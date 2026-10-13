@@ -1,0 +1,178 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import { tours } from "@/content";
+import {
+  getCategories,
+  getCategoryByPath,
+  getCategoryTourCount,
+  getCategoryTrail,
+  getTopLevelCategories,
+} from "@/lib/data/categories";
+import { getFeaturedTours, getRelatedTours, getTourBySlug, getTourTags, getToursByCategoryId } from "@/lib/data/tours";
+import { getArticleBySlug, getArticles } from "@/lib/data/articles";
+import { getDestinationsByRegion } from "@/lib/data/destinations";
+import { formatDuration, formatPriceFrom, formatMoney, hasPublishedPrice } from "@/lib/format";
+import { ROUTES, primaryNav } from "@/config/navigation";
+
+/**
+ * Content and repository tests.
+ *
+ * Importing `@/content` runs the Zod parse and the referential-integrity check,
+ * so a dangling category id or a duplicate slug fails these tests rather than
+ * shipping.
+ */
+
+describe("content integrity", () => {
+  it("loads and validates every tour record", () => {
+    assert.ok(tours.length > 0);
+  });
+
+  it("has a unique slug and id for every tour", () => {
+    assert.equal(new Set(tours.map((tour) => tour.slug)).size, tours.length);
+    assert.equal(new Set(tours.map((tour) => tour.id)).size, tours.length);
+  });
+
+  it("never publishes a price of zero", () => {
+    for (const tour of tours) {
+      if (tour.priceFrom !== null) {
+        assert.ok(tour.priceFrom.amount > 0, `${tour.slug} has a non-positive price`);
+      }
+    }
+  });
+
+  it("gives every tour a category and at least one itinerary day", () => {
+    for (const tour of tours) {
+      assert.ok(tour.categoryIds.length >= 1, `${tour.slug} has no category`);
+      assert.ok(tour.itinerary.length >= 1, `${tour.slug} has no itinerary`);
+    }
+  });
+});
+
+describe("category repository", () => {
+  it("exposes the required menu structure in order", () => {
+    const top = getTopLevelCategories().map((category) => category.name);
+    assert.deepEqual(top, ["Tour Quy Nhơn - Phú Yên", "Tour Trong Nước"]);
+  });
+
+  it("uses the exact menu labels required by the brief", () => {
+    const labels = primaryNav.map((item) => item.label);
+    assert.deepEqual(labels, [
+      "Trang chủ",
+      "Tour Quy Nhơn - Phú Yên",
+      "Tour Trong Nước",
+      "Cẩm Nang Du Lịch",
+      "Liên Hệ",
+    ]);
+  });
+
+  it("keeps the required sub-menu labels under each parent", () => {
+    const childLabels = (index: number) =>
+      (primaryNav[index].children ?? []).map((child) => child.label);
+
+    assert.deepEqual(childLabels(1), ["Tour Quy Nhơn 1 Ngày", "Tour Quy Nhơn dài Ngày"]);
+    assert.deepEqual(childLabels(2), [
+      "Tour Miền Bắc",
+      "Tour Miền Trung",
+      "Tour Miền Nam",
+      "Tour Tây Nguyên",
+    ]);
+  });
+
+  it("includes child-category tours when listing a parent category", () => {
+    const parentTours = getToursByCategoryId("cat_quy_nhon_phu_yen");
+    const oneDay = getToursByCategoryId("cat_quy_nhon_1_ngay");
+    const multiDay = getToursByCategoryId("cat_quy_nhon_dai_ngay");
+
+    assert.ok(oneDay.length > 0 && multiDay.length > 0);
+    assert.equal(parentTours.length, oneDay.length + multiDay.length);
+    assert.ok(getCategoryTourCount("cat_quy_nhon_phu_yen") >= oneDay.length);
+  });
+
+  it("resolves every category path used in navigation", () => {
+    for (const item of primaryNav) {
+      assert.ok(getCategoryByPath(item.href) || item.href === ROUTES.home || item.href === ROUTES.guides || item.href === ROUTES.contact,
+        `no destination for ${item.href}`);
+      for (const child of item.children ?? []) {
+        assert.ok(getCategoryByPath(child.href), `unknown child path ${child.href}`);
+      }
+    }
+  });
+
+  it("builds a breadcrumb trail from root to a child category", () => {
+    const trail = getCategoryTrail("cat_mien_bac");
+    assert.deepEqual(
+      trail.map((category) => category.name),
+      ["Tour Trong Nước", "Tour Miền Bắc"],
+    );
+  });
+
+  it("has no category with a dangling parent reference", () => {
+    const ids = new Set(getCategories().map((category) => category.id));
+    for (const category of getCategories()) {
+      if (category.parentId) assert.ok(ids.has(category.parentId));
+    }
+  });
+});
+
+describe("tour repository", () => {
+  it("finds a tour by slug", () => {
+    assert.ok(getTourBySlug("quy-nhon-phu-yen-3-ngay-2-dem"));
+    assert.equal(getTourBySlug("khong-ton-tai"), undefined);
+  });
+
+  it("prioritises the Quy Nhơn – Phú Yên line-up for the home page", () => {
+    const featured = getFeaturedTours(6);
+    assert.equal(featured.length, 6);
+    const focus = getToursByCategoryId("cat_quy_nhon_phu_yen").map((tour) => tour.slug);
+    assert.ok(focus.includes(featured[0].slug));
+  });
+
+  it("never includes the current tour in its own related list", () => {
+    const slug = "quy-nhon-phu-yen-3-ngay-2-dem";
+    const related = getRelatedTours(slug, 3);
+    assert.equal(related.length, 3);
+    assert.ok(!related.some((tour) => tour.slug === slug));
+  });
+
+  it("returns useful filter tags", () => {
+    const tags = getTourTags();
+    assert.ok(tags.length >= 3);
+  });
+});
+
+describe("destination and article repository", () => {
+  it("groups destinations by region", () => {
+    const focus = getDestinationsByRegion("quy-nhon-phu-yen");
+    assert.ok(focus.length >= 4);
+    assert.ok(focus.some((destination) => destination.name === "Quy Nhơn"));
+  });
+
+  it("resolves an article by slug and links it to real tours", () => {
+    const article = getArticleBySlug("kinh-nghiem-du-lich-quy-nhon-phu-yen");
+    assert.ok(article);
+    if (!article) return;
+    for (const slug of article.relatedTourSlugs) {
+      assert.ok(getTourBySlug(slug), `article links to a missing tour: ${slug}`);
+    }
+    assert.ok(getArticles().length >= 4);
+  });
+});
+
+describe("formatting rules", () => {
+  it("renders an unpublished price as 'Liên hệ tư vấn', never as 0 ₫", () => {
+    assert.equal(formatPriceFrom(null), "Liên hệ tư vấn");
+    assert.ok(!formatPriceFrom(null).includes("0"));
+    assert.equal(hasPublishedPrice(null), false);
+  });
+
+  it("formats VND with thousands separators", () => {
+    assert.equal(formatMoney({ amount: 1250000, currency: "VND" }), "1.250.000 ₫");
+    assert.equal(formatPriceFrom({ amount: 890000, currency: "VND" }), "Từ 890.000 ₫");
+    assert.equal(hasPublishedPrice({ amount: 890000, currency: "VND" }), true);
+  });
+
+  it("formats a single-day tour without mentioning nights", () => {
+    assert.equal(formatDuration({ days: 1, nights: 0 }), "1 ngày");
+    assert.equal(formatDuration({ days: 3, nights: 2 }), "3 ngày 2 đêm");
+  });
+});
