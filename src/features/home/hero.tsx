@@ -54,7 +54,7 @@ export function Hero({ locale }: { locale: Locale }) {
       />
 
       <Container>
-        <div className="relative grid grid-cols-1 items-center gap-10 pt-8 pb-12 sm:gap-12 sm:pt-12 sm:pb-20 lg:grid-cols-12 lg:gap-16 lg:pt-14 lg:pb-24">
+        <div className="relative grid grid-cols-1 items-center gap-10 pt-[22px] pb-12 sm:gap-12 sm:pt-[38px] sm:pb-20 lg:grid-cols-12 lg:gap-16 lg:pt-[46px] lg:pb-24">
           {/* --- Copy ------------------------------------------------------- */}
           <div className="lg:col-span-6">
             <p
