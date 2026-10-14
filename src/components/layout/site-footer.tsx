@@ -33,36 +33,47 @@ function renderCopyright(template: string, name: string): React.ReactNode {
   });
 }
 
+/** Column heading with the brand rule that marks every section eyebrow. */
+function FooterHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="flex items-center gap-2.5 text-sm font-bold uppercase tracking-wider text-foreground">
+      <span aria-hidden="true" className="brand-gradient h-0.5 w-5 rounded-full" />
+      {children}
+    </h2>
+  );
+}
+
+const linkClass =
+  "font-medium text-foreground-muted transition-colors hover:text-primary-strong";
+
 export function SiteFooter({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
   const topLevel = getCategories(locale).filter((category) => category.parentId === null);
   const socials = [...primarySocialLinks, ...secondarySocialLinks];
 
   return (
-    <footer className="border-t border-border bg-surface-sunken">
+    <footer className="bg-surface-sunken">
+      {/* Mirrors the identity rule at the top of the header. */}
+      <div className="brand-gradient h-px w-full" aria-hidden="true" />
+
       <Container>
-        <div className="grid grid-cols-1 gap-8 py-12 sm:gap-10 sm:py-14 lg:grid-cols-12">
-          <div className="lg:col-span-4">
-            <Logo size="md" tagline={m.site.tagline} />
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-foreground-muted">
-              {m.site.description}
-            </p>
-            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.12em] text-primary-strong">
+        <div className="grid grid-cols-1 gap-10 py-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-12 lg:py-16">
+          <div className="sm:col-span-2 lg:col-span-4">
+            <Logo size="md" />
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-primary-strong">
               {m.site.tagline}
+            </p>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-foreground-muted">
+              {m.site.description}
             </p>
           </div>
 
           <nav aria-label={m.footer.categoriesAria} className="lg:col-span-3">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-              {m.footer.categoriesTitle}
-            </h2>
-            <ul className="mt-4 space-y-3 text-sm">
+            <FooterHeading>{m.footer.categoriesTitle}</FooterHeading>
+            <ul className="mt-5 space-y-3 text-sm">
               {topLevel.map((category) => (
                 <li key={category.id}>
-                  <Link
-                    href={localizePath(locale, category.path)}
-                    className="font-medium text-foreground-muted transition-colors hover:text-primary-strong"
-                  >
+                  <Link href={localizePath(locale, category.path)} className={linkClass}>
                     {category.name}
                   </Link>
                 </li>
@@ -71,32 +82,21 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           </nav>
 
           <nav aria-label={m.footer.infoAria} className="lg:col-span-2">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-              {m.footer.infoTitle}
-            </h2>
-            <ul className="mt-4 space-y-3 text-sm">
+            <FooterHeading>{m.footer.infoTitle}</FooterHeading>
+            <ul className="mt-5 space-y-3 text-sm">
               <li>
-                <Link
-                  href={localizePath(locale, ROUTES.guides)}
-                  className="font-medium text-foreground-muted transition-colors hover:text-primary-strong"
-                >
+                <Link href={localizePath(locale, ROUTES.guides)} className={linkClass}>
                   {m.nav.guides}
                 </Link>
               </li>
               <li>
-                <Link
-                  href={localizePath(locale, ROUTES.contact)}
-                  className="font-medium text-foreground-muted transition-colors hover:text-primary-strong"
-                >
+                <Link href={localizePath(locale, ROUTES.contact)} className={linkClass}>
                   {m.nav.contact}
                 </Link>
               </li>
               {footerLegalNav.map((item) => (
                 <li key={item.href}>
-                  <Link
-                    href={localizePath(locale, item.href)}
-                    className="font-medium text-foreground-muted transition-colors hover:text-primary-strong"
-                  >
+                  <Link href={localizePath(locale, item.href)} className={linkClass}>
                     {m.nav[item.labelKey]}
                   </Link>
                 </li>
@@ -104,13 +104,11 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             </ul>
           </nav>
 
-          <div className="lg:col-span-3">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-              {m.footer.contactTitle}
-            </h2>
-            <ul className="mt-4 space-y-1 text-sm text-foreground-muted">
-              <li className="flex items-center gap-2.5">
-                <PhoneIcon className="h-4 w-4 shrink-0 text-primary-strong" />
+          <div className="sm:col-span-2 lg:col-span-3">
+            <FooterHeading>{m.footer.contactTitle}</FooterHeading>
+            <ul className="mt-5 space-y-1 text-sm text-foreground-muted">
+              <li className="flex items-start gap-2.5">
+                <PhoneIcon className="mt-3.5 h-4 w-4 shrink-0 text-primary-strong" />
                 <a
                   href={siteConfig.contact.hotlineHref}
                   className="inline-flex min-h-11 items-center font-semibold text-foreground transition-colors hover:text-primary-strong"
@@ -118,8 +116,8 @@ export function SiteFooter({ locale }: { locale: Locale }) {
                   {siteConfig.contact.hotline}
                 </a>
               </li>
-              <li className="flex items-center gap-2.5">
-                <MailIcon className="h-4 w-4 shrink-0 text-primary-strong" />
+              <li className="flex items-start gap-2.5">
+                <MailIcon className="mt-3.5 h-4 w-4 shrink-0 text-primary-strong" />
                 <a
                   href={`mailto:${siteConfig.contact.email}`}
                   className="inline-flex min-h-11 items-center break-all transition-colors hover:text-primary-strong"
@@ -127,27 +125,25 @@ export function SiteFooter({ locale }: { locale: Locale }) {
                   {siteConfig.contact.email}
                 </a>
               </li>
-              <li className="flex items-center gap-2.5">
-                <MapPinIcon className="h-4 w-4 shrink-0 text-primary-strong" />
-                <span className="inline-flex min-h-11 items-center">
-                  {siteConfig.contact.address}
-                </span>
+              <li className="flex items-start gap-2.5">
+                <MapPinIcon className="mt-1 h-4 w-4 shrink-0 text-primary-strong" />
+                <span className="py-1.5 leading-relaxed">{siteConfig.contact.address}</span>
               </li>
-              <li className="flex items-center gap-2.5">
-                <ClockIcon className="h-4 w-4 shrink-0 text-primary-strong" />
-                <span className="inline-flex min-h-11 items-center">{m.site.workingHours}</span>
+              <li className="flex items-start gap-2.5">
+                <ClockIcon className="mt-1 h-4 w-4 shrink-0 text-primary-strong" />
+                <span className="py-1.5 leading-relaxed">{m.site.workingHours}</span>
               </li>
             </ul>
 
             {socials.length > 0 ? (
-              <ul className="mt-5 flex flex-wrap gap-2">
+              <ul className="mt-6 flex flex-wrap gap-2">
                 {socials.map((social) => (
                   <li key={social.key}>
                     <a
                       href={social.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex min-h-11 items-center rounded-full border border-border-strong px-3.5 text-xs font-semibold text-foreground-muted transition-colors hover:border-primary hover:text-primary-strong"
+                      className="inline-flex min-h-11 items-center rounded-full border border-border-strong bg-surface/60 px-4 text-xs font-semibold text-foreground-muted transition-[color,border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-primary-soft hover:text-primary-strong"
                     >
                       {social.label}
                     </a>
@@ -160,7 +156,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
 
         <div className="flex flex-col gap-3 border-t border-border py-6 text-xs text-foreground-subtle sm:flex-row sm:items-center sm:justify-between">
           <p>{renderCopyright(m.footer.copyright, siteConfig.name)}</p>
-          <p>{m.footer.disclaimer}</p>
+          <p className="sm:max-w-xl sm:text-right">{m.footer.disclaimer}</p>
         </div>
       </Container>
     </footer>

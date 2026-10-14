@@ -46,7 +46,7 @@ export function HeaderShell({ children }: { children: ReactNode }) {
         "transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out",
         scroll.condensed
           ? "border-border bg-surface/95 shadow-[0_8px_28px_-18px_rgba(122,0,49,0.4)]"
-          : "border-transparent bg-surface/80",
+          : "border-transparent bg-transparent",
         hidden ? "-translate-y-full" : "translate-y-0",
       )}
     >

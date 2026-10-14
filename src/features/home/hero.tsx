@@ -33,7 +33,7 @@ export function Hero({ locale }: { locale: Locale }) {
   ].filter((item): item is string => Boolean(item));
 
   return (
-    <section className="relative overflow-hidden bg-background">
+    <section className="relative overflow-x-clip bg-background">
       {/* Brand field: two soft blooms plus a faint dot grid, no heavy wash. */}
       <span
         aria-hidden="true"
