@@ -9,34 +9,53 @@ import { TourCard, type TourCardModel } from "./tour-card";
 
 type SortKey = "recommended" | "duration-asc" | "duration-desc";
 
-const SORT_LABELS: Record<SortKey, string> = {
-  recommended: "Đề xuất",
-  "duration-asc": "Thời lượng ngắn trước",
-  "duration-desc": "Thời lượng dài trước",
+export type TourExplorerLabels = {
+  filterLabel: string;
+  all: string;
+  sortLabel: string;
+  sortRecommended: string;
+  sortDurationAsc: string;
+  sortDurationDesc: string;
+  /** Plural form, `{count}` placeholder. */
+  tourCount: { one: string; other: string };
+  clearFilter: string;
+  emptyTitle: string;
+  emptyBody: string;
+  clearFiltersShort: string;
+  sendRequest: string;
+  contactHref: string;
 };
+
+function countLabel(label: { one: string; other: string }, count: number): string {
+  return (count === 1 ? label.one : label.other).replace("{count}", String(count));
+}
 
 /**
  * Category listing with tag filter + duration sort.
  *
  * This is genuinely client-side on purpose: the whole catalogue for a category
- * is small, so shipping it once beats a server round-trip per keystroke. The
- * filter state is component state (not the URL) — with this few tours a URL
- * contract would be ceremony, and it would force the page into dynamic
- * rendering. If the catalogue grows past ~100 tours per category, this is the
- * component to swap for a server-side, URL-driven filter.
+ * is small, so shipping it once beats a server round-trip per keystroke. Every
+ * string arrives in `labels`; the catalogs stay on the server.
  */
 export function TourExplorer({
   tours,
   tags,
+  labels,
 }: {
   tours: readonly TourCardModel[];
   tags: readonly string[];
+  labels: TourExplorerLabels;
 }) {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>("recommended");
   const sortId = useId();
 
-  /** Only offer tags that would actually return results. */
+  const sortLabels: Record<SortKey, string> = {
+    recommended: labels.sortRecommended,
+    "duration-asc": labels.sortDurationAsc,
+    "duration-desc": labels.sortDurationDesc,
+  };
+
   const availableTags = useMemo(
     () => tags.filter((tag) => tours.some((tour) => tour.tags.includes(tag))),
     [tags, tours],
@@ -67,7 +86,7 @@ export function TourExplorer({
         {availableTags.length > 0 ? (
           <div className="flex flex-col gap-2.5">
             <p id="tour-filter-label" className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
-              Lọc theo nhu cầu
+              {labels.filterLabel}
             </p>
             <div role="group" aria-labelledby="tour-filter-label" className="flex flex-wrap gap-2">
               <button
@@ -76,13 +95,13 @@ export function TourExplorer({
                 onClick={() => setActiveTag(null)}
                 data-focus-ring=""
                 className={cn(
-                  "inline-flex min-h-10 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors sm:min-h-9",
+                  "inline-flex min-h-11 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors",
                   activeTag === null
                     ? "border-primary-strong bg-primary-strong text-white"
                     : "border-border-strong bg-surface text-foreground-muted hover:border-primary hover:text-primary-strong",
                 )}
               >
-                Tất cả
+                {labels.all}
               </button>
               {availableTags.map((tag) => (
                 <button
@@ -92,7 +111,7 @@ export function TourExplorer({
                   onClick={() => setActiveTag(activeTag === tag ? null : tag)}
                   data-focus-ring=""
                   className={cn(
-                    "rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors",
+                    "inline-flex min-h-11 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors",
                     activeTag === tag
                       ? "border-primary-strong bg-primary-strong text-white"
                       : "border-border-strong bg-surface text-foreground-muted hover:border-primary hover:text-primary-strong",
@@ -111,16 +130,16 @@ export function TourExplorer({
               htmlFor={sortId}
               className="text-xs font-bold uppercase tracking-wider text-foreground-muted"
             >
-              Sắp xếp theo
+              {labels.sortLabel}
             </label>
             <Select
               id={sortId}
               value={sort}
               onChange={(event) => setSort(event.target.value as SortKey)}
             >
-              {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+              {(Object.keys(sortLabels) as SortKey[]).map((key) => (
                 <option key={key} value={key}>
-                  {SORT_LABELS[key]}
+                  {sortLabels[key]}
                 </option>
               ))}
             </Select>
@@ -128,17 +147,17 @@ export function TourExplorer({
 
           <div className="flex items-center gap-3">
             <p aria-live="polite" className="text-sm text-foreground-muted">
-              {visible.length} tour{visible.length === 1 ? "" : ""}
+              {countLabel(labels.tourCount, visible.length)}
             </p>
             {isFiltered ? (
               <button
                 type="button"
                 onClick={clearFilters}
                 data-focus-ring=""
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-border-strong bg-surface px-3.5 text-sm font-semibold text-foreground-muted transition-colors hover:border-primary hover:text-primary-strong sm:min-h-9"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border-strong bg-surface px-3.5 text-sm font-semibold text-foreground-muted transition-colors hover:border-primary hover:text-primary-strong"
               >
                 <CloseIcon className="h-3.5 w-3.5" />
-                Xoá lọc
+                {labels.clearFilter}
               </button>
             ) : null}
           </div>
@@ -157,10 +176,8 @@ export function TourExplorer({
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border-strong bg-surface px-6 py-16 text-center">
           <CompassIcon className="h-9 w-9 text-brand-300" />
           <div>
-            <h3 className="text-lg font-bold text-foreground">Chưa có tour phù hợp bộ lọc</h3>
-            <p className="mt-1 text-sm text-foreground-muted">
-              Thử bỏ bộ lọc, hoặc gửi yêu cầu để SEA TRIP thiết kế lịch trình riêng cho bạn.
-            </p>
+            <h3 className="text-lg font-bold text-foreground">{labels.emptyTitle}</h3>
+            <p className="mt-1 text-sm text-foreground-muted">{labels.emptyBody}</p>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             <button
@@ -169,10 +186,10 @@ export function TourExplorer({
               data-focus-ring=""
               className="inline-flex h-11 items-center rounded-full border border-border-strong bg-surface px-5 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary-strong"
             >
-              Xoá bộ lọc
+              {labels.clearFiltersShort}
             </button>
-            <ButtonLink href="/lien-he" size="md">
-              Gửi yêu cầu tư vấn
+            <ButtonLink href={labels.contactHref} size="md">
+              {labels.sendRequest}
             </ButtonLink>
           </div>
         </div>

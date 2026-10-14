@@ -1,4 +1,6 @@
 import { siteConfig } from "@/config/site";
+import { localeMeta, type Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
 import { absoluteUrl } from "./seo";
 
 /**
@@ -7,38 +9,48 @@ import { absoluteUrl } from "./seo";
  * House rule: only emit structured data that mirrors content actually visible
  * on the page. No `aggregateRating`, no `review`, no invented awards or
  * certifications. `offers` is emitted only when a real price exists.
+ *
+ * Every builder takes the rendering `locale` so `inLanguage` and the visible
+ * strings match the page language.
  */
 
 type Json = Record<string, unknown>;
 
-export function travelAgencyJsonLd(): Json {
+const lang = (locale: Locale) => localeMeta[locale].htmlLang;
+
+export function travelAgencyJsonLd(locale: Locale): Json {
+  const m = getMessages(locale);
   return {
     "@context": "https://schema.org",
     "@type": "TravelAgency",
     name: siteConfig.name,
-    description: siteConfig.description,
+    description: m.site.description,
     url: absoluteUrl("/"),
-    slogan: siteConfig.message,
+    slogan: m.site.tagline,
     image: absoluteUrl("/opengraph-image.png"),
     logo: absoluteUrl("/brand/logo-lockup.png"),
     telephone: siteConfig.contact.hotline,
     email: siteConfig.contact.email,
     address: {
       "@type": "PostalAddress",
-      streetAddress: siteConfig.contact.address,
+      streetAddress: siteConfig.contact.addressParts.street,
+      addressLocality: siteConfig.contact.addressParts.locality,
+      addressRegion: siteConfig.contact.addressParts.region,
       addressCountry: "VN",
     },
-    areaServed: { "@type": "Country", name: "Việt Nam" },
+    areaServed: { "@type": "Country", name: locale === "vi" ? "Việt Nam" : "Vietnam" },
+    // Only channels the owner has actually set — never a fallback platform URL.
+    sameAs: [siteConfig.social.facebook, siteConfig.social.zalo].filter((link) => link.length > 0),
   };
 }
 
-export function websiteJsonLd(): Json {
+export function websiteJsonLd(locale: Locale): Json {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: siteConfig.name,
     url: absoluteUrl("/"),
-    inLanguage: "vi",
+    inLanguage: lang(locale),
   };
 }
 
@@ -58,21 +70,24 @@ export function breadcrumbJsonLd(items: readonly { label: string; path: string }
 export function collectionPageJsonLd({
   name,
   description,
-  path,
+  url,
   tours,
+  locale,
 }: {
   name: string;
   description: string;
-  path: string;
-  tours: readonly { title: string; slug: string }[];
+  /** Absolute URL of the page. */
+  url: string;
+  tours: readonly { title: string; url: string }[];
+  locale: Locale;
 }): Json {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name,
     description,
-    url: absoluteUrl(path),
-    inLanguage: "vi",
+    url,
+    inLanguage: lang(locale),
     mainEntity: {
       "@type": "ItemList",
       numberOfItems: tours.length,
@@ -80,7 +95,7 @@ export function collectionPageJsonLd({
         "@type": "ListItem",
         position: index + 1,
         name: tour.title,
-        url: absoluteUrl(`/tour/${tour.slug}`),
+        url: tour.url,
       })),
     },
   };
@@ -89,28 +104,31 @@ export function collectionPageJsonLd({
 export function touristTripJsonLd({
   title,
   summary,
-  slug,
+  url,
   destinations,
   itinerary,
   price,
   image,
+  locale,
 }: {
   title: string;
   summary: string;
-  slug: string;
+  /** Absolute URL of the tour page. */
+  url: string;
   destinations: readonly { name: string }[];
   itinerary: readonly { title: string; summary?: string }[];
   price: { amount: number; currency: string } | null;
   image: string;
+  locale: Locale;
 }): Json {
   return {
     "@context": "https://schema.org",
     "@type": "TouristTrip",
     name: title,
     description: summary,
-    url: absoluteUrl(`/tour/${slug}`),
+    url,
     image: absoluteUrl(image),
-    inLanguage: "vi",
+    inLanguage: lang(locale),
     provider: {
       "@type": "TravelAgency",
       name: siteConfig.name,
@@ -150,28 +168,31 @@ export function touristTripJsonLd({
 export function articleJsonLd({
   title,
   excerpt,
-  slug,
+  url,
   publishedAt,
   updatedAt,
   image,
   author,
+  locale,
 }: {
   title: string;
   excerpt: string;
-  slug: string;
+  /** Absolute URL of the article page. */
+  url: string;
   publishedAt: string;
   updatedAt?: string;
   image: string;
   author: string;
+  locale: Locale;
 }): Json {
   return {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: title,
     description: excerpt,
-    mainEntityOfPage: absoluteUrl(`/cam-nang-du-lich/${slug}`),
+    mainEntityOfPage: url,
     image: absoluteUrl(image),
-    inLanguage: "vi",
+    inLanguage: lang(locale),
     datePublished: publishedAt,
     ...(updatedAt ? { dateModified: updatedAt } : {}),
     author: { "@type": "Organization", name: author },

@@ -2,11 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  MONTH_LABELS,
-  WEEKDAY_FULL,
-  WEEKDAY_SHORT,
   buildMonthGrid,
-  formatDateWithWeekday,
   monthViewOf,
   parseIsoDate,
   sameDay,
@@ -24,30 +20,51 @@ import { CalendarIcon, ChevronDownIcon, ChevronRightIcon } from "./icons";
 import { controlClassName } from "./form-controls";
 
 /**
+ * Date-picker strings. Passed in from the server so the catalogs stay out of the
+ * client bundle.
+ */
+export type DatePickerLabels = {
+  placeholder: string;
+  dialogLabel: string;
+  previousMonth: string;
+  nextMonth: string;
+  clear: string;
+  today: string;
+  tomorrow: string;
+  months: readonly string[];
+  weekdaysShort: readonly string[];
+  weekdaysFull: readonly string[];
+  /** "{day} {month} {year}" */
+  dayAria: string;
+};
+
+function fmt(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
+    vars[key] === undefined ? match : String(vars[key]),
+  );
+}
+
+const pad = (value: number) => String(value).padStart(2, "0");
+const ddmm = (parts: DateParts) => `${pad(parts.d)}/${pad(parts.m + 1)}/${parts.y}`;
+
+/**
  * Custom date picker.
  *
- * Why not `<input type="date">`: the calendar popup lives in the browser's shadow
- * DOM and cannot be styled. Chrome paints the selected day in its own blue
- * regardless of `accent-color`, which looks foreign next to the brand pink and
- * the rest of the form. Everything around the field could be themed; the one
- * part the customer actually looks at could not.
- *
- * So the popup is built here. The value contract is unchanged: an ISO
- * `YYYY-MM-DD` string, or `""` when cleared — identical to what the native input
- * produced, so nothing downstream changes.
+ * The popup is built here rather than using `<input type="date">` so it can be
+ * themed; the value contract is unchanged (ISO `YYYY-MM-DD`, or `""`).
  *
  * Accessibility: `role="dialog"` popover, `role="grid"` calendar with
  * `columnheader`/`gridcell`, roving `tabindex`, `aria-selected`, and
  * `aria-current="date"`. Arrow keys move by day/week, PageUp/PageDown by month,
  * Home/End to week edges, Enter/Space selects, Escape closes, clicking outside
- * closes. Date arithmetic lives in `lib/date.ts`.
+ * closes. All labels come from `labels`.
  */
 export function DatePicker({
   id,
   value,
   onChange,
   invalid = false,
-  placeholder = "Chọn ngày",
+  labels,
   describedBy,
   className,
 }: {
@@ -56,15 +73,11 @@ export function DatePicker({
   value: string;
   onChange: (value: string) => void;
   invalid?: boolean;
-  placeholder?: string;
+  labels: DatePickerLabels;
   describedBy?: string;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  /**
-   * "Today" is resolved on open (a user gesture), never during render: reading
-   * the clock while rendering would differ between server and client.
-   */
   const [today, setToday] = useState<DateParts | null>(null);
   const [view, setView] = useState<MonthView | null>(null);
   const [focusIso, setFocusIso] = useState<string | null>(null);
@@ -77,8 +90,12 @@ export function DatePicker({
 
   const focusDay = useCallback((iso: string) => {
     setFocusIso(iso);
-    requestAnimationFrame(() => dayRefs.current.get(iso)?.focus());
   }, []);
+
+  useEffect(() => {
+    if (!open || !focusIso) return;
+    dayRefs.current.get(focusIso)?.focus();
+  }, [open, focusIso]);
 
   const returnFocusToTrigger = () => {
     setOpen(false);
@@ -109,7 +126,6 @@ export function DatePicker({
     requestAnimationFrame(() => triggerRef.current?.focus());
   };
 
-  // Close on outside pointer press.
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
@@ -163,7 +179,6 @@ export function DatePicker({
         event.preventDefault();
         return returnFocusToTrigger();
       case "Tab":
-        // Small surface, few focusables: a simple wrap keeps focus inside.
         event.preventDefault();
         return cycleFocus(event.shiftKey ? -1 : 1);
       default:
@@ -171,7 +186,6 @@ export function DatePicker({
     }
   };
 
-  /** Wrap Tab within the popover (month nav → days → quick actions). */
   const cycleFocus = (direction: 1 | -1) => {
     const root = wrapperRef.current?.querySelector<HTMLElement>('[role="dialog"]');
     if (!root) return;
@@ -219,11 +233,11 @@ export function DatePicker({
             selected ? "font-medium text-foreground" : "text-foreground-subtle",
           )}
         >
-          {selected ? formatDateWithWeekday(value).split(" · ")[0] : placeholder}
+          {selected ? ddmm(selected) : labels.placeholder}
         </span>
         {selected ? (
           <span className="hidden shrink-0 text-xs text-foreground-subtle sm:inline">
-            {WEEKDAY_FULL[weekdayIndexMonday(selected)]}
+            {labels.weekdaysFull[weekdayIndexMonday(selected)]}
           </span>
         ) : null}
         <ChevronDownIcon
@@ -239,12 +253,12 @@ export function DatePicker({
         <div
           role="dialog"
           aria-modal="false"
-          aria-label="Chọn ngày khởi hành"
+          aria-label={labels.dialogLabel}
           onKeyDown={onPopoverKeyDown}
           className={cn(
             "absolute left-0 top-[calc(100%+0.5rem)] z-50 w-[19.5rem] max-w-[calc(100vw-2.5rem)]",
             "origin-top rounded-2xl border border-border bg-surface p-3 shadow-lifted",
-            "animate-[stt-reveal_0.18s_var(--ease-out-soft)_both]",
+            "animate-[stt-entrance_0.18s_var(--ease-out-soft)_both]",
           )}
         >
           {/* Month navigation */}
@@ -253,21 +267,21 @@ export function DatePicker({
               type="button"
               onClick={() => setView(shiftMonthView(view, -1))}
               data-focus-ring=""
-              aria-label="Tháng trước"
+              aria-label={labels.previousMonth}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-primary-soft hover:text-primary-strong"
             >
               <ChevronRightIcon className="h-4 w-4 rotate-180" />
             </button>
 
             <p aria-live="polite" className="text-sm font-bold text-foreground">
-              {MONTH_LABELS[view.m]} {view.y}
+              {labels.months[view.m]} {view.y}
             </p>
 
             <button
               type="button"
               onClick={() => setView(shiftMonthView(view, 1))}
               data-focus-ring=""
-              aria-label="Tháng sau"
+              aria-label={labels.nextMonth}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground-muted transition-colors hover:bg-primary-soft hover:text-primary-strong"
             >
               <ChevronRightIcon className="h-4 w-4" />
@@ -277,15 +291,15 @@ export function DatePicker({
           {/* Calendar grid */}
           <div
             role="grid"
-            aria-label={`${MONTH_LABELS[view.m]} ${view.y}`}
+            aria-label={`${labels.months[view.m]} ${view.y}`}
             className="mt-2 grid grid-cols-7 gap-y-0.5"
           >
             <div role="row" className="contents">
-              {WEEKDAY_SHORT.map((day, index) => (
+              {labels.weekdaysShort.map((day, index) => (
                 <div
                   key={day}
                   role="columnheader"
-                  aria-label={WEEKDAY_FULL[index]}
+                  aria-label={labels.weekdaysFull[index]}
                   className="flex h-8 items-center justify-center text-[0.6875rem] font-bold uppercase tracking-wide text-foreground-subtle"
                 >
                   {day}
@@ -314,7 +328,11 @@ export function DatePicker({
                         }}
                         type="button"
                         tabIndex={isFocusTarget ? 0 : -1}
-                        aria-label={`${cell.parts.d} ${MONTH_LABELS[cell.parts.m]} ${cell.parts.y}`}
+                        aria-label={fmt(labels.dayAria, {
+                          day: cell.parts.d,
+                          month: labels.months[cell.parts.m],
+                          year: cell.parts.y,
+                        })}
                         aria-current={isToday ? "date" : undefined}
                         data-focus-ring=""
                         onClick={() => select(cell.parts)}
@@ -344,7 +362,7 @@ export function DatePicker({
               data-focus-ring=""
               className="rounded-full px-3 py-1.5 text-xs font-semibold text-foreground-muted transition-colors hover:bg-surface-muted hover:text-foreground"
             >
-              Xoá
+              {labels.clear}
             </button>
             <div className="flex gap-1">
               <button
@@ -353,7 +371,7 @@ export function DatePicker({
                 data-focus-ring=""
                 className="rounded-full px-3 py-1.5 text-xs font-semibold text-primary-strong transition-colors hover:bg-primary-soft"
               >
-                Hôm nay
+                {labels.today}
               </button>
               <button
                 type="button"
@@ -361,7 +379,7 @@ export function DatePicker({
                 data-focus-ring=""
                 className="rounded-full px-3 py-1.5 text-xs font-semibold text-primary-strong transition-colors hover:bg-primary-soft"
               >
-                Ngày mai
+                {labels.tomorrow}
               </button>
             </div>
           </div>

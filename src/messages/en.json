@@ -1,0 +1,496 @@
+{
+  "site": {
+    "description": "SEA TRIP TRAVEL curates destinations and designs domestic travel experiences, focused on Quy Nhon – Phu Yen and routes across the North, Central, South and Central Highlands of Vietnam.",
+    "tagline": "Curated destinations – Elevated experiences",
+    "workingHours": "Mon – Sat, 08:00 – 18:00"
+  },
+  "common": {
+    "home": "Home",
+    "skipToContent": "Skip navigation, go to main content",
+    "mainContentLabel": "Main content",
+    "viewDetails": "View details",
+    "viewNow": "View now",
+    "explore": "Explore",
+    "all": "All",
+    "allOf": "All {label}",
+    "clearFilters": "Clear filter",
+    "clearFilterShort": "Clear filters",
+    "sendConsultRequest": "Send request",
+    "requestConsultation": "Get advice",
+    "requestConsultationFree": "Free consultation",
+    "callHotline": "Call hotline",
+    "callHotlineAria": "Call hotline {phone}",
+    "hotline": "Hotline",
+    "email": "Email",
+    "address": "Address",
+    "contactForPricing": "Contact us for pricing",
+    "priceFrom": "From {price}",
+    "priceReference": "Reference price",
+    "priceLabelContact": "Tour price",
+    "priceLabelFrom": "Price from",
+    "priceNoteUnknown": "SEA TRIP quotes per group size, departure date and the service level you choose.",
+    "priceNoteKnown": "The price can change with the season and the number of travellers.",
+    "noOnlineBooking": "This website only takes consultation requests; online booking and payment are not supported yet.",
+    "notAvailableBooking": "Online booking is not available yet",
+    "duration": "Duration",
+    "departure": "Departs from",
+    "destinationsCount": "Destinations",
+    "departurePrefix": "Departs: {place}",
+    "departureFallback": "Contact us to confirm",
+    "updating": "Being updated",
+    "tourCount": { "one": "{count} tour", "other": "{count} tours" },
+    "dayUnit": { "one": "{count} day", "other": "{count} days" },
+    "nightUnit": { "one": "{count} night", "other": "{count} nights" },
+    "readMinutes": { "one": "{count} min read", "other": "{count} min read" },
+    "readMinutesShort": { "one": "{count} min", "other": "{count} min" },
+    "breadcrumbAria": "Breadcrumb",
+    "pageNavAria": "On this page",
+    "imageAlt": "Illustrative image",
+    "destinationAlt": "Destination: {name}",
+    "backToTop": "Back to top"
+  },
+  "nav": {
+    "home": "Home",
+    "quyNhonPhuYen": "Quy Nhon - Phu Yen Tours",
+    "quyNhonOneDay": "Quy Nhon 1-Day Tours",
+    "quyNhonMultiDay": "Quy Nhon Multi-Day Tours",
+    "domestic": "Vietnam Tours",
+    "north": "Northern Vietnam",
+    "central": "Central Vietnam",
+    "south": "Southern Vietnam",
+    "highlands": "Central Highlands",
+    "guides": "Travel Guides",
+    "contact": "Contact",
+    "privacy": "Privacy policy",
+    "description": {
+      "quyNhonPhuYen": "SEA TRIP's focus route",
+      "domestic": "Curated by region"
+    }
+  },
+  "header": {
+    "primaryNavAria": "Primary navigation",
+    "primaryNavMobileAria": "Primary navigation (mobile)",
+    "menuLabel": "Menu",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "footer": {
+    "categoriesTitle": "Tour categories",
+    "categoriesAria": "Tour categories",
+    "infoTitle": "Information",
+    "infoAria": "Other links",
+    "contactTitle": "Contact",
+    "copyright": "© {year} {name}.",
+    "disclaimer": "Tour details, itineraries and images on this website must be confirmed before publication."
+  },
+  "locale": {
+    "label": "Language",
+    "switchTo": "Switch to {language}",
+    "current": "Current language: {language}",
+    "vi": "Tiếng Việt",
+    "en": "English"
+  },
+  "regions": {
+    "quy-nhon-phu-yen": "Quy Nhon – Phu Yen",
+    "mien-bac": "Northern Vietnam",
+    "mien-trung": "Central Vietnam",
+    "mien-nam": "Southern Vietnam",
+    "tay-nguyen": "Central Highlands"
+  },
+  "home": {
+    "hero": {
+      "badge": "Vietnam travel · Curated",
+      "titleLine1": "Curated destinations",
+      "titleLine2": "elevated experiences",
+      "lead": "Right season, right place, and a pace that is entirely your own.",
+      "bodyA": "SEA TRIP TRAVEL designs domestic journeys slowly and carefully, starting from our focus route",
+      "bodyB": "— where clear seas meet basalt rock and lighthouses.",
+      "ctaTours": "See Quy Nhon – Phu Yen tours",
+      "ctaConsult": "Free consultation",
+      "assuranceTours": "{count} Quy Nhon – Phu Yen tours",
+      "assuranceAdvice": "One-to-one advice around your schedule",
+      "assuranceNoBooking": "Online booking is not available yet",
+      "collageAltMain": "Quy Nhon bay seen from above",
+      "collageAltSecondary": "Ghenh Da Dia with layered basalt columns",
+      "focusBadge": "Focus route",
+      "focusName": "Quy Nhon – Phu Yen"
+    },
+    "explore": {
+      "eyebrow": "Where to start",
+      "title": "Explore by the route you care about",
+      "description": "SEA TRIP's two main lines: Quy Nhon – Phu Yen and domestic tours by region.",
+      "ctaAll": "See all Vietnam tours",
+      "destinationsEyebrow": "Featured destinations",
+      "destinationsBlurb": "The most-chosen places on our focus route. Each one already has a matching tour, so you can read the itinerary right away.",
+      "ctaRoute": "See the Quy Nhon – Phu Yen route"
+    },
+    "featured": {
+      "eyebrow": "Focus route",
+      "title": "Featured Quy Nhon – Phu Yen tours",
+      "description": "From day tours to five-day journeys combining both provinces. Choose by the time you have.",
+      "cta": "See the whole route"
+    },
+    "regions": {
+      "eyebrow": "Vietnam tours",
+      "title": "Choose by region",
+      "description": "Four regions, each with its own climate, scenery and travelling rhythm.",
+      "cta": "See all",
+      "viewRegion": "See {name} tours",
+      "regionAlt": "Destination: {name}"
+    },
+    "values": {
+      "eyebrow": "Why SEA TRIP",
+      "title": "How we choose an experience",
+      "description": "Four principles applied to every journey, including a one-day tour.",
+      "cta": "Plan your trip with us",
+      "imageAlt": "Central Vietnam coastline seen from above",
+      "cardLabel": "How SEA TRIP works",
+      "principles": [
+        {
+          "title": "Fewer places, deeper stays",
+          "body": "Each journey focuses on one cluster of places instead of rushing through many. Travel time is planned up front so you get real time at each stop."
+        },
+        {
+          "title": "Itineraries that say what is included",
+          "body": "Every tour lists what is and is not included. A price that is not confirmed shows “Contact us for pricing”, never a zero."
+        },
+        {
+          "title": "Direct advice, no pressure",
+          "body": "This website only takes requests. You talk to an advisor, see the price and the conditions, then decide."
+        },
+        {
+          "title": "Honest when we are unsure",
+          "body": "Anything that needs confirming — prices, cancellation terms, boat schedules — is checked again before we send it to you."
+        }
+      ]
+    },
+    "guides": {
+      "eyebrow": "Travel guides",
+      "title": "Prepare before you set off",
+      "description": "Practical notes on timing, transport and the places worth your time.",
+      "cta": "See all guides",
+      "otherArticles": "More articles"
+    },
+    "consult": {
+      "title": "Which trip are you thinking about?",
+      "description": "Leave a few details and SEA TRIP will suggest destinations, timing and options — completely free."
+    }
+  },
+  "consult": {
+    "eyebrow": "Get advice",
+    "defaultTitle": "Get advice for an itinerary that fits you",
+    "defaultDescription": "Fill in a few basics and SEA TRIP will get in touch with destination, timing and option suggestions.",
+    "directLabel": "Prefer to talk directly?",
+    "privacyPre": "Your information is handled under our",
+    "privacyLink": "privacy policy",
+    "privacyPost": ".",
+    "assurances": [
+      {
+        "title": "Reply during working hours",
+        "body": "Your request goes straight to the advisory team, with no middleman."
+      },
+      {
+        "title": "Itineraries adjusted to your needs",
+        "body": "Tell us your dates and budget; SEA TRIP suggests a fitting option."
+      },
+      {
+        "title": "No online deposit",
+        "body": "This website only takes consultation requests. Everything is agreed directly."
+      }
+    ]
+  },
+  "tour": {
+    "notFoundTitle": "Tour not found",
+    "notFoundDescription": "The tour you are looking for does not exist or has changed.",
+    "categoryFallback": "Vietnam tours",
+    "sections": {
+      "overview": "Overview",
+      "highlights": "Highlights",
+      "itinerary": "Itinerary",
+      "services": "Services",
+      "notes": "Notes",
+      "consult": "Get advice"
+    },
+    "overviewEyebrow": "Introduction",
+    "overviewTitle": "Programme overview",
+    "overviewEmpty": "The introduction is being updated. SEA TRIP will send a detailed description when you get in touch.",
+    "highlightsEyebrow": "Why choose this programme",
+    "highlightsTitle": "Highlights",
+    "itineraryEyebrow": "Details",
+    "itineraryTitle": "Itinerary",
+    "itineraryNote": "The order and timing may be adjusted for weather and local conditions.",
+    "itineraryEmpty": "The detailed itinerary is being updated. Please send a request and we will share the full itinerary by phone or email.",
+    "servicesEyebrow": "What you get",
+    "servicesTitle": "What is and is not included",
+    "includedTitle": "Included",
+    "excludedTitle": "Not included",
+    "notesTitle": "Before you go",
+    "policiesTitle": "Terms & policies",
+    "relatedEyebrow": "More suggestions",
+    "relatedTitle": "Related tours",
+    "relatedDescription": "Programmes on the same route or of a similar length.",
+    "asideWant": "Want the detailed itinerary?",
+    "asideDescription": "Send a request for advice on price, timing and the right option.",
+    "asideCta": "Ask about this tour",
+    "consultTitle": "Get advice for this tour",
+    "consultDescription": "Leave your details and SEA TRIP will advise in detail about \"{title}\" — current price: {price}.",
+    "dayLabel": "Day {index}:",
+    "mealsLabel": "Meals: {meals}",
+    "destinationsCountValue": "{count} places",
+    "galleryAria": "Photos of {title}",
+    "galleryListAria": "Choose a photo",
+    "galleryImageLabel": "Photo {index}",
+    "galleryAlt": "{title} — photo {index}",
+    "galleryPlaceholderAlt": "{title} — illustrative image"
+  },
+  "tourCard": {
+    "durationLabel": "{days} days"
+  },
+  "tourExplorer": {
+    "filterLabel": "Filter by what you need",
+    "sortLabel": "Sort by",
+    "sortRecommended": "Recommended",
+    "sortDurationAsc": "Shortest first",
+    "sortDurationDesc": "Longest first",
+    "emptyTitle": "No tours match these filters",
+    "emptyBody": "Try clearing the filters, or send a request and SEA TRIP will design a private itinerary for you."
+  },
+  "category": {
+    "notFoundTitle": "Category not found",
+    "notFoundDescription": "The category you are looking for does not exist.",
+    "fallbackParent": "Vietnam tours",
+    "listHeadingSr": "Tour list: {name}",
+    "groupEyebrow": "Choose by length",
+    "groupTitle": "Groups in this category",
+    "groupDescription": "Each group suits a different amount of time. Pick the one closest to your plan.",
+    "moreEyebrow": "See more",
+    "moreTitle": "Other routes",
+    "moreTitleInParent": "Other groups in {name}",
+    "groupCount": "This category contains {count} tour groups.",
+    "consultTitle": "Need a private itinerary for your group?",
+    "consultDescription": "Tell SEA TRIP your dates and party size and we will suggest the right option for the route you are viewing."
+  },
+  "guides": {
+    "indexTitle": "Travel guides",
+    "indexDescription": "Travel advice for Quy Nhon – Phu Yen and routes across Vietnam: timing, transport, food and suggested itineraries.",
+    "heroEyebrow": "Travel guides",
+    "heroTitle": "Prepare well to travel light",
+    "heroDescription": "Short articles focused on the decisions you need to make: which month to go, how to get around, what to eat and how to plan a sensible itinerary.",
+    "featuredSr": "Featured article",
+    "otherEyebrow": "More articles",
+    "otherTitle": "Read on before you set off",
+    "toToursEyebrow": "From guide to tour",
+    "toToursTitle": "See the matching tours",
+    "toToursDescription": "Guides help you picture the trip. Once the direction is clear, look at a concrete itinerary.",
+    "consultTitle": "Still have questions about the trip?",
+    "consultDescription": "Still unsure about timing or itinerary? Send your question and SEA TRIP will answer for your specific case.",
+    "featuredBadge": "Featured",
+    "articleNotFoundTitle": "Article not found",
+    "articleNotFoundDescription": "The article you are looking for does not exist or has changed.",
+    "relatedToursEyebrow": "Go now",
+    "relatedToursTitle": "Tours related to this article",
+    "relatedToursDescription": "Concrete itineraries for the places just mentioned.",
+    "relatedArticlesEyebrow": "Read more",
+    "relatedArticlesTitle": "Related articles",
+    "allGuides": "All guides",
+    "askQuestionPre": "Or",
+    "askQuestionLink": "send SEA TRIP a question",
+    "askQuestionPost": ".",
+    "articleConsultTitle": "Need advice for a concrete plan?",
+    "articleConsultDescription": "Tell SEA TRIP your dates and party size and we will suggest an itinerary based on what you just read."
+  },
+  "contact": {
+    "metaTitle": "Contact & get advice",
+    "metaDescription": "Send a request for Quy Nhon – Phu Yen tours and other Vietnam routes. SEA TRIP TRAVEL replies during working hours.",
+    "heroEyebrow": "Contact",
+    "heroTitle": "Tell SEA TRIP where you want to go",
+    "heroDescription": "Fill in the form or call us. The clearer your dates and party size, the faster and more accurate the advice.",
+    "channelHotline": "Hotline",
+    "channelEmail": "Email",
+    "channelAddress": "Address",
+    "emailNote": "For requests that need attachments",
+    "addressNote": "Please make an appointment before visiting the office",
+    "afterTitle": "After you send your request",
+    "outOfHours": "Outside working hours, requests are still recorded and handled on the next working day.",
+    "formEyebrow": "Consultation form",
+    "formTitle": "Send a request",
+    "formDescription": "All we need is your name, phone number and confirmation. The other fields make the advice more accurate.",
+    "steps": [
+      {
+        "title": "1. SEA TRIP receives your request",
+        "body": "The request goes to the advisory team together with the tour you were viewing and the page you sent it from."
+      },
+      {
+        "title": "2. An advisor gets back to you",
+        "body": "During working hours, an advisor calls or replies by email to clarify what you need."
+      },
+      {
+        "title": "3. You receive options and a quote",
+        "body": "You get a detailed itinerary, pricing by party size and the applicable conditions to decide on."
+      }
+    ]
+  },
+  "lead": {
+    "optional": "optional",
+    "company": "Company",
+    "fields": {
+      "fullName": "Full name",
+      "phone": "Phone number",
+      "email": "Email",
+      "interest": "Tour / destination",
+      "travelDate": "Planned date",
+      "partySize": "Party size",
+      "message": "Your request"
+    },
+    "hints": {
+      "phone": "We will call this number",
+      "travelDate": "Leave blank if unsure",
+      "partySize": "Up to 60 guests",
+      "message": "Free time, budget, special requests…"
+    },
+    "placeholders": {
+      "fullName": "John Smith",
+      "phone": "0987 654 321",
+      "email": "you@email.com",
+      "interest": "Quy Nhon – Phu Yen 3 days",
+      "partySize": "2",
+      "message": "For example: a family of four, 3 days 2 nights, beaches and seafood preferred."
+    },
+    "consent": {
+      "pre": "I agree that SEA TRIP TRAVEL may contact me by the phone number or email provided, and I have read the",
+      "link": "contact information policy",
+      "post": ".",
+      "hint": "Required so SEA TRIP may contact you"
+    },
+    "submit": "Send request",
+    "submitting": "Sending…",
+    "submittingSr": "Sending your request",
+    "errorSr": "The request was not sent",
+    "leaveWarning": "You have an unfinished consultation form. Switching language will clear what you have typed. Switch anyway?",
+    "footnote": "SEA TRIP only uses this information to advise you. No marketing list sign-up.",
+    "genericError": "We could not send your request. Please check your connection and try again, or call our hotline for help.",
+    "networkError": "We could not reach the system. Please check your connection and try again.",
+    "success": {
+      "title": "We received your request",
+      "requestId": "Request ID:",
+      "body": "The SEA TRIP advisory team will contact you during working hours. If you need to talk sooner, you can call the hotline for a faster reply.",
+      "callHotline": "Call hotline",
+      "sendAnother": "Send another request"
+    },
+    "validation": {
+      "fullName": "Please enter your full name.",
+      "phone": "Please enter a valid phone number.",
+      "email": "This email is not valid.",
+      "travelDate": "The planned date is not valid.",
+      "partySize": "The party size is not valid.",
+      "message": "The message is too long.",
+      "consent": "Please confirm you have read the contact information policy.",
+      "interest": "The message is too long.",
+      "form": "Please check the information you entered."
+    },
+    "errors": {
+      "VALIDATION_ERROR": "Please check the information you entered.",
+      "PAYLOAD_TOO_LARGE": "Your message is too large. Please shorten it and try again.",
+      "SPAM_REJECTED": "Your request was not sent. Please try again.",
+      "RATE_LIMITED": "You have sent quite a few requests. Please try again later or call our hotline.",
+      "MAIL_DELIVERY_FAILED": "We could not send your request to the advisory team. Please try again, or call hotline {phone}.",
+      "MAIL_NOT_CONFIGURED": "Our email system is temporarily unavailable. Please call hotline {phone} for immediate help.",
+      "INTERNAL_ERROR": "Something went wrong while processing your request. Please try again."
+    }
+  },
+  "datePicker": {
+    "placeholder": "Choose a date",
+    "dialogLabel": "Choose a departure date",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "clear": "Clear",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "weekdaysShort": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "weekdaysFull": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "dayAria": "{month} {day}, {year}",
+    "selectedDate": "{date} · {weekday}"
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "metaDescription": "The page you are looking for does not exist or has changed.",
+    "eyebrow": "Error 404",
+    "title": "We could not find this page",
+    "description": "The link may have changed or no longer exists. Try one of the items below, or send a request and SEA TRIP will help you find it.",
+    "ctaHome": "Back to home",
+    "ctaConsult": "Send a request",
+    "suggestions": [
+      {
+        "title": "Quy Nhon – Phu Yen tours",
+        "body": "Our focus route: day tours and 2–5 day journeys."
+      },
+      {
+        "title": "Vietnam tours",
+        "body": "North, Central, South and the Central Highlands."
+      },
+      {
+        "title": "Travel guides",
+        "body": "Advice on timing, transport and destinations."
+      }
+    ]
+  },
+  "errorPage": {
+    "title": "Something went wrong while loading the page",
+    "description": "Please try reloading. If the problem continues, call our hotline for direct help.",
+    "codeLabel": "Technical error code:",
+    "retry": "Try again",
+    "home": "Back to home",
+    "contact": "Contact us"
+  },
+  "floating": {
+    "zalo": "Chat on Zalo",
+    "facebook": "Facebook",
+    "phone": "Call {phone}",
+    "open": "Open quick contact",
+    "close": "Close quick contact"
+  },
+  "privacy": {
+    "metaTitle": "Contact information policy",
+    "metaDescription": "What SEA TRIP TRAVEL collects when you send the consultation form, what it is used for, how long it is kept, and what rights you have.",
+    "eyebrow": "Policy",
+    "title": "Contact information policy",
+    "lastUpdated": "Last updated: {date}",
+    "footerLinkPre": "See the",
+    "footerLink": "contact page",
+    "footerLinkPost": "for direct contact channels."
+  },
+  "draftBanner": {
+    "label": "Translation in progress",
+    "message": "The English version of this page is a draft and may still show some content in Vietnamese. Please refer to the Vietnamese page before relying on the information.",
+    "switchVi": "View the Vietnamese page",
+    "notIndexed": "This page is kept out of search results until the translation is reviewed."
+  },
+  "missingTranslation": {
+    "title": "This page is not available in English yet",
+    "description": "The content you are looking for is currently only available in Vietnamese. You can view the Vietnamese page, or contact us for help in English.",
+    "ctaVi": "View the Vietnamese page",
+    "ctaContact": "Contact us"
+  }
+}

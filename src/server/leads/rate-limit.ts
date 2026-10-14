@@ -1,16 +1,13 @@
 import "server-only";
 
+import { getLeadStore, type LeadStore } from "./store";
+
 /**
- * Best-effort rate limiting.
+ * Fixed-window rate limiting, backed by a `LeadStore`.
  *
- * ⚠️ LIMITATION: this counter lives in the memory of a single server instance.
- * On a serverless/edge deployment each cold instance starts from zero, so an
- * attacker distributing requests across instances can exceed the intended
- * limit. It still stops the common case (a script hammering one endpoint).
- *
- * Where the deployment can be scaled, replace `getRateLimiter()` with an
- * adapter backed by shared storage (Upstash Redis, Vercel KV, DynamoDB). The
- * interface below is the seam — no caller changes when that happens.
+ * The decision logic is identical whichever store is active; only the counter's
+ * home changes. `getRateLimiter()` is cached per (limit, window) pair so the
+ * store is not rebuilt on every request.
  */
 
 export type RateLimitDecision = {
@@ -22,51 +19,60 @@ export interface RateLimiter {
   check(key: string): Promise<RateLimitDecision>;
 }
 
-type Bucket = { count: number; resetAt: number };
-
-export class InMemoryRateLimiter implements RateLimiter {
-  private readonly buckets = new Map<string, Bucket>();
-  private lastSweep = 0;
-
+export class WindowRateLimiter implements RateLimiter {
   constructor(
+    private readonly store: LeadStore,
     private readonly limit: number,
     private readonly windowMs: number,
   ) {}
 
   async check(key: string): Promise<RateLimitDecision> {
-    const now = Date.now();
-    this.sweep(now);
+    const result = await this.store.increment(key, this.windowMs);
 
-    const bucket = this.buckets.get(key);
-    if (!bucket || bucket.resetAt <= now) {
-      this.buckets.set(key, { count: 1, resetAt: now + this.windowMs });
+    /**
+     * When the backing store is unreachable we let the request through.
+     *
+     * Losing a genuine lead is a worse failure than letting a spam burst slip
+     * past a single layer whose siblings (honeypot, payload cap, schema
+     * validation) are still in force. Failing closed would turn a Redis blip
+     * into "the contact form is broken", which is not a trade this site should
+     * make. The event is logged so it is visible in operations.
+     */
+    if (!result) {
+      console.warn(
+        `[rate-limit] store "${this.store.kind}" unavailable — allowing request (fail-open)`,
+      );
       return { allowed: true, retryAfterSeconds: 0 };
     }
 
-    if (bucket.count >= this.limit) {
+    if (result.count > this.limit) {
       return {
         allowed: false,
-        retryAfterSeconds: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)),
+        retryAfterSeconds: Math.max(1, Math.ceil(result.resetInMs / 1000)),
       };
     }
 
-    bucket.count += 1;
     return { allowed: true, retryAfterSeconds: 0 };
-  }
-
-  /** Drop expired buckets so the map cannot grow without bound. */
-  private sweep(now: number): void {
-    if (now - this.lastSweep < this.windowMs) return;
-    this.lastSweep = now;
-    for (const [key, bucket] of this.buckets) {
-      if (bucket.resetAt <= now) this.buckets.delete(key);
-    }
   }
 }
 
+/** Build a limiter around an explicit store. Used by the app and by tests. */
+export function createRateLimiter(
+  store: LeadStore,
+  limit: number,
+  windowMs: number,
+): RateLimiter {
+  return new WindowRateLimiter(store, limit, windowMs);
+}
+
 let cached: RateLimiter | null = null;
+let cachedKey = "";
 
 export function getRateLimiter(limit: number, windowMs: number): RateLimiter {
-  if (!cached) cached = new InMemoryRateLimiter(limit, windowMs);
+  const key = `${limit}|${windowMs}`;
+  if (!cached || cachedKey !== key) {
+    cached = createRateLimiter(getLeadStore(), limit, windowMs);
+    cachedKey = key;
+  }
   return cached;
 }

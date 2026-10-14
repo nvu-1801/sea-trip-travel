@@ -61,21 +61,29 @@ Dải `brand-50…900` có sẵn cho trường hợp cần sắc độ trung gia
 
 ## 4. Chữ
 
-**Be Vietnam Pro** cho toàn bộ giao diện.
+**Hai họ font, chia vai trò rõ ràng:**
 
-- Được thiết kế cho tiếng Việt: đủ dấu ở mọi weight, không bị "rơi dấu".
-- Self-host qua `next/font` → không request tới Google, không layout shift.
-- Weight dùng: 400 / 500 / 600 / 700 / 800.
+- **Be Vietnam Pro** — thân trang, UI, nút, card, form. Được thiết kế cho tiếng
+  Việt: đủ dấu ở mọi weight, không bị "rơi dấu". Weight dùng: 400 / 500 / 600 /
+  700 / 800. Self-host qua `next/font` → không request tới Google, không layout
+  shift.
+- **Fraunces** — **chỉ tiêu đề** (H1/H2, `text-display*`). Serif mềm, có trục
+  `SOFT` để bo đầu nét. Variable font, subset `vietnamese`. `.font-display` đặt
+  `font-variation-settings: "SOFT" 40` cho mềm hơn. Card title (16–18px) và mọi
+  chữ dưới `display-sm` vẫn dùng Be Vietnam Pro để không tranh chấp ở cỡ nhỏ.
 
-Hệ cỡ chữ (`--text-*`):
+**Hệ cỡ tiêu đề (`--text-*`) — fluid bằng `clamp()`**, nên tiêu đề lớn dần theo
+viewport thay vì nhảy bậc ở breakpoint:
 
-| Token | Cỡ | Dùng |
+| Token | Cỡ (clamp) | Dùng |
 | --- | --- | --- |
-| `display-xl` | 3.5rem, lh 1.04, ls −0.03em | H1 trang chủ (≥ sm) |
-| `display-lg` | 2.75rem | H1 phụ |
-| `display` | 2.125rem | H1 trang con |
-| `display-sm` | 1.625rem | H2 section |
-| mặc định Tailwind | — | Chữ nội dung |
+| `display-xl` | ~30 → 60px, lh 1.05, ls −0.02em | H1 trang chủ |
+| `display-lg` | ~28 → 48px, lh 1.08, ls −0.015em | (dự phòng) |
+| `display` | ~26 → 44px, lh 1.12, ls −0.01em | H1 trang con |
+| `display-sm` | ~24 → 34px, lh 1.18, ls −0.01em | H2 section, heading nhỏ |
+
+Tiêu đề `font-semibold` (600) — serif để weight 800 sẽ nặng như slab. Tracking
+serif nhẹ hơn sans (bớt âm).
 
 Body copy dùng `text-[1.0625rem]` (17px) với `leading-relaxed` — dễ đọc trên
 mobile hơn 16px.

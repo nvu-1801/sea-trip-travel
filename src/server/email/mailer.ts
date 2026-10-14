@@ -138,23 +138,36 @@ class SmtpMailer implements Mailer {
 }
 
 let cached: Mailer | null = null;
+let cachedKey = "";
+
+/** Identity of the current transport config. A change rebuilds the mailer. */
+function configKey(): string {
+  return [
+    process.env.MAIL_TRANSPORT ?? "log",
+    process.env.SMTP_HOST ?? "",
+    process.env.SMTP_PORT ?? "",
+    process.env.SMTP_USER ?? "",
+    process.env.NODE_ENV ?? "",
+  ].join("|");
+}
 
 export function getMailer(): Mailer {
-  if (cached) return cached;
+  const key = configKey();
+  if (cached && key === cachedKey) return cached;
 
   const transport = (process.env.MAIL_TRANSPORT ?? "log").toLowerCase();
 
-  if (transport === "smtp") {
-    cached = new SmtpMailer({
-      host: process.env.SMTP_HOST ?? "",
-      port: Number(process.env.SMTP_PORT ?? 587),
-      secure: (process.env.SMTP_SECURE ?? "false").toLowerCase() === "true",
-      user: process.env.SMTP_USER ?? "",
-      password: process.env.SMTP_PASSWORD ?? "",
-    });
-    return cached;
-  }
+  cached =
+    transport === "smtp"
+      ? new SmtpMailer({
+          host: process.env.SMTP_HOST ?? "",
+          port: Number(process.env.SMTP_PORT ?? 587),
+          secure: (process.env.SMTP_SECURE ?? "false").toLowerCase() === "true",
+          user: process.env.SMTP_USER ?? "",
+          password: process.env.SMTP_PASSWORD ?? "",
+        })
+      : new LogMailer();
 
-  cached = new LogMailer();
+  cachedKey = key;
   return cached;
 }

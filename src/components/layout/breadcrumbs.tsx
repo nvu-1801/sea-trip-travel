@@ -9,9 +9,15 @@ export type Crumb = {
 };
 
 /** Breadcrumb with matching JSON-LD emitted by `BreadcrumbJsonLd`. */
-export function Breadcrumbs({ items }: { items: readonly Crumb[] }) {
+export function Breadcrumbs({
+  items,
+  ariaLabel = "Breadcrumb",
+}: {
+  items: readonly Crumb[];
+  ariaLabel?: string;
+}) {
   return (
-    <nav aria-label="Breadcrumb">
+    <nav aria-label={ariaLabel}>
       <Container>
         <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1 py-4 text-sm">
           {items.map((item, index) => {
@@ -21,7 +27,7 @@ export function Breadcrumbs({ items }: { items: readonly Crumb[] }) {
                 {item.href && !isLast ? (
                   <Link
                     href={item.href}
-                    className="text-foreground-muted transition-colors hover:text-primary-strong"
+                    className="inline-flex min-h-11 items-center text-foreground-muted transition-colors hover:text-primary-strong"
                   >
                     {item.label}
                   </Link>

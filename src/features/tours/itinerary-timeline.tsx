@@ -1,6 +1,8 @@
 import type { ItineraryDay } from "@/domain/tour";
 import { Badge } from "@/components/ui/badge";
 import { MapPinIcon } from "@/components/ui/icons";
+import type { Locale } from "@/i18n/config";
+import { format, getMessages } from "@/i18n/messages";
 
 /**
  * Day-by-day itinerary.
@@ -9,12 +11,19 @@ import { MapPinIcon } from "@/components/ui/icons";
  * one decorative device used consistently, and it encodes the sequence the
  * content already has rather than adding ornament.
  */
-export function ItineraryTimeline({ days }: { days: readonly ItineraryDay[] }) {
+export function ItineraryTimeline({
+  days,
+  locale,
+}: {
+  days: readonly ItineraryDay[];
+  locale: Locale;
+}) {
+  const m = getMessages(locale);
+
   if (days.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-border-strong bg-surface px-5 py-6 text-sm text-foreground-muted">
-        Lịch trình chi tiết đang được cập nhật. Vui lòng gửi yêu cầu tư vấn để nhận lịch trình đầy
-        đủ qua điện thoại hoặc email.
+        {m.tour.itineraryEmpty}
       </p>
     );
   }
@@ -44,7 +53,10 @@ export function ItineraryTimeline({ days }: { days: readonly ItineraryDay[] }) {
             <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 shadow-soft transition-shadow duration-300 hover:shadow-card sm:p-6">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <h3 className="text-lg font-bold text-foreground">
-                  <span className="text-primary-strong">Ngày {day.index}:</span> {day.title}
+                  <span className="text-primary-strong">
+                    {format(m.tour.dayLabel, { index: day.index })}
+                  </span>{" "}
+                  {day.title}
                 </h3>
                 {day.accommodation ? (
                   <span className="text-xs font-medium text-foreground-subtle">
@@ -82,7 +94,9 @@ export function ItineraryTimeline({ days }: { days: readonly ItineraryDay[] }) {
                     </Badge>
                   ))}
                   {day.meals.length > 0 ? (
-                    <Badge tone="neutral">Bữa ăn: {day.meals.join(", ")}</Badge>
+                    <Badge tone="neutral">
+                      {format(m.tour.mealsLabel, { meals: day.meals.join(", ") })}
+                    </Badge>
                   ) : null}
                 </div>
               ) : null}

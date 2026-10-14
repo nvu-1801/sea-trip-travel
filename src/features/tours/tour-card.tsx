@@ -1,51 +1,17 @@
 import Link from "next/link";
-import type { Tour } from "@/domain/tour";
-import { formatDestinationNames } from "@/lib/data/destinations";
-import { formatDuration, formatPriceFrom, hasPublishedPrice } from "@/lib/format";
-import { AssetImage, type AssetImageInput } from "@/components/ui/asset-image";
+import { AssetImage } from "@/components/ui/asset-image";
 import { ArrowRightIcon, ClockIcon, MapPinIcon } from "@/components/ui/icons";
+import type { TourCardModel } from "./tour-card-model";
+
+export type { TourCardModel } from "./tour-card-model";
 
 /**
- * Card view-model.
+ * Tour card.
  *
- * The UI never sees a raw `Tour`. It sees a small, serialisable projection,
- * which is what lets the listing page hand data to a Client Component for
- * filtering without shipping the whole content graph to the browser.
+ * Purely presentational: every string (including the URL) is already resolved in
+ * the `TourCardModel`, so this component can render inside the client-side
+ * `TourExplorer` without pulling the message catalogs into the browser bundle.
  */
-export type TourCardModel = {
-  slug: string;
-  title: string;
-  summary: string;
-  durationLabel: string;
-  /** Used by the listing sort control. */
-  durationDays: number;
-  /** "Từ 1.200.000 ₫" or "Liên hệ tư vấn". Never "0 ₫". */
-  priceLabel: string;
-  priceIsContact: boolean;
-  destinationsLabel: string;
-  departureLabel: string | null;
-  highlights: readonly string[];
-  tags: readonly string[];
-  image?: AssetImageInput;
-};
-
-export function toTourCard(tour: Tour): TourCardModel {
-  return {
-    slug: tour.slug,
-    title: tour.title,
-    summary: tour.summary,
-    durationLabel: formatDuration(tour.duration),
-    durationDays: tour.duration.days,
-    priceLabel: formatPriceFrom(tour.priceFrom),
-    priceIsContact: !hasPublishedPrice(tour.priceFrom),
-    destinationsLabel: formatDestinationNames(tour.destinationIds),
-    departureLabel: tour.departurePoints[0] ?? null,
-    highlights: tour.highlights.slice(0, 3),
-    tags: tour.tags,
-    image: tour.images[0],
-  };
-}
-
 export function TourCard({ tour, priority = false }: { tour: TourCardModel; priority?: boolean }) {
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-soft transition-[box-shadow,transform,border-color] duration-300 ease-out hover:-translate-y-1 hover:border-brand-200 hover:shadow-lifted">
@@ -80,7 +46,7 @@ export function TourCard({ tour, priority = false }: { tour: TourCardModel; prio
         ) : null}
 
         <h3 className="text-lg font-bold leading-snug text-foreground">
-          <Link href={`/tour/${tour.slug}`} className="transition-colors hover:text-primary-strong">
+          <Link href={tour.href} className="transition-colors hover:text-primary-strong">
             {/* Single stretched hit area for the whole card. */}
             <span className="absolute inset-0 z-10" aria-hidden="true" />
             {tour.title}
@@ -103,14 +69,14 @@ export function TourCard({ tour, priority = false }: { tour: TourCardModel; prio
           </ul>
         ) : null}
 
-        {tour.departureLabel ? (
-          <p className="text-xs text-foreground-subtle">Khởi hành: {tour.departureLabel}</p>
+        {tour.departureText ? (
+          <p className="text-xs text-foreground-subtle">{tour.departureText}</p>
         ) : null}
 
         <div className="mt-auto flex items-end justify-between gap-3 border-t border-border pt-4">
           <div>
             <p className="text-[0.6875rem] font-medium uppercase tracking-wider text-foreground-subtle">
-              Giá tham khảo
+              {tour.referencePriceText}
             </p>
             <p
               className={
@@ -123,7 +89,7 @@ export function TourCard({ tour, priority = false }: { tour: TourCardModel; prio
             </p>
           </div>
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-strong">
-            Xem chi tiết
+            {tour.viewDetailsText}
             <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
           </span>
         </div>

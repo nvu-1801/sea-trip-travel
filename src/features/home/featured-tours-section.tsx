@@ -5,26 +5,30 @@ import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { TourGrid } from "@/features/tours/tour-grid";
-import { toTourCard } from "@/features/tours/tour-card";
+import { toTourCard } from "@/features/tours/tour-card-model";
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
+import { localizePath } from "@/i18n/routing";
 
 /**
  * Featured tours. Prefers the Quy Nhơn – Phú Yên line-up (the site's focus) and
  * tops up from other regions so the section is never thin.
  */
-export function FeaturedToursSection() {
-  const tours = getFeaturedTours(6).map(toTourCard);
+export function FeaturedToursSection({ locale }: { locale: Locale }) {
+  const m = getMessages(locale);
+  const tours = getFeaturedTours(6, locale).map((tour) => toTourCard(tour, locale));
 
   return (
     <Section tone="muted" spacing="loose">
       <Container>
         <Reveal>
           <SectionHeading
-            eyebrow="Tuyến trọng tâm"
-            title="Tour Quy Nhơn – Phú Yên nổi bật"
-            description="Từ tour trong ngày tới hành trình 5 ngày kết hợp hai tỉnh. Chọn theo thời gian bạn có."
+            eyebrow={m.home.featured.eyebrow}
+            title={m.home.featured.title}
+            description={m.home.featured.description}
             action={
-              <ButtonLink href={ROUTES.quyNhonPhuYen} variant="secondary">
-                Xem toàn bộ tuyến
+              <ButtonLink href={localizePath(locale, ROUTES.quyNhonPhuYen)} variant="secondary">
+                {m.home.featured.cta}
                 <ArrowRightIcon className="h-4 w-4" />
               </ButtonLink>
             }

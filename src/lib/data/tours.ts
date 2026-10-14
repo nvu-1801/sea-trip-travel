@@ -1,21 +1,20 @@
 import { tours } from "@/content";
 import type { Tour } from "@/domain/tour";
+import type { Locale } from "@/i18n/config";
 import { getAllDescendantCategoryIds } from "./internal";
+import { resolveTour } from "./localize";
 
 /**
- * Read-only access to tours.
+ * Read-only access to tours, resolved for the requested locale.
  *
- * Every page reads tours through these functions and nothing else, so moving
- * the source from TypeScript files to an API/CMS later means rewriting this
- * file — not the UI.
+ * Every page reads tours through these functions and nothing else, so moving the
+ * source from TypeScript files to an API/CMS later means rewriting this file —
+ * not the UI.
  */
 
-export function getTours(): readonly Tour[] {
-  return tours;
-}
-
-export function getTourBySlug(slug: string): Tour | undefined {
-  return tours.find((tour) => tour.slug === slug);
+export function getTourBySlug(slug: string, locale: Locale): Tour | undefined {
+  const tour = tours.find((candidate) => candidate.slug === slug);
+  return tour ? resolveTour(tour, locale) : undefined;
 }
 
 export function getTourSlugs(): readonly string[] {
@@ -23,35 +22,31 @@ export function getTourSlugs(): readonly string[] {
 }
 
 /** Tours filed under `categoryId` or any of its child categories. */
-export function getToursByCategoryId(categoryId: string): readonly Tour[] {
+export function getToursByCategoryId(categoryId: string, locale: Locale): readonly Tour[] {
   const ids = new Set(getAllDescendantCategoryIds(categoryId));
-  return tours.filter((tour) => tour.categoryIds.some((id) => ids.has(id)));
-}
-
-export function getToursByIds(ids: readonly string[]): readonly Tour[] {
-  const wanted = new Set(ids);
-  return tours.filter((tour) => wanted.has(tour.slug));
+  return tours
+    .filter((tour) => tour.categoryIds.some((id) => ids.has(id)))
+    .map((tour) => resolveTour(tour, locale));
 }
 
 /**
  * Home-page feature set. Prefers the Quy Nhơn – Phú Yên line-up (the site's
  * focus) and tops up with other regions so the section never looks empty.
  */
-export function getFeaturedTours(limit = 6): readonly Tour[] {
+export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
   const focus = new Set(getAllDescendantCategoryIds("cat_quy_nhon_phu_yen"));
   const inFocus = tours.filter((tour) => tour.categoryIds.some((id) => focus.has(id)));
-  if (inFocus.length >= limit) return inFocus.slice(0, limit);
-
-  const rest = tours.filter((tour) => !inFocus.includes(tour));
-  return [...inFocus, ...rest].slice(0, limit);
+  const chosen =
+    inFocus.length >= limit ? inFocus.slice(0, limit) : [...inFocus, ...tours.filter((t) => !inFocus.includes(t))].slice(0, limit);
+  return chosen.map((tour) => resolveTour(tour, locale));
 }
 
 /**
  * Related tours: same category first, then anything sharing a destination.
  * Returns `limit` items and never includes the tour itself.
  */
-export function getRelatedTours(slug: string, limit = 3): readonly Tour[] {
-  const tour = getTourBySlug(slug);
+export function getRelatedTours(slug: string, limit = 3, locale: Locale): readonly Tour[] {
+  const tour = tours.find((candidate) => candidate.slug === slug);
   if (!tour) return [];
 
   const categoryIds = new Set(tour.categoryIds);
@@ -68,20 +63,24 @@ export function getRelatedTours(slug: string, limit = 3): readonly Tour[] {
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score);
 
-  if (scored.length >= limit) {
-    return scored.slice(0, limit).map((entry) => entry.candidate);
-  }
+  const chosen =
+    scored.length >= limit
+      ? scored.slice(0, limit).map((entry) => entry.candidate)
+      : [
+          ...scored.map((entry) => entry.candidate),
+          ...tours.filter(
+            (candidate) =>
+              candidate.slug !== tour.slug &&
+              !scored.some((entry) => entry.candidate.slug === candidate.slug),
+          ),
+        ].slice(0, limit);
 
-  const chosen = new Set(scored.map((entry) => entry.candidate.slug));
-  const fallback = tours.filter(
-    (candidate) => candidate.slug !== tour.slug && !chosen.has(candidate.slug),
-  );
-  return [...scored.map((entry) => entry.candidate), ...fallback].slice(0, limit);
+  return chosen.map((candidate) => resolveTour(candidate, locale));
 }
 
 /** Distinct tags across the catalogue — drives the listing filter chips. */
-export function getTourTags(): readonly string[] {
+export function getTourTags(locale: Locale): readonly string[] {
   const tags = new Set<string>();
-  for (const tour of tours) for (const tag of tour.tags) tags.add(tag);
-  return [...tags].sort((a, b) => a.localeCompare(b, "vi"));
+  for (const tour of tours) for (const tag of resolveTour(tour, locale).tags) tags.add(tag);
+  return [...tags].sort((a, b) => a.localeCompare(b, locale === "vi" ? "vi" : "en"));
 }

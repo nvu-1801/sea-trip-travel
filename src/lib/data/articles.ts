@@ -1,37 +1,47 @@
 import { articles } from "@/content";
 import type { TravelArticle } from "@/domain/article";
-import { getTourBySlug } from "./tours";
+import type { Locale } from "@/i18n/config";
+import { resolveArticle } from "./localize";
 
-export function getArticles(): readonly TravelArticle[] {
-  return [...articles].sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+/** All articles, newest first, resolved for the requested locale. */
+export function getArticles(locale: Locale): readonly TravelArticle[] {
+  return [...articles]
+    .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
+    .map((article) => resolveArticle(article, locale));
 }
 
-export function getArticleBySlug(slug: string): TravelArticle | undefined {
-  return articles.find((article) => article.slug === slug);
+export function getArticleBySlug(slug: string, locale: Locale): TravelArticle | undefined {
+  const article = articles.find((candidate) => candidate.slug === slug);
+  return article ? resolveArticle(article, locale) : undefined;
 }
 
 export function getArticleSlugs(): readonly string[] {
   return articles.map((article) => article.slug);
 }
 
-export function getFeaturedArticle(): TravelArticle | undefined {
-  return getArticles().find((article) => article.featured) ?? getArticles()[0];
+export function getFeaturedArticle(locale: Locale): TravelArticle | undefined {
+  const all = getArticles(locale);
+  return all.find((article) => article.featured) ?? all[0];
 }
 
-export function getNonFeaturedArticles(): readonly TravelArticle[] {
-  const featured = getFeaturedArticle();
-  return getArticles().filter((article) => article.slug !== featured?.slug);
+export function getNonFeaturedArticles(locale: Locale): readonly TravelArticle[] {
+  const featured = getFeaturedArticle(locale);
+  return getArticles(locale).filter((article) => article.slug !== featured?.slug);
 }
 
 /** Related reading: shared destination first, then shared tour, then recent. */
-export function getRelatedArticles(slug: string, limit = 3): readonly TravelArticle[] {
-  const article = getArticleBySlug(slug);
+export function getRelatedArticles(
+  slug: string,
+  limit = 3,
+  locale: Locale,
+): readonly TravelArticle[] {
+  const article = articles.find((candidate) => candidate.slug === slug);
   if (!article) return [];
 
   const destinationIds = new Set(article.destinationIds);
   const tourSlugs = new Set(article.relatedTourSlugs);
 
-  const scored = getArticles()
+  const scored = getArticles(locale)
     .filter((candidate) => candidate.slug !== article.slug)
     .map((candidate) => {
       let score = 0;
@@ -46,15 +56,8 @@ export function getRelatedArticles(slug: string, limit = 3): readonly TravelArti
   if (chosen.length >= limit) return chosen.slice(0, limit);
 
   const seen = new Set(chosen.map((c) => c.slug));
-  const fallback = getArticles().filter(
+  const fallback = getArticles(locale).filter(
     (candidate) => candidate.slug !== article.slug && !seen.has(candidate.slug),
   );
   return [...chosen, ...fallback].slice(0, limit);
-}
-
-/** Tours referenced by an article, resolved to real records (dead refs skipped). */
-export function getArticleRelatedTours(article: TravelArticle) {
-  return article.relatedTourSlugs
-    .map((slug) => getTourBySlug(slug))
-    .filter((tour): tour is NonNullable<typeof tour> => Boolean(tour));
 }

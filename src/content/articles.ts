@@ -28,7 +28,7 @@ export const articles: readonly TravelArticleInput[] = [
     body: [
       {
         type: "paragraph",
-        text: "Quy Nhơn (Bình Định) và Phú Yên nằm cạnh nhau, cách nhau khoảng 100 km theo đường bộ. Vì vậy hai điểm này thường được ghép trong cùng một hành trình, kể cả khi bạn chỉ có ba ngày.",
+        text: "Quy Nhơn và Phú Yên nằm cạnh nhau, cách nhau khoảng 100 km theo đường bộ. Vì vậy hai điểm này thường được ghép trong cùng một hành trình, kể cả khi bạn chỉ có ba ngày.",
       },
       { type: "heading", level: 2, text: "Nên đi vào thời điểm nào?" },
       {

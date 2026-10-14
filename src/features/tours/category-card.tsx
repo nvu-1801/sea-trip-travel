@@ -3,6 +3,9 @@ import type { TourCategory } from "@/domain/category";
 import { AssetImage } from "@/components/ui/asset-image";
 import { cn } from "@/lib/utils";
 import { ArrowRightIcon } from "@/components/ui/icons";
+import type { Locale } from "@/i18n/config";
+import { format, getMessages, plural } from "@/i18n/messages";
+import { localizePath } from "@/i18n/routing";
 
 /**
  * Category tile.
@@ -14,17 +17,20 @@ import { ArrowRightIcon } from "@/components/ui/icons";
 export function CategoryCard({
   category,
   tourCount,
+  locale,
   className,
   priority = false,
 }: {
   category: TourCategory;
   tourCount: number;
+  locale: Locale;
   className?: string;
   priority?: boolean;
 }) {
+  const m = getMessages(locale);
   return (
     <Link
-      href={category.path}
+      href={localizePath(locale, category.path)}
       className={cn(
         "group relative flex min-h-56 flex-col justify-end overflow-hidden rounded-2xl border border-border shadow-soft transition-[box-shadow,transform] duration-300 ease-out hover:-translate-y-1 hover:shadow-lifted",
         className,
@@ -32,7 +38,7 @@ export function CategoryCard({
     >
       <AssetImage
         image={category.image}
-        altFallback={`Điểm đến ${category.name}`}
+        altFallback={format(m.common.destinationAlt, { name: category.name })}
         priority={priority}
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.05]"
@@ -45,7 +51,7 @@ export function CategoryCard({
 
       <span className="relative z-10 flex flex-col gap-2 p-5 text-white">
         <span className="inline-flex w-fit items-center rounded-full bg-white/20 px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-wider backdrop-blur-sm">
-          {tourCount} tour
+          {plural(m.common.tourCount, tourCount)}
         </span>
         <span className="text-xl font-extrabold leading-tight drop-shadow-sm">
           {category.name}
@@ -54,7 +60,7 @@ export function CategoryCard({
           <span className="text-sm leading-snug text-white/85">{category.tagline}</span>
         ) : null}
         <span className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold">
-          Khám phá
+          {m.common.explore}
           <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
         </span>
       </span>

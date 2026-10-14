@@ -19,10 +19,13 @@ npm run dev                    # http://localhost:3000
 Kiểm tra chất lượng:
 
 ```bash
-npm run typecheck   # tsc --noEmit
-npm run lint        # eslint
-npm test            # node:test (89 test)
-npm run build       # next build
+npm run typecheck     # tsc --noEmit
+npm run lint          # eslint
+npm test              # node:test (110 test)
+npm run build         # next build (42 trang)
+
+npm run verify:ui     # Chrome thật: 82 kiểm tra (layout, bàn phím, form → SMTP)
+npm run content:report # nội dung nào còn thiếu, theo từng bản ghi
 ```
 
 ## Cấu trúc
@@ -62,6 +65,23 @@ Giữ đúng thứ tự yêu cầu. Nguồn duy nhất: `src/config/navigation.t
 Trang khác: `/tour/[slug]`, `/cam-nang-du-lich/[slug]`, `/chinh-sach-bao-mat`,
 `/api/leads`, `sitemap.xml`, `robots.txt`.
 
+## Song ngữ (vi / en)
+
+Website hiện hỗ trợ **tiếng Việt** (mặc định, URL không prefix) và **tiếng Anh**
+(`/en/...`). Slug nội dung giữ nguyên ở cả hai ngôn ngữ.
+
+- **Không dùng thư viện i18n ngoài:** `next-intl` chưa hỗ trợ `cacheComponents`
+  (đang bật), nên i18n dựng trên `next/root-params` + `src/proxy.ts`.
+- Chuỗi giao diện: `src/messages/{vi,en}.json` (key khớp nhau, `typecheck` kiểm).
+- Nội dung: bản dịch đặt ở `src/content/locales/en/*.ts`, **khoá theo `id`** bản
+  ghi, kèm `translationStatus: draft | reviewed`.
+- Bản dịch tiếng Anh do agent tạo đang là **draft**: xem được nhưng có banner,
+  `noindex`, và **không** nằm trong `sitemap.xml`/`hreflang`.
+
+Vận hành: **`docs/I18N_GUIDE.md`**. Danh sách bản dịch cần duyệt:
+**`docs/I18N_CONTENT_REVIEW.md`**.
+
+
 ## Biến môi trường
 
 Xem `.env.example`. Không có secret nào được ghi vào source. Chỉ biến có tiền tố
@@ -86,10 +106,13 @@ Danh sách việc cần chủ website cung cấp: **`docs/CONTENT-TODO.md`**.
 | File | Nội dung |
 | --- | --- |
 | `docs/PLAN.md` | Kế hoạch triển khai: phạm vi, sitemap, art direction, lộ trình |
+| `docs/verification.md` | **Báo cáo kiểm chứng**: email thật, rate limit, mobile, animation, và những gì còn chưa kiểm được |
 | `docs/architecture.md` | Kiến trúc, cây thư mục, quy tắc phụ thuộc, luồng dữ liệu |
 | `docs/design-tokens.md` | Token màu/chữ/khoảng cách + lý do đạt WCAG AA |
 | `docs/lead-flow.md` | Luồng form → email, chống spam, xử lý lỗi, biến môi trường |
 | `docs/admin-roadmap.md` | Lộ trình bổ sung admin/CMS sau MVP |
+| `docs/I18N_GUIDE.md` | Vận hành song ngữ vi/en: thêm chuỗi, thêm tour/bài viết, bật index EN |
+| `docs/I18N_CONTENT_REVIEW.md` | Danh sách bản dịch tiếng Anh đang chờ duyệt |
 | `docs/acceptance-checklist.md` | Checklist nghiệm thu + cách kiểm chứng |
 | `docs/CONTENT-TODO.md` | Thông tin còn thiếu cần chủ website cung cấp |
 

@@ -176,13 +176,20 @@ export function buildLeadNotificationHtml(context: LeadNotificationContext): str
                 ${row(
                   "Ngày dự kiến",
                   lead.travelDate
-                    ? escapeHtml(formatDate(lead.travelDate))
+                    ? escapeHtml(formatDate(lead.travelDate, "vi"))
                     : `<span style="color:#8b7684;">Chưa xác định</span>`,
                 )}
                 ${row(
                   "Số người",
                   lead.partySize ? `${lead.partySize} khách` : `<span style="color:#8b7684;">Chưa xác định</span>`,
                   { last: !lead.message },
+                )}
+                ${row(
+                  "Ngôn ngữ khách sử dụng",
+                  lead.locale === "en"
+                    ? "English (khách điền form tiếng Anh)"
+                    : "Tiếng Việt",
+                  { last: true },
                 )}
               </table>
             </td>
@@ -263,8 +270,9 @@ export function buildLeadNotificationText(context: LeadNotificationContext): str
     `Số điện thoại: ${lead.phone}`,
     `Email: ${lead.email ?? "(khách không cung cấp)"}`,
     `Tour / điểm đến quan tâm: ${tourTitle ?? lead.interest ?? "(chưa xác định)"}`,
-    `Ngày dự kiến: ${lead.travelDate ? formatDate(lead.travelDate) : "(chưa xác định)"}`,
+    `Ngày dự kiến: ${lead.travelDate ? formatDate(lead.travelDate, "vi") : "(chưa xác định)"}`,
     `Số người: ${lead.partySize ?? "(chưa xác định)"}`,
+    `Ngôn ngữ khách sử dụng: ${lead.locale === "en" ? "English" : "Tiếng Việt"}`,
   ];
 
   if (tourHref) lines.push(`Trang tour: ${tourHref}`);

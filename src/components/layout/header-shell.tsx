@@ -55,6 +55,7 @@ export function HeaderShell({ children }: { children: ReactNode }) {
       {/* Scroll progress */}
       <div
         aria-hidden="true"
+        data-print-hidden=""
         className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-0.5 overflow-hidden"
       >
         <div

@@ -18,9 +18,11 @@ import { cn } from "@/lib/utils";
 export function MobileConsultBar({
   tourTitle,
   priceLabel,
+  labels,
 }: {
   tourTitle: string;
   priceLabel: string;
+  labels: { consult: string; callHotlineAria: string };
 }) {
   const [pastIntro, setPastIntro] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
@@ -50,6 +52,7 @@ export function MobileConsultBar({
   return (
     <div
       aria-hidden={!visible}
+      data-print-hidden=""
       className={cn(
         "fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 px-4 py-3 shadow-[0_-8px_24px_-12px_rgba(122,0,49,0.18)] backdrop-blur-md transition-transform duration-300 ease-out lg:hidden",
         visible ? "translate-y-0" : "translate-y-full",
@@ -64,7 +67,7 @@ export function MobileConsultBar({
         </div>
         <a
           href={siteConfig.contact.hotlineHref}
-          aria-label={`Gọi hotline ${siteConfig.contact.hotline}`}
+          aria-label={labels.callHotlineAria.replace("{phone}", siteConfig.contact.hotline)}
           tabIndex={visible ? 0 : -1}
           className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-primary-strong"
         >
@@ -76,7 +79,7 @@ export function MobileConsultBar({
           className="shrink-0"
           tabIndex={visible ? 0 : -1}
         >
-          Nhận tư vấn
+          {labels.consult}
         </ButtonLink>
       </div>
     </div>

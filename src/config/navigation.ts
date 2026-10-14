@@ -1,18 +1,37 @@
 /**
  * Navigation model — the required menu, in the required order.
  * Single source of truth for the header, the mobile drawer and the footer.
+ *
+ * Labels are i18n keys (resolved from `src/messages/*.json`), never literal
+ * text, so the same structure renders in every language. The `key` values map
+ * onto `messages.nav`.
  */
 
+export type NavKey =
+  | "home"
+  | "quyNhonPhuYen"
+  | "quyNhonOneDay"
+  | "quyNhonMultiDay"
+  | "domestic"
+  | "north"
+  | "central"
+  | "south"
+  | "highlands"
+  | "guides"
+  | "contact"
+  | "privacy";
+
 export type NavLink = {
-  label: string;
+  /** Key into `messages.nav`. */
+  labelKey: NavKey;
   href: string;
 };
 
 export type NavItem = NavLink & {
   /** Present on parent items that open a dropdown / accordion. */
   children?: readonly NavLink[];
-  /** Short line used by the desktop mega-panel and mobile accordion. */
-  description?: string;
+  /** Key into `messages.nav.description` for the mega-panel / accordion line. */
+  descriptionKey?: "quyNhonPhuYen" | "domestic";
 };
 
 export const ROUTES = {
@@ -32,48 +51,40 @@ export const ROUTES = {
 
 export const primaryNav: readonly NavItem[] = [
   {
-    label: "Trang chủ",
+    labelKey: "home",
     href: ROUTES.home,
   },
   {
-    label: "Tour Quy Nhơn - Phú Yên",
+    labelKey: "quyNhonPhuYen",
     href: ROUTES.quyNhonPhuYen,
-    description: "Tuyến tour trọng tâm của SEA TRIP",
+    descriptionKey: "quyNhonPhuYen",
     children: [
-      { label: "Tour Quy Nhơn 1 Ngày", href: ROUTES.quyNhonOneDay },
-      { label: "Tour Quy Nhơn dài Ngày", href: ROUTES.quyNhonMultiDay },
+      { labelKey: "quyNhonOneDay", href: ROUTES.quyNhonOneDay },
+      { labelKey: "quyNhonMultiDay", href: ROUTES.quyNhonMultiDay },
     ],
   },
   {
-    label: "Tour Trong Nước",
+    labelKey: "domestic",
     href: ROUTES.domestic,
-    description: "Chọn lọc theo từng vùng miền",
+    descriptionKey: "domestic",
     children: [
-      { label: "Tour Miền Bắc", href: ROUTES.north },
-      { label: "Tour Miền Trung", href: ROUTES.central },
-      { label: "Tour Miền Nam", href: ROUTES.south },
-      { label: "Tour Tây Nguyên", href: ROUTES.highlands },
+      { labelKey: "north", href: ROUTES.north },
+      { labelKey: "central", href: ROUTES.central },
+      { labelKey: "south", href: ROUTES.south },
+      { labelKey: "highlands", href: ROUTES.highlands },
     ],
   },
   {
-    label: "Cẩm Nang Du Lịch",
+    labelKey: "guides",
     href: ROUTES.guides,
   },
   {
-    label: "Liên Hệ",
+    labelKey: "contact",
     href: ROUTES.contact,
   },
 ] as const;
 
 /** Legal / policy links shown in the footer. */
 export const footerLegalNav: readonly NavLink[] = [
-  { label: "Chính sách bảo mật", href: ROUTES.privacy },
+  { labelKey: "privacy", href: ROUTES.privacy },
 ];
-
-/** Categories acknowledged but intentionally out of MVP scope. */
-export const OUT_OF_SCOPE = [
-  "Đặt tour trực tuyến",
-  "Thanh toán",
-  "Tài khoản khách hàng",
-  "Vé máy bay / khách sạn",
-] as const;

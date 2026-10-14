@@ -1,38 +1,114 @@
 # Thông tin cần chủ website cung cấp
 
-Mọi mục dưới đây hiện là **placeholder** trong source. Website đã chạy được và
-hiển thị hợp lý, nhưng **không được xuất bản** trước khi các mục nhóm A được xác
-nhận — vì chúng ảnh hưởng tới pháp lý, khả năng liên hệ và độ tin cậy.
+Website **đã chạy được** và hiển thị hợp lý. Nhưng **không được xuất bản** trước
+khi nhóm A được xác nhận — vì chúng ảnh hưởng tới pháp lý, khả năng liên hệ và độ
+tin cậy.
 
-Ký hiệu: 🔴 chặn xuất bản · 🟠 nên có trước khi chạy quảng cáo · 🟡 cải thiện sau.
+Ký hiệu: ✅ đã có · 🔴 chặn xuất bản · 🟠 nên có trước khi chạy quảng cáo · 🟡 cải thiện sau.
+
+Kiểm tra lại bất cứ lúc nào:
+
+```bash
+npm run content:report   # liệt kê mục còn thiếu, suy ra từ config thật
+```
+
+---
+
+## Đã nhận (2026-10-14)
+
+| Mục | Giá trị | Nơi lưu |
+| --- | --- | --- |
+| Hotline | `0969 297 064` (`tel:+84969297064`) | `src/config/site.ts` |
+| Email nhận tư vấn | `seatriptravel@gmail.com` | `src/config/site.ts` |
+| Người nhận email sales | `seatriptravel@gmail.com` | `.env` → `SALES_RECIPIENTS` |
+| Địa chỉ | 42-44 Chế Lan Viên, Phường Quy Nhơn Nam, Tỉnh Gia Lai | `src/config/site.ts` |
+| Facebook | `facebook.com/share/1C64q28Cz5/` | `src/config/site.ts` |
+| Tỉnh của 4 điểm đến Quy Nhơn | `Gia Lai` (theo địa chỉ trên) | `src/content/destinations.ts` |
+
+Các giá trị này đã xuất hiện ở: header, footer, nút liên hệ nổi, form tư vấn
+(nút gọi hotline), trang liên hệ, trang chính sách, email nội bộ và JSON-LD.
 
 ---
 
 ## A. Bắt buộc trước khi xuất bản
 
-| # | Mục | Placeholder hiện tại | Ở đâu |
+| # | Mục | Trạng thái | Ghi chú |
 | --- | --- | --- | --- |
-| A1 | 🔴 **Hotline chính thức** | `0000 000 000` | `src/config/site.ts` → `contact.hotline`, `contact.hotlineHref` |
-| A2 | 🔴 **Email nhận yêu cầu tư vấn** | `hello@example.com` | `src/config/site.ts` → `contact.email` |
-| A3 | 🔴 **Người nhận email sales** | `sales@example.com` | `.env` → `SALES_RECIPIENTS` |
-| A4 | 🔴 **Domain thật** | `http://localhost:3000` | `.env` → `NEXT_PUBLIC_SITE_URL` |
-| A5 | 🔴 **Email gửi đi thuộc domain đã xác minh** + SPF/DKIM/DMARC | `no-reply@example.com` | `.env` → `MAIL_FROM_EMAIL` |
-| A6 | 🔴 **Tên pháp nhân, mã số thuế, địa chỉ đăng ký** | "Địa chỉ văn phòng sẽ được cập nhật" | `src/config/site.ts` → `contact.address`, và `src/app/chinh-sach-bao-mat/page.tsx` |
-| A7 | 🔴 **Chính sách xử lý thông tin đã được duyệt** | Bản dự thảo có ghi chú | `src/app/chinh-sach-bao-mat/page.tsx` |
-| A8 | 🔴 **Duyệt toàn bộ nội dung tour** — lịch trình, dịch vụ bao gồm/không bao gồm, lưu ý | `contentStatus: "demo"` | `src/content/tours/*.ts` |
-| A9 | 🔴 **Giá tour, hoặc xác nhận giữ "Liên hệ tư vấn"** | `priceFrom: null` | `src/content/tours/*.ts` |
-| A10 | 🔴 **Điều kiện & chính sách huỷ/thanh toán** (nếu công bố) | Mảng rỗng ⇒ khối chính sách bị ẩn | `policies: []` trong mỗi tour |
+| A1 | Hotline chính thức | ✅ | Đã nhận |
+| A2 | Email nhận yêu cầu tư vấn | ✅ | Đã nhận |
+| A3 | Người nhận email sales | ✅ có trong `.env.example` | **Phải đặt lại** trong môi trường deploy thật |
+| A4 | **Domain thật** | 🔴 | Vẫn là `http://localhost:3000`. Cần domain + DNS trước khi deploy, vì nó vào canonical, OG và link trong email |
+| A5 | **Bảo đảm email gửi đi** | 🔴 | Xem mục riêng bên dưới |
+| A6 | **Tên pháp nhân + mã số thuế** | 🔴 | Đã có địa chỉ; còn thiếu **tên công ty/hộ kinh doanh** và **MST** để ghi ở footer và trang chính sách |
+| A7 | **Duyệt chính sách xử lý thông tin** | 🔴 | Bản dự thảo ở `src/app/chinh-sach-bao-mat/page.tsx` cần được đọc và duyệt |
+| A8 | **Duyệt nội dung 15 tour** | 🔴 | Lịch trình, dịch vụ bao gồm/không bao gồm, lưu ý. Tất cả đang `contentStatus: "demo"` |
+| A9 | **Giá tour, hoặc xác nhận giữ "Liên hệ tư vấn"** | 🔴 | Cả 15 tour đang `priceFrom: null` |
+| A10 | **Điều kiện & chính sách huỷ/thanh toán** | 🔴 | Mảng `policies` rỗng ⇒ khối chính sách bị ẩn. Điền khi đã có nội dung được duyệt |
+
+### A5 — Bảo đảm email gửi đi
+
+Hiện tại phương án khả thi là **Gmail SMTP** (`smtp.gmail.com:587`), vì chưa có
+hộp thư theo domain. Cách bật:
+
+1. Bật **xác minh 2 bước** cho tài khoản Google `seatriptravel@gmail.com`.
+2. Tạo **Mật khẩu ứng dụng** (App Password) 16 ký tự → dán vào `SMTP_PASSWORD`.
+   Không dùng mật khẩu đăng nhập Google.
+3. Đặt `MAIL_TRANSPORT=smtp`, `MAIL_FROM_EMAIL=seatriptravel@gmail.com`.
+4. Gửi thử và **kiểm tra thư đã vào hộp thư**, cả trên Gmail mobile và Outlook.
+
+Điều cần biết (chưa kiểm chứng số cụ thể, cần tra trang chính sách hiện hành của
+Google): tài khoản Gmail miễn phí có **giới hạn số thư gửi mỗi ngày**, và `From`
+sẽ là địa chỉ Gmail chứ không phải tên miền riêng.
+
+**Vì sao nên chuyển sang hộp thư theo domain** (khi có điều kiện): địa chỉ gửi
+thuộc domain riêng + SPF/DKIM/DMARC giúp thư ít vào spam hơn và không bị giới hạn
+theo tài khoản cá nhân. Khi đó chỉ cần đổi `SMTP_*` và `MAIL_FROM_EMAIL`, không
+sửa code.
+
+> Lưu ý: `POST /api/leads` trả 200 nghĩa là **transport đã nhận thư**, chưa chứng
+> minh thư đã vào hộp thư. Việc kiểm bằng hộp thư thật là bắt buộc và không thể
+> thay bằng test tự động. Chi tiết ở `docs/verification.md` mục 2.
+
+---
 
 ## B. Nên có trước khi chạy quảng cáo
 
-| # | Mục | Ghi chú |
+| # | Mục | Trạng thái | Ghi chú |
+| --- | --- | --- | --- |
+| B0 | **Xác nhận tên tỉnh/thành của từng điểm đến** | 🔴 cần xác nhận | Xem mục riêng bên dưới |
+| B1 | **Ảnh thật cho tour và điểm đến** | 🟠 | Hiện dùng placeholder gradient. Thêm `image.src = "/images/…"`, xem `docs/design-tokens.md` mục 7 |
+| B2 | **Giờ làm việc thật** | 🟠 | Đang là "Thứ 2 – Thứ 7, 08:00 – 18:00" |
+| B3 | **Logo dạng vector (SVG/AI)** | 🟠 | Hiện tách từ PNG |
+| B4 | Kênh social | ✅ Facebook | Facebook đã có. Zalo chưa đặt → web tự dùng `zalo.me/0969297064`, link chạy được; điền link Zalo OA riêng nếu có. Instagram/TikTok/YouTube: để trống thì nút bị ẩn |
+| B5 | Ảnh Open Graph riêng theo tour | 🟠 | Hiện dùng ảnh thương hiệu chung |
+| B6 | Điểm khởi hành thật cho từng tour | 🟠 | |
+
+### B0 — Tên tỉnh/thành sau sáp nhập 2025
+
+Địa chỉ bạn cung cấp ghi **Tỉnh Gia Lai**, nên 4 điểm đến ở khu vực Quy Nhơn đã
+được cập nhật thành `Gia Lai`.
+
+**Nhưng 4 điểm đến ở Phú Yên thì chưa** — tôi không truy cập được mạng để xác
+minh cấu trúc hành chính mới, nên không tự sửa. Cần bạn xác nhận tên tỉnh/thành
+hiện tại cho các điểm sau (và cả các vùng khác nếu có thay đổi):
+
+| Điểm đến | Đang ghi | Cần xác nhận |
 | --- | --- | --- |
-| B1 | 🟠 **Ảnh thật cho từng tour và điểm đến** | Thêm `image.src = "/images/…"` trong `content/`. Xem hướng dẫn chọn ảnh ở `docs/design-tokens.md` mục 7 |
-| B2 | 🟠 **Giờ làm việc thật** | `src/config/site.ts` → `contact.workingHours` |
-| B3 | 🟠 **Logo dạng vector (SVG/AI)** | Hiện đang tách từ PNG do khách cung cấp. SVG sẽ nét hơn ở mọi kích thước |
-| B4 | 🟠 **Kênh social chính thức (Facebook, Zalo)** | `src/config/site.ts` → `social.*`. Đang để trống nên nút dùng **đường dẫn dự phòng**: Facebook → `facebook.com`, Zalo → `zalo.me/<hotline>`. Nút vẫn hiển thị (theo yêu cầu) nhưng **phải cập nhật trước khi chạy quảng cáo**, nếu không khách bấm sẽ tới trang chủ của nền tảng |
-| B5 | 🟠 **Ảnh Open Graph riêng theo tour** | Hiện dùng ảnh thương hiệu chung `src/app/opengraph-image.png` |
-| B6 | 🟠 **Điểm khởi hành thật** cho từng tour | `departurePoints` |
+| Ghềnh Đá Đĩa | Phú Yên | ? |
+| Bãi Xép | Phú Yên | ? |
+| Mũi Điện – Đại Lãnh | Phú Yên | ? |
+| Đầm Ô Loan | Phú Yên | ? |
+| Đà Nẵng / Hội An / Huế | Đà Nẵng / Quảng Nam / Huế | ? |
+| Phú Quốc | Kiên Giang | ? |
+| Cần Thơ | Cần Thơ | ? |
+| Đà Lạt | Lâm Đồng | ? |
+| Buôn Ma Thuột | Đắk Lắk | ? |
+
+Cách sửa: một dòng `province` cho mỗi điểm trong `src/content/destinations.ts`.
+Nếu bạn muốn bỏ hẳn tên tỉnh để tránh nhầm, cũng nói — sửa một chỗ trong
+`DestinationCard` là xong.
+
+---
 
 ## C. Cải thiện sau
 
@@ -43,32 +119,32 @@ Ký hiệu: 🔴 chặn xuất bản · 🟠 nên có trước khi chạy quản
 | C3 | 🟡 Bổ sung ảnh thật cho địa danh trong bài viết |
 | C4 | 🟡 Xem lại tiêu đề/description SEO cho từng tour và danh mục (`seo` trong `content/`) |
 | C5 | 🟡 Chuyển nội dung sang CMS (xem `docs/admin-roadmap.md`) |
+| C6 | 🟡 Thay link Facebook dạng `share/…` bằng link trang chính thức nếu có |
 
 ---
 
 ## Cách thay thế nội dung demo
 
-1. **Đổi thông tin liên hệ**: sửa `src/config/site.ts`. Sau khi sửa, kiểm tra
-   `isPlaceholderContact` không còn bật cho mục nào.
-2. **Thêm tour thật**: thêm một object vào file trong `src/content/tours/`, rồi
-   đặt `contentStatus: "verified"`. Nếu viết sai khoá danh mục hoặc điểm đến,
-   `npm run build` sẽ đỏ ngay kèm thông báo cụ thể — không lọt ra production.
-3. **Thêm ảnh**: bỏ file vào `public/images/…`, rồi điền `image.src = "/images/…"`.
-   Không cần sửa component nào.
-4. **Không có nhãn demo trên giao diện**: `contentStatus` chỉ là metadata nội bộ,
-   không được render. Khách không thấy nhãn nào về nội dung demo.
-5. **Gỡ khỏi danh sách này**: đặt `contentStatus: "verified"` cho bản ghi đã duyệt,
-   và xoá dòng tương ứng ở mục A8/A9.
+1. **Đổi thông tin liên hệ**: sửa `src/config/site.ts`. Chạy `npm run content:report`
+   để xác nhận không còn mục nào trong "OUTSTANDING OWNER VALUES".
+2. **Thêm tour thật**: thêm object vào file trong `src/content/tours/`, đặt
+   `contentStatus: "verified"`. Sai khoá danh mục/điểm đến ⇒ `npm run build` đỏ
+   ngay kèm thông báo cụ thể.
+3. **Thêm ảnh**: bỏ file vào `public/images/…`, điền `image.src = "/images/…"`.
+   Không cần sửa component.
+4. **Nội dung demo không hiển thị nhãn nào** trên giao diện — `contentStatus` chỉ
+   là metadata theo dõi nội bộ.
 
 ## Kiểm tra sau khi cập nhật
 
 ```bash
 npm run typecheck   # kiểu dữ liệu nội dung đúng
-npm test            # toàn vẹn dữ liệu, không còn giá 0, không có slug trùng
+npm test            # toàn vẹn dữ liệu, không còn giá 0, không slug trùng
 npm run build       # tất cả trang tĩnh dựng thành công
+npm run verify:ui   # mở Chrome thật: layout, bàn phím, form → SMTP
 ```
 
-Nếu có lỗi, thông báo sẽ nêu tên bản ghi và khoá bị sai, ví dụ:
+Nếu có lỗi, thông báo nêu tên bản ghi và khoá sai, ví dụ:
 
 ```
 Lỗi toàn vẹn dữ liệu nội dung (1):

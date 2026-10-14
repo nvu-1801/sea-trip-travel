@@ -40,7 +40,7 @@ export const tourCategories: readonly TourCategoryInput[] = [
     region: "quy-nhon-phu-yen",
     tagline: "Ghép Quy Nhơn với Phú Yên trong 2–5 ngày",
     description:
-      "Các tour dài ngày kết hợp Quy Nhơn (Bình Định) với Phú Yên trong cùng một hành trình, có nghỉ đêm và thời gian tham quan thoải mái hơn.",
+      "Các tour dài ngày kết hợp Quy Nhơn với Phú Yên trong cùng một hành trình, có nghỉ đêm và thời gian tham quan thoải mái hơn.",
     order: 2,
     contentStatus: "demo",
   },

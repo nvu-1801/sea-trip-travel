@@ -1,29 +1,32 @@
 import { tourCategories, tours } from "@/content";
 import type { TourCategory } from "@/domain/category";
-import type { Region } from "@/domain/common";
+import type { Locale } from "@/i18n/config";
+import { resolveCategory } from "./localize";
 
-/** Read-only access to the category tree. Never touches a data source directly. */
+/** Read-only access to the category tree, resolved for the requested locale. */
 
-export function getCategories(): readonly TourCategory[] {
-  return tourCategories;
+export function getCategories(locale: Locale): readonly TourCategory[] {
+  return tourCategories.map((category) => resolveCategory(category, locale));
 }
 
-export function getTopLevelCategories(): readonly TourCategory[] {
-  return tourCategories
+export function getTopLevelCategories(locale: Locale): readonly TourCategory[] {
+  return getCategories(locale)
     .filter((category) => category.parentId === null)
     .sort((a, b) => a.order - b.order);
 }
 
-export function getCategoryById(id: string): TourCategory | undefined {
-  return tourCategories.find((category) => category.id === id);
+export function getCategoryById(id: string, locale: Locale): TourCategory | undefined {
+  const category = tourCategories.find((candidate) => candidate.id === id);
+  return category ? resolveCategory(category, locale) : undefined;
 }
 
-export function getCategoryByPath(path: string): TourCategory | undefined {
-  return tourCategories.find((category) => category.path === path);
+export function getCategoryByPath(path: string, locale: Locale): TourCategory | undefined {
+  const category = tourCategories.find((candidate) => candidate.path === path);
+  return category ? resolveCategory(category, locale) : undefined;
 }
 
-export function getChildCategories(parentId: string): readonly TourCategory[] {
-  return tourCategories
+export function getChildCategories(parentId: string, locale: Locale): readonly TourCategory[] {
+  return getCategories(locale)
     .filter((category) => category.parentId === parentId)
     .sort((a, b) => a.order - b.order);
 }
@@ -49,13 +52,13 @@ export function getCategoryAndDescendantIds(id: string): readonly string[] {
 }
 
 /** Breadcrumb trail from the root category down to `id`. */
-export function getCategoryTrail(id: string): readonly TourCategory[] {
+export function getCategoryTrail(id: string, locale: Locale): readonly TourCategory[] {
   const trail: TourCategory[] = [];
-  let current = getCategoryById(id);
+  let current = getCategoryById(id, locale);
   let guard = 0;
   while (current && guard < 10) {
     trail.unshift(current);
-    current = current.parentId ? getCategoryById(current.parentId) : undefined;
+    current = current.parentId ? getCategoryById(current.parentId, locale) : undefined;
     guard += 1;
   }
   return trail;
@@ -65,8 +68,4 @@ export function getCategoryTrail(id: string): readonly TourCategory[] {
 export function getCategoryTourCount(categoryId: string): number {
   const ids = new Set(getCategoryAndDescendantIds(categoryId));
   return tours.filter((tour) => tour.categoryIds.some((id) => ids.has(id))).length;
-}
-
-export function getCategoriesByRegion(region: Region): readonly TourCategory[] {
-  return tourCategories.filter((category) => category.region === region);
 }

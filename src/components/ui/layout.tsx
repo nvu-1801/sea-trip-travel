@@ -17,17 +17,6 @@ export function Container({
   return <div className={cn("container-page", className)}>{children}</div>;
 }
 
-/** Prose measure for long-form copy (guides, policies). */
-export function ProseContainer({
-  className,
-  children,
-}: {
-  className?: string;
-  children: ReactNode;
-}) {
-  return <div className={cn("mx-auto w-full max-w-2xl px-5 sm:px-0", className)}>{children}</div>;
-}
-
 type SectionProps = {
   as?: ElementType;
   className?: string;
@@ -99,7 +88,7 @@ export function SectionHeading({
             {eyebrow}
           </p>
         ) : null}
-        <Tag className="text-display-sm font-extrabold text-foreground sm:text-display">{title}</Tag>
+        <Tag className="text-display-sm font-display font-semibold text-foreground">{title}</Tag>
         {description ? (
           <p className="text-[1.0625rem] leading-relaxed text-foreground-muted">{description}</p>
         ) : null}

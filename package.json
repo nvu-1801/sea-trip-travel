@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/content.test.ts"
+    "verify:ui": "node scripts/verify-ui.mjs",
+    "content:report": "node --env-file-if-exists=.env.local --import tsx scripts/content-report.ts",
+    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/lead-store.test.ts tests/content.test.ts tests/mail-transport.test.ts tests/i18n.test.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -27,6 +29,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "playwright": "^1.64.0",
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",

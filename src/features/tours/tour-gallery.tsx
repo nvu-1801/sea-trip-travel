@@ -6,6 +6,24 @@ import { AssetImage } from "@/components/ui/asset-image";
 import { cn } from "@/lib/utils";
 import { ChevronRightIcon } from "@/components/ui/icons";
 
+export type TourGalleryLabels = {
+  /** "Ảnh tour {title}" */
+  aria: string;
+  listAria: string;
+  /** "Ảnh {index}" */
+  imageSr: string;
+  /** "{title} — ảnh {index}" */
+  alt: string;
+  /** "{title} — ảnh minh hoạ" */
+  placeholderAlt: string;
+};
+
+function fmt(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) =>
+    vars[key] === undefined ? match : String(vars[key]),
+  );
+}
+
 /**
  * Tour gallery.
  *
@@ -16,15 +34,19 @@ import { ChevronRightIcon } from "@/components/ui/icons";
 export function TourGallery({
   images,
   title,
+  labels,
 }: {
   images: readonly ImageAsset[];
   title: string;
+  labels: TourGalleryLabels;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const tabRefs = useRef(new Map<number, HTMLButtonElement>());
 
   const safeImages =
-    images.length > 0 ? images : [{ alt: `${title} — ảnh minh hoạ` } as ImageAsset];
+    images.length > 0
+      ? images
+      : [{ alt: fmt(labels.placeholderAlt, { title }) } as ImageAsset];
   const active = safeImages[Math.min(activeIndex, safeImages.length - 1)];
 
   const focusTab = (index: number) => {
@@ -38,7 +60,7 @@ export function TourGallery({
       <div
         id="tour-gallery-panel"
         role="tabpanel"
-        aria-label={`Ảnh tour ${title}`}
+        aria-label={fmt(labels.aria, { title })}
         className="overflow-hidden rounded-2xl border border-border bg-surface shadow-soft"
       >
         <AssetImage
@@ -57,7 +79,7 @@ export function TourGallery({
       {safeImages.length > 1 ? (
         <div
           role="tablist"
-          aria-label="Chọn ảnh"
+          aria-label={labels.listAria}
           aria-orientation="horizontal"
           className="no-scrollbar flex gap-2.5 overflow-x-auto pb-1"
         >
@@ -103,12 +125,12 @@ export function TourGallery({
             >
               <AssetImage
                 image={image}
-                altFallback={`${title} — ảnh ${index + 1}`}
+                altFallback={fmt(labels.alt, { title, index: index + 1 })}
                 sizes="120px"
                 variant="plain"
                 className="h-16 w-24 sm:h-20 sm:w-32"
               />
-              <span className="sr-only">Ảnh {index + 1}</span>
+              <span className="sr-only">{fmt(labels.imageSr, { index: index + 1 })}</span>
             </button>
           ))}
           <span

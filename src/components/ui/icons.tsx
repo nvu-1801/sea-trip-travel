@@ -156,15 +156,6 @@ export const ShieldIcon = (p: IconProps) => (
   </Svg>
 );
 
-export const ImageIcon = (p: IconProps) => (
-  <Svg {...p}>
-    <rect x="3.5" y="5" width="17" height="14" rx="2" />
-    <circle cx="9" cy="10" r="1.6" />
-    <path d="m4.5 17 4.2-4.2a1.6 1.6 0 0 1 2.3 0L15 17" />
-    <path d="m14 15 1.7-1.7a1.6 1.6 0 0 1 2.3 0L20 15.3" />
-  </Svg>
-);
-
 export const SendIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M20.5 3.5 3.5 10.2l7 2.6 2.6 7 7.4-16.3Z" />
@@ -196,29 +187,4 @@ export const ArrowUpIcon = (p: IconProps) => (
     <path d="M12 19V5" />
     <path d="m6 11 6-6 6 6" />
   </Svg>
-);
-
-/** Simplified Zalo mark: speech bubble with the tail, drawn on the brand blue. */
-export const ZaloIcon = (p: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...p}>
-    <path d="M12 3.2c-5 0-9 3.3-9 7.4 0 3.6 3 6.6 7.1 7.3l-.6 3 3.4-2.6c.6.1 1.3.1 1.9.1 5 0 9-3.3 9-7.4S17 3.2 12 3.2Z" />
-  </svg>
-);
-
-export const InstagramIcon = (p: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...p}>
-    <path d="M12 4.6c2.4 0 2.7 0 3.6.05.9.04 1.4.2 1.7.32.44.17.75.37 1.08.7.33.33.53.64.7 1.08.12.3.28.8.32 1.7.05.9.05 1.2.05 3.55s0 2.65-.05 3.55c-.04.9-.2 1.4-.32 1.7-.17.44-.37.75-.7 1.08-.33.33-.64.53-1.08.7-.3.12-.8.28-1.7.32-.9.05-1.2.05-3.6.05s-2.7 0-3.6-.05c-.9-.04-1.4-.2-1.7-.32a2.9 2.9 0 0 1-1.08-.7 2.9 2.9 0 0 1-.7-1.08c-.12-.3-.28-.8-.32-1.7C4.6 14.65 4.6 14.35 4.6 12s0-2.65.05-3.55c.04-.9.2-1.4.32-1.7.17-.44.37-.75.7-1.08.33-.33.64-.53 1.08-.7.3-.12.8-.28 1.7-.32C9.3 4.6 9.6 4.6 12 4.6Zm0 3.5a3.9 3.9 0 1 0 0 7.8 3.9 3.9 0 0 0 0-7.8Zm0 6.43a2.53 2.53 0 1 1 0-5.06 2.53 2.53 0 0 1 0 5.06Zm4.97-6.6a.91.91 0 1 1-1.82 0 .91.91 0 0 1 1.82 0Z" />
-  </svg>
-);
-
-export const TikTokIcon = (p: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...p}>
-    <path d="M16.5 3h-2.7v11.3a2.5 2.5 0 1 1-2.5-2.5c.2 0 .4 0 .6.06V9.1a5.3 5.3 0 1 0 4.6 5.25V9.4a5.6 5.6 0 0 0 3.5 1.2V7.9a3.2 3.2 0 0 1-3.5-3.2V3Z" />
-  </svg>
-);
-
-export const YouTubeIcon = (p: IconProps) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" {...p}>
-    <path d="M21.2 8.2a2.6 2.6 0 0 0-1.8-1.85C17.9 6 12 6 12 6s-5.9 0-7.4.35A2.6 2.6 0 0 0 2.8 8.2 27 27 0 0 0 2.5 12c0 1.3.1 2.6.3 3.8a2.6 2.6 0 0 0 1.8 1.85C6.1 18 12 18 12 18s5.9 0 7.4-.35a2.6 2.6 0 0 0 1.8-1.85c.2-1.2.3-2.5.3-3.8s-.1-2.6-.3-3.8ZM10.2 14.7V9.3L14.7 12l-4.5 2.7Z" />
-  </svg>
 );

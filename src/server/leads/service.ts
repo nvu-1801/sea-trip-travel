@@ -19,6 +19,7 @@ import {
   buildLeadSubject,
 } from "@/server/email/templates/lead-notification";
 import { safeSiteUrl } from "@/lib/sanitize";
+import { getLeadStore } from "./store";
 import { getRateLimiter } from "./rate-limit";
 
 /**
@@ -44,18 +45,39 @@ export type SubmitLeadContext = {
   userAgent?: string;
 };
 
-/** Short-lived idempotency cache. In-memory, same caveat as the rate limiter. */
-const idempotencyCache = new Map<string, { at: number; result: SubmitLeadResult }>();
+/**
+ * Idempotency.
+ *
+ * Stored in the configured `LeadStore`, so it works across instances when a
+ * shared store is configured. The flow is check → send → remember: a retry after
+ * a timeout, or a second click that slipped past the button's disabled state,
+ * returns the original response instead of sending a second email.
+ *
+ * Residual gap, stated plainly: two requests carrying the SAME key that arrive
+ * truly concurrently can both pass the check before either writes. That window is
+ * bounded client-side (disabled control + in-flight ref) and by the rate limiter.
+ * Closing it properly needs a claim-then-send protocol with a compensating
+ * delete, which is more machinery than this form justifies.
+ */
 const IDEMPOTENCY_TTL_MS = 10 * 60 * 1000;
+const idempotencyKeyFor = (key: string) => `lead:idem:${key}`;
 
-function rememberSubmission(key: string, result: SubmitLeadResult): void {
-  const now = Date.now();
-  if (idempotencyCache.size > 5000) {
-    for (const [existing, entry] of idempotencyCache) {
-      if (now - entry.at > IDEMPOTENCY_TTL_MS) idempotencyCache.delete(existing);
-    }
+async function recallSubmission(key: string): Promise<SubmitLeadResult | null> {
+  const raw = await getLeadStore().get(idempotencyKeyFor(key));
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as SubmitLeadResult;
+  } catch {
+    return null;
   }
-  idempotencyCache.set(key, { at: now, result });
+}
+
+async function rememberSubmission(key: string, result: SubmitLeadResult): Promise<void> {
+  await getLeadStore().setIfAbsent(
+    idempotencyKeyFor(key),
+    JSON.stringify(result),
+    IDEMPOTENCY_TTL_MS,
+  );
 }
 
 /** Salted, non-reversible client fingerprint used only as a rate-limit key. */
@@ -160,10 +182,10 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
     : null;
 
   if (idempotencyKey) {
-    const cached = idempotencyCache.get(idempotencyKey);
-    if (cached && Date.now() - cached.at < IDEMPOTENCY_TTL_MS) {
+    const previous = await recallSubmission(idempotencyKey);
+    if (previous) {
       console.info("[lead] duplicate submission ignored (idempotency key reuse)");
-      return cached.result;
+      return previous;
     }
   }
 
@@ -184,7 +206,7 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
   const now = new Date();
   const requestId = buildRequestId(now);
 
-  const tour = input.tourSlug ? getTourBySlug(input.tourSlug) : undefined;
+  const tour = input.tourSlug ? getTourBySlug(input.tourSlug, input.locale) : undefined;
   const lead: ContactLead = {
     requestId,
     receivedAt: now.toISOString(),
@@ -197,6 +219,7 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
     ...(input.partySize ? { partySize: input.partySize } : {}),
     ...(input.message ? { message: input.message } : {}),
     ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
+    locale: input.locale,
     ...(input.utm ? { utm: input.utm } : {}),
   };
 
@@ -270,6 +293,6 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
     },
   };
 
-  if (idempotencyKey) rememberSubmission(idempotencyKey, success);
+  if (idempotencyKey) await rememberSubmission(idempotencyKey, success);
   return success;
 }

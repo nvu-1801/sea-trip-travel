@@ -2,6 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
+import { localizePath } from "@/i18n/routing";
+import { getMessages } from "@/i18n/messages";
+import type { Locale } from "@/i18n/config";
 
 /**
  * Header/footer lockup: the supplied peacock mark plus the wordmark set as live
@@ -17,11 +20,14 @@ export function Logo({
   className,
   size = "md",
   showTagline = false,
+  tagline = siteConfig.message,
   priority = false,
 }: {
   className?: string;
   size?: "sm" | "md" | "lg";
   showTagline?: boolean;
+  /** Localized brand line under the wordmark. */
+  tagline?: string;
   priority?: boolean;
 }) {
   const markClass =
@@ -36,7 +42,7 @@ export function Logo({
       ? "text-[0.875rem] sm:text-[0.9375rem]"
       : size === "lg"
         ? "text-xl sm:text-2xl"
-        : "text-base sm:text-[1.0625rem] xl:text-[1.125rem]";
+        : "text-base sm:text-[1.0625rem] 2xl:text-[1.125rem]";
 
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
@@ -62,7 +68,7 @@ export function Logo({
         </span>
         {showTagline ? (
           <span className="mt-1 whitespace-nowrap text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-foreground-muted">
-            {siteConfig.message}
+            {tagline}
           </span>
         ) : null}
       </span>
@@ -71,23 +77,26 @@ export function Logo({
 }
 
 export function LogoLink({
+  locale,
   className,
   size = "md",
   showTagline = false,
   priority = false,
 }: {
+  locale: Locale;
   className?: string;
   size?: "sm" | "md" | "lg";
   showTagline?: boolean;
   priority?: boolean;
 }) {
+  const m = getMessages(locale);
   return (
     <Link
-      href="/"
-      className={cn("shrink-0 rounded-sm", className)}
-      aria-label={`${siteConfig.name} – về trang chủ`}
+      href={localizePath(locale, "/")}
+      className={cn("inline-flex min-h-11 shrink-0 items-center rounded-sm", className)}
+      aria-label={`${siteConfig.name} – ${m.common.home}`}
     >
-      <Logo size={size} showTagline={showTagline} priority={priority} />
+      <Logo size={size} showTagline={showTagline} tagline={m.site.tagline} priority={priority} />
     </Link>
   );
 }

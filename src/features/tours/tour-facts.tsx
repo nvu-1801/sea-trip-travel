@@ -1,4 +1,6 @@
 import type { Tour } from "@/domain/tour";
+import { format, getMessages } from "@/i18n/messages";
+import type { Locale } from "@/i18n/config";
 import { formatDuration, formatPriceFrom, hasPublishedPrice } from "@/lib/format";
 import { SectionHeading } from "@/components/ui/layout";
 import { CheckIcon, CloseIcon, ClockIcon, InfoIcon, MapPinIcon, UsersIcon } from "@/components/ui/icons";
@@ -9,29 +11,27 @@ import { cn } from "@/lib/utils";
  *
  * This is a FULL-WIDTH, three-up strip (grid-cols-3 from `sm` up). Do not drop
  * it into a narrow grid column — at ~200px per cell the values wrap to pieces.
- * On the tour detail page it renders in the main column below the gallery and is
- * hidden from `lg` up, where the sticky aside shows the same facts.
- *
- * The destination row shows a COUNT, not the destination list: the full list is
- * already rendered as chips under the tour summary, and repeating it here made
- * the cell seven lines tall.
  */
-export function TourKeyFacts({ tour }: { tour: Tour }) {
+export function TourKeyFacts({ tour, locale }: { tour: Tour; locale: Locale }) {
+  const m = getMessages(locale);
   const facts = [
     {
       icon: ClockIcon,
-      label: "Thời lượng",
-      value: formatDuration(tour.duration),
+      label: m.common.duration,
+      value: formatDuration(tour.duration, locale),
     },
     {
       icon: MapPinIcon,
-      label: "Số điểm đến",
-      value: tour.destinationIds.length > 0 ? `${tour.destinationIds.length} điểm` : "Đang cập nhật",
+      label: m.common.destinationsCount,
+      value:
+        tour.destinationIds.length > 0
+          ? format(m.tour.destinationsCountValue, { count: tour.destinationIds.length })
+          : m.common.updating,
     },
     {
       icon: UsersIcon,
-      label: "Khởi hành",
-      value: tour.departurePoints.join(", ") || "Liên hệ để xác nhận",
+      label: m.common.departure,
+      value: tour.departurePoints.join(", ") || m.common.departureFallback,
     },
   ];
 
@@ -56,13 +56,14 @@ export function TourKeyFacts({ tour }: { tour: Tour }) {
 }
 
 /** Price + booking-condition block. */
-export function TourPriceBlock({ tour }: { tour: Tour }) {
+export function TourPriceBlock({ tour, locale }: { tour: Tour; locale: Locale }) {
+  const m = getMessages(locale);
   const hasPrice = hasPublishedPrice(tour.priceFrom);
 
   return (
     <div className="rounded-2xl border border-border bg-surface p-5 shadow-soft">
       <p className="text-[0.6875rem] font-bold uppercase tracking-wider text-foreground-subtle">
-        {hasPrice ? "Giá từ" : "Giá tour"}
+        {hasPrice ? m.common.priceLabelFrom : m.common.priceLabelContact}
       </p>
       <p
         className={cn(
@@ -70,35 +71,33 @@ export function TourPriceBlock({ tour }: { tour: Tour }) {
           hasPrice ? "text-display-sm" : "text-xl text-primary-strong",
         )}
       >
-        {formatPriceFrom(tour.priceFrom)}
+        {formatPriceFrom(tour.priceFrom, locale)}
       </p>
       <p className="mt-2 text-xs leading-relaxed text-foreground-muted">
-        {tour.priceNote ??
-          (hasPrice
-            ? "Giá có thể thay đổi theo thời điểm và số lượng khách."
-            : "SEA TRIP báo giá theo số khách, thời điểm khởi hành và hạng dịch vụ bạn chọn.")}
+        {tour.priceNote ?? (hasPrice ? m.common.priceNoteKnown : m.common.priceNoteUnknown)}
       </p>
       <p className="mt-3 flex items-start gap-1.5 text-xs text-foreground-subtle">
         <InfoIcon className="mt-px h-3.5 w-3.5 shrink-0" />
-        Website chỉ tiếp nhận yêu cầu tư vấn, chưa hỗ trợ đặt và thanh toán trực tuyến.
+        {m.common.noOnlineBooking}
       </p>
     </div>
   );
 }
 
 /** Included / excluded services. */
-export function TourServices({ tour }: { tour: Tour }) {
+export function TourServices({ tour, locale }: { tour: Tour; locale: Locale }) {
+  const m = getMessages(locale);
   if (tour.included.length === 0 && tour.excluded.length === 0) return null;
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       {tour.included.length > 0 ? (
         <div className="rounded-2xl border border-border bg-surface p-5">
           <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success-soft">
               <CheckIcon className="h-3.5 w-3.5 text-success" />
             </span>
-            Dịch vụ bao gồm
+            {m.tour.includedTitle}
           </h3>
           <ul className="mt-4 flex flex-col gap-2.5">
             {tour.included.map((item) => (
@@ -117,7 +116,7 @@ export function TourServices({ tour }: { tour: Tour }) {
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-sunken">
               <CloseIcon className="h-3.5 w-3.5 text-foreground-subtle" />
             </span>
-            Không bao gồm
+            {m.tour.excludedTitle}
           </h3>
           <ul className="mt-4 flex flex-col gap-2.5">
             {tour.excluded.map((item) => (
@@ -134,12 +133,13 @@ export function TourServices({ tour }: { tour: Tour }) {
 }
 
 /** Practical notes ("Lưu ý"). */
-export function TourNotes({ tour }: { tour: Tour }) {
+export function TourNotes({ tour, locale }: { tour: Tour; locale: Locale }) {
+  const m = getMessages(locale);
   if (tour.notes.length === 0) return null;
 
   return (
     <div className="rounded-2xl border border-amber-200 bg-warning-soft p-5 sm:p-6">
-      <h3 className="text-base font-bold text-foreground">Lưu ý trước khi đi</h3>
+      <h3 className="text-base font-bold text-foreground">{m.tour.notesTitle}</h3>
       <ul className="mt-4 flex flex-col gap-2.5">
         {tour.notes.map((note) => (
           <li key={note} className="flex gap-2.5 text-[0.9375rem] leading-relaxed text-foreground">
@@ -157,13 +157,14 @@ export function TourNotes({ tour }: { tour: Tour }) {
  * Rendered only when the owner has supplied verified wording — an empty array
  * hides the block entirely rather than showing invented policy text.
  */
-export function TourPolicies({ tour }: { tour: Tour }) {
+export function TourPolicies({ tour, locale }: { tour: Tour; locale: Locale }) {
+  const m = getMessages(locale);
   if (tour.policies.length === 0) return null;
 
   return (
     <section aria-labelledby="tour-policies" className="flex flex-col gap-4">
-      <h2 id="tour-policies" className="text-display-sm font-extrabold text-foreground">
-        Điều kiện & chính sách
+      <h2 id="tour-policies" className="text-display-sm font-display font-semibold text-foreground">
+        {m.tour.policiesTitle}
       </h2>
       <ul className="flex flex-col gap-2.5">
         {tour.policies.map((policy) => (
@@ -183,18 +184,19 @@ export function TourPolicies({ tour }: { tour: Tour }) {
  * looked sparse with only a handful of short lines; numbering gives the eye a
  * path and the hairline rules keep two columns from reading as one long list.
  */
-export function TourHighlights({ tour }: { tour: Tour }) {
+export function TourHighlights({ tour, locale }: { tour: Tour; locale: Locale }) {
+  const m = getMessages(locale);
   if (tour.highlights.length === 0) return null;
 
   return (
     <section aria-labelledby="tour-highlights" className="flex flex-col gap-6">
       <SectionHeading
-        eyebrow="Vì sao nên chọn chương trình này"
-        title={<span id="tour-highlights">Điểm nổi bật</span>}
+        eyebrow={m.tour.highlightsEyebrow}
+        title={<span id="tour-highlights">{m.tour.highlightsTitle}</span>}
         as="h2"
       />
 
-      <ol className="grid gap-x-10 sm:grid-cols-2">
+      <ol className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
         {tour.highlights.map((highlight, index) => (
           <li
             key={highlight}

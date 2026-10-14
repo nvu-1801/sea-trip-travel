@@ -5,11 +5,29 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { primaryNav } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
+import type { Locale } from "@/i18n/config";
+import { localizePath, stripLocaleFromPath } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { ButtonLink } from "@/components/ui/button";
 import { ChevronDownIcon, CloseIcon, MailIcon, MenuIcon, PhoneIcon } from "@/components/ui/icons";
 import { setNavOpen } from "./header-state";
+import { LocaleSwitcher } from "./locale-switcher";
 import { Logo } from "./logo";
+import type { NavLabels } from "./desktop-nav";
+
+export type MobileNavUi = {
+  openMenu: string;
+  closeMenu: string;
+  menuLabel: string;
+  primaryNavAria: string;
+  requestConsultationFree: string;
+  hotline: string;
+  email: string;
+  langLabel: string;
+  langSwitchTo: string;
+  langCurrent: string;
+  leaveWarning: string;
+};
 
 /**
  * Mobile navigation drawer.
@@ -18,12 +36,20 @@ import { Logo } from "./logo";
  * real focus trap, inert background content, Escape-to-close and a backdrop
  * without shipping a focus-trap library.
  *
- * The drawer slides/fades in via CSS (see globals.css) and the sub-menus animate
- * with a `grid-template-rows` transition. Collapsed sub-menus are marked `inert`
- * so their links are neither focusable nor announced.
+ * The language switch sits at the top of the drawer, where it is always reachable
+ * without overflowing the 360–390px bar.
  */
-export function MobileNav() {
+export function MobileNav({
+  locale,
+  labels,
+  ui,
+}: {
+  locale: Locale;
+  labels: NavLabels;
+  ui: MobileNavUi;
+}) {
   const pathname = usePathname();
+  const currentPath = stripLocaleFromPath(pathname ?? "/").path;
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -62,8 +88,6 @@ export function MobileNav() {
     }
   };
 
-  // Close the drawer when a link inside it is followed. Doing this on click
-  // rather than in a `pathname` effect avoids a cascading render on navigation.
   const close = () => {
     changeOpen(false);
     setExpanded(null);
@@ -75,9 +99,9 @@ export function MobileNav() {
         type="button"
         onClick={() => changeOpen(true)}
         data-focus-ring=""
-        aria-label="Mở menu"
+        aria-label={ui.openMenu}
         aria-haspopup="dialog"
-        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-foreground transition-colors hover:border-primary hover:text-primary-strong lg:hidden"
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-foreground transition-colors hover:border-primary hover:text-primary-strong xl:hidden"
       >
         <MenuIcon className="h-5 w-5" />
       </button>
@@ -85,36 +109,46 @@ export function MobileNav() {
       <dialog
         ref={dialogRef}
         onClose={() => changeOpen(false)}
-        aria-label="Menu"
+        aria-label={ui.menuLabel}
         className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-brand-900/45 backdrop:backdrop-blur-sm"
       >
         <div className="stt-drawer-panel flex h-dvh w-full flex-col bg-background">
           <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-3.5">
             <Logo size="sm" />
-            <button
-              type="button"
-              onClick={close}
-              data-focus-ring=""
-              aria-label="Đóng menu"
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-foreground transition-colors hover:border-primary hover:text-primary-strong"
-            >
-              <CloseIcon className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <LocaleSwitcher
+                locale={locale}
+                label={ui.langLabel}
+                switchToLabel={ui.langSwitchTo}
+                currentLabel={ui.langCurrent}
+                leaveWarning={ui.leaveWarning}
+              />
+              <button
+                type="button"
+                onClick={close}
+                data-focus-ring=""
+                aria-label={ui.closeMenu}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-foreground transition-colors hover:border-primary hover:text-primary-strong"
+              >
+                <CloseIcon className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
-          <nav aria-label="Điều hướng chính (di động)" className="flex-1 overflow-y-auto px-3 py-4">
+          <nav aria-label={ui.primaryNavAria} className="flex-1 overflow-y-auto px-3 py-4">
             <ul className="flex flex-col gap-1">
               {primaryNav.map((item) => {
+                const label = labels.nav[item.labelKey];
                 const isActive =
                   item.href === "/"
-                    ? pathname === "/"
-                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    ? currentPath === "/"
+                    : currentPath === item.href || currentPath.startsWith(`${item.href}/`);
 
                 if (!item.children || item.children.length === 0) {
                   return (
                     <li key={item.href}>
                       <Link
-                        href={item.href}
+                        href={localizePath(locale, item.href)}
                         onClick={close}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
@@ -124,14 +158,14 @@ export function MobileNav() {
                             : "text-foreground hover:bg-surface-muted",
                         )}
                       >
-                        {item.label}
+                        {label}
                       </Link>
                     </li>
                   );
                 }
 
-                const isExpanded = expanded === item.label;
-                const panelId = `mobile-panel-${item.label.replace(/\s+/g, "-")}`;
+                const isExpanded = expanded === item.labelKey;
+                const panelId = `mobile-panel-${item.labelKey}`;
 
                 return (
                   <li key={item.href}>
@@ -139,7 +173,7 @@ export function MobileNav() {
                       type="button"
                       aria-expanded={isExpanded}
                       aria-controls={panelId}
-                      onClick={() => setExpanded(isExpanded ? null : item.label)}
+                      onClick={() => setExpanded(isExpanded ? null : item.labelKey)}
                       data-focus-ring=""
                       className={cn(
                         "flex w-full items-center justify-between gap-2 rounded-lg px-4 py-3.5 text-left text-base font-semibold whitespace-nowrap transition-colors",
@@ -148,7 +182,7 @@ export function MobileNav() {
                           : "text-foreground hover:bg-surface-muted",
                       )}
                     >
-                      {item.label}
+                      {label}
                       <ChevronDownIcon
                         className={cn(
                           "h-5 w-5 shrink-0 transition-transform duration-300 ease-out",
@@ -157,8 +191,6 @@ export function MobileNav() {
                       />
                     </button>
 
-                    {/* Animated height; `inert` keeps collapsed links out of the
-                        tab order and away from screen readers. */}
                     <div
                       id={panelId}
                       inert={!isExpanded}
@@ -170,27 +202,27 @@ export function MobileNav() {
                       <div className="overflow-hidden">
                         <div className="mb-2 mt-1 pl-2">
                           <Link
-                            href={item.href}
+                            href={localizePath(locale, item.href)}
                             onClick={close}
                             className="block rounded-lg px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-primary-strong transition-colors hover:bg-primary-soft"
                           >
-                            Tất cả {item.label}
+                            {labels.allOf.replace("{label}", label)}
                           </Link>
                           <ul className="mt-0.5 border-l border-border pl-2">
                             {item.children.map((child) => (
                               <li key={child.href}>
                                 <Link
-                                  href={child.href}
+                                  href={localizePath(locale, child.href)}
                                   onClick={close}
-                                  aria-current={pathname === child.href ? "page" : undefined}
+                                  aria-current={currentPath === child.href ? "page" : undefined}
                                   className={cn(
                                     "block rounded-lg px-4 py-2.5 text-[0.9375rem] whitespace-nowrap transition-colors",
-                                    pathname === child.href
+                                    currentPath === child.href
                                       ? "font-semibold text-primary-strong"
                                       : "text-foreground-muted hover:bg-surface-muted hover:text-foreground",
                                   )}
                                 >
-                                  {child.label}
+                                  {labels.nav[child.labelKey]}
                                 </Link>
                               </li>
                             ))}
@@ -205,13 +237,18 @@ export function MobileNav() {
           </nav>
 
           <div className="border-t border-border bg-surface px-5 py-4">
-            <ButtonLink href="/lien-he" size="lg" sheen className="w-full">
-              Nhận tư vấn miễn phí
+            <ButtonLink
+              href={localizePath(locale, "/lien-he")}
+              size="lg"
+              sheen
+              className="w-full"
+            >
+              {ui.requestConsultationFree}
             </ButtonLink>
             <dl className="mt-4 grid gap-2 text-sm">
               <div className="flex items-center gap-2">
                 <PhoneIcon className="h-4 w-4 shrink-0 text-primary-strong" />
-                <dt className="sr-only">Hotline</dt>
+                <dt className="sr-only">{ui.hotline}</dt>
                 <dd>
                   <a
                     href={siteConfig.contact.hotlineHref}
@@ -223,7 +260,7 @@ export function MobileNav() {
               </div>
               <div className="flex items-center gap-2">
                 <MailIcon className="h-4 w-4 shrink-0 text-primary-strong" />
-                <dt className="sr-only">Email</dt>
+                <dt className="sr-only">{ui.email}</dt>
                 <dd>
                   <a
                     href={`mailto:${siteConfig.contact.email}`}

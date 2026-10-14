@@ -11,6 +11,26 @@ export const contentStatusSchema = z.enum(["demo", "verified"]);
 export type ContentStatus = z.infer<typeof contentStatusSchema>;
 
 /**
+ * Content locales. `vi` is the source/default language; `en` is a translation.
+ * The domain owns this union so Zod schemas and the i18n layer cannot drift.
+ */
+export const CONTENT_LOCALES = ["vi", "en"] as const;
+export const contentLocaleSchema = z.enum(CONTENT_LOCALES);
+export type ContentLocale = z.infer<typeof contentLocaleSchema>;
+
+/**
+ * How complete a translation is.
+ * - `missing`  — no translation at all; the page must fall back to `vi`.
+ * - `draft`    — machine/agent-written; readable in dev/preview, never indexed.
+ * - `reviewed` — approved by the site owner; the only status safe to index.
+ *
+ * This is deliberately separate from `contentStatus` (demo/verified): a page can
+ * have verified Vietnamese source and a draft English translation.
+ */
+export const translationStatusSchema = z.enum(["missing", "draft", "reviewed"]);
+export type TranslationStatus = z.infer<typeof translationStatusSchema>;
+
+/**
  * An image, or an explicit absence of one.
  * When `src` is omitted the UI renders the branded placeholder instead of
  * inventing a photo. Filling in `src` later is the only change required.

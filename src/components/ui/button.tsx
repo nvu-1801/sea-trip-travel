@@ -15,7 +15,7 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "inverse";
 export type ButtonSize = "sm" | "md" | "lg";
 
 const base =
-  "relative isolate inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease-out disabled:pointer-events-none disabled:opacity-60";
+  "relative isolate inline-flex items-center justify-center gap-2 text-center font-semibold transition-[background-color,color,border-color,box-shadow,transform] duration-200 ease-out disabled:pointer-events-none disabled:opacity-60 sm:whitespace-nowrap";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
@@ -26,10 +26,20 @@ const variants: Record<ButtonVariant, string> = {
   inverse: "bg-white text-primary-strong hover:bg-brand-50 shadow-soft",
 };
 
+/**
+ * `min-h` + vertical padding rather than a fixed height: a label that wraps on a
+ * narrow screen grows the button instead of being clipped. The padding is sized
+ * so a single-line label lands on exactly the intended height
+ * (sm 36px, md 44px, lg 52px).
+ *
+ * There is deliberately no `whitespace-nowrap` at the base — see `base` above.
+ * A nowrap label has a large `min-content` width, and inside a grid or flex item
+ * that is enough to push the whole layout wider than a 360px phone.
+ */
 const sizes: Record<ButtonSize, string> = {
-  sm: "h-9 rounded-full px-4 text-sm",
-  md: "h-11 rounded-full px-5 text-[0.9375rem]",
-  lg: "h-13 rounded-full px-7 text-base",
+  sm: "min-h-9 rounded-full px-4 py-2 text-sm",
+  md: "min-h-11 rounded-full px-5 py-2.5 text-[0.9375rem]",
+  lg: "min-h-13 rounded-full px-7 py-3.5 text-base",
 };
 
 /** Light sweep that crosses the button once on hover. */

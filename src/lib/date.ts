@@ -108,10 +108,6 @@ export function sameDay(a: DateParts | null, b: DateParts | null): boolean {
   return Boolean(a && b && a.y === b.y && a.m === b.m && a.d === b.d);
 }
 
-export function isWeekend(parts: DateParts): boolean {
-  return toDate(parts).getDay() === 0 || toDate(parts).getDay() === 6;
-}
-
 export type MonthCell = {
   iso: string;
   parts: DateParts;

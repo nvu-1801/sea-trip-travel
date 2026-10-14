@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { contentLocaleSchema } from "./common";
 
 /**
  * The consultation-request ("lead") contract.
@@ -131,6 +132,12 @@ export const leadInputSchema = z.object({
   ),
   /** Page the request was sent from, for the sales email. */
   sourcePage: optionalText(LEAD_LIMITS.sourcePage),
+  /**
+   * Language the visitor filled the form in. Validated server-side and stored
+   * with the lead so sales knows which language to reply in, and so server-side
+   * copy (where any remains) can be rendered in the right language.
+   */
+  locale: contentLocaleSchema.default("vi"),
   utm: utmSchema,
 });
 
@@ -149,6 +156,8 @@ export const contactLeadSchema = z.object({
   partySize: z.number().int().positive().optional(),
   message: z.string().optional(),
   sourcePage: z.string().optional(),
+  /** Locale the visitor used. Drives the "customer language" row in the sales email. */
+  locale: contentLocaleSchema.default("vi"),
   utm: utmSchema,
 });
 

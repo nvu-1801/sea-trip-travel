@@ -1,10 +1,22 @@
 /**
  * Site-wide configuration and business identity.
  *
- * NOTE: Every value marked `TODO(owner)` is a placeholder that the site owner
- * must supply before launch. They are intentionally obvious so nothing invented
- * is published by accident. See docs/CONTENT-TODO.md.
+ * Values marked `TODO(owner)` are still placeholders and must be supplied before
+ * launch. See docs/CONTENT-TODO.md — it tracks what is done and what is not.
  */
+
+/** Structured address, so JSON-LD can emit proper PostalAddress parts. */
+const addressParts = {
+  street: "42-44 Chế Lan Viên",
+  locality: "Phường Quy Nhơn Nam",
+  region: "Tỉnh Gia Lai",
+  country: "Việt Nam",
+} as const;
+
+/** One source of truth: the display string is derived from the parts. */
+const address = [addressParts.street, addressParts.locality, addressParts.region, addressParts.country].join(
+  ", ",
+);
 
 export const siteConfig = {
   name: "SEA TRIP TRAVEL",
@@ -12,37 +24,33 @@ export const siteConfig = {
   /** Brand message, taken verbatim from the logo lockup. */
   message: "Chọn lọc điểm đến – Nâng tầm trải nghiệm",
   description:
-    "SEA TRIP TRAVEL chọn lọc điểm đến và thiết kế trải nghiệm du lịch trong nước, tập trung vào Quy Nhơn – Phú Yên và các tuyến tour Miền Bắc, Miền Trung, Miền Nam, Tây Nguyên.",
+    "SEA TRIP TRAVEL chọn lọc điểm đến và thiết kế trải nghiệm du lịch trong nước, tập trung vào Quy Nhơn – Phú Yên và các tuyến Miền Bắc, Miền Trung, Miền Nam, Tây Nguyên.",
+  /** TODO(owner): domain thật, khi đã trỏ DNS. Dùng cho canonical, OG và link trong email. */
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   locale: "vi_VN",
   lang: "vi",
   contact: {
-    /** TODO(owner): hotline chính thức. Placeholder bên dưới. */
-    hotline: "0000 000 000",
-    hotlineHref: "tel:+84000000000",
-    /** TODO(owner): email nhận tư vấn (sales inbox on the verified mail domain). */
-    email: "hello@example.com",
-    /** TODO(owner): địa chỉ văn phòng. */
-    address: "Địa chỉ văn phòng sẽ được cập nhật",
-    /** TODO(owner): giờ làm việc. */
+    /** Display form. Vietnamese convention groups the last 3 digits. */
+    hotline: "0969 297 064",
+    /** Dialable form — must be the same number, digits only. */
+    hotlineHref: "tel:+84969297064",
+    email: "seatriptravel@gmail.com",
+    address,
+    addressParts,
+    /** TODO(owner): xác nhận giờ làm việc thực tế. */
     workingHours: "Thứ 2 – Thứ 7, 08:00 – 18:00",
   },
   social: {
+    facebook: "https://www.facebook.com/share/1C64q28Cz5/?mibextid=wwXIfr",
     /**
-     * TODO(owner): điền kênh chính thức. Để trống thì nút tương ứng sẽ dùng
-     * đường dẫn dự phòng và cần được cập nhật trước khi chạy quảng cáo
-     * (xem docs/CONTENT-TODO.md nhóm 🟠).
+     * Zalo OA hoặc `https://zalo.me/<số điện thoại>`. Bỏ trống thì nút Zalo tự
+     * dùng `https://zalo.me/` + số hotline ở trên — với hotline thật thì link đó
+     * đã dùng được. Điền link OA riêng nếu có.
      */
-    facebook: "",
-    /** Zalo OA hoặc link `https://zalo.me/<số điện thoại>`. */
     zalo: "",
+    /** TODO(owner): điền nếu có kênh chính thức; để trống thì nút sẽ bị ẩn. */
     instagram: "",
     tiktok: "",
     youtube: "",
   },
-} as const;
-
-export const isPlaceholderContact = {
-  hotline: siteConfig.contact.hotline.includes("0000"),
-  email: siteConfig.contact.email.includes("example.com"),
 } as const;

@@ -162,3 +162,35 @@ Chi tiết luồng lead: `docs/lead-flow.md`.
   mặc định đã chạy trên Node runtime.
 - **`dynamicParams` cũng không dùng được.** Slug không tồn tại sẽ render ở
   request time rồi rơi vào `notFound()`.
+
+## 7. Đa ngôn ngữ (vi / en)
+
+Route nằm dưới `app/[locale]/…`; `locale` là **root param**, nên mọi Server
+Component và hàm server đọc được ngôn ngữ qua `next/root-params` mà không cần
+truyền prop, và locale tự động nằm trong cache key của `'use cache'`.
+
+```text
+proxy.ts            /vi/… → 308 về /…        (URL tiếng Việt chuẩn)
+                    /en/… → đi thẳng
+                    còn lại → rewrite nội bộ sang /vi/…
+i18n/               config (locales, nhãn, Intl tag), routing (localizePath,
+                    stripLocaleFromPath, switchLocalePath), messages (catalog +
+                    format/plural), server (getLocale, getTranslations), params
+messages/{vi,en}.json   chuỗi giao diện (en kiểm khớp key với vi bằng TS)
+content/locales/en/*.ts bản dịch nội dung, khoá theo id bản ghi + translationStatus
+lib/data/localize.ts    resolve bản ghi theo locale + translationStatus
+```
+
+Bất biến:
+
+1. **Tiếng Việt không đổi URL.** `/vi/…` bị chuyển hướng 308; mọi `href`, canonical
+   và hreflang đi qua duy nhất `localizePath()`.
+2. **Dữ liệu dùng chung không nhân bản.** slug, id, quan hệ, giá, thời lượng,
+   `src` ảnh chỉ tồn tại ở bản ghi nguồn; file dịch chỉ chứa trường ngôn ngữ.
+3. **Chỉ nội dung `reviewed` mới được index.** `draft`/`missing` → banner + noindex
+   + không vào sitemap/hreflang; `x-default` luôn trỏ về tiếng Việt.
+4. **Catalog không xuống client.** Client Component nhận chuỗi qua props
+   (`LeadForm`, `DatePicker`, `LocaleSwitcher`, `TourExplorer`).
+5. **i18n first-party.** `next-intl` chưa hỗ trợ `cacheComponents`
+   (`amannn/next-intl#1493`), nên không thêm dependency ngoài.
+

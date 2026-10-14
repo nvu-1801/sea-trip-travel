@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/navigation";
-import { getChildCategories, getCategories, getCategoryTourCount } from "@/lib/data/categories";
+import { getCategories, getChildCategories, getCategoryTourCount } from "@/lib/data/categories";
 import { getToursByCategoryId } from "@/lib/data/tours";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon, MapPinIcon } from "@/components/ui/icons";
 import { AssetImage } from "@/components/ui/asset-image";
+import type { Locale } from "@/i18n/config";
+import { format, getMessages, plural } from "@/i18n/messages";
+import { localizePath } from "@/i18n/routing";
 
 /**
  * Domestic tours by region.
@@ -15,23 +18,24 @@ import { AssetImage } from "@/components/ui/asset-image";
  * a text column breaks up the rhythm of the page and reads faster than a fourth
  * row of identical cards.
  */
-export function RegionsSection() {
-  const domestic = getCategories().find((category) => category.path === ROUTES.domestic);
+export function RegionsSection({ locale }: { locale: Locale }) {
+  const m = getMessages(locale);
+  const domestic = getCategories(locale).find((category) => category.path === ROUTES.domestic);
   if (!domestic) return null;
 
-  const regions = getChildCategories(domestic.id);
+  const regions = getChildCategories(domestic.id, locale);
 
   return (
     <Section tone="default" spacing="loose">
       <Container>
         <Reveal>
           <SectionHeading
-            eyebrow="Tour trong nước"
-            title="Chọn theo vùng miền"
-            description="Bốn vùng với đặc trưng khác nhau về khí hậu, cảnh quan và nhịp hành trình."
+            eyebrow={m.home.regions.eyebrow}
+            title={m.home.regions.title}
+            description={m.home.regions.description}
             action={
-              <ButtonLink href={ROUTES.domestic} variant="secondary">
-                Xem tất cả
+              <ButtonLink href={localizePath(locale, ROUTES.domestic)} variant="secondary">
+                {m.home.regions.cta}
                 <ArrowRightIcon className="h-4 w-4" />
               </ButtonLink>
             }
@@ -40,16 +44,16 @@ export function RegionsSection() {
 
         <ul className="mt-10 flex flex-col gap-5">
           {regions.map((region) => {
-            const regionTours = getToursByCategoryId(region.id).slice(0, 3);
+            const regionTours = getToursByCategoryId(region.id, locale).slice(0, 3);
             return (
               <Reveal as="li" key={region.id}>
                 <Link
-                  href={region.path}
-                  className="group grid gap-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-soft transition-[box-shadow,transform,border-color] duration-300 ease-out hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card sm:grid-cols-[minmax(0,15rem)_1fr]"
+                  href={localizePath(locale, region.path)}
+                  className="group grid grid-cols-1 gap-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-soft transition-[box-shadow,transform,border-color] duration-300 ease-out hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card sm:grid-cols-[minmax(0,15rem)_1fr]"
                 >
                   <AssetImage
                     image={region.image}
-                    altFallback={`Điểm đến ${region.name}`}
+                    altFallback={format(m.home.regions.regionAlt, { name: region.name })}
                     sizes="(max-width: 640px) 100vw, 240px"
                     className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-44"
                   />
@@ -61,7 +65,7 @@ export function RegionsSection() {
                       </h3>
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary-strong">
                         <MapPinIcon className="h-3.5 w-3.5" />
-                        {getCategoryTourCount(region.id)} tour
+                        {plural(m.common.tourCount, getCategoryTourCount(region.id))}
                       </span>
                     </div>
 
@@ -83,7 +87,7 @@ export function RegionsSection() {
                     ) : null}
 
                     <span className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-strong">
-                      Xem tour {region.name.replace("Tour ", "")}
+                      {format(m.home.regions.viewRegion, { name: region.name })}
                       <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                     </span>
                   </div>

@@ -34,6 +34,7 @@ function makeLead(overrides: Partial<ContactLead> = {}): ContactLead {
     fullName: "Nguyễn Văn A",
     phone: "0987654321",
     email: "khach@example.com",
+    locale: "vi",
     ...overrides,
   };
 }
@@ -190,5 +191,20 @@ describe("lead notification email", () => {
     assert.ok(!subject.includes("0987654321"));
     assert.ok(!subject.includes("khach@example.com"));
     assert.ok(!subject.includes("Nguyễn"));
+  });
+
+  it("tells sales which language the customer used, and never translates their words", () => {
+    const english = buildLeadNotificationText({
+      lead: makeLead({ locale: "en", message: "We are a family of four" }),
+    });
+    assert.ok(english.includes("Ngôn ngữ khách sử dụng: English"));
+    // The customer's own words are passed through verbatim.
+    assert.ok(english.includes("We are a family of four"));
+
+    const vietnamese = buildLeadNotificationText({ lead: makeLead({ locale: "vi" }) });
+    assert.ok(vietnamese.includes("Ngôn ngữ khách sử dụng: Tiếng Việt"));
+
+    const html = buildLeadNotificationHtml({ lead: makeLead({ locale: "en" }) });
+    assert.ok(html.includes("Ngôn ngữ khách sử dụng"));
   });
 });

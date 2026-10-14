@@ -13,6 +13,10 @@
 # testing
 /coverage
 
+# generated verification artefacts (regenerate with 
+pm run verify:ui)
+/verify-screenshots
+
 # next.js
 /.next/
 /out/

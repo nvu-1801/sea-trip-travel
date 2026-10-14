@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
+import { localeMeta, type Locale } from "@/i18n/config";
+import { localizePath } from "@/i18n/routing";
 
 /** Join the configured origin with a site-relative path. */
 export function absoluteUrl(path: string): string {
@@ -8,41 +10,53 @@ export function absoluteUrl(path: string): string {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/** Strip diacritics-free path segments are already ASCII; this is for safety. */
-export function canonicalFor(path: string): string {
-  return absoluteUrl(path);
-}
-
 type BuildMetadataInput = {
   title: string;
   description: string;
-  /** Site-relative canonical path. */
+  /** Site-relative canonical path, in its Vietnamese form. */
   path: string;
+  /** Locale this metadata is rendered for. */
+  locale: Locale;
   /** Site-relative OG image. Defaults to the generated brand card. */
   image?: string;
   type?: "website" | "article";
   publishedTime?: string;
   noIndex?: boolean;
   keywords?: readonly string[];
+  /**
+   * Emit `vi` / `en` / `x-default` hreflang alternates. Set `false` for pages
+   * that have no eligible counterpart (404s, single-language pages).
+   */
+  hreflang?: boolean;
 };
 
 export function buildMetadata({
   title,
   description,
   path,
+  locale,
   image = "/opengraph-image.png",
   type = "website",
   publishedTime,
   noIndex = false,
   keywords,
+  hreflang = true,
 }: BuildMetadataInput): Metadata {
-  const url = absoluteUrl(path);
+  const url = absoluteUrl(localizePath(locale, path));
+
+  const languages = hreflang
+    ? {
+        vi: absoluteUrl(localizePath("vi", path)),
+        en: absoluteUrl(localizePath("en", path)),
+        "x-default": absoluteUrl(localizePath("vi", path)),
+      }
+    : undefined;
 
   return {
     title,
     description,
     keywords: keywords ? [...keywords] : undefined,
-    alternates: { canonical: url },
+    alternates: { canonical: url, ...(languages ? { languages } : {}) },
     robots: noIndex
       ? { index: false, follow: false }
       : { index: true, follow: true, "max-image-preview": "large" },
@@ -52,7 +66,7 @@ export function buildMetadata({
       title,
       description,
       siteName: siteConfig.name,
-      locale: siteConfig.locale,
+      locale: localeMeta[locale].ogLocale,
       images: [{ url: absoluteUrl(image), width: 1200, height: 630, alt: title }],
       ...(publishedTime ? { publishedTime } : {}),
     },

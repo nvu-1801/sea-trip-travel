@@ -1,0 +1,496 @@
+{
+  "site": {
+    "description": "SEA TRIP TRAVEL chọn lọc điểm đến và thiết kế trải nghiệm du lịch trong nước, tập trung vào Quy Nhơn – Phú Yên và các tuyến Miền Bắc, Miền Trung, Miền Nam, Tây Nguyên.",
+    "tagline": "Chọn lọc điểm đến – Nâng tầm trải nghiệm",
+    "workingHours": "Thứ 2 – Thứ 7, 08:00 – 18:00"
+  },
+  "common": {
+    "home": "Trang chủ",
+    "skipToContent": "Bỏ qua điều hướng, tới nội dung chính",
+    "mainContentLabel": "Nội dung chính",
+    "viewDetails": "Xem chi tiết",
+    "viewNow": "Xem ngay",
+    "explore": "Khám phá",
+    "all": "Tất cả",
+    "allOf": "Tất cả {label}",
+    "clearFilters": "Xoá lọc",
+    "clearFilterShort": "Xoá bộ lọc",
+    "sendConsultRequest": "Gửi yêu cầu tư vấn",
+    "requestConsultation": "Nhận tư vấn",
+    "requestConsultationFree": "Nhận tư vấn miễn phí",
+    "callHotline": "Gọi hotline",
+    "callHotlineAria": "Gọi hotline {phone}",
+    "hotline": "Hotline",
+    "email": "Email",
+    "address": "Địa chỉ",
+    "contactForPricing": "Liên hệ tư vấn",
+    "priceFrom": "Từ {price}",
+    "priceReference": "Giá tham khảo",
+    "priceLabelContact": "Giá tour",
+    "priceLabelFrom": "Giá từ",
+    "priceNoteUnknown": "SEA TRIP báo giá theo số khách, thời điểm khởi hành và hạng dịch vụ bạn chọn.",
+    "priceNoteKnown": "Giá có thể thay đổi theo thời điểm và số lượng khách.",
+    "noOnlineBooking": "Website chỉ tiếp nhận yêu cầu tư vấn, chưa hỗ trợ đặt và thanh toán trực tuyến.",
+    "notAvailableBooking": "Chưa hỗ trợ đặt tour trực tuyến",
+    "duration": "Thời lượng",
+    "departure": "Khởi hành",
+    "destinationsCount": "Số điểm đến",
+    "departurePrefix": "Khởi hành: {place}",
+    "departureFallback": "Liên hệ để xác nhận",
+    "updating": "Đang cập nhật",
+    "tourCount": { "one": "{count} tour", "other": "{count} tour" },
+    "dayUnit": { "one": "{count} ngày", "other": "{count} ngày" },
+    "nightUnit": { "one": "{count} đêm", "other": "{count} đêm" },
+    "readMinutes": { "one": "{count} phút đọc", "other": "{count} phút đọc" },
+    "readMinutesShort": { "one": "{count} phút", "other": "{count} phút" },
+    "breadcrumbAria": "Đường dẫn",
+    "pageNavAria": "Nội dung trang",
+    "imageAlt": "Ảnh minh hoạ",
+    "destinationAlt": "Điểm đến {name}",
+    "backToTop": "Về đầu trang"
+  },
+  "nav": {
+    "home": "Trang chủ",
+    "quyNhonPhuYen": "Tour Quy Nhơn - Phú Yên",
+    "quyNhonOneDay": "Tour Quy Nhơn 1 Ngày",
+    "quyNhonMultiDay": "Tour Quy Nhơn dài Ngày",
+    "domestic": "Tour Trong Nước",
+    "north": "Tour Miền Bắc",
+    "central": "Tour Miền Trung",
+    "south": "Tour Miền Nam",
+    "highlands": "Tour Tây Nguyên",
+    "guides": "Cẩm Nang Du Lịch",
+    "contact": "Liên Hệ",
+    "privacy": "Chính sách bảo mật",
+    "description": {
+      "quyNhonPhuYen": "Tuyến tour trọng tâm của SEA TRIP",
+      "domestic": "Chọn lọc theo từng vùng miền"
+    }
+  },
+  "header": {
+    "primaryNavAria": "Điều hướng chính",
+    "primaryNavMobileAria": "Điều hướng chính (di động)",
+    "menuLabel": "Menu",
+    "openMenu": "Mở menu",
+    "closeMenu": "Đóng menu"
+  },
+  "footer": {
+    "categoriesTitle": "Danh mục tour",
+    "categoriesAria": "Danh mục tour",
+    "infoTitle": "Thông tin",
+    "infoAria": "Liên kết khác",
+    "contactTitle": "Liên hệ",
+    "copyright": "© {year} {name}.",
+    "disclaimer": "Thông tin tour, lịch trình và hình ảnh trên website cần được xác nhận trước khi xuất bản."
+  },
+  "locale": {
+    "label": "Ngôn ngữ",
+    "switchTo": "Chuyển sang {language}",
+    "current": "Ngôn ngữ hiện tại: {language}",
+    "vi": "Tiếng Việt",
+    "en": "English"
+  },
+  "regions": {
+    "quy-nhon-phu-yen": "Quy Nhơn – Phú Yên",
+    "mien-bac": "Miền Bắc",
+    "mien-trung": "Miền Trung",
+    "mien-nam": "Miền Nam",
+    "tay-nguyen": "Tây Nguyên"
+  },
+  "home": {
+    "hero": {
+      "badge": "Du lịch trong nước · Chọn lọc",
+      "titleLine1": "Chọn lọc điểm đến",
+      "titleLine2": "nâng tầm trải nghiệm",
+      "lead": "Đi đúng mùa, ở đúng nơi, và đi với nhịp độ của riêng bạn.",
+      "bodyA": "SEA TRIP TRAVEL thiết kế hành trình trong nước theo cách chậm rãi và kỹ lưỡng, bắt đầu từ tuyến trọng tâm",
+      "bodyB": "— nơi biển xanh gặp đá bazan và những ngọn hải đăng.",
+      "ctaTours": "Xem tour Quy Nhơn – Phú Yên",
+      "ctaConsult": "Nhận tư vấn miễn phí",
+      "assuranceTours": "{count} tour Quy Nhơn – Phú Yên",
+      "assuranceAdvice": "Tư vấn 1:1 theo thời gian của bạn",
+      "assuranceNoBooking": "Chưa hỗ trợ đặt tour trực tuyến",
+      "collageAltMain": "Vịnh biển Quy Nhơn nhìn từ trên cao",
+      "collageAltSecondary": "Ghềnh Đá Đĩa với các cột đá bazan xếp lớp",
+      "focusBadge": "Tuyến trọng tâm",
+      "focusName": "Quy Nhơn – Phú Yên"
+    },
+    "explore": {
+      "eyebrow": "Bắt đầu từ đâu",
+      "title": "Khám phá theo tuyến bạn quan tâm",
+      "description": "Hai tuyến chính của SEA TRIP: Quy Nhơn – Phú Yên và tour trong nước theo vùng miền.",
+      "ctaAll": "Xem tất cả tour trong nước",
+      "destinationsEyebrow": "Điểm đến nổi bật",
+      "destinationsBlurb": "Cụm điểm được nhiều khách chọn nhất trong tuyến trọng tâm. Mỗi điểm đều đã có tour tương ứng để bạn xem lịch trình ngay.",
+      "ctaRoute": "Xem tuyến Quy Nhơn – Phú Yên"
+    },
+    "featured": {
+      "eyebrow": "Tuyến trọng tâm",
+      "title": "Tour Quy Nhơn – Phú Yên nổi bật",
+      "description": "Từ tour trong ngày tới hành trình 5 ngày kết hợp hai tỉnh. Chọn theo thời gian bạn có.",
+      "cta": "Xem toàn bộ tuyến"
+    },
+    "regions": {
+      "eyebrow": "Tour trong nước",
+      "title": "Chọn theo vùng miền",
+      "description": "Bốn vùng với đặc trưng khác nhau về khí hậu, cảnh quan và nhịp hành trình.",
+      "cta": "Xem tất cả",
+      "viewRegion": "Xem tour {name}",
+      "regionAlt": "Điểm đến {name}"
+    },
+    "values": {
+      "eyebrow": "Vì sao chọn SEA TRIP",
+      "title": "Chúng tôi chọn trải nghiệm như thế nào",
+      "description": "Bốn nguyên tắc áp dụng cho mọi hành trình, kể cả tour ngắn một ngày.",
+      "cta": "Nhận tư vấn cho chuyến đi",
+      "imageAlt": "Đường bờ biển miền Trung nhìn từ trên cao",
+      "cardLabel": "Cách SEA TRIP làm việc",
+      "principles": [
+        {
+          "title": "Chọn ít điểm, đi sâu hơn",
+          "body": "Mỗi hành trình tập trung vào một cụm điểm thay vì chạy qua nhiều nơi. Thời gian di chuyển được tính trước để bạn có thời gian thật ở mỗi điểm."
+        },
+        {
+          "title": "Lịch trình nói rõ bao gồm gì",
+          "body": "Mỗi tour đều liệt kê dịch vụ bao gồm và không bao gồm. Giá chưa xác nhận sẽ hiển thị “Liên hệ tư vấn”, không hiển thị số 0."
+        },
+        {
+          "title": "Tư vấn trực tiếp, không ép",
+          "body": "Website chỉ tiếp nhận yêu cầu. Bạn trao đổi với tư vấn viên, xem giá và điều kiện, rồi mới quyết định."
+        },
+        {
+          "title": "Nói thật khi chưa chắc",
+          "body": "Những nội dung cần xác nhận như giá, chính sách huỷ hay thời điểm tàu chạy sẽ được kiểm tra lại trước khi gửi cho bạn."
+        }
+      ]
+    },
+    "guides": {
+      "eyebrow": "Cẩm nang du lịch",
+      "title": "Chuẩn bị trước khi lên đường",
+      "description": "Kinh nghiệm thực tế về thời điểm, di chuyển và những điểm đáng dành thời gian.",
+      "cta": "Xem tất cả cẩm nang",
+      "otherArticles": "Bài viết khác"
+    },
+    "consult": {
+      "title": "Bạn đang nghĩ tới chuyến đi nào?",
+      "description": "Để lại vài thông tin, SEA TRIP sẽ gợi ý điểm đến, thời điểm và phương án phù hợp — hoàn toàn miễn phí."
+    }
+  },
+  "consult": {
+    "eyebrow": "Liên hệ tư vấn",
+    "defaultTitle": "Nhận tư vấn lịch trình phù hợp với bạn",
+    "defaultDescription": "Điền vài thông tin cơ bản, SEA TRIP sẽ liên hệ để gợi ý điểm đến, thời điểm và phương án phù hợp nhất.",
+    "directLabel": "Muốn trao đổi trực tiếp?",
+    "privacyPre": "Thông tin của bạn được xử lý theo",
+    "privacyLink": "chính sách bảo mật",
+    "privacyPost": ".",
+    "assurances": [
+      {
+        "title": "Phản hồi trong giờ làm việc",
+        "body": "Yêu cầu được chuyển thẳng cho bộ phận tư vấn, không qua trung gian."
+      },
+      {
+        "title": "Lịch trình chỉnh theo nhu cầu",
+        "body": "Bạn cho biết thời gian và ngân sách, SEA TRIP gợi ý phương án phù hợp."
+      },
+      {
+        "title": "Không đặt cọc trực tuyến",
+        "body": "Website chỉ tiếp nhận yêu cầu tư vấn. Mọi thoả thuận diễn ra trực tiếp."
+      }
+    ]
+  },
+  "tour": {
+    "notFoundTitle": "Không tìm thấy tour",
+    "notFoundDescription": "Tour bạn tìm không tồn tại hoặc đã được thay đổi.",
+    "categoryFallback": "Tour trong nước",
+    "sections": {
+      "overview": "Tổng quan",
+      "highlights": "Điểm nổi bật",
+      "itinerary": "Lịch trình",
+      "services": "Dịch vụ",
+      "notes": "Lưu ý",
+      "consult": "Tư vấn"
+    },
+    "overviewEyebrow": "Giới thiệu",
+    "overviewTitle": "Tổng quan chương trình",
+    "overviewEmpty": "Phần giới thiệu đang được cập nhật. SEA TRIP sẽ gửi mô tả chi tiết khi liên hệ tư vấn.",
+    "highlightsEyebrow": "Vì sao nên chọn chương trình này",
+    "highlightsTitle": "Điểm nổi bật",
+    "itineraryEyebrow": "Chi tiết",
+    "itineraryTitle": "Lịch trình",
+    "itineraryNote": "Thứ tự và thời gian có thể điều chỉnh theo thời tiết và tình hình thực tế.",
+    "itineraryEmpty": "Lịch trình chi tiết đang được cập nhật. Vui lòng gửi yêu cầu tư vấn để nhận lịch trình đầy đủ qua điện thoại hoặc email.",
+    "servicesEyebrow": "Quyền lợi",
+    "servicesTitle": "Dịch vụ bao gồm và không bao gồm",
+    "includedTitle": "Dịch vụ bao gồm",
+    "excludedTitle": "Không bao gồm",
+    "notesTitle": "Lưu ý trước khi đi",
+    "policiesTitle": "Điều kiện & chính sách",
+    "relatedEyebrow": "Gợi ý thêm",
+    "relatedTitle": "Tour liên quan",
+    "relatedDescription": "Các chương trình cùng tuyến hoặc cùng nhóm thời lượng.",
+    "asideWant": "Bạn muốn nhận lịch trình chi tiết?",
+    "asideDescription": "Gửi yêu cầu để được tư vấn giá, thời điểm và phương án phù hợp.",
+    "asideCta": "Nhận tư vấn tour này",
+    "consultTitle": "Nhận tư vấn cho tour này",
+    "consultDescription": "Để lại thông tin, SEA TRIP sẽ liên hệ tư vấn chi tiết về \"{title}\" — giá hiện tại: {price}.",
+    "dayLabel": "Ngày {index}:",
+    "mealsLabel": "Bữa ăn: {meals}",
+    "destinationsCountValue": "{count} điểm",
+    "galleryAria": "Ảnh tour {title}",
+    "galleryListAria": "Chọn ảnh",
+    "galleryImageLabel": "Ảnh {index}",
+    "galleryAlt": "{title} — ảnh {index}",
+    "galleryPlaceholderAlt": "{title} — ảnh minh hoạ"
+  },
+  "tourCard": {
+    "durationLabel": "{days} ngày"
+  },
+  "tourExplorer": {
+    "filterLabel": "Lọc theo nhu cầu",
+    "sortLabel": "Sắp xếp theo",
+    "sortRecommended": "Đề xuất",
+    "sortDurationAsc": "Thời lượng ngắn trước",
+    "sortDurationDesc": "Thời lượng dài trước",
+    "emptyTitle": "Chưa có tour phù hợp bộ lọc",
+    "emptyBody": "Thử bỏ bộ lọc, hoặc gửi yêu cầu để SEA TRIP thiết kế lịch trình riêng cho bạn."
+  },
+  "category": {
+    "notFoundTitle": "Không tìm thấy danh mục",
+    "notFoundDescription": "Danh mục bạn tìm không tồn tại.",
+    "fallbackParent": "Tour trong nước",
+    "listHeadingSr": "Danh sách tour {name}",
+    "groupEyebrow": "Chọn theo thời lượng",
+    "groupTitle": "Nhóm tour trong danh mục này",
+    "groupDescription": "Mỗi nhóm phù hợp với một quỹ thời gian khác nhau. Chọn nhóm gần với kế hoạch của bạn nhất.",
+    "moreEyebrow": "Xem thêm",
+    "moreTitle": "Các tuyến tour khác",
+    "moreTitleInParent": "Các nhóm khác trong {name}",
+    "groupCount": "Danh mục này gồm {count} nhóm tour.",
+    "consultTitle": "Cần lịch trình riêng cho nhóm của bạn?",
+    "consultDescription": "Cho SEA TRIP biết thời gian và số người, chúng tôi sẽ gợi ý phương án phù hợp với tuyến bạn đang xem."
+  },
+  "guides": {
+    "indexTitle": "Cẩm nang du lịch",
+    "indexDescription": "Kinh nghiệm du lịch Quy Nhơn – Phú Yên và các tuyến trong nước: thời điểm, di chuyển, ăn ở và lịch trình gợi ý.",
+    "heroEyebrow": "Cẩm nang du lịch",
+    "heroTitle": "Chuẩn bị tốt để chuyến đi nhẹ hơn",
+    "heroDescription": "Những bài viết ngắn, tập trung vào việc cần quyết định: đi tháng nào, di chuyển ra sao, ăn gì và sắp lịch trình thế nào cho hợp lý.",
+    "featuredSr": "Bài viết nổi bật",
+    "otherEyebrow": "Bài viết khác",
+    "otherTitle": "Đọc tiếp trước khi lên đường",
+    "toToursEyebrow": "Từ cẩm nang tới tour",
+    "toToursTitle": "Xem tour tương ứng",
+    "toToursDescription": "Cẩm nang giúp bạn hình dung chuyến đi. Khi đã rõ hướng, xem lịch trình cụ thể.",
+    "consultTitle": "Vẫn còn câu hỏi về chuyến đi?",
+    "consultDescription": "Đọc xong vẫn phân vân thời điểm hay lịch trình? Gửi câu hỏi, SEA TRIP trả lời cụ thể cho trường hợp của bạn.",
+    "featuredBadge": "Bài nổi bật",
+    "articleNotFoundTitle": "Không tìm thấy bài viết",
+    "articleNotFoundDescription": "Bài viết bạn tìm không tồn tại hoặc đã được thay đổi.",
+    "relatedToursEyebrow": "Đi ngay",
+    "relatedToursTitle": "Tour liên quan tới bài viết",
+    "relatedToursDescription": "Lịch trình cụ thể cho những điểm vừa nhắc tới.",
+    "relatedArticlesEyebrow": "Đọc thêm",
+    "relatedArticlesTitle": "Bài viết liên quan",
+    "allGuides": "Tất cả cẩm nang",
+    "askQuestionPre": "Hoặc",
+    "askQuestionLink": "gửi câu hỏi cho SEA TRIP",
+    "askQuestionPost": ".",
+    "articleConsultTitle": "Cần tư vấn cho kế hoạch cụ thể?",
+    "articleConsultDescription": "Cho SEA TRIP biết thời gian và số người, chúng tôi gợi ý lịch trình dựa trên những gì bạn vừa đọc."
+  },
+  "contact": {
+    "metaTitle": "Liên hệ & nhận tư vấn",
+    "metaDescription": "Gửi yêu cầu tư vấn tour Quy Nhơn – Phú Yên và các tuyến trong nước. SEA TRIP TRAVEL liên hệ lại trong giờ làm việc.",
+    "heroEyebrow": "Liên hệ",
+    "heroTitle": "Nói cho SEA TRIP biết bạn muốn đi đâu",
+    "heroDescription": "Điền form hoặc gọi trực tiếp. Càng rõ thời gian và số người, tư vấn càng nhanh và sát nhu cầu.",
+    "channelHotline": "Hotline",
+    "channelEmail": "Email",
+    "channelAddress": "Địa chỉ",
+    "emailNote": "Dùng cho yêu cầu cần kèm tài liệu",
+    "addressNote": "Vui lòng hẹn trước khi tới văn phòng",
+    "afterTitle": "Sau khi bạn gửi yêu cầu",
+    "outOfHours": "Ngoài giờ làm việc, yêu cầu vẫn được ghi nhận và xử lý vào buổi làm việc kế tiếp.",
+    "formEyebrow": "Form tư vấn",
+    "formTitle": "Gửi yêu cầu",
+    "formDescription": "Chỉ cần họ tên, số điện thoại và xác nhận. Các trường còn lại giúp tư vấn chính xác hơn.",
+    "steps": [
+      {
+        "title": "1. SEA TRIP tiếp nhận yêu cầu",
+        "body": "Yêu cầu được chuyển tới bộ phận tư vấn kèm tour bạn đang xem và trang bạn gửi từ."
+      },
+      {
+        "title": "2. Tư vấn viên liên hệ lại",
+        "body": "Trong giờ làm việc, tư vấn viên gọi hoặc trả lời email để làm rõ nhu cầu của bạn."
+      },
+      {
+        "title": "3. Nhận phương án và báo giá",
+        "body": "Bạn nhận lịch trình chi tiết, giá theo số khách và điều kiện áp dụng để quyết định."
+      }
+    ]
+  },
+  "lead": {
+    "optional": "tuỳ chọn",
+    "company": "Công ty",
+    "fields": {
+      "fullName": "Họ tên",
+      "phone": "Số điện thoại",
+      "email": "Email",
+      "interest": "Tour / điểm đến",
+      "travelDate": "Ngày dự kiến",
+      "partySize": "Số người",
+      "message": "Nội dung yêu cầu"
+    },
+    "hints": {
+      "phone": "Sẽ gọi qua số này",
+      "travelDate": "Bỏ trống nếu chưa chắc",
+      "partySize": "Tối đa 60 khách",
+      "message": "Thời gian rảnh, ngân sách, yêu cầu riêng…"
+    },
+    "placeholders": {
+      "fullName": "Nguyễn Văn A",
+      "phone": "0987 654 321",
+      "email": "ban@email.com",
+      "interest": "Quy Nhơn – Phú Yên 3 ngày",
+      "partySize": "2",
+      "message": "Ví dụ: Gia đình 4 người, muốn đi 3 ngày 2 đêm, ưu tiên biển và hải sản."
+    },
+    "consent": {
+      "pre": "Tôi đồng ý để SEA TRIP TRAVEL liên hệ tư vấn qua số điện thoại hoặc email đã cung cấp, và đã đọc",
+      "link": "chính sách xử lý thông tin liên hệ",
+      "post": ".",
+      "hint": "Bắt buộc để SEA TRIP được phép liên hệ bạn"
+    },
+    "submit": "Gửi yêu cầu tư vấn",
+    "submitting": "Đang gửi…",
+    "submittingSr": "Đang gửi yêu cầu",
+    "errorSr": "Gửi yêu cầu chưa thành công",
+    "leaveWarning": "Bạn đang điền dở form tư vấn. Chuyển ngôn ngữ sẽ xoá nội dung đã nhập. Bạn vẫn muốn chuyển?",
+    "footnote": "SEA TRIP chỉ dùng thông tin này để liên hệ tư vấn. Không đăng ký nhận tin quảng cáo.",
+    "genericError": "Chưa gửi được yêu cầu. Vui lòng kiểm tra kết nối và thử lại, hoặc gọi hotline để được hỗ trợ.",
+    "networkError": "Không kết nối được tới hệ thống. Vui lòng kiểm tra đường truyền và thử lại.",
+    "success": {
+      "title": "Đã tiếp nhận yêu cầu của bạn",
+      "requestId": "Mã yêu cầu:",
+      "body": "Bộ phận tư vấn của SEA TRIP sẽ liên hệ trong giờ làm việc. Nếu cần trao đổi ngay, bạn có thể gọi hotline để được hỗ trợ sớm hơn.",
+      "callHotline": "Gọi hotline",
+      "sendAnother": "Gửi yêu cầu khác"
+    },
+    "validation": {
+      "fullName": "Vui lòng nhập họ tên.",
+      "phone": "Vui lòng nhập số điện thoại hợp lệ.",
+      "email": "Email chưa hợp lệ.",
+      "travelDate": "Ngày dự kiến chưa hợp lệ.",
+      "partySize": "Số người chưa hợp lệ.",
+      "message": "Nội dung quá dài.",
+      "consent": "Vui lòng xác nhận đã đọc chính sách xử lý thông tin liên hệ.",
+      "interest": "Nội dung quá dài.",
+      "form": "Vui lòng kiểm tra lại các thông tin đã nhập."
+    },
+    "errors": {
+      "VALIDATION_ERROR": "Vui lòng kiểm tra lại các thông tin đã nhập.",
+      "PAYLOAD_TOO_LARGE": "Nội dung gửi quá lớn. Vui lòng rút gọn và thử lại.",
+      "SPAM_REJECTED": "Yêu cầu chưa được gửi. Vui lòng thử lại.",
+      "RATE_LIMITED": "Bạn đã gửi khá nhiều yêu cầu. Vui lòng thử lại sau hoặc gọi hotline.",
+      "MAIL_DELIVERY_FAILED": "Chưa gửi được yêu cầu tới bộ phận tư vấn. Vui lòng thử lại, hoặc gọi hotline {phone}.",
+      "MAIL_NOT_CONFIGURED": "Hệ thống gửi email đang tạm thời chưa sẵn sàng. Vui lòng gọi hotline {phone} để được tư vấn ngay.",
+      "INTERNAL_ERROR": "Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại."
+    }
+  },
+  "datePicker": {
+    "placeholder": "Chọn ngày",
+    "dialogLabel": "Chọn ngày khởi hành",
+    "previousMonth": "Tháng trước",
+    "nextMonth": "Tháng sau",
+    "clear": "Xoá",
+    "today": "Hôm nay",
+    "tomorrow": "Ngày mai",
+    "months": [
+      "Tháng 1",
+      "Tháng 2",
+      "Tháng 3",
+      "Tháng 4",
+      "Tháng 5",
+      "Tháng 6",
+      "Tháng 7",
+      "Tháng 8",
+      "Tháng 9",
+      "Tháng 10",
+      "Tháng 11",
+      "Tháng 12"
+    ],
+    "weekdaysShort": ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
+    "weekdaysFull": [
+      "Thứ Hai",
+      "Thứ Ba",
+      "Thứ Tư",
+      "Thứ Năm",
+      "Thứ Sáu",
+      "Thứ Bảy",
+      "Chủ Nhật"
+    ],
+    "dayAria": "{day} {month} {year}",
+    "selectedDate": "{date} · {weekday}"
+  },
+  "notFound": {
+    "metaTitle": "Không tìm thấy trang",
+    "metaDescription": "Trang bạn tìm không tồn tại hoặc đã được thay đổi.",
+    "eyebrow": "Lỗi 404",
+    "title": "Không tìm thấy trang này",
+    "description": "Đường dẫn có thể đã thay đổi hoặc không còn tồn tại. Bạn thử một trong các mục dưới đây, hoặc gửi yêu cầu để SEA TRIP tìm giúp.",
+    "ctaHome": "Về trang chủ",
+    "ctaConsult": "Gửi yêu cầu tư vấn",
+    "suggestions": [
+      {
+        "title": "Tour Quy Nhơn – Phú Yên",
+        "body": "Tuyến trọng tâm: tour trong ngày và hành trình 2–5 ngày."
+      },
+      {
+        "title": "Tour trong nước",
+        "body": "Miền Bắc, Miền Trung, Miền Nam và Tây Nguyên."
+      },
+      {
+        "title": "Cẩm nang du lịch",
+        "body": "Kinh nghiệm chọn thời điểm, di chuyển và điểm đến."
+      }
+    ]
+  },
+  "errorPage": {
+    "title": "Có lỗi xảy ra khi tải trang",
+    "description": "Bạn thử tải lại. Nếu lỗi vẫn tiếp diễn, vui lòng gọi hotline để được hỗ trợ trực tiếp.",
+    "codeLabel": "Mã lỗi kỹ thuật:",
+    "retry": "Thử lại",
+    "home": "Về trang chủ",
+    "contact": "Liên hệ tư vấn"
+  },
+  "floating": {
+    "zalo": "Chat Zalo",
+    "facebook": "Facebook",
+    "phone": "Gọi {phone}",
+    "open": "Mở liên hệ nhanh",
+    "close": "Đóng liên hệ nhanh"
+  },
+  "privacy": {
+    "metaTitle": "Chính sách xử lý thông tin liên hệ",
+    "metaDescription": "SEA TRIP TRAVEL thu thập thông tin gì khi bạn gửi form tư vấn, dùng để làm gì, lưu trong bao lâu và bạn có quyền gì.",
+    "eyebrow": "Chính sách",
+    "title": "Chính sách xử lý thông tin liên hệ",
+    "lastUpdated": "Cập nhật lần cuối: {date}",
+    "footerLinkPre": "Xem thêm",
+    "footerLink": "trang liên hệ",
+    "footerLinkPost": "để biết các kênh liên hệ trực tiếp."
+  },
+  "draftBanner": {
+    "label": "Bản dịch chưa hoàn tất",
+    "message": "Nội dung tiếng Anh của trang này đang ở bản nháp và có thể còn phần hiển thị bằng tiếng Việt. Vui lòng đối chiếu bản tiếng Việt trước khi sử dụng thông tin.",
+    "switchVi": "Xem bản tiếng Việt",
+    "notIndexed": "Trang này chưa được đưa vào tìm kiếm cho tới khi bản dịch được duyệt."
+  },
+  "missingTranslation": {
+    "title": "Trang này chưa có bản tiếng Anh",
+    "description": "Nội dung bạn đang tìm hiện chỉ có bằng tiếng Việt. Bạn có thể xem bản tiếng Việt, hoặc liên hệ để được hỗ trợ bằng tiếng Anh.",
+    "ctaVi": "Xem bản tiếng Việt",
+    "ctaContact": "Liên hệ tư vấn"
+  }
+}

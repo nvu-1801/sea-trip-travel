@@ -2,7 +2,6 @@ import { z } from "zod";
 import { tourCategorySchema } from "@/domain/category";
 import { destinationSchema } from "@/domain/destination";
 import { travelArticleSchema } from "@/domain/article";
-import { siteConfig } from "@/config/site";
 import { destinations as rawDestinations } from "./destinations";
 import { tourCategories as rawCategories } from "./categories";
 import { articles as rawArticles } from "./articles";
@@ -22,26 +21,6 @@ export const tourCategories = z.array(tourCategorySchema).parse(rawCategories);
 export const articles = z.array(travelArticleSchema).parse(rawArticles);
 
 export { tours };
-
-export type SiteSettings = {
-  siteName: string;
-  message: string;
-  description: string;
-  hotline: string;
-  email: string;
-  address: string;
-  workingHours: string;
-};
-
-export const siteSettings: SiteSettings = {
-  siteName: siteConfig.name,
-  message: siteConfig.message,
-  description: siteConfig.description,
-  hotline: siteConfig.contact.hotline,
-  email: siteConfig.contact.email,
-  address: siteConfig.contact.address,
-  workingHours: siteConfig.contact.workingHours,
-};
 
 /** Referential integrity — throws on the first problem found. */
 function assertIntegrity(): void {

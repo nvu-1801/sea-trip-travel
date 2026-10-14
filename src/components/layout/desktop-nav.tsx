@@ -4,9 +4,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { primaryNav } from "@/config/navigation";
+import type { Locale } from "@/i18n/config";
+import type { Messages } from "@/i18n/messages";
+import { localizePath, stripLocaleFromPath } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon } from "@/components/ui/icons";
 import { setNavOpen } from "./header-state";
+
+/**
+ * Labels are passed in from the server header rather than imported: a Client
+ * Component that imported the catalogs would ship every message to the browser.
+ */
+export type NavLabels = {
+  nav: Messages["nav"];
+  header: Messages["header"];
+  /** "All {label}" template. */
+  allOf: string;
+};
 
 /**
  * Desktop navigation.
@@ -18,22 +32,19 @@ import { setNavOpen } from "./header-state";
  *   - Enter / Space toggles, ArrowDown opens and moves into the panel
  *   - Escape closes and returns focus to the trigger
  *   - focus leaving the item closes it
- *
- * Every label is `whitespace-nowrap` and `shrink-0`, so the nav can only ever
- * run out of room — it can never wrap, which is what made the header look broken
- * at ~1280px.
  */
-export function DesktopNav() {
+export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabels }) {
   const pathname = usePathname();
+  // Links are authored in their Vietnamese-canonical form; strip any prefix
+  // before comparing so EN pages still highlight the right item.
+  const currentPath = stripLocaleFromPath(pathname ?? "/").path;
   const [openLabel, setOpenLabel] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemRefs = useRef(new Map<string, HTMLDivElement>());
   const navOpenRef = useRef(false);
+  /** Only a keyboard-triggered open should move focus into the panel. */
+  const focusPanelOnOpen = useRef(false);
 
-  /**
-   * Single funnel for opening/closing so the header's "hold" flag can never get
-   * out of sync: opening a panel pins the header in place.
-   */
   const applyOpen = (label: string | null) => {
     setOpenLabel(label);
     const next = label !== null;
@@ -42,6 +53,30 @@ export function DesktopNav() {
       setNavOpen(next);
     }
   };
+
+  useEffect(() => {
+    if (!openLabel || !focusPanelOnOpen.current) return;
+    focusPanelOnOpen.current = false;
+
+    const label = openLabel;
+    let frame = 0;
+    let raf = 0;
+
+    const attempt = () => {
+      const link = itemRefs.current
+        .get(label)
+        ?.querySelector<HTMLAnchorElement>("a[data-nav-panel-link]");
+
+      if (link && getComputedStyle(link).visibility !== "hidden") {
+        link.focus();
+        if (document.activeElement === link) return;
+      }
+      if (frame++ < 10) raf = requestAnimationFrame(attempt);
+    };
+
+    attempt();
+    return () => cancelAnimationFrame(raf);
+  }, [openLabel]);
 
   useEffect(() => {
     return () => {
@@ -63,32 +98,22 @@ export function DesktopNav() {
     closeTimer.current = setTimeout(() => applyOpen(null), 140);
   };
 
-  const focusFirstLink = (label: string) => {
-    const container = itemRefs.current.get(label);
-    const link = container?.querySelector<HTMLAnchorElement>("a[data-nav-panel-link]");
-    link?.focus();
-  };
-
   const isActive = (href: string, childHrefs: readonly string[] = []) => {
-    if (href === "/") return pathname === "/";
+    if (href === "/") return currentPath === "/";
     return (
-      pathname === href ||
-      pathname.startsWith(`${href}/`) ||
-      childHrefs.some((child) => pathname === child || pathname.startsWith(`${child}/`))
+      currentPath === href ||
+      currentPath.startsWith(`${href}/`) ||
+      childHrefs.some((child) => currentPath === child || currentPath.startsWith(`${child}/`))
     );
   };
 
-  /** Shared look for every top-level item. */
   const itemClass = (active: boolean, expanded = false) =>
     cn(
-      "group/item relative inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5",
-      "text-[0.8125rem] font-semibold transition-colors duration-200 xl:px-3.5 xl:text-[0.9375rem]",
-      active || expanded
-        ? "text-primary-strong"
-        : "text-foreground hover:text-primary-strong",
+      "group/item relative inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2",
+      "text-[0.8125rem] font-semibold transition-colors duration-200 hover:bg-primary-soft/70",
+      active || expanded ? "text-primary-strong" : "text-foreground hover:text-primary-strong",
     );
 
-  /** Gradient underline that grows from the left on hover / when active. */
   const underlineClass = (active: boolean) =>
     cn(
       "brand-gradient absolute -bottom-1 left-0 h-0.5 w-full origin-left rounded-full",
@@ -97,22 +122,24 @@ export function DesktopNav() {
     );
 
   return (
-    <nav aria-label="Điều hướng chính" className="hidden min-w-0 lg:block">
+    <nav aria-label={labels.header.primaryNavAria} className="hidden min-w-0 xl:block">
       <ul className="flex items-center gap-0.5 xl:gap-1">
         {primaryNav.map((item) => {
+          const label = labels.nav[item.labelKey];
           const childHrefs = item.children?.map((child) => child.href) ?? [];
           const active = isActive(item.href, childHrefs);
+          const allOf = labels.allOf.replace("{label}", label);
 
           if (!item.children || item.children.length === 0) {
             return (
               <li key={item.href} className="shrink-0">
                 <Link
-                  href={item.href}
+                  href={localizePath(locale, item.href)}
                   aria-current={active ? "page" : undefined}
                   className={itemClass(active)}
                 >
                   <span className="relative">
-                    {item.label}
+                    {label}
                     <span aria-hidden="true" className={underlineClass(active)} />
                   </span>
                 </Link>
@@ -120,17 +147,17 @@ export function DesktopNav() {
             );
           }
 
-          const expanded = openLabel === item.label;
+          const expanded = openLabel === item.labelKey;
 
           return (
             <li key={item.href} className="shrink-0">
               <div
                 ref={(node) => {
-                  if (node) itemRefs.current.set(item.label, node);
-                  else itemRefs.current.delete(item.label);
+                  if (node) itemRefs.current.set(item.labelKey, node);
+                  else itemRefs.current.delete(item.labelKey);
                 }}
                 className="relative"
-                onMouseEnter={() => open(item.label)}
+                onMouseEnter={() => open(item.labelKey)}
                 onMouseLeave={scheduleClose}
                 onBlur={(event) => {
                   if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
@@ -142,12 +169,12 @@ export function DesktopNav() {
                   type="button"
                   aria-expanded={expanded}
                   aria-haspopup="true"
-                  onClick={() => applyOpen(expanded ? null : item.label)}
+                  onClick={() => applyOpen(expanded ? null : item.labelKey)}
                   onKeyDown={(event) => {
                     if (event.key === "ArrowDown") {
                       event.preventDefault();
-                      open(item.label);
-                      requestAnimationFrame(() => focusFirstLink(item.label));
+                      focusPanelOnOpen.current = true;
+                      open(item.labelKey);
                     }
                     if (event.key === "Escape") applyOpen(null);
                   }}
@@ -155,7 +182,7 @@ export function DesktopNav() {
                   className={itemClass(active, expanded)}
                 >
                   <span className="relative">
-                    {item.label}
+                    {label}
                     <span aria-hidden="true" className={underlineClass(active || expanded)} />
                   </span>
                   <ChevronDownIcon
@@ -180,21 +207,21 @@ export function DesktopNav() {
                       event.preventDefault();
                       applyOpen(null);
                       itemRefs.current
-                        .get(item.label)
+                        .get(item.labelKey)
                         ?.querySelector<HTMLButtonElement>("button")
                         ?.focus();
                     }
                   }}
                 >
                   <Link
-                    href={item.href}
+                    href={localizePath(locale, item.href)}
                     data-nav-panel-link=""
                     tabIndex={expanded ? 0 : -1}
                     onClick={() => applyOpen(null)}
                     className="group/overview relative block overflow-hidden rounded-xl bg-primary-soft px-3.5 py-3 text-sm font-bold whitespace-nowrap text-primary-strong transition-colors hover:bg-brand-100"
                   >
                     <span className="flex items-center justify-between gap-2">
-                      Tất cả {item.label}
+                      {allOf}
                       <span
                         aria-hidden="true"
                         className="h-1.5 w-1.5 rounded-full bg-brand-400 transition-transform duration-300 group-hover/overview:scale-150"
@@ -202,23 +229,29 @@ export function DesktopNav() {
                     </span>
                   </Link>
 
+                  {item.descriptionKey ? (
+                    <p className="px-3.5 pb-1 pt-2 text-xs text-foreground-muted">
+                      {labels.nav.description[item.descriptionKey]}
+                    </p>
+                  ) : null}
+
                   <ul className="mt-1">
                     {item.children.map((child) => (
                       <li key={child.href}>
                         <Link
-                          href={child.href}
+                          href={localizePath(locale, child.href)}
                           data-nav-panel-link=""
                           tabIndex={expanded ? 0 : -1}
                           onClick={() => applyOpen(null)}
-                          aria-current={pathname === child.href ? "page" : undefined}
+                          aria-current={currentPath === child.href ? "page" : undefined}
                           className={cn(
                             "flex items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
-                            pathname === child.href
+                            currentPath === child.href
                               ? "bg-surface-sunken text-primary-strong"
                               : "text-foreground hover:bg-surface-muted hover:text-primary-strong",
                           )}
                         >
-                          {child.label}
+                          {labels.nav[child.labelKey]}
                           <span
                             aria-hidden="true"
                             className="h-px w-4 bg-border-strong transition-all duration-300 group-hover:w-6"

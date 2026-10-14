@@ -6,6 +6,9 @@ import { primarySocialLinks, secondarySocialLinks } from "@/config/social-links"
 import { getCategories } from "@/lib/data/categories";
 import { Container } from "@/components/ui/layout";
 import { MailIcon, MapPinIcon, PhoneIcon, ClockIcon } from "@/components/ui/icons";
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
+import { localizePath } from "@/i18n/routing";
 import { Logo } from "./logo";
 
 /**
@@ -21,33 +24,43 @@ async function CopyrightYear() {
   return <>{new Date().getFullYear()}</>;
 }
 
-export function SiteFooter() {
-  const topLevel = getCategories().filter((category) => category.parentId === null);
+/** Interleave the cached year element into the localized copyright template. */
+function renderCopyright(template: string, name: string): React.ReactNode {
+  return template.split(/(\{year\}|\{name\})/).map((part, index) => {
+    if (part === "{year}") return <CopyrightYear key={index} />;
+    if (part === "{name}") return name;
+    return part;
+  });
+}
+
+export function SiteFooter({ locale }: { locale: Locale }) {
+  const m = getMessages(locale);
+  const topLevel = getCategories(locale).filter((category) => category.parentId === null);
   const socials = [...primarySocialLinks, ...secondarySocialLinks];
 
   return (
     <footer className="border-t border-border bg-surface-sunken">
       <Container>
-        <div className="grid gap-8 py-12 sm:gap-10 sm:py-14 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-8 py-12 sm:gap-10 sm:py-14 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <Logo size="md" />
+            <Logo size="md" tagline={m.site.tagline} />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-foreground-muted">
-              {siteConfig.description}
+              {m.site.description}
             </p>
             <p className="mt-4 text-sm font-semibold uppercase tracking-[0.12em] text-primary-strong">
-              {siteConfig.message}
+              {m.site.tagline}
             </p>
           </div>
 
-          <nav aria-label="Danh mục tour" className="lg:col-span-3">
+          <nav aria-label={m.footer.categoriesAria} className="lg:col-span-3">
             <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-              Danh mục tour
+              {m.footer.categoriesTitle}
             </h2>
             <ul className="mt-4 space-y-3 text-sm">
               {topLevel.map((category) => (
                 <li key={category.id}>
                   <Link
-                    href={category.path}
+                    href={localizePath(locale, category.path)}
                     className="font-medium text-foreground-muted transition-colors hover:text-primary-strong"
                   >
                     {category.name}
@@ -57,34 +70,34 @@ export function SiteFooter() {
             </ul>
           </nav>
 
-          <nav aria-label="Liên kết khác" className="lg:col-span-2">
+          <nav aria-label={m.footer.infoAria} className="lg:col-span-2">
             <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-              Thông tin
+              {m.footer.infoTitle}
             </h2>
             <ul className="mt-4 space-y-3 text-sm">
               <li>
                 <Link
-                  href={ROUTES.guides}
+                  href={localizePath(locale, ROUTES.guides)}
                   className="font-medium text-foreground-muted transition-colors hover:text-primary-strong"
                 >
-                  Cẩm Nang Du Lịch
+                  {m.nav.guides}
                 </Link>
               </li>
               <li>
                 <Link
-                  href={ROUTES.contact}
+                  href={localizePath(locale, ROUTES.contact)}
                   className="font-medium text-foreground-muted transition-colors hover:text-primary-strong"
                 >
-                  Liên Hệ
+                  {m.nav.contact}
                 </Link>
               </li>
               {footerLegalNav.map((item) => (
                 <li key={item.href}>
                   <Link
-                    href={item.href}
+                    href={localizePath(locale, item.href)}
                     className="font-medium text-foreground-muted transition-colors hover:text-primary-strong"
                   >
-                    {item.label}
+                    {m.nav[item.labelKey]}
                   </Link>
                 </li>
               ))}
@@ -93,34 +106,36 @@ export function SiteFooter() {
 
           <div className="lg:col-span-3">
             <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-              Liên hệ
+              {m.footer.contactTitle}
             </h2>
-            <ul className="mt-4 space-y-3 text-sm text-foreground-muted">
-              <li className="flex items-start gap-2.5">
-                <PhoneIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" />
+            <ul className="mt-4 space-y-1 text-sm text-foreground-muted">
+              <li className="flex items-center gap-2.5">
+                <PhoneIcon className="h-4 w-4 shrink-0 text-primary-strong" />
                 <a
                   href={siteConfig.contact.hotlineHref}
-                  className="font-semibold text-foreground transition-colors hover:text-primary-strong"
+                  className="inline-flex min-h-11 items-center font-semibold text-foreground transition-colors hover:text-primary-strong"
                 >
                   {siteConfig.contact.hotline}
                 </a>
               </li>
-              <li className="flex items-start gap-2.5">
-                <MailIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" />
+              <li className="flex items-center gap-2.5">
+                <MailIcon className="h-4 w-4 shrink-0 text-primary-strong" />
                 <a
                   href={`mailto:${siteConfig.contact.email}`}
-                  className="break-all transition-colors hover:text-primary-strong"
+                  className="inline-flex min-h-11 items-center break-all transition-colors hover:text-primary-strong"
                 >
                   {siteConfig.contact.email}
                 </a>
               </li>
-              <li className="flex items-start gap-2.5">
-                <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" />
-                <span>{siteConfig.contact.address}</span>
+              <li className="flex items-center gap-2.5">
+                <MapPinIcon className="h-4 w-4 shrink-0 text-primary-strong" />
+                <span className="inline-flex min-h-11 items-center">
+                  {siteConfig.contact.address}
+                </span>
               </li>
-              <li className="flex items-start gap-2.5">
-                <ClockIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" />
-                <span>{siteConfig.contact.workingHours}</span>
+              <li className="flex items-center gap-2.5">
+                <ClockIcon className="h-4 w-4 shrink-0 text-primary-strong" />
+                <span className="inline-flex min-h-11 items-center">{m.site.workingHours}</span>
               </li>
             </ul>
 
@@ -132,7 +147,7 @@ export function SiteFooter() {
                       href={social.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex rounded-full border border-border-strong px-3 py-1.5 text-xs font-semibold text-foreground-muted transition-colors hover:border-primary hover:text-primary-strong"
+                      className="inline-flex min-h-11 items-center rounded-full border border-border-strong px-3.5 text-xs font-semibold text-foreground-muted transition-colors hover:border-primary hover:text-primary-strong"
                     >
                       {social.label}
                     </a>
@@ -144,13 +159,8 @@ export function SiteFooter() {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-border py-6 text-xs text-foreground-subtle sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            © <CopyrightYear /> {siteConfig.name}.
-          </p>
-          <p>
-            Thông tin tour, lịch trình và hình ảnh trên website cần được xác nhận trước khi xuất
-            bản.
-          </p>
+          <p>{renderCopyright(m.footer.copyright, siteConfig.name)}</p>
+          <p>{m.footer.disclaimer}</p>
         </div>
       </Container>
     </footer>

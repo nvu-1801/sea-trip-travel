@@ -2,12 +2,14 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { leadInputSchema, type LeadResponse, type UtmParams } from "@/domain/lead";
+import type { Locale } from "@/i18n/config";
 import { siteConfig } from "@/config/site";
 import { CheckCircleIcon, AlertIcon, SendIcon, SpinnerIcon } from "@/components/ui/icons";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePicker, type DatePickerLabels } from "@/components/ui/date-picker";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/form-controls";
 import { cn } from "@/lib/utils";
+import { setFormDirty } from "./draft-guard";
 
 /**
  * Consultation request form.
@@ -16,12 +18,65 @@ import { cn } from "@/lib/utils";
  * pre-fill the form). Validation reuses the *same* Zod schema the API route
  * uses, so client and server can never disagree about what is valid.
  *
- * Behaviour required by the brief, implemented here:
- *  - loading, per-field errors, system error and success states
- *  - double-submit blocked (disabled control + in-flight guard + idempotency key)
- *  - on failure every value the customer typed is kept
- *  - never claims an email was sent; reports that the request was received
+ * The visitor's language travels with the request (`locale`) and every visible
+ * string comes from `labels`, so the server never has to send Vietnamese copy to
+ * an English form.
  */
+
+export type LeadFormLabels = {
+  optional: string;
+  company: string;
+  fields: {
+    fullName: string;
+    phone: string;
+    email: string;
+    interest: string;
+    travelDate: string;
+    partySize: string;
+    message: string;
+  };
+  hints: { phone: string; travelDate: string; partySize: string; message: string };
+  placeholders: {
+    fullName: string;
+    phone: string;
+    email: string;
+    interest: string;
+    partySize: string;
+    message: string;
+  };
+  consent: { pre: string; link: string; post: string; hint: string };
+  submit: string;
+  submitting: string;
+  submittingSr: string;
+  errorSr: string;
+  footnote: string;
+  genericError: string;
+  networkError: string;
+  success: {
+    title: string;
+    requestId: string;
+    body: string;
+    callHotline: string;
+    sendAnother: string;
+  };
+  validation: {
+    fullName: string;
+    phone: string;
+    email: string;
+    interest: string;
+    travelDate: string;
+    partySize: string;
+    message: string;
+    consent: string;
+    form: string;
+  };
+  /** API error code → template (may contain `{phone}`). */
+  errors: Record<string, string>;
+  hotline: string;
+  /** Localized privacy-policy path. */
+  privacyHref: string;
+  datePicker: DatePickerLabels;
+};
 
 const clientSchema = leadInputSchema.omit({ company: true, submissionId: true });
 
@@ -65,11 +120,15 @@ function collectContext(): { sourcePage?: string; utm?: UtmParams } {
 }
 
 export function LeadForm({
+  locale,
+  labels,
   tourSlug,
   defaultInterest,
   className,
   compact = false,
 }: {
+  locale: Locale;
+  labels: LeadFormLabels;
   /** Pre-fills and links the request to a specific tour. */
   tourSlug?: string;
   defaultInterest?: string;
@@ -99,8 +158,15 @@ export function LeadForm({
         : `sub-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }, []);
 
+  /** Map a Zod issue path to the localized message for that field. */
+  const messageFor = (field: string): string => {
+    const key = field as keyof LeadFormLabels["validation"];
+    return labels.validation[key] ?? labels.validation.form;
+  };
+
   const update = <K extends keyof Values>(key: K, value: Values[K]) => {
     setValues((previous) => ({ ...previous, [key]: value }));
+    setFormDirty(true);
     // Clear the field error as soon as the customer edits that field.
     setFieldErrors((previous) => {
       if (!previous[key]) return previous;
@@ -123,6 +189,7 @@ export function LeadForm({
 
     const payload = {
       ...values,
+      locale,
       ...(tourSlug ? { tourSlug } : {}),
       ...collectContext(),
     };
@@ -133,7 +200,7 @@ export function LeadForm({
       const errors: Record<string, string[]> = {};
       for (const issue of parsed.error.issues) {
         const key = String(issue.path[0] ?? "form");
-        errors[key] = [...(errors[key] ?? []), issue.message];
+        errors[key] = [...(errors[key] ?? []), messageFor(key)];
       }
       setFieldErrors(errors);
       setStatus("idle");
@@ -168,22 +235,29 @@ export function LeadForm({
         setRequestId(data.requestId);
         setStatus("success");
         setValues({ ...EMPTY, interest: defaultInterest ?? "" });
+        setFormDirty(false);
         return;
       }
 
-      // 3. Failure — keep every value the customer entered.
+      // 3. Failure — keep every value the customer entered. Messages are
+      //    localized on the client from the structured error code, never from
+      //    the (Vietnamese) server string.
       const error = data && !data.ok ? data.error : null;
-      if (error?.fieldErrors) setFieldErrors(error.fieldErrors);
+      if (error?.fieldErrors) {
+        const mapped: Record<string, string[]> = {};
+        for (const field of Object.keys(error.fieldErrors)) {
+          mapped[field] = [messageFor(field)];
+        }
+        setFieldErrors(mapped);
+      }
+      const template = error ? labels.errors[error.code] : undefined;
       setSystemMessage(
-        error?.message ??
-          "Chưa gửi được yêu cầu. Vui lòng kiểm tra kết nối và thử lại, hoặc gọi hotline để được hỗ trợ.",
+        (template ?? labels.genericError).replace("{phone}", siteConfig.contact.hotline),
       );
       setStatus("error");
       if (error?.fieldErrors) focusFirstError(error.fieldErrors);
     } catch {
-      setSystemMessage(
-        "Không kết nối được tới hệ thống. Vui lòng kiểm tra đường truyền và thử lại.",
-      );
+      setSystemMessage(labels.networkError);
       setStatus("error");
     } finally {
       submittingRef.current = false;
@@ -204,16 +278,16 @@ export function LeadForm({
       >
         <CheckCircleIcon className="h-10 w-10 text-success" />
         <div>
-          <h3 className="text-xl font-bold text-foreground">Đã tiếp nhận yêu cầu của bạn</h3>
+          <h3 className="text-xl font-bold text-foreground">{labels.success.title}</h3>
           {requestId ? (
             <p className="mt-1 text-sm text-foreground-muted">
-              Mã yêu cầu: <strong className="font-semibold text-foreground">{requestId}</strong>
+              {labels.success.requestId}{" "}
+              <strong className="font-semibold text-foreground">{requestId}</strong>
             </p>
           ) : null}
         </div>
         <p className="text-[0.9375rem] leading-relaxed text-foreground-muted">
-          Bộ phận tư vấn của SEA TRIP sẽ liên hệ trong giờ làm việc. Nếu cần trao đổi ngay, bạn có
-          thể gọi hotline để được hỗ trợ sớm hơn.
+          {labels.success.body}
         </p>
         <div className="flex flex-wrap gap-2">
           <ButtonLink
@@ -222,7 +296,7 @@ export function LeadForm({
             size="md"
             external
           >
-            Gọi hotline
+            {labels.success.callHotline}
           </ButtonLink>
           <Button
             variant="ghost"
@@ -233,7 +307,7 @@ export function LeadForm({
               setSystemMessage(null);
             }}
           >
-            Gửi yêu cầu khác
+            {labels.success.sendAnother}
           </Button>
         </div>
       </div>
@@ -249,7 +323,7 @@ export function LeadForm({
     >
       {/* Honeypot: off-screen, not announced, not tabbable. */}
       <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden opacity-0">
-        <label htmlFor={id("company")}>Công ty</label>
+        <label htmlFor={id("company")}>{labels.company}</label>
         <input
           id={id("company")}
           name="company"
@@ -260,8 +334,14 @@ export function LeadForm({
         />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field id={id("fullName")} label="Họ tên" required error={errorFor("fullName")}>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <Field
+          id={id("fullName")}
+          label={labels.fields.fullName}
+          required
+          optionalLabel={labels.optional}
+          error={errorFor("fullName")}
+        >
           <Input
             id={id("fullName")}
             name="fullName"
@@ -270,16 +350,17 @@ export function LeadForm({
             invalid={Boolean(errorFor("fullName"))}
             aria-describedby={`${id("fullName")}-message`}
             onChange={(event) => update("fullName", event.target.value)}
-            placeholder="Nguyễn Văn A"
+            placeholder={labels.placeholders.fullName}
           />
         </Field>
 
         <Field
           id={id("phone")}
-          label="Số điện thoại"
+          label={labels.fields.phone}
           required
+          optionalLabel={labels.optional}
           error={errorFor("phone")}
-          hint="Sẽ gọi qua số này"
+          hint={labels.hints.phone}
         >
           <Input
             id={id("phone")}
@@ -291,13 +372,14 @@ export function LeadForm({
             invalid={Boolean(errorFor("phone"))}
             aria-describedby={`${id("phone")}-message`}
             onChange={(event) => update("phone", event.target.value)}
-            placeholder="0987 654 321"
+            placeholder={labels.placeholders.phone}
           />
         </Field>
 
         <Field
           id={id("email")}
-          label="Email"
+          label={labels.fields.email}
+          optionalLabel={labels.optional}
           error={errorFor("email")}
         >
           <Input
@@ -310,11 +392,16 @@ export function LeadForm({
             invalid={Boolean(errorFor("email"))}
             aria-describedby={`${id("email")}-message`}
             onChange={(event) => update("email", event.target.value)}
-            placeholder="ban@email.com"
+            placeholder={labels.placeholders.email}
           />
         </Field>
 
-        <Field id={id("interest")} label="Tour / điểm đến" error={errorFor("interest")}>
+        <Field
+          id={id("interest")}
+          label={labels.fields.interest}
+          optionalLabel={labels.optional}
+          error={errorFor("interest")}
+        >
           <Input
             id={id("interest")}
             name="interest"
@@ -322,30 +409,33 @@ export function LeadForm({
             invalid={Boolean(errorFor("interest"))}
             aria-describedby={`${id("interest")}-message`}
             onChange={(event) => update("interest", event.target.value)}
-            placeholder="Quy Nhơn – Phú Yên 3 ngày"
+            placeholder={labels.placeholders.interest}
           />
         </Field>
 
         <Field
           id={id("travelDate")}
-          label="Ngày dự kiến"
+          label={labels.fields.travelDate}
+          optionalLabel={labels.optional}
           error={errorFor("travelDate")}
-          hint="Bỏ trống nếu chưa chắc"
+          hint={labels.hints.travelDate}
         >
           <DatePicker
             id={id("travelDate")}
             value={values.travelDate}
             invalid={Boolean(errorFor("travelDate"))}
             describedBy={`${id("travelDate")}-message`}
+            labels={labels.datePicker}
             onChange={(next) => update("travelDate", next)}
           />
         </Field>
 
         <Field
           id={id("partySize")}
-          label="Số người"
+          label={labels.fields.partySize}
+          optionalLabel={labels.optional}
           error={errorFor("partySize")}
-          hint="Tối đa 60 khách"
+          hint={labels.hints.partySize}
         >
           <Input
             id={id("partySize")}
@@ -358,16 +448,17 @@ export function LeadForm({
             invalid={Boolean(errorFor("partySize"))}
             aria-describedby={`${id("partySize")}-message`}
             onChange={(event) => update("partySize", event.target.value)}
-            placeholder="2"
+            placeholder={labels.placeholders.partySize}
           />
         </Field>
       </div>
 
       <Field
         id={id("message")}
-        label="Nội dung yêu cầu"
+        label={labels.fields.message}
+        optionalLabel={labels.optional}
         error={errorFor("message")}
-        hint="Thời gian rảnh, ngân sách, yêu cầu riêng…"
+        hint={labels.hints.message}
       >
         <Textarea
           id={id("message")}
@@ -377,12 +468,10 @@ export function LeadForm({
           invalid={Boolean(errorFor("message"))}
           aria-describedby={`${id("message")}-message`}
           onChange={(event) => update("message", event.target.value)}
-          placeholder="Ví dụ: Gia đình 4 người, muốn đi 3 ngày 2 đêm, ưu tiên biển và hải sản."
+          placeholder={labels.placeholders.message}
         />
       </Field>
 
-      {/* Consent gets its own layout (no separate field label — the sentence IS
-          the label) and tints once checked. */}
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor={id("consent")}
@@ -397,15 +486,14 @@ export function LeadForm({
             onChange={(event) => update("consent", event.target.checked)}
           />
           <span>
-            Tôi đồng ý để SEA TRIP TRAVEL liên hệ tư vấn qua số điện thoại hoặc email đã cung cấp,
-            và đã đọc{" "}
+            {labels.consent.pre}{" "}
             <a
-              href="/chinh-sach-bao-mat"
+              href={labels.privacyHref}
               className="font-semibold text-primary-strong underline underline-offset-2"
             >
-              chính sách xử lý thông tin liên hệ
+              {labels.consent.link}
             </a>
-            .
+            {labels.consent.post}
           </span>
         </label>
         <p
@@ -419,7 +507,7 @@ export function LeadForm({
           {errorFor("consent") ? (
             <AlertIcon className="mt-px h-3.5 w-3.5 shrink-0" />
           ) : null}
-          {errorFor("consent") ?? "Bắt buộc để SEA TRIP được phép liên hệ bạn"}
+          {errorFor("consent") ?? labels.consent.hint}
         </p>
       </div>
 
@@ -443,23 +531,21 @@ export function LeadForm({
           {status === "submitting" ? (
             <>
               <SpinnerIcon className="h-4 w-4" />
-              Đang gửi…
+              {labels.submitting}
             </>
           ) : (
             <>
               <SendIcon className="h-4 w-4" />
-              Gửi yêu cầu tư vấn
+              {labels.submit}
             </>
           )}
         </Button>
-        <p className="text-xs leading-relaxed text-foreground-subtle">
-          SEA TRIP chỉ dùng thông tin này để liên hệ tư vấn. Không đăng ký nhận tin quảng cáo.
-        </p>
+        <p className="text-xs leading-relaxed text-foreground-subtle">{labels.footnote}</p>
       </div>
 
       <div aria-live="polite" className="sr-only">
-        {status === "submitting" ? "Đang gửi yêu cầu" : ""}
-        {status === "error" ? "Gửi yêu cầu chưa thành công" : ""}
+        {status === "submitting" ? labels.submittingSr : ""}
+        {status === "error" ? labels.errorSr : ""}
       </div>
     </form>
   );
