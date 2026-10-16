@@ -1,0 +1,271 @@
+import type { TourInput } from "@/domain/tour";
+
+/** Existing demo programmes with no matching customer document yet. Preserve URLs. */
+export const legacyQuyNhonPhuYenTours: readonly TourInput[] = [
+  {
+    "id": "tour_qn_hon_kho_1n",
+    "slug": "quy-nhon-hon-kho-lan-bien-1-ngay",
+    "title": "Quy Nhơn – Hòn Khô lặn biển 1 ngày",
+    "summary": "Một ngày trên biển với hoạt động lặn ngắm san hô ở Hòn Khô, phù hợp khách thích trải nghiệm dưới nước.",
+    "categoryIds": [
+      "cat_quy_nhon_1_ngay"
+    ],
+    "destinationIds": [
+      "dest_quy_nhon",
+      "dest_hon_kho"
+    ],
+    "duration": {
+      "days": 1,
+      "nights": 0
+    },
+    "departurePoints": [
+      "Quy Nhơn"
+    ],
+    "priceFrom": null,
+    "priceNote": "Giá phụ thuộc số khách và thiết bị lặn thuê kèm.",
+    "highlights": [
+      "Lặn ống thở ngắm rạn san hô ở vùng nước nông",
+      "Phù hợp cả khách chưa từng lặn — có phổ biến kỹ thuật cơ bản trước khi xuống nước",
+      "Thiết bị lặn ống thở cơ bản đã bao gồm trong chương trình",
+      "Nhân viên hỗ trợ dưới nước trong suốt thời gian hoạt động",
+      "Thời gian nghỉ ngơi thoải mái trên bãi",
+      "Bữa trưa hải sản tại khu vực Hòn Khô"
+    ],
+    "images": [
+      {
+        "alt": "Rạn san hô nông ở Hòn Khô"
+      },
+      {
+        "alt": "Khách chuẩn bị lặn ống thở"
+      }
+    ],
+    "overview": [
+      "Hòn Khô là đảo nhỏ gần bờ, nước nông và khá lặng, thuận tiện cho hoạt động lặn ống thở trong ngày.",
+      "Chương trình dành cho cả khách chưa từng lặn; hướng dẫn viên sẽ phổ biến kỹ thuật cơ bản trước khi xuống nước."
+    ],
+    "itinerary": [
+      {
+        "id": "d1",
+        "index": 1,
+        "title": "Quy Nhơn – Hòn Khô",
+        "summary": "Ra đảo buổi sáng, lặn ngắm san hô, chiều về đất liền.",
+        "activities": [
+          "Đón khách và di chuyển ra bến tàu.",
+          "Phổ biến an toàn và hướng dẫn sử dụng thiết bị lặn.",
+          "Di chuyển ra Hòn Khô.",
+          "Lặn ống thở ngắm san hô theo nhóm.",
+          "Dùng bữa trưa hải sản, nghỉ ngơi tự do.",
+          "Trở về Quy Nhơn, kết thúc chương trình."
+        ],
+        "meals": [
+          "Trưa"
+        ],
+        "places": [
+          "Hòn Khô"
+        ]
+      }
+    ],
+    "included": [
+      "Xe đưa đón và tàu/cano ra đảo",
+      "Thiết bị lặn ống thở cơ bản",
+      "Hướng dẫn viên và nhân viên hỗ trợ dưới nước",
+      "Bữa trưa theo chương trình"
+    ],
+    "excluded": [
+      "Chi phí cá nhân",
+      "Dịch vụ chụp ảnh dưới nước (nếu có nhu cầu)",
+      "Bảo hiểm du lịch"
+    ],
+    "notes": [
+      "Khách không biết bơi vẫn có thể tham gia nhưng cần tuân thủ hướng dẫn và mặc áo phao.",
+      "Hoạt động có thể tạm hoãn nếu biển động; khi đó sẽ thống nhất phương án thay thế."
+    ],
+    "tags": [
+      "1 ngày",
+      "Lặn biển",
+      "Biển đảo"
+    ],
+    "contentStatus": "demo",
+    "updatedAt": "2026-01-15T09:00:00+07:00"
+  },
+  {
+    "id": "tour_qn_py_5n4d",
+    "slug": "quy-nhon-phu-yen-5-ngay-4-dem",
+    "title": "Quy Nhơn – Phú Yên 5 ngày 4 đêm",
+    "summary": "Hành trình đầy đủ nhất cho hai tỉnh: thêm thời gian nghỉ dưỡng, lặn biển và khám phá Phú Yên ở nhịp chậm.",
+    "categoryIds": [
+      "cat_quy_nhon_dai_ngay"
+    ],
+    "destinationIds": [
+      "dest_quy_nhon",
+      "dest_ky_co_eo_gio",
+      "dest_hon_kho",
+      "dest_cu_lao_xanh",
+      "dest_ghenh_da_dia",
+      "dest_bai_xep",
+      "dest_mui_dien",
+      "dest_dam_o_loan"
+    ],
+    "duration": {
+      "days": 5,
+      "nights": 4
+    },
+    "departurePoints": [
+      "Quy Nhơn"
+    ],
+    "priceFrom": null,
+    "priceNote": "Giá phụ thuộc hạng khách sạn, số khách và mùa cao điểm.",
+    "highlights": [
+      "Bao gồm cả Kỳ Co – Eo Gió, Hòn Khô và Cù Lao Xanh",
+      "Hai đêm tại Phú Yên để không phải di chuyển nhiều trong ngày",
+      "Bao gồm thiết bị lặn cơ bản cho ngày Hòn Khô",
+      "Chương trình dài nhất trong tuyến, phù hợp nhóm gia đình",
+      "Xen kẽ ngày hoạt động và ngày nhẹ để không bị mệt",
+      "Mỗi tối kết thúc sớm, có thời gian tự do và nghỉ dưỡng"
+    ],
+    "images": [
+      {
+        "alt": "Toàn cảnh biển Quy Nhơn"
+      },
+      {
+        "alt": "Lặn ngắm san hô ở Hòn Khô"
+      },
+      {
+        "alt": "Bình minh ở Mũi Điện"
+      }
+    ],
+    "overview": [
+      "Đây là chương trình dài nhất trong nhóm Quy Nhơn – Phú Yên, dành cho khách có quỹ thời gian thoải mái hoặc đi theo nhóm gia đình.",
+      "Lịch trình xen kẽ ngày hoạt động và ngày nhẹ, mỗi tối đều kết thúc sớm để nghỉ ngơi."
+    ],
+    "itinerary": [
+      {
+        "id": "d1",
+        "index": 1,
+        "title": "Đón khách tại Quy Nhơn",
+        "summary": "Nhận phòng và làm quen thành phố biển.",
+        "activities": [
+          "Đón khách tại sân bay/bến xe.",
+          "Nhận phòng khách sạn.",
+          "Dạo biển và ăn tối tại trung tâm."
+        ],
+        "meals": [
+          "Tối"
+        ],
+        "accommodation": "Nghỉ đêm tại Quy Nhơn",
+        "places": [
+          "Quy Nhơn"
+        ]
+      },
+      {
+        "id": "d2",
+        "index": 2,
+        "title": "Kỳ Co – Eo Gió",
+        "summary": "Cụm điểm biển nổi tiếng nhất.",
+        "activities": [
+          "Cano ra Kỳ Co.",
+          "Tắm biển và nghỉ tại bãi.",
+          "Ăn trưa hải sản.",
+          "Tham quan Eo Gió lúc chiều muộn."
+        ],
+        "meals": [
+          "Sáng",
+          "Trưa"
+        ],
+        "accommodation": "Nghỉ đêm tại Quy Nhơn",
+        "places": [
+          "Kỳ Co",
+          "Eo Gió"
+        ]
+      },
+      {
+        "id": "d3",
+        "index": 3,
+        "title": "Hòn Khô – lặn biển",
+        "summary": "Ngày trải nghiệm dưới nước.",
+        "activities": [
+          "Ra Hòn Khô.",
+          "Hướng dẫn lặn ống thở và lặn ngắm san hô.",
+          "Ăn trưa hải sản.",
+          "Về đất liền, tự do buổi chiều."
+        ],
+        "meals": [
+          "Sáng",
+          "Trưa"
+        ],
+        "accommodation": "Nghỉ đêm tại Quy Nhơn",
+        "places": [
+          "Hòn Khô"
+        ]
+      },
+      {
+        "id": "d4",
+        "index": 4,
+        "title": "Quy Nhơn – Phú Yên – Ghềnh Đá Đĩa – Bãi Xép",
+        "summary": "Chuyển sang Phú Yên, tham quan điểm chính.",
+        "activities": [
+          "Di chuyển sang Phú Yên.",
+          "Tham quan Ghềnh Đá Đĩa.",
+          "Dừng ở Bãi Xép.",
+          "Ăn trưa và tham quan Đầm Ô Loan.",
+          "Nhận phòng tại Phú Yên."
+        ],
+        "meals": [
+          "Sáng",
+          "Trưa",
+          "Tối"
+        ],
+        "accommodation": "Nghỉ đêm tại Phú Yên",
+        "places": [
+          "Ghềnh Đá Đĩa",
+          "Bãi Xép",
+          "Đầm Ô Loan"
+        ]
+      },
+      {
+        "id": "d5",
+        "index": 5,
+        "title": "Mũi Điện – Cù Lao Xanh – Kết thúc",
+        "summary": "Buổi sáng cuối trước khi tiễn khách.",
+        "activities": [
+          "Đón bình minh tại Mũi Điện.",
+          "Ăn sáng và trả phòng.",
+          "Tuỳ thời gian, ghé Cù Lao Xanh hoặc tự do tại Quy Nhơn.",
+          "Tiễn khách tại sân bay/bến xe."
+        ],
+        "meals": [
+          "Sáng"
+        ],
+        "places": [
+          "Mũi Điện"
+        ]
+      }
+    ],
+    "included": [
+      "Xe đưa đón theo chương trình",
+      "04 đêm khách sạn theo hạng đã chọn",
+      "Các bữa ăn ghi trong lịch trình",
+      "Vé tham quan, cano, tàu và thiết bị lặn cơ bản",
+      "Hướng dẫn viên đồng hành"
+    ],
+    "excluded": [
+      "Vé máy bay / tàu xe tới Quy Nhơn",
+      "Chi phí cá nhân và đồ uống ngoài chương trình",
+      "Phụ thu phòng đơn",
+      "Bảo hiểm du lịch và dịch vụ chụp ảnh dưới nước"
+    ],
+    "notes": [
+      "Chương trình có nhiều hoạt động trên biển; khách nên sắp xếp sức khoẻ phù hợp.",
+      "Giờ tàu ra đảo có thể thay đổi theo thuỷ triều, ảnh hưởng tới giờ của ngày 3 và ngày 5."
+    ],
+    "tags": [
+      "5 ngày",
+      "Quy Nhơn",
+      "Phú Yên",
+      "Lặn biển",
+      "Nghỉ dưỡng"
+    ],
+    "contentStatus": "demo",
+    "updatedAt": "2026-01-15T09:00:00+07:00"
+  }
+];

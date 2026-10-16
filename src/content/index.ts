@@ -47,6 +47,13 @@ function assertIntegrity(): void {
   unique(articles, (a) => a.slug, "Article slug");
 
   for (const tour of tours) {
+    if (tour.itinerary.length !== tour.duration.days || tour.itinerary.some((day, i) => day.index !== i + 1)) {
+      problems.push(`Tour "${tour.slug}" có số ngày hoặc thứ tự lịch trình không khớp`);
+    }
+    unique(tour.pricingOptions, (option) => option.id, `Gói giá ${tour.slug}`);
+    if (tour.pricingOptions.length > 0 && tour.priceFrom?.amount !== Math.min(...tour.pricingOptions.map((option) => option.adultPrice))) {
+      problems.push(`Tour "${tour.slug}" có giá từ không khớp bảng giá`);
+    }
     for (const id of tour.categoryIds) {
       if (!categoryIds.has(id)) {
         problems.push(`Tour "${tour.slug}" tham chiếu danh mục không tồn tại: ${id}`);

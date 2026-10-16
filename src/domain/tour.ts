@@ -48,6 +48,18 @@ export const tourSchema = z.object({
   duration: durationSchema,
   /** Where the tour starts. Omit when it is not confirmed. */
   departurePoints: z.array(z.string().min(1)).default([]),
+  returnPoints: z.array(z.string().min(1)).default([]),
+  transport: z.array(z.string().min(1)).default([]),
+  tourCode: z.string().min(1).optional(),
+  /** Editorial provenance; never render source filenames in the customer flow. */
+  sourceDocuments: z.array(z.string().min(1)).default([]),
+  pricingOptions: z.array(z.object({
+    id: z.string().min(1),
+    label: z.string().min(1),
+    adultPrice: z.number().int().positive(),
+    childPrice: z.number().int().nonnegative(),
+  })).default([]),
+  gifts: z.array(z.string().min(1)).default([]),
   /** `null` ⇒ "Liên hệ tư vấn". Never render 0 ₫. */
   priceFrom: moneySchema.nullable().default(null),
   /** Explains what the price does (or does not) include. */

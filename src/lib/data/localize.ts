@@ -10,6 +10,7 @@ import type { Destination } from "@/domain/destination";
 import type { Tour } from "@/domain/tour";
 import type { TourCategory } from "@/domain/category";
 import type { Locale } from "@/i18n/config";
+import { tours } from "@/content/tours";
 
 /**
  * Resolve a source record for one locale.
@@ -29,6 +30,8 @@ const REVIEWED: TranslationStatus = "reviewed";
 
 export function tourTranslationStatus(id: string, locale: Locale): TranslationStatus {
   if (locale === "vi") return REVIEWED;
+  const source = tours.find((tour) => tour.id === id);
+  if (source && source.sourceDocuments.length > 0 && tourTranslations[id]?.sourceUpdatedAt !== source.updatedAt) return "missing";
   return tourTranslations[id]?.translationStatus ?? "missing";
 }
 
@@ -58,6 +61,8 @@ export function resolveTour(tour: Tour, locale: Locale): Tour {
   if (locale === "vi") return tour;
   const tr = tourTranslations[tour.id];
   if (!tr) return tour;
+  // Old itinerary overlays can silently replace transport, insurance and meals.
+  if (tour.sourceDocuments.length > 0 && tr.sourceUpdatedAt !== tour.updatedAt) return tour;
 
   const itinerary = tr.itinerary
     ? tour.itinerary.map((day, index) => {

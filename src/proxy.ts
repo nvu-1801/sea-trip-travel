@@ -7,7 +7,7 @@ import { defaultLocale } from "@/i18n/config";
  * Next.js 16 renamed `middleware` to `proxy`. This is the only place the two URL
  * shapes are reconciled:
  *
- *   - `/vi`, `/vi/...`  → 308 redirect to the canonical Vietnamese URL (`/`, `/...`)
+ *   - `/vi`, `/vi/...`  → pass through (metadata points to unprefixed canonical)
  *   - `/en`, `/en/...`  → passed straight through to the `[locale]` route tree
  *   - anything else     → internal rewrite to `/vi/...` (the URL never changes)
  *
@@ -23,11 +23,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // `/vi/...` is not a canonical URL: strip it and redirect.
+  // An internal rewrite can re-enter the proxy at `/vi/...`. Redirecting that
+  // path back to `/...` creates a production redirect loop. Accept both forms;
+  // page metadata consistently selects the unprefixed Vietnamese canonical.
   if (pathname === `/${defaultLocale}` || pathname.startsWith(`/${defaultLocale}/`)) {
-    const url = request.nextUrl.clone();
-    url.pathname = pathname.slice(defaultLocale.length + 1) || "/";
-    return NextResponse.redirect(url, 308);
+    return NextResponse.next();
   }
 
   // Already localized (English).

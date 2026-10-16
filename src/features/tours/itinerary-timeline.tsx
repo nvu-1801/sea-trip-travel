@@ -50,7 +50,8 @@ export function ItineraryTimeline({
               {day.index}
             </span>
 
-            <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 shadow-soft transition-shadow duration-300 hover:shadow-card sm:p-6">
+            <details open={index === 0} className="group rounded-2xl border border-border bg-surface p-5 shadow-soft transition-shadow duration-300 hover:shadow-card sm:p-6">
+              <summary className="cursor-pointer list-none rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-strong">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <h3 className="text-lg font-bold text-foreground">
                   <span className="text-primary-strong">
@@ -58,12 +59,15 @@ export function ItineraryTimeline({
                   </span>{" "}
                   {day.title}
                 </h3>
+                <span aria-hidden="true" className="text-xl font-light text-primary-strong transition-transform group-open:rotate-45">+</span>
                 {day.accommodation ? (
                   <span className="text-xs font-medium text-foreground-subtle">
                     {day.accommodation}
                   </span>
                 ) : null}
               </div>
+              </summary>
+              <div className="mt-5 flex flex-col gap-4 border-t border-border pt-5">
 
               {day.summary ? (
                 <p className="text-[0.9375rem] leading-relaxed text-foreground-muted">
@@ -73,8 +77,8 @@ export function ItineraryTimeline({
 
               {day.activities.length > 0 ? (
                 <ul className="flex flex-col gap-2">
-                  {day.activities.map((activity) => (
-                    <li key={activity} className="flex gap-3 text-[0.9375rem] leading-relaxed text-foreground">
+                  {day.activities.map((activity, activityIndex) => (
+                    <li key={`${activityIndex}-${activity}`} className="flex gap-3 text-[0.9375rem] leading-relaxed text-foreground">
                       <span
                         aria-hidden="true"
                         className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400"
@@ -100,7 +104,8 @@ export function ItineraryTimeline({
                   ) : null}
                 </div>
               ) : null}
-            </div>
+              </div>
+            </details>
           </li>
         );
       })}

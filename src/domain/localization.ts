@@ -28,6 +28,8 @@ export type ItineraryDayTranslation = z.infer<typeof itineraryDayTranslationSche
 
 export const tourTranslationSchema = z.object({
   translationStatus: translationStatusSchema.default("draft"),
+  /** Required to overlay a newly imported customer programme safely. */
+  sourceUpdatedAt: z.iso.datetime({ offset: true }).optional(),
   title: translatedText.optional(),
   summary: translatedText.optional(),
   highlights: z.array(translatedText).optional(),

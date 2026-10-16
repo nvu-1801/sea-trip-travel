@@ -14,6 +14,12 @@ npm run content:report   # liệt kê mục còn thiếu, suy ra từ config th�
 
 ---
 
+## Cập nhật tài liệu tour ngày 16/10/2026
+
+Đã nhận 13 file Word, loại hai cặp trùng thành 11 chương trình. Tổng dự kiến 14 file nên còn thiếu một file chưa xác định. Đã nhập lịch trình, dịch vụ, chính sách riêng theo tour, 28 ảnh và bảng giá bốn tour dài ngày. Bảy tour một ngày chưa có giá, tiếp tục hiển thị Liên hệ tư vấn. Các tour cũ chưa có tài liệu đối ứng và các mục ngoài tour để bổ sung sau theo yêu cầu người dùng.
+
+Danh sách A8–A10 cũ bên dưới là baseline trước đợt nhập; trạng thái hiện tại lấy từ `npm run content:report`. Chi tiết mâu thuẫn tài liệu và giới hạn ảnh ở `TOUR-CONTENT-IMPLEMENTATION-PLAN.md`. Chưa tự điền pháp nhân, MST, phụ thu hoặc domain.
+
 ## Đã nhận (2026-10-14)
 
 | Mục | Giá trị | Nơi lưu |
@@ -41,9 +47,9 @@ Các giá trị này đã xuất hiện ở: header, footer, nút liên hệ n�
 | A5 | **Bảo đảm email gửi đi** | 🔴 | Xem mục riêng bên dưới |
 | A6 | **Tên pháp nhân + mã số thuế** | 🔴 | Đã có địa chỉ; còn thiếu **tên công ty/hộ kinh doanh** và **MST** để ghi ở footer và trang chính sách |
 | A7 | **Duyệt chính sách xử lý thông tin** | 🔴 | Bản dự thảo ở `src/app/chinh-sach-bao-mat/page.tsx` cần được đọc và duyệt |
-| A8 | **Duyệt nội dung 15 tour** | 🔴 | Lịch trình, dịch vụ bao gồm/không bao gồm, lưu ý. Tất cả đang `contentStatus: "demo"` |
-| A9 | **Giá tour, hoặc xác nhận giữ "Liên hệ tư vấn"** | 🔴 | Cả 15 tour đang `priceFrom: null` |
-| A10 | **Điều kiện & chính sách huỷ/thanh toán** | 🔴 | Mảng `policies` rỗng ⇒ khối chính sách bị ẩn. Điền khi đã có nội dung được duyệt |
+| A8 | **Nội dung tour** | Đã nhập một phần | 11 chương trình đã có tài liệu khách; phần còn lại chờ bổ sung |
+| A9 | **Giá tour** | Đã nhập một phần | Bốn tour dài ngày có bảng giá, bảy tour một ngày chưa có giá; xác nhận thời hạn áp dụng sau |
+| A10 | **Điều kiện & chính sách huỷ/thanh toán** | Đã nhập một phần | Giữ chính sách từng tour từ Word; chưa tự tính phí cho ranh giới thời gian còn mơ hồ |
 
 ### A5 — Bảo đảm email gửi đi
 

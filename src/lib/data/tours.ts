@@ -36,8 +36,15 @@ export function getToursByCategoryId(categoryId: string, locale: Locale): readon
 export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
   const focus = new Set(getAllDescendantCategoryIds("cat_quy_nhon_phu_yen"));
   const inFocus = tours.filter((tour) => tour.categoryIds.some((id) => focus.has(id)));
-  const chosen =
-    inFocus.length >= limit ? inFocus.slice(0, limit) : [...inFocus, ...tours.filter((t) => !inFocus.includes(t))].slice(0, limit);
+  // Show both day trips and overnight programmes as the catalogue grows.
+  const dayLimit = Math.ceil(limit / 2);
+  const diverse = [
+    ...inFocus.filter((tour) => tour.duration.days === 1).slice(0, dayLimit),
+    ...inFocus.filter((tour) => tour.duration.days > 1).slice(0, limit - dayLimit),
+    ...inFocus,
+    ...tours.filter((tour) => !inFocus.includes(tour)),
+  ];
+  const chosen = [...new Map(diverse.map((tour) => [tour.id, tour])).values()].slice(0, limit);
   return chosen.map((tour) => resolveTour(tour, locale));
 }
 

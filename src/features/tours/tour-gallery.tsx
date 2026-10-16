@@ -60,6 +60,7 @@ export function TourGallery({
       <div
         id="tour-gallery-panel"
         role="tabpanel"
+        aria-labelledby={safeImages.length > 1 ? `tour-gallery-tab-${activeIndex}` : undefined}
         aria-label={fmt(labels.aria, { title })}
         className="overflow-hidden rounded-2xl border border-border bg-surface shadow-soft"
       >
@@ -67,6 +68,7 @@ export function TourGallery({
           image={active}
           altFallback={title}
           priority
+          fit="contain"
           sizes="(max-width: 1024px) 100vw, 60vw"
           className="aspect-[16/10] w-full"
           markPlaceholder

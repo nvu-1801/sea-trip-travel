@@ -170,7 +170,7 @@ Component và hàm server đọc được ngôn ngữ qua `next/root-params` mà
 truyền prop, và locale tự động nằm trong cache key của `'use cache'`.
 
 ```text
-proxy.ts            /vi/… → 308 về /…        (URL tiếng Việt chuẩn)
+proxy.ts            /vi/… → pass through      (canonical vẫn là /…)
                     /en/… → đi thẳng
                     còn lại → rewrite nội bộ sang /vi/…
 i18n/               config (locales, nhãn, Intl tag), routing (localizePath,
@@ -183,7 +183,7 @@ lib/data/localize.ts    resolve bản ghi theo locale + translationStatus
 
 Bất biến:
 
-1. **Tiếng Việt không đổi URL.** `/vi/…` bị chuyển hướng 308; mọi `href`, canonical
+1. **Tiếng Việt không đổi URL.** `/vi/…` được chấp nhận để tránh vòng lặp rewrite; mọi `href`, canonical
    và hreflang đi qua duy nhất `localizePath()`.
 2. **Dữ liệu dùng chung không nhân bản.** slug, id, quan hệ, giá, thời lượng,
    `src` ảnh chỉ tồn tại ở bản ghi nguồn; file dịch chỉ chứa trường ngôn ngữ.

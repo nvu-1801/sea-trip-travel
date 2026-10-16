@@ -38,11 +38,26 @@
     "departurePrefix": "Departs: {place}",
     "departureFallback": "Contact us to confirm",
     "updating": "Being updated",
-    "tourCount": { "one": "{count} tour", "other": "{count} tours" },
-    "dayUnit": { "one": "{count} day", "other": "{count} days" },
-    "nightUnit": { "one": "{count} night", "other": "{count} nights" },
-    "readMinutes": { "one": "{count} min read", "other": "{count} min read" },
-    "readMinutesShort": { "one": "{count} min", "other": "{count} min" },
+    "tourCount": {
+      "one": "{count} tour",
+      "other": "{count} tours"
+    },
+    "dayUnit": {
+      "one": "{count} day",
+      "other": "{count} days"
+    },
+    "nightUnit": {
+      "one": "{count} night",
+      "other": "{count} nights"
+    },
+    "readMinutes": {
+      "one": "{count} min read",
+      "other": "{count} min read"
+    },
+    "readMinutesShort": {
+      "one": "{count} min",
+      "other": "{count} min"
+    },
     "breadcrumbAria": "Breadcrumb",
     "pageNavAria": "On this page",
     "imageAlt": "Illustrative image",
@@ -241,7 +256,17 @@
     "galleryListAria": "Choose a photo",
     "galleryImageLabel": "Photo {index}",
     "galleryAlt": "{title} — photo {index}",
-    "galleryPlaceholderAlt": "{title} — illustrative image"
+    "galleryPlaceholderAlt": "{title} — illustrative image",
+    "packages": {
+      "title": "Find your travel package",
+      "description": "Reference prices per guest by accommodation package. Inclusions are confirmed during consultation.",
+      "accommodation": "Package",
+      "adult": "Adult",
+      "child": "Children aged 5–9",
+      "gift": "Programme extras",
+      "returnPoint": "Drop-off",
+      "transport": "Transport"
+    }
   },
   "tourCard": {
     "durationLabel": "{days} days"
@@ -420,7 +445,15 @@
       "November",
       "December"
     ],
-    "weekdaysShort": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "weekdaysShort": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
     "weekdaysFull": [
       "Monday",
       "Tuesday",

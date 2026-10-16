@@ -50,6 +50,7 @@ type AssetImageProps = {
   className?: string;
   sizes?: string;
   priority?: boolean;
+  fit?: "cover" | "contain";
   /** Show the small "Ảnh minh hoạ" marker. Off inside dense grids. */
   markPlaceholder?: boolean;
   /**
@@ -72,6 +73,7 @@ export function AssetImage({
   className,
   sizes = "(max-width: 768px) 100vw, 33vw",
   priority = false,
+  fit = "cover",
   markPlaceholder = false,
   variant = "scene",
   parallax = false,
@@ -91,7 +93,7 @@ export function AssetImage({
           fill
           sizes={sizes}
           priority={priority}
-          className="object-cover"
+          className={fit === "contain" ? "object-contain" : "object-cover"}
         />
       </div>
     );

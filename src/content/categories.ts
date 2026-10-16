@@ -7,6 +7,7 @@ import type { TourCategoryInput } from "@/domain/category";
 export const tourCategories: readonly TourCategoryInput[] = [
   {
     id: "cat_quy_nhon_phu_yen",
+    image: {"src": "/images/tours/d7233006cc4fd0f9.jpeg", "alt": "Bãi biển Kỳ Co"},
     slug: "tour-quy-nhon-phu-yen",
     path: "/tour-quy-nhon-phu-yen",
     name: "Tour Quy Nhơn - Phú Yên",
@@ -20,6 +21,7 @@ export const tourCategories: readonly TourCategoryInput[] = [
   },
   {
     id: "cat_quy_nhon_1_ngay",
+    image: {"src": "/images/tours/e16bd7abd194bb4a.jpeg", "alt": "Bãi biển Kỳ Co"},
     slug: "tour-quy-nhon-1-ngay",
     path: "/tour-quy-nhon-phu-yen/tour-quy-nhon-1-ngay",
     name: "Tour Quy Nhơn 1 Ngày",
@@ -33,6 +35,7 @@ export const tourCategories: readonly TourCategoryInput[] = [
   },
   {
     id: "cat_quy_nhon_dai_ngay",
+    image: {"src": "/images/tours/afdf37ef08e566b9.png", "alt": "Đảo Cù Lao Xanh"},
     slug: "tour-quy-nhon-dai-ngay",
     path: "/tour-quy-nhon-phu-yen/tour-quy-nhon-dai-ngay",
     name: "Tour Quy Nhơn dài Ngày",

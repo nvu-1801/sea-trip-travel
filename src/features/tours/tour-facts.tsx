@@ -1,7 +1,7 @@
 import type { Tour } from "@/domain/tour";
 import { format, getMessages } from "@/i18n/messages";
 import type { Locale } from "@/i18n/config";
-import { formatDuration, formatPriceFrom, hasPublishedPrice } from "@/lib/format";
+import { formatDuration, formatPriceFrom, formatMoney, hasPublishedPrice } from "@/lib/format";
 import { SectionHeading } from "@/components/ui/layout";
 import { CheckIcon, CloseIcon, ClockIcon, InfoIcon, MapPinIcon, UsersIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
@@ -80,7 +80,45 @@ export function TourPriceBlock({ tour, locale }: { tour: Tour; locale: Locale })
         <InfoIcon className="mt-px h-3.5 w-3.5 shrink-0" />
         {m.common.noOnlineBooking}
       </p>
+      {tour.pricingOptions.length > 0 ? (
+        <a href="#bang-gia" className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-primary-strong underline underline-offset-4">
+          {m.tour.packages.title}
+        </a>
+      ) : null}
     </div>
+  );
+}
+
+/** A responsive comparison; no checkout or inferred package entitlements. */
+export function TourPackages({ tour, locale }: { tour: Tour; locale: Locale }) {
+  if (tour.pricingOptions.length === 0) return null;
+  const m = getMessages(locale).tour.packages;
+  const money = (amount: number) => formatMoney({ amount, currency: "VND" }, locale);
+  return (
+    <section id="bang-gia" aria-labelledby="packages-title" className="scroll-mt-28 rounded-3xl border border-border bg-surface p-5 shadow-soft sm:p-8">
+      <SectionHeading title={<span id="packages-title">{m.title}</span>} description={m.description} as="h2" />
+      <div className="mt-6 overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-left text-xs sm:text-sm">
+          <thead className="bg-surface-muted text-foreground-muted">
+            <tr>
+              <th scope="col" className="p-3 sm:p-4">{m.accommodation}</th>
+              <th scope="col" className="p-3 sm:p-4">{m.adult}</th>
+              <th scope="col" className="p-3 sm:p-4">{m.child}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {tour.pricingOptions.map((option) => (
+              <tr key={option.id} className="even:bg-surface-muted/40">
+                <th scope="row" className="p-3 font-semibold sm:p-4">{option.label}</th>
+                <td className="whitespace-nowrap p-3 font-bold tabular-nums text-primary-strong sm:p-4">{money(option.adultPrice)}</td>
+                <td className="whitespace-nowrap p-3 tabular-nums sm:p-4">{money(option.childPrice)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-4 text-sm leading-relaxed text-foreground-muted">{tour.priceNote}</p>
+    </section>
   );
 }
 
@@ -125,6 +163,14 @@ export function TourServices({ tour, locale }: { tour: Tour; locale: Locale }) {
                 {item}
               </li>
             ))}
+          </ul>
+        </div>
+      ) : null}
+      {tour.gifts.length > 0 ? (
+        <div className="rounded-2xl border border-border bg-primary-soft p-5 md:col-span-2">
+          <h3 className="text-base font-bold text-foreground">{m.tour.packages.gift}</h3>
+          <ul className="mt-3 grid gap-3 text-sm leading-relaxed sm:grid-cols-2">
+            {tour.gifts.map((gift) => <li key={gift} className="flex gap-2"><CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" />{gift}</li>)}
           </ul>
         </div>
       ) : null}

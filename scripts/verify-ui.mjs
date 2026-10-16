@@ -712,13 +712,16 @@ async function checkContactDetails(browser) {
   check("contact page links the mailto", contactHtml.includes("mailto:seatriptravel"));
   check("contact page shows the address", contactHtml.includes(ADDRESS));
 
-  // The header hotline is visible from `xl` up.
+  // The full hotline appears from 2xl; 1280px leaves room for the long menu.
   const headerPhone = page.locator(`header a[href="${HOTLINE_HREF}"]`).first();
-  check("header hotline link is visible at 1280px", await headerPhone.isVisible());
+  check("full header hotline is hidden at 1280px to preserve menu spacing", !(await headerPhone.isVisible()));
+  await page.setViewportSize({ width: 1536, height: 900 });
+  check("header hotline link is visible at 1536px", await headerPhone.isVisible());
   check(
     "header hotline shows the number",
     (await headerPhone.innerText()).includes(HOTLINE_DISPLAY),
   );
+  await page.setViewportSize({ width: 1280, height: 900 });
 
   // Floating rail: closed items are hidden, so open it first.
   const railToggle = page.locator('button[aria-controls="floating-contact-list"]');
@@ -1225,7 +1228,7 @@ async function main() {
 
   const server = spawn(
     process.platform === "win32" ? "npx.cmd" : "npx",
-    ["next", "start", "--port", String(PORT)],
+    ["next", "start", "--hostname", "127.0.0.1", "--port", String(PORT)],
     {
       env: {
         ...process.env,
@@ -1260,7 +1263,9 @@ async function main() {
     if (!up) throw new Error(`next start did not become ready on ${BASE}`);
     console.log(`Production server ready on ${BASE} (NODE_ENV=production)\n`);
 
-    browser = await chromium.launch({ channel: "chrome" });
+    browser = await chromium.launch(process.env.CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
+      : { channel: "chrome" });
 
     await checkNoHorizontalOverflow(browser);
     await checkReducedMotion(browser);

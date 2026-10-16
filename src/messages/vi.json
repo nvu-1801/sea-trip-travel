@@ -38,11 +38,26 @@
     "departurePrefix": "Khởi hành: {place}",
     "departureFallback": "Liên hệ để xác nhận",
     "updating": "Đang cập nhật",
-    "tourCount": { "one": "{count} tour", "other": "{count} tour" },
-    "dayUnit": { "one": "{count} ngày", "other": "{count} ngày" },
-    "nightUnit": { "one": "{count} đêm", "other": "{count} đêm" },
-    "readMinutes": { "one": "{count} phút đọc", "other": "{count} phút đọc" },
-    "readMinutesShort": { "one": "{count} phút", "other": "{count} phút" },
+    "tourCount": {
+      "one": "{count} tour",
+      "other": "{count} tour"
+    },
+    "dayUnit": {
+      "one": "{count} ngày",
+      "other": "{count} ngày"
+    },
+    "nightUnit": {
+      "one": "{count} đêm",
+      "other": "{count} đêm"
+    },
+    "readMinutes": {
+      "one": "{count} phút đọc",
+      "other": "{count} phút đọc"
+    },
+    "readMinutesShort": {
+      "one": "{count} phút",
+      "other": "{count} phút"
+    },
     "breadcrumbAria": "Đường dẫn",
     "pageNavAria": "Nội dung trang",
     "imageAlt": "Ảnh minh hoạ",
@@ -241,7 +256,17 @@
     "galleryListAria": "Chọn ảnh",
     "galleryImageLabel": "Ảnh {index}",
     "galleryAlt": "{title} — ảnh {index}",
-    "galleryPlaceholderAlt": "{title} — ảnh minh hoạ"
+    "galleryPlaceholderAlt": "{title} — ảnh minh hoạ",
+    "packages": {
+      "title": "Chọn gói phù hợp",
+      "description": "Giá tham khảo theo từng hạng lưu trú, tính trên mỗi khách. Quyền lợi được xác nhận khi tư vấn.",
+      "accommodation": "Gói dịch vụ",
+      "adult": "Người lớn",
+      "child": "Trẻ em 5–9 tuổi",
+      "gift": "Quà tặng trong chương trình",
+      "returnPoint": "Điểm trả khách",
+      "transport": "Phương tiện"
+    }
   },
   "tourCard": {
     "durationLabel": "{days} ngày"
@@ -420,7 +445,15 @@
       "Tháng 11",
       "Tháng 12"
     ],
-    "weekdaysShort": ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
+    "weekdaysShort": [
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "T6",
+      "T7",
+      "CN"
+    ],
     "weekdaysFull": [
       "Thứ Hai",
       "Thứ Ba",

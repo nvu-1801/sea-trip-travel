@@ -53,6 +53,7 @@ export function buildMetadata({
     : undefined;
 
   return {
+    metadataBase: new URL(siteConfig.url),
     title,
     description,
     keywords: keywords ? [...keywords] : undefined,

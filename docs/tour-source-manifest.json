@@ -1,0 +1,83 @@
+{
+  "expectedFiles": 14,
+  "receivedFiles": 13,
+  "uniquePrograms": 11,
+  "duplicates": [
+    [
+      "ST10 LAND SĂN CÁ BÃI DỨA(1).docx",
+      "ST10 LAND SĂN CÁ BÃI DỨA.docx"
+    ],
+    [
+      "TOUR QUY NHƠN - PHÚ YÊN 4 NGÀY 3 ĐÊM ( ĐÓN TIỄN QUY NHƠN)(1).docx",
+      "TOUR QUY NHƠN - PHÚ YÊN 4 NGÀY 3 ĐÊM ( ĐÓN TIỄN QUY NHƠN).docx"
+    ]
+  ],
+  "programs": [
+    {
+      "file": "ST01( ĐƯỜNG BỘ) TOUR KỲ CO - EO GIÓ 1 NGÀY.docx",
+      "id": "tour_qn_ky_co_eo_gio_1n",
+      "slug": "quy-nhon-ky-co-eo-gio-1-ngay",
+      "textSha256": "36f4eeadd1705721ab9307f0b6d99be3df683d9c6a35f188dafb5d5b07d12d3b"
+    },
+    {
+      "file": "ST02 TOUR QUY NHƠN - PHÚ YÊN - GHỀNH ĐÁ ĐĨA 1 NGÀY.docx",
+      "id": "tour_qn_py_ghenh_da_dia_1n",
+      "slug": "quy-nhon-phu-yen-ghenh-da-dia-1-ngay",
+      "textSha256": "8b223d781c538dc13d6b0e729dc3c5f477e6707c34d68d2ff35ac5468d182dad"
+    },
+    {
+      "file": "ST03 TOUR KỲ CO - EO GIÓ - HÒN KHÔ 1 NGÀY.docx",
+      "id": "tour_qn_ky_co_eo_gio_hon_kho_1n",
+      "slug": "ky-co-eo-gio-hon-kho-1-ngay",
+      "textSha256": "c5f40d82072fbca1a58d0374a471f05e8aa1ffc4caf4bd2b6e231625a69eea8d"
+    },
+    {
+      "file": "ST04 TOUR QUY NHƠN - CÙ LAO XANH 1 NGÀY.docx",
+      "id": "tour_qn_cu_lao_xanh_1n",
+      "slug": "quy-nhon-cu-lao-xanh-1-ngay",
+      "textSha256": "d17d9122e90166f7913f2e0417d3107829245b6e8cf06da2284fe0b7009b3fa2"
+    },
+    {
+      "file": "ST05 TOUR QUY NHƠN - PHÚ YÊN - MŨI ĐIỆN 1 NGÀY.docx",
+      "id": "tour_py_mui_dien_1n",
+      "slug": "quy-nhon-phu-yen-mui-dien-1-ngay",
+      "textSha256": "fd2a7c25691f29c3016e2aeed7c89f3fdf3908aceb0d2a6554a00c82daaf2da9"
+    },
+    {
+      "file": "ST06 TOUR TÂY SƠN - HẦM HÔ 1 NGÀY.docx",
+      "id": "tour_tay_son_ham_ho_1n",
+      "slug": "tay-son-ham-ho-1-ngay",
+      "textSha256": "2995f8611cbf2f522068dd3f52f5cd0fa17361380665e2e8bb3166d5af7e9d47"
+    },
+    {
+      "file": "ST10 LAND SĂN CÁ BÃI DỨA(1).docx",
+      "id": "tour_bai_dua_san_ca_1n",
+      "slug": "san-ca-bai-dua-1-ngay",
+      "textSha256": "5725a4d399c3f2b77707f2642ab96d00e5a6f161c976c6d8447053aaefcd7603"
+    },
+    {
+      "file": "TOUR QUY NHƠN - PHÚ YÊN 3 NGÀY 2 ĐÊM.docx",
+      "id": "tour_qn_py_3n2d",
+      "slug": "quy-nhon-phu-yen-3-ngay-2-dem",
+      "textSha256": "f80f6dae76231c8fef15c3af36da05a1454279046024e95cddcfee6d6f191533"
+    },
+    {
+      "file": "TOUR QUY NHƠN - PHÚ YÊN 4 NGÀY 3 ĐÊM ( ĐÓN TIỄN QUY NHƠN)(1).docx",
+      "id": "tour_qn_py_4n3d",
+      "slug": "quy-nhon-phu-yen-4-ngay-3-dem",
+      "textSha256": "9b144a7dfaf7d6ec9b8bc53e688d48c74357f293b5013903912917d1289601c4"
+    },
+    {
+      "file": "2 TOUR QUY NHƠN - PHÚ YÊN 4 NGÀY 3 ĐÊM ( ĐÓN QN - TIỄN PY).docx",
+      "id": "tour_qn_py_4n3d_tien_py",
+      "slug": "quy-nhon-phu-yen-4-ngay-3-dem-tien-phu-yen",
+      "textSha256": "af97ebca093039fe32a47e134fbd9cf619a336d8ce19aee902e7f9e718ae9ac7"
+    },
+    {
+      "file": "TOUR QUY NHƠN 4 NGÀY 3 ĐÊM.docx",
+      "id": "tour_qn_4n3d",
+      "slug": "quy-nhon-4-ngay-3-dem",
+      "textSha256": "dbb29d1768d88569d259cef8110c2f9b7391dc443d076da9a8b7391923e4a7c8"
+    }
+  ]
+}

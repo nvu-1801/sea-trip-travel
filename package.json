@@ -7,10 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "verify:ui": "node scripts/verify-ui.mjs",
     "content:report": "node --env-file-if-exists=.env.local --import tsx scripts/content-report.ts",
-    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/lead-store.test.ts tests/content.test.ts tests/mail-transport.test.ts tests/i18n.test.ts"
+    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/lead-store.test.ts tests/content.test.ts tests/mail-transport.test.ts tests/i18n.test.ts",
+    "verify:tour-import": "node scripts/verify-tour-import.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

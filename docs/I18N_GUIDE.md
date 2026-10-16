@@ -19,8 +19,7 @@ Tài liệu ngắn cho người vận hành nội dung. Kiến trúc chi tiết 
 | Tiếng Việt (không prefix) | `/` | `/lien-he` | `/tour/quy-nhon-...` |
 | English (`/en`) | `/en` | `/en/lien-he` | `/en/tour/quy-nhon-...` |
 
-- URL tiếng Việt **giữ nguyên** như trước. `/vi/...` bị 308-redirect về URL không
-  prefix (`src/proxy.ts`).
+- URL tiếng Việt **giữ nguyên** như trước. `/vi/...` được chấp nhận để tránh vòng lặp rewrite; metadata canonical luôn trỏ về URL không prefix (`src/proxy.ts`).
 - Slug nội dung **không dịch** (ví dụ `/en/tour/quy-nhon-ky-co-eo-gio-1-ngay`).
 - Ngôn ngữ **không** tự đổi theo IP hay `Accept-Language`; chỉ đổi khi bấm VI/EN.
 
@@ -29,7 +28,7 @@ Tài liệu ngắn cho người vận hành nội dung. Kiến trúc chi tiết 
 ```
 src/
 ├── app/[locale]/…      Route theo ngôn ngữ (root layout đọc locale)
-├── proxy.ts            Viết lại /… → /vi/…, chuyển hướng /vi/… → /…
+├── proxy.ts            Viết lại /… → /vi/…, chấp nhận /vi/… để tránh vòng lặp
 ├── i18n/               config, routing, messages, server (getLocale), params
 ├── messages/vi.json    Nguồn sự thật của chuỗi giao diện
 ├── messages/en.json    Bản dịch (được TS kiểm tra khớp key với vi.json)

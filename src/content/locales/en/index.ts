@@ -9,6 +9,7 @@ import { articleTranslations as rawArticles } from "./articles";
 import { categoryTranslations as rawCategories } from "./categories";
 import { destinationTranslations as rawDestinations } from "./destinations";
 import { tourTranslations as rawTours } from "./tours";
+import { customerTourTranslations } from "./customer-tours";
 
 /**
  * English content overlays, validated at build time.
@@ -18,7 +19,10 @@ import { tourTranslations as rawTours } from "./tours";
  * content is checked.
  */
 
-export const tourTranslations = z.record(z.string(), tourTranslationSchema).parse(rawTours);
+export const tourTranslations = z.record(z.string(), tourTranslationSchema).parse({
+  ...rawTours,
+  ...customerTourTranslations,
+});
 export const categoryTranslations = z.record(z.string(), categoryTranslationSchema).parse(
   rawCategories,
 );

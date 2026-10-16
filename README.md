@@ -21,7 +21,7 @@ Kiểm tra chất lượng:
 ```bash
 npm run typecheck     # tsc --noEmit
 npm run lint          # eslint
-npm test              # node:test (110 test)
+npm test              # node:test (132 test)
 npm run build         # next build (42 trang)
 
 npm run verify:ui     # Chrome thật: 82 kiểm tra (layout, bàn phím, form → SMTP)
@@ -89,12 +89,12 @@ Xem `.env.example`. Không có secret nào được ghi vào source. Chỉ biế
 
 ## Nội dung và dữ liệu
 
-Nội dung hiện nằm trong `src/content/*.ts` và **đã được đánh dấu là demo**:
+Nội dung nằm trong `src/content/`. Đợt 16/10/2026 đã nhập 11 chương trình từ tài liệu khách hàng, bảng giá lưu trú và 28 ảnh gốc trong Word. Xem `docs/TOUR-CONTENT-IMPLEMENTATION-PLAN.md` và `docs/TOUR-IMPORT-VERIFICATION.md`.
 
-- Mọi bản ghi có `contentStatus: "demo"`. Đây là **metadata theo dõi nội bộ** (dùng
+- Tour từ tài liệu khách có `contentStatus: "verified"`; tour chưa có tài liệu đối ứng giữ `demo`. Đây là **metadata theo dõi nội bộ** (dùng
   cho `docs/CONTENT-TODO.md` và checklist nghiệm thu) — trường này **không** được
   render ra giao diện. Khách không thấy nhãn nào về "nội dung demo".
-- Giá tour đặt `priceFrom: null` → giao diện hiển thị **"Liên hệ tư vấn"**, không
+- Tour một ngày chưa có giá giữ `priceFrom: null` → **"Liên hệ tư vấn"**; bốn tour dài ngày có bảng giá theo gói. Giá thiếu không
   bao giờ hiển thị `0 ₫`.
 - Ảnh chưa có: `image.src` bỏ trống → hệ thống vẽ placeholder gradient thương
   hiệu. Thêm ảnh thật = điền `src` (một dòng dữ liệu), không sửa component.

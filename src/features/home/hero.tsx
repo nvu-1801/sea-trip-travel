@@ -22,7 +22,10 @@ export function Hero({ locale }: { locale: Locale }) {
   const quyNhon = getCategories(locale).find(
     (category) => category.slug === "tour-quy-nhon-phu-yen",
   );
-  const highlights = getDestinationsByRegion("quy-nhon-phu-yen", locale).slice(0, 3);
+  const focusDestinations = getDestinationsByRegion("quy-nhon-phu-yen", locale);
+  const highlights = focusDestinations.slice(0, 3);
+  const mainImage = focusDestinations.find((destination) => destination.id === "dest_ky_co_eo_gio")?.image;
+  const secondaryImage = focusDestinations.find((destination) => destination.id === "dest_cu_lao_xanh")?.image;
 
   const assurances = [
     quyNhon
@@ -141,7 +144,7 @@ export function Hero({ locale }: { locale: Locale }) {
             >
               <div className="overflow-hidden rounded-3xl border border-border shadow-lifted">
                 <AssetImage
-                  image={{ alt: m.home.hero.collageAltMain }}
+                  image={mainImage ?? { alt: m.home.hero.collageAltMain }}
                   sizes="(max-width: 1024px) 90vw, 40vw"
                   priority
                   parallax
@@ -172,7 +175,7 @@ export function Hero({ locale }: { locale: Locale }) {
               <div className="absolute -bottom-6 -left-3 w-28 sm:-bottom-8 sm:-left-8 sm:w-44 lg:w-48">
                 <div className="overflow-hidden rounded-2xl border-4 border-background shadow-card">
                   <AssetImage
-                    image={{ alt: m.home.hero.collageAltSecondary }}
+                    image={secondaryImage ?? { alt: m.home.hero.collageAltSecondary }}
                     sizes="200px"
                     parallax
                     className="aspect-square w-full"
