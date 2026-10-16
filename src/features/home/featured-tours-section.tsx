@@ -14,9 +14,11 @@ import { localizePath } from "@/i18n/routing";
  * Featured tours. Prefers the Quy Nhơn – Phú Yên line-up (the site's focus) and
  * tops up from other regions so the section is never thin.
  */
-export function FeaturedToursSection({ locale }: { locale: Locale }) {
+export async function FeaturedToursSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const tours = getFeaturedTours(6, locale).map((tour) => toTourCard(tour, locale));
+  const tours = await Promise.all(
+    (await getFeaturedTours(6, locale)).map((tour) => toTourCard(tour, locale)),
+  );
 
   return (
     <Section tone="muted" spacing="loose">

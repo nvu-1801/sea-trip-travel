@@ -1,47 +1,81 @@
-import { articles } from "@/content";
 import type { TravelArticle } from "@/domain/article";
 import type { Locale } from "@/i18n/config";
+import type { ContentSnapshot } from "@/server/repo/types";
+import { loadPublishedSnapshot, translationsFor } from "./snapshot";
 import { resolveArticle } from "./localize";
+import { getSiteSettings } from "./settings";
 
-/** All articles, newest first, resolved for the requested locale. */
-export function getArticles(locale: Locale): readonly TravelArticle[] {
-  return [...articles]
+/** All published articles, newest first, resolved for the requested locale. */
+
+async function snap(source?: ContentSnapshot): Promise<ContentSnapshot> {
+  return source ?? loadPublishedSnapshot();
+}
+
+export async function getArticles(
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TravelArticle[]> {
+  const snapshot = await snap(source);
+  const translations = translationsFor(snapshot, locale);
+  return [...snapshot.articles]
     .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
-    .map((article) => resolveArticle(article, locale));
+    .map((article) => resolveArticle(article, locale, translations));
 }
 
-export function getArticleBySlug(slug: string, locale: Locale): TravelArticle | undefined {
-  const article = articles.find((candidate) => candidate.slug === slug);
-  return article ? resolveArticle(article, locale) : undefined;
+export async function getArticleBySlug(
+  slug: string,
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TravelArticle | undefined> {
+  const snapshot = await snap(source);
+  const article = snapshot.articles.find((candidate) => candidate.slug === slug);
+  if (!article) return undefined;
+  return resolveArticle(article, locale, translationsFor(snapshot, locale));
 }
 
-export function getArticleSlugs(): readonly string[] {
-  return articles.map((article) => article.slug);
+export async function getArticleSlugs(source?: ContentSnapshot): Promise<string[]> {
+  const snapshot = await snap(source);
+  return snapshot.articles.map((article) => article.slug);
 }
 
-export function getFeaturedArticle(locale: Locale): TravelArticle | undefined {
-  const all = getArticles(locale);
+export async function getFeaturedArticle(
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TravelArticle | undefined> {
+  const snapshot = await snap(source);
+  const settings = await getSiteSettings(locale, snapshot);
+  const pinnedSlug = settings.home?.featuredArticleSlug;
+  const all = await getArticles(locale, snapshot);
+  if (pinnedSlug) {
+    const pinned = all.find((article) => article.slug === pinnedSlug);
+    if (pinned) return pinned;
+  }
   return all.find((article) => article.featured) ?? all[0];
 }
 
-export function getNonFeaturedArticles(locale: Locale): readonly TravelArticle[] {
-  const featured = getFeaturedArticle(locale);
-  return getArticles(locale).filter((article) => article.slug !== featured?.slug);
+export async function getNonFeaturedArticles(
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TravelArticle[]> {
+  const featured = await getFeaturedArticle(locale, source);
+  return (await getArticles(locale, source)).filter((article) => article.slug !== featured?.slug);
 }
 
 /** Related reading: shared destination first, then shared tour, then recent. */
-export function getRelatedArticles(
+export async function getRelatedArticles(
   slug: string,
   limit = 3,
   locale: Locale,
-): readonly TravelArticle[] {
-  const article = articles.find((candidate) => candidate.slug === slug);
+  source?: ContentSnapshot,
+): Promise<TravelArticle[]> {
+  const snapshot = await snap(source);
+  const article = snapshot.articles.find((candidate) => candidate.slug === slug);
   if (!article) return [];
 
   const destinationIds = new Set(article.destinationIds);
   const tourSlugs = new Set(article.relatedTourSlugs);
 
-  const scored = getArticles(locale)
+  const scored = (await getArticles(locale, snapshot))
     .filter((candidate) => candidate.slug !== article.slug)
     .map((candidate) => {
       let score = 0;
@@ -56,7 +90,7 @@ export function getRelatedArticles(
   if (chosen.length >= limit) return chosen.slice(0, limit);
 
   const seen = new Set(chosen.map((c) => c.slug));
-  const fallback = getArticles(locale).filter(
+  const fallback = (await getArticles(locale, snapshot)).filter(
     (candidate) => candidate.slug !== article.slug && !seen.has(candidate.slug),
   );
   return [...chosen, ...fallback].slice(0, limit);

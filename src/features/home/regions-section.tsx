@@ -18,12 +18,19 @@ import { localizePath } from "@/i18n/routing";
  * a text column breaks up the rhythm of the page and reads faster than a fourth
  * row of identical cards.
  */
-export function RegionsSection({ locale }: { locale: Locale }) {
+export async function RegionsSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const domestic = getCategories(locale).find((category) => category.path === ROUTES.domestic);
+  const domestic = (await getCategories(locale)).find((category) => category.path === ROUTES.domestic);
   if (!domestic) return null;
 
-  const regions = getChildCategories(domestic.id, locale);
+  const regions = await getChildCategories(domestic.id, locale);
+  const regionData = await Promise.all(
+    regions.map(async (region) => ({
+      region,
+      tours: (await getToursByCategoryId(region.id, locale)).slice(0, 3),
+      count: await getCategoryTourCount(region.id),
+    })),
+  );
 
   return (
     <Section tone="default" spacing="loose">
@@ -43,8 +50,7 @@ export function RegionsSection({ locale }: { locale: Locale }) {
         </Reveal>
 
         <ul className="mt-10 flex flex-col gap-5">
-          {regions.map((region) => {
-            const regionTours = getToursByCategoryId(region.id, locale).slice(0, 3);
+          {regionData.map(({ region, tours: regionTours, count }) => {
             return (
               <Reveal as="li" key={region.id}>
                 <Link
@@ -65,7 +71,7 @@ export function RegionsSection({ locale }: { locale: Locale }) {
                       </h3>
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary-strong">
                         <MapPinIcon className="h-3.5 w-3.5" />
-                        {plural(m.common.tourCount, getCategoryTourCount(region.id))}
+                        {plural(m.common.tourCount, count)}
                       </span>
                     </div>
 

@@ -15,8 +15,8 @@ import { resolveLocaleFromParams } from "@/i18n/params";
  */
 export const instant = false;
 
-export function generateStaticParams() {
-  return getTourSlugs().map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  return (await getTourSlugs()).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -26,7 +26,7 @@ export async function generateMetadata({
   const locale = await resolveLocaleFromParams(params);
   // 404 during metadata resolution — before the PPR shell streams. A `notFound()`
   // reached while streaming degrades to a soft 404 (HTTP 200 + noindex).
-  if (!getTourBySlug(slug, locale)) notFound();
+  if (!(await getTourBySlug(slug, locale))) notFound();
   return buildTourMetadata(slug, locale);
 }
 

@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { defaultLocale } from "@/i18n/config";
+import { SESSION_COOKIE } from "@/server/auth/cookie-name";
 
 /**
- * Locale routing.
+ * Locale routing + the admin gate.
  *
  * Next.js 16 renamed `middleware` to `proxy`. This is the only place the two URL
  * shapes are reconciled:
@@ -13,13 +14,32 @@ import { defaultLocale } from "@/i18n/config";
  *
  * Vietnamese keeps the URLs it already had, so nothing indexed moves. The
  * language is never chosen from the browser or IP — only from the URL.
+ *
+ * `/admin` is not localized and is gated here first: a request without a session
+ * cookie is redirected to the login screen before any admin code runs. Middleware
+ * only sees that a cookie exists — not whether it is valid — so the layout and
+ * every admin page re-verify the session server-side.
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Never touch API routes or framework internals (defence in depth on top of
-  // the matcher below).
-  if (pathname.startsWith("/_next") || pathname.startsWith("/api")) {
+  // Never touch API routes, served media or framework internals.
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/media")
+  ) {
+    return NextResponse.next();
+  }
+
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    if (pathname === "/admin/login") return NextResponse.next();
+    if (!request.cookies.has(SESSION_COOKIE)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      url.search = "";
+      return NextResponse.redirect(url, 307);
+    }
     return NextResponse.next();
   }
 
@@ -46,9 +66,13 @@ export const config = {
     /*
      * Run on everything except:
      *  - api                (route handlers are not localized)
+     *  - media              (served uploads are not localized)
      *  - _next              (static/image/data)
      *  - metadata + assets  (favicon, sitemap, robots, generated icons, public files)
+     *
+     * `/admin` is intentionally NOT excluded: the proxy gates it on the session
+     * cookie. It is still excluded from the locale rewrite by the branch above.
      */
-    "/((?!api|_next|favicon.ico|icon.png|apple-icon.png|opengraph-image.png|sitemap.xml|robots.txt|brand/|.*\\..*).*)",
+    "/((?!api|media|_next|favicon.ico|icon.png|apple-icon.png|opengraph-image.png|sitemap.xml|robots.txt|brand/|.*\\..*).*)",
   ],
 };

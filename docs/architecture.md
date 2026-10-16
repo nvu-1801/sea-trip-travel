@@ -17,6 +17,11 @@ tắc phụ thuộc để việc mở rộng sau này (admin/CMS) không phải 
 **Không dùng ở MVP:** NestJS, database, queue, CMS, auth. Không có lý do thực tế
 nào ở giai đoạn này; xem `docs/admin-roadmap.md`.
 
+> **Cập nhật (`feat/tour-admin`):** khu quản trị đã được triển khai trên SQLite.
+> `src/lib/data/*` giữ nguyên chữ ký nhưng nay đọc **một snapshot đã xuất bản** từ
+> `src/lib/data/snapshot.ts` (`'use cache'` + `cacheTag("content")`), và trở thành
+> `async`. UI không đổi về cấu trúc. Chi tiết: `docs/ADMIN-IMPLEMENTATION-PLAN.md`.
+
 ## 2. Cây thư mục
 
 ```text

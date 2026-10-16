@@ -75,3 +75,31 @@ export const secondarySocialLinks: readonly SocialLink[] = [
   tiktokLink,
   youtubeLink,
 ].filter((link) => !link.isPlaceholder);
+
+/**
+ * Resolve the social links with owner overrides from the admin
+ * (`site_setting.social`). Anything not overridden keeps the shipped default,
+ * so the footer is correct before the owner opens the admin.
+ */
+export function resolveSocialLinks(
+  overrides: Partial<Record<SocialLink["key"], string>> = {},
+  hotline?: string,
+): { primary: SocialLink[]; secondary: SocialLink[] } {
+  const value = (key: SocialLink["key"], fallback: string) => (overrides[key] ?? fallback).trim();
+
+  const facebook = resolve("facebook", "Facebook", value("facebook", siteConfig.social.facebook), "https://www.facebook.com/");
+  const zalo = resolve(
+    "zalo",
+    "Zalo",
+    value("zalo", siteConfig.social.zalo),
+    `https://zalo.me/${digits(hotline ?? siteConfig.contact.hotline)}`,
+  );
+  const instagram = resolve("instagram", "Instagram", value("instagram", siteConfig.social.instagram), "https://www.instagram.com/");
+  const tiktok = resolve("tiktok", "TikTok", value("tiktok", siteConfig.social.tiktok), "https://www.tiktok.com/");
+  const youtube = resolve("youtube", "YouTube", value("youtube", siteConfig.social.youtube), "https://www.youtube.com/");
+
+  return {
+    primary: [facebook, zalo],
+    secondary: [instagram, tiktok, youtube].filter((link) => !link.isPlaceholder),
+  };
+}

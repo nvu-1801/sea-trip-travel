@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import "./helpers";
 import { localizePath, stripLocaleFromPath, switchLocalePath } from "@/i18n/routing";
 import { getMessages } from "@/i18n/messages";
 import { tourTranslations } from "@/content/locales/en";
@@ -86,8 +87,8 @@ describe("message catalogs", () => {
 });
 
 describe("english content overlay", () => {
-  it("covers every tour id", () => {
-    const ids = getTourSlugs();
+  it("covers every tour id", async () => {
+    const ids = await getTourSlugs();
     assert.ok(ids.length > 0);
     // Every English translation is keyed by the *source id*, and every source id
     // has one entry (no more, no fewer).
@@ -95,23 +96,23 @@ describe("english content overlay", () => {
     assert.equal(new Set(translatedIds).size, translatedIds.length);
   });
 
-  it("returns a Vietnamese title for vi and a different English title for en", () => {
+  it("returns a Vietnamese title for vi and a different English title for en", async () => {
     const slug = "quy-nhon-phu-yen-3-ngay-2-dem";
-    const vi = getTourBySlug(slug, "vi");
-    const en = getTourBySlug(slug, "en");
+    const vi = await getTourBySlug(slug, "vi");
+    const en = await getTourBySlug(slug, "en");
     assert.ok(vi && en);
     assert.notEqual(vi.title, en.title);
     // Shared facts must be identical across locales.
     assert.equal(vi.slug, en.slug);
-    assert.equal(vi.priceFrom, en.priceFrom);
+    assert.deepEqual(vi.priceFrom, en.priceFrom);
     assert.deepEqual(vi.duration, en.duration);
   });
 
-  it("marks agent-written translations as draft and keeps them out of the index", () => {
-    for (const slug of getTourSlugs()) {
-      const tour = getTourBySlug(slug, "en");
+  it("marks agent-written translations as draft and keeps them out of the index", async () => {
+    for (const slug of await getTourSlugs()) {
+      const tour = await getTourBySlug(slug, "en");
       assert.ok(tour);
-      const status = tourTranslationStatus(tour.id, "en");
+      const status = await tourTranslationStatus(tour.id, "en");
       assert.equal(status, "draft", `${slug} should still be draft`);
       assert.equal(isIndexable(status, "en"), false);
     }

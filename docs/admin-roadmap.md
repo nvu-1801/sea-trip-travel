@@ -2,6 +2,19 @@
 
 Cập nhật 16/10/2026 theo yêu cầu khách. Trạng thái: kế hoạch triển khai; admin/database chưa được xây dựng. Website hiện đọc nội dung TypeScript qua repository. Nhánh chuẩn bị: `feat/tour-admin-preparation`.
 
+> **Cập nhật 17/10/2026 — ĐÃ TRIỂN KHAI trên nhánh `feat/tour-admin`.**
+> Kế hoạch dưới đây đã được thực hiện theo đúng thứ tự ở mục “Thứ tự thực hiện”:
+> SQLite + migration + backup/restore (§1), đăng nhập một admin + CLI (§2),
+> schema tour/giá/lịch trình/bài viết/media/lead/settings (§3), chuyển repository
+> sang DB với `lib/data` async + cache tag (§4), màn hình admin + import (§5),
+> tìm nhanh + lưu lead trước khi gửi email (§6), kiểm thử (§7).
+> Tài liệu: `docs/ADMIN-IMPLEMENTATION-PLAN.md`, `docs/ADMIN-SETUP.md`,
+> `docs/ADMIN-VERIFICATION.md`.
+>
+> Chưa làm (cố ý): nhiều tài khoản/phân quyền, duyệt nhiều cấp, xoá vĩnh viễn,
+> thanh toán/booking, object storage ngoài (hiện dùng thư mục uploads trên volume
+> bền vững), phân trang server-side cho danh sách rất lớn.
+
 ## Phạm vi đã chốt
 
 - Landing page tour có chuyển động nhẹ, tìm nhanh hữu ích trên mobile.

@@ -10,8 +10,13 @@
     "typecheck": "next typegen && tsc --noEmit",
     "verify:ui": "node scripts/verify-ui.mjs",
     "content:report": "node --env-file-if-exists=.env.local --import tsx scripts/content-report.ts",
-    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/lead-store.test.ts tests/content.test.ts tests/mail-transport.test.ts tests/i18n.test.ts",
-    "verify:tour-import": "node scripts/verify-tour-import.mjs"
+    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/lead-store.test.ts tests/content.test.ts tests/mail-transport.test.ts tests/i18n.test.ts tests/search.test.ts tests/admin-auth.test.ts tests/db-content.test.ts",
+    "verify:tour-import": "node scripts/verify-tour-import.mjs",
+    "db:migrate": "node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts",
+    "db:import": "node --env-file-if-exists=.env.local --import tsx scripts/import-content.ts",
+    "db:setup": "npm run db:migrate && npm run db:import",
+    "admin": "node --env-file-if-exists=.env.local --import tsx scripts/admin.ts",
+    "verify:admin": "node scripts/verify-admin.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -19,12 +24,13 @@
     "nodemailer": "^10.1.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "sharp": "^0.35.4",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/nodemailer": "^8.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",

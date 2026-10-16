@@ -36,12 +36,12 @@ import { ROUTES } from "@/config/navigation";
  * params, which keeps every category page a fully static prerender.
  */
 
-function crumbsFor(path: string, locale: Locale): Crumb[] {
+async function crumbsFor(path: string, locale: Locale): Promise<Crumb[]> {
   const m = getMessages(locale);
-  const category = getCategoryByPath(path, locale);
+  const category = await getCategoryByPath(path, locale);
   if (!category) return [{ label: m.common.home, href: localizePath(locale, "/") }];
 
-  const trail = getCategoryTrail(category.id, locale);
+  const trail = await getCategoryTrail(category.id, locale);
   const crumbs: Crumb[] = [{ label: m.common.home, href: localizePath(locale, "/") }];
   trail.forEach((item, index) => {
     const isLast = index === trail.length - 1;
@@ -54,9 +54,9 @@ function crumbsFor(path: string, locale: Locale): Crumb[] {
   return crumbs;
 }
 
-export function buildCategoryMetadata(categoryPath: string, locale: Locale): Metadata {
+export async function buildCategoryMetadata(categoryPath: string, locale: Locale): Promise<Metadata> {
   const m = getMessages(locale);
-  const category = getCategoryByPath(categoryPath, locale);
+  const category = await getCategoryByPath(categoryPath, locale);
   if (!category) {
     return buildMetadata({
       title: m.category.notFoundTitle,
@@ -68,7 +68,7 @@ export function buildCategoryMetadata(categoryPath: string, locale: Locale): Met
     });
   }
 
-  const indexable = isIndexable(categoryTranslationStatus(category.id, locale), locale);
+  const indexable = isIndexable(await categoryTranslationStatus(category.id, locale), locale);
 
   return buildMetadata({
     title: category.seo?.title ?? category.name,
@@ -80,7 +80,7 @@ export function buildCategoryMetadata(categoryPath: string, locale: Locale): Met
   });
 }
 
-export function CategoryPageView({
+export async function CategoryPageView({
   categoryPath,
   locale,
 }: {
@@ -88,26 +88,36 @@ export function CategoryPageView({
   locale: Locale;
 }) {
   const m = getMessages(locale);
-  const category = getCategoryByPath(categoryPath, locale);
+  const category = await getCategoryByPath(categoryPath, locale);
   if (!category) notFound();
 
-  const children = getChildCategories(category.id, locale);
-  const parent = category.parentId ? getCategoryById(category.parentId, locale) : undefined;
+  const children = await getChildCategories(category.id, locale);
+  const parent = category.parentId ? await getCategoryById(category.parentId, locale) : undefined;
 
-  const tours = getToursByCategoryId(category.id, locale).map((tour) =>
-    toTourCard(tour, locale),
+  const tours = await Promise.all(
+    (await getToursByCategoryId(category.id, locale)).map((tour) => toTourCard(tour, locale)),
   );
-  const tags = getTourTags(locale);
-  const crumbs = crumbsFor(categoryPath, locale);
+  const tags = await getTourTags(locale);
+  const crumbs = await crumbsFor(categoryPath, locale);
 
   const siblings = parent
-    ? getChildCategories(parent.id, locale).filter((item) => item.id !== category.id)
-    : getCategories(locale).filter(
+    ? (await getChildCategories(parent.id, locale)).filter((item) => item.id !== category.id)
+    : (await getCategories(locale)).filter(
         (item) => item.parentId === null && item.id !== category.id,
       );
 
-  const descendantCount = getCategoryAndDescendantIds(category.id).length;
-  const indexable = isIndexable(categoryTranslationStatus(category.id, locale), locale);
+  const descendantCount = (await getCategoryAndDescendantIds(category.id)).length;
+  const indexable = isIndexable(await categoryTranslationStatus(category.id, locale), locale);
+
+  // One lookup for every child-category badge instead of a query per render.
+  const countTargets = [...children, ...siblings];
+  const tourCounts = new Map(
+    await Promise.all(
+      countTargets.map(
+        async (item) => [item.id, await getCategoryTourCount(item.id)] as const,
+      ),
+    ),
+  );
 
   return (
     <>
@@ -164,7 +174,7 @@ export function CategoryPageView({
                     >
                       {child.name}
                       <span className="text-xs font-medium text-foreground-subtle">
-                        {getCategoryTourCount(child.id)}
+                        {tourCounts.get(child.id) ?? 0}
                       </span>
                     </a>
                   </li>
@@ -216,7 +226,7 @@ export function CategoryPageView({
                   <CategoryCard
                     category={child}
                     locale={locale}
-                    tourCount={getCategoryTourCount(child.id)}
+                    tourCount={tourCounts.get(child.id) ?? 0}
                     className="w-full"
                   />
                 </Reveal>
@@ -244,7 +254,7 @@ export function CategoryPageView({
                   <CategoryCard
                     category={sibling}
                     locale={locale}
-                    tourCount={getCategoryTourCount(sibling.id)}
+                    tourCount={tourCounts.get(sibling.id) ?? 0}
                     className="w-full"
                   />
                 </Reveal>

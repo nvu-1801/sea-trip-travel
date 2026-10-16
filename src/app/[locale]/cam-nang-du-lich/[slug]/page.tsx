@@ -27,8 +27,8 @@ import { getMessages, plural } from "@/i18n/messages";
 import { localizePath } from "@/i18n/routing";
 import { resolveLocaleFromParams } from "@/i18n/params";
 
-export function generateStaticParams() {
-  return getArticleSlugs().map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  return (await getArticleSlugs()).map((slug) => ({ slug }));
 }
 
 /**
@@ -43,13 +43,13 @@ export async function generateMetadata({
 }: PageProps<"/[locale]/cam-nang-du-lich/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const locale = await resolveLocaleFromParams(params);
-  const article = getArticleBySlug(slug, locale);
+  const article = await getArticleBySlug(slug, locale);
 
   // 404 during metadata resolution — before the PPR shell streams. A `notFound()`
   // reached while streaming degrades to a soft 404 (HTTP 200 + noindex).
   if (!article) notFound();
 
-  const indexable = isIndexable(articleTranslationStatus(article.id, locale), locale);
+  const indexable = isIndexable(await articleTranslationStatus(article.id, locale), locale);
 
   return buildMetadata({
     title: article.seo?.title ?? article.title,
@@ -71,17 +71,19 @@ export default async function ArticlePage({
   const { slug } = await params;
   const locale = await resolveLocaleFromParams(params);
   const m = getMessages(locale);
-  const article = getArticleBySlug(slug, locale);
+  const article = await getArticleBySlug(slug, locale);
   if (!article) notFound();
 
-  const indexable = isIndexable(articleTranslationStatus(article.id, locale), locale);
+  const indexable = isIndexable(await articleTranslationStatus(article.id, locale), locale);
 
-  const relatedTours = article.relatedTourSlugs
-    .map((tourSlug) => getTourBySlug(tourSlug, locale))
+  const relatedTours = (
+    await Promise.all(article.relatedTourSlugs.map((tourSlug) => getTourBySlug(tourSlug, locale)))
+  )
     .filter((tour): tour is NonNullable<typeof tour> => Boolean(tour))
     .map((tour) => toTourCard(tour, locale));
+  const resolvedRelatedTours = await Promise.all(relatedTours);
 
-  const relatedArticles = getRelatedArticles(article.slug, 3, locale);
+  const relatedArticles = await getRelatedArticles(article.slug, 3, locale);
   const articlePath = `/cam-nang-du-lich/${article.slug}`;
   const crumbs: Crumb[] = [
     { label: m.common.home, href: localizePath(locale, ROUTES.home) },
@@ -167,7 +169,7 @@ export default async function ArticlePage({
         </article>
       </Container>
 
-      {relatedTours.length > 0 ? (
+      {resolvedRelatedTours.length > 0 ? (
         <Section tone="muted" spacing="default">
           <Container>
             <SectionHeading
@@ -177,7 +179,7 @@ export default async function ArticlePage({
               as="h2"
             />
             <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {relatedTours.map((tour) => (
+              {resolvedRelatedTours.map((tour) => (
                 <li key={tour.slug} className="flex">
                   <TourCard tour={tour} />
                 </li>

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import "./helpers";
 import { tours } from "@/content";
 import {
   getCategories,
@@ -22,6 +23,7 @@ import { ROUTES, primaryNav } from "@/config/navigation";
 import { getMessages } from "@/i18n/messages";
 import { existsSync } from "node:fs";
 import { resolveTour } from "@/lib/data/localize";
+import { tourTranslations } from "@/content/locales/en";
 
 /**
  * Content and repository tests.
@@ -64,18 +66,18 @@ describe("customer tour programmes", () => {
     assert.match(byCode("ST01").title, /đường bộ/);
   });
 
-  it("keeps the two four-day Quy Nhon–Phu Yen routes separate", () => {
-    const sameAirport = getTourBySlug("quy-nhon-phu-yen-4-ngay-3-dem", VI)!;
-    const differentAirport = getTourBySlug("quy-nhon-phu-yen-4-ngay-3-dem-tien-phu-yen", VI)!;
+  it("keeps the two four-day Quy Nhon–Phu Yen routes separate", async () => {
+    const sameAirport = (await getTourBySlug("quy-nhon-phu-yen-4-ngay-3-dem", VI))!;
+    const differentAirport = (await getTourBySlug("quy-nhon-phu-yen-4-ngay-3-dem-tien-phu-yen", VI))!;
     assert.deepEqual(sameAirport.returnPoints, ["Sân bay Phù Cát (UIH)"]);
     assert.deepEqual(differentAirport.returnPoints, ["Sân bay Tuy Hòa (TBB)"]);
     assert.match(differentAirport.itinerary[2].accommodation!, /Phú Yên/);
   });
 
-  it("matches the supplied adult and child package prices exactly", () => {
-    const three = getTourBySlug("quy-nhon-phu-yen-3-ngay-2-dem", VI)!;
+  it("matches the supplied adult and child package prices exactly", async () => {
+    const three = (await getTourBySlug("quy-nhon-phu-yen-3-ngay-2-dem", VI))!;
     assert.deepEqual(three.pricingOptions.map((p) => [p.adultPrice, p.childPrice]), [[2290000,1374000],[2940000,1764000],[3240000,1944000],[3340000,2004000]]);
-    const four = getTourBySlug("quy-nhon-4-ngay-3-dem", VI)!;
+    const four = (await getTourBySlug("quy-nhon-4-ngay-3-dem", VI))!;
     assert.deepEqual(four.pricingOptions.map((p) => p.adultPrice), [2440000,3410000,3860000,4010000]);
     for (const tour of imported.filter((tour) => tour.pricingOptions.length > 0)) {
       assert.equal(tour.priceFrom?.amount, Math.min(...tour.pricingOptions.map((p) => p.adultPrice)));
@@ -94,14 +96,38 @@ describe("customer tour programmes", () => {
     }
   });
 
-  it("never overlays old English itinerary, meals or insurance on imported programmes", () => {
+  it("never overlays old English itinerary, meals or insurance on imported programmes", async () => {
+    const translations = {
+      tour: tourTranslations as never,
+      category: {},
+      destination: {},
+      article: {},
+    };
     for (const source of imported) {
-      const translated = resolveTour(source, "en");
+      const translated = resolveTour(source, "en", translations);
       assert.deepEqual(translated.itinerary, source.itinerary);
       assert.deepEqual(translated.included, source.included);
       assert.deepEqual(translated.excluded, source.excluded);
+      // The overlay is dropped when its `sourceUpdatedAt` no longer matches.
       const updated = { ...source, updatedAt: "2026-10-17T00:00:00Z" };
-      assert.equal(resolveTour(updated, "en"), updated);
+      assert.equal(resolveTour(updated, "en", translations), updated);
+    }
+  });
+
+  it("reads the same programmes back from the repository", async () => {
+    for (const source of imported) {
+      const fromRepo = await getTourBySlug(source.slug, VI);
+      assert.ok(fromRepo, `missing in repository: ${source.slug}`);
+      assert.equal(fromRepo!.id, source.id);
+      assert.equal(fromRepo!.priceFrom?.amount ?? null, source.priceFrom?.amount ?? null);
+      assert.deepEqual(
+        fromRepo!.itinerary.map((day) => JSON.parse(JSON.stringify(day))),
+        source.itinerary.map((day) => JSON.parse(JSON.stringify(day))),
+      );
+      assert.deepEqual(
+        fromRepo!.images.map((image) => JSON.parse(JSON.stringify(image))),
+        source.images.map((image) => JSON.parse(JSON.stringify(image))),
+      );
     }
   });
 });
@@ -133,8 +159,8 @@ describe("content integrity", () => {
 });
 
 describe("category repository", () => {
-  it("exposes the required menu structure in order", () => {
-    const top = getTopLevelCategories(VI).map((category) => category.name);
+  it("exposes the required menu structure in order", async () => {
+    const top = (await getTopLevelCategories(VI)).map((category) => category.name);
     assert.deepEqual(top, ["Tour Quy Nhơn - Phú Yên", "Tour Trong Nước"]);
   });
 
@@ -164,88 +190,89 @@ describe("category repository", () => {
     ]);
   });
 
-  it("includes child-category tours when listing a parent category", () => {
-    const parentTours = getToursByCategoryId("cat_quy_nhon_phu_yen", VI);
-    const oneDay = getToursByCategoryId("cat_quy_nhon_1_ngay", VI);
-    const multiDay = getToursByCategoryId("cat_quy_nhon_dai_ngay", VI);
+  it("includes child-category tours when listing a parent category", async () => {
+    const parentTours = await getToursByCategoryId("cat_quy_nhon_phu_yen", VI);
+    const oneDay = await getToursByCategoryId("cat_quy_nhon_1_ngay", VI);
+    const multiDay = await getToursByCategoryId("cat_quy_nhon_dai_ngay", VI);
 
     assert.ok(oneDay.length > 0 && multiDay.length > 0);
     assert.equal(parentTours.length, oneDay.length + multiDay.length);
-    assert.ok(getCategoryTourCount("cat_quy_nhon_phu_yen") >= oneDay.length);
+    assert.ok((await getCategoryTourCount("cat_quy_nhon_phu_yen")) >= oneDay.length);
   });
 
-  it("resolves every category path used in navigation", () => {
+  it("resolves every category path used in navigation", async () => {
     for (const item of primaryNav) {
       assert.ok(
-        getCategoryByPath(item.href, VI) ||
+        (await getCategoryByPath(item.href, VI)) ||
           item.href === ROUTES.home ||
           item.href === ROUTES.guides ||
           item.href === ROUTES.contact,
         `no destination for ${item.href}`,
       );
       for (const child of item.children ?? []) {
-        assert.ok(getCategoryByPath(child.href, VI), `unknown child path ${child.href}`);
+        assert.ok(await getCategoryByPath(child.href, VI), `unknown child path ${child.href}`);
       }
     }
   });
 
-  it("builds a breadcrumb trail from root to a child category", () => {
-    const trail = getCategoryTrail("cat_mien_bac", VI);
+  it("builds a breadcrumb trail from root to a child category", async () => {
+    const trail = await getCategoryTrail("cat_mien_bac", VI);
     assert.deepEqual(
       trail.map((category) => category.name),
       ["Tour Trong Nước", "Tour Miền Bắc"],
     );
   });
 
-  it("has no category with a dangling parent reference", () => {
-    const ids = new Set(getCategories(VI).map((category) => category.id));
-    for (const category of getCategories(VI)) {
+  it("has no category with a dangling parent reference", async () => {
+    const categories = await getCategories(VI);
+    const ids = new Set(categories.map((category) => category.id));
+    for (const category of categories) {
       if (category.parentId) assert.ok(ids.has(category.parentId));
     }
   });
 });
 
 describe("tour repository", () => {
-  it("finds a tour by slug", () => {
-    assert.ok(getTourBySlug("quy-nhon-phu-yen-3-ngay-2-dem", VI));
-    assert.equal(getTourBySlug("khong-ton-tai", VI), undefined);
+  it("finds a tour by slug", async () => {
+    assert.ok(await getTourBySlug("quy-nhon-phu-yen-3-ngay-2-dem", VI));
+    assert.equal(await getTourBySlug("khong-ton-tai", VI), undefined);
   });
 
-  it("prioritises the Quy Nhơn – Phú Yên line-up for the home page", () => {
-    const featured = getFeaturedTours(6, VI);
+  it("prioritises the Quy Nhơn – Phú Yên line-up for the home page", async () => {
+    const featured = await getFeaturedTours(6, VI);
     assert.equal(featured.length, 6);
-    const focus = getToursByCategoryId("cat_quy_nhon_phu_yen", VI).map((tour) => tour.slug);
+    const focus = (await getToursByCategoryId("cat_quy_nhon_phu_yen", VI)).map((tour) => tour.slug);
     assert.ok(focus.includes(featured[0].slug));
   });
 
-  it("never includes the current tour in its own related list", () => {
+  it("never includes the current tour in its own related list", async () => {
     const slug = "quy-nhon-phu-yen-3-ngay-2-dem";
-    const related = getRelatedTours(slug, 3, VI);
+    const related = await getRelatedTours(slug, 3, VI);
     assert.equal(related.length, 3);
     assert.ok(!related.some((tour) => tour.slug === slug));
   });
 
-  it("returns useful filter tags", () => {
-    const tags = getTourTags(VI);
+  it("returns useful filter tags", async () => {
+    const tags = await getTourTags(VI);
     assert.ok(tags.length >= 3);
   });
 });
 
 describe("destination and article repository", () => {
-  it("groups destinations by region", () => {
-    const focus = getDestinationsByRegion("quy-nhon-phu-yen", VI);
+  it("groups destinations by region", async () => {
+    const focus = await getDestinationsByRegion("quy-nhon-phu-yen", VI);
     assert.ok(focus.length >= 4);
     assert.ok(focus.some((destination) => destination.name === "Quy Nhơn"));
   });
 
-  it("resolves an article by slug and links it to real tours", () => {
-    const article = getArticleBySlug("kinh-nghiem-du-lich-quy-nhon-phu-yen", VI);
+  it("resolves an article by slug and links it to real tours", async () => {
+    const article = await getArticleBySlug("kinh-nghiem-du-lich-quy-nhon-phu-yen", VI);
     assert.ok(article);
     if (!article) return;
     for (const slug of article.relatedTourSlugs) {
-      assert.ok(getTourBySlug(slug, VI), `article links to a missing tour: ${slug}`);
+      assert.ok(await getTourBySlug(slug, VI), `article links to a missing tour: ${slug}`);
     }
-    assert.ok(getArticles(VI).length >= 4);
+    assert.ok((await getArticles(VI)).length >= 4);
   });
 });
 

@@ -1,16 +1,17 @@
-import {
-  articleTranslations,
-  categoryTranslations,
-  destinationTranslations,
-  tourTranslations,
-} from "@/content/locales/en";
 import type { TravelArticle, ArticleBlock } from "@/domain/article";
 import type { TranslationStatus } from "@/domain/common";
 import type { Destination } from "@/domain/destination";
 import type { Tour } from "@/domain/tour";
 import type { TourCategory } from "@/domain/category";
 import type { Locale } from "@/i18n/config";
-import { tours } from "@/content/tours";
+import type {
+  ArticleTranslation,
+  CategoryTranslation,
+  DestinationTranslation,
+  TourTranslation,
+} from "@/domain/localization";
+import { loadPublishedSnapshot, translationsFor } from "./snapshot";
+import type { Translations } from "@/server/repo/translations";
 
 /**
  * Resolve a source record for one locale.
@@ -22,60 +23,93 @@ import { tours } from "@/content/tours";
  *
  * Shared facts (slug, ids, price, duration, image `src`) are never touched: they
  * exist in exactly one place.
+ *
+ * The resolvers are pure functions of `(record, locale, translations)`. The
+ * `*Status` helpers are async because they need the cached content snapshot.
  */
 
 const REVIEWED: TranslationStatus = "reviewed";
 
 /* --- Translation status --------------------------------------------------- */
 
-export function tourTranslationStatus(id: string, locale: Locale): TranslationStatus {
-  if (locale === "vi") return REVIEWED;
-  const source = tours.find((tour) => tour.id === id);
-  if (source && source.sourceDocuments.length > 0 && tourTranslations[id]?.sourceUpdatedAt !== source.updatedAt) return "missing";
-  return tourTranslations[id]?.translationStatus ?? "missing";
+export function tourStatusOf(tour: Tour, translations: Translations): TranslationStatus {
+  const overlay: TourTranslation | undefined = translations.tour[tour.id];
+  if (tour.sourceDocuments.length > 0 && overlay?.sourceUpdatedAt !== tour.updatedAt) {
+    return "missing";
+  }
+  return overlay?.translationStatus ?? "missing";
 }
 
-export function categoryTranslationStatus(id: string, locale: Locale): TranslationStatus {
-  if (locale === "vi") return REVIEWED;
-  return categoryTranslations[id]?.translationStatus ?? "missing";
+export function categoryStatusOf(id: string, translations: Translations): TranslationStatus {
+  return translations.category[id]?.translationStatus ?? "missing";
 }
 
-export function destinationTranslationStatus(id: string, locale: Locale): TranslationStatus {
-  if (locale === "vi") return REVIEWED;
-  return destinationTranslations[id]?.translationStatus ?? "missing";
+export function articleStatusOf(id: string, translations: Translations): TranslationStatus {
+  return translations.article[id]?.translationStatus ?? "missing";
 }
 
-export function articleTranslationStatus(id: string, locale: Locale): TranslationStatus {
+export async function tourTranslationStatus(
+  id: string,
+  locale: Locale,
+  source?: import("@/server/repo/types").ContentSnapshot,
+): Promise<TranslationStatus> {
   if (locale === "vi") return REVIEWED;
-  return articleTranslations[id]?.translationStatus ?? "missing";
+  const snapshot = source ?? (await loadPublishedSnapshot());
+  const tour = snapshot.tours.find((candidate) => candidate.id === id);
+  if (!tour) return "missing";
+  return tourStatusOf(tour, translationsFor(snapshot, "en"));
 }
 
-/** True once a record has an English translation that is safe to index. */
-export function isTourIndexable(id: string, locale: Locale): boolean {
-  return locale === "vi" || tourTranslationStatus(id, locale) === REVIEWED;
+export async function categoryTranslationStatus(
+  id: string,
+  locale: Locale,
+  source?: import("@/server/repo/types").ContentSnapshot,
+): Promise<TranslationStatus> {
+  if (locale === "vi") return REVIEWED;
+  const snapshot = source ?? (await loadPublishedSnapshot());
+  return translationsFor(snapshot, "en").category[id]?.translationStatus ?? "missing";
+}
+
+export async function destinationTranslationStatus(
+  id: string,
+  locale: Locale,
+  source?: import("@/server/repo/types").ContentSnapshot,
+): Promise<TranslationStatus> {
+  if (locale === "vi") return REVIEWED;
+  const snapshot = source ?? (await loadPublishedSnapshot());
+  return translationsFor(snapshot, "en").destination[id]?.translationStatus ?? "missing";
+}
+
+export async function articleTranslationStatus(
+  id: string,
+  locale: Locale,
+  source?: import("@/server/repo/types").ContentSnapshot,
+): Promise<TranslationStatus> {
+  if (locale === "vi") return REVIEWED;
+  const snapshot = source ?? (await loadPublishedSnapshot());
+  return translationsFor(snapshot, "en").article[id]?.translationStatus ?? "missing";
 }
 
 /* --- Record resolution ---------------------------------------------------- */
 
-export function resolveTour(tour: Tour, locale: Locale): Tour {
+export function resolveTour(tour: Tour, locale: Locale, translations: Translations): Tour {
   if (locale === "vi") return tour;
-  const tr = tourTranslations[tour.id];
+  const tr = translations.tour[tour.id];
   if (!tr) return tour;
-  // Old itinerary overlays can silently replace transport, insurance and meals.
   if (tour.sourceDocuments.length > 0 && tr.sourceUpdatedAt !== tour.updatedAt) return tour;
 
   const itinerary = tr.itinerary
     ? tour.itinerary.map((day, index) => {
-        const d = tr.itinerary?.[index];
-        if (!d) return day;
+        const overlay = tr.itinerary?.[index];
+        if (!overlay) return day;
         return {
           ...day,
-          title: d.title ?? day.title,
-          summary: d.summary ?? day.summary,
-          activities: d.activities ?? day.activities,
-          meals: d.meals ?? day.meals,
-          accommodation: d.accommodation ?? day.accommodation,
-          places: d.places ?? day.places,
+          title: overlay.title ?? day.title,
+          summary: overlay.summary ?? day.summary,
+          activities: overlay.activities ?? day.activities,
+          meals: overlay.meals ?? day.meals,
+          accommodation: overlay.accommodation ?? day.accommodation,
+          places: overlay.places ?? day.places,
         };
       })
     : tour.itinerary;
@@ -101,9 +135,13 @@ export function resolveTour(tour: Tour, locale: Locale): Tour {
   };
 }
 
-export function resolveCategory(category: TourCategory, locale: Locale): TourCategory {
+export function resolveCategory(
+  category: TourCategory,
+  locale: Locale,
+  translations: Translations,
+): TourCategory {
   if (locale === "vi") return category;
-  const tr = categoryTranslations[category.id];
+  const tr: CategoryTranslation | undefined = translations.category[category.id];
   if (!tr) return category;
   return {
     ...category,
@@ -114,18 +152,31 @@ export function resolveCategory(category: TourCategory, locale: Locale): TourCat
   };
 }
 
-export function resolveDestination(destination: Destination, locale: Locale): Destination {
+export function resolveDestination(
+  destination: Destination,
+  locale: Locale,
+  translations: Translations,
+): Destination {
   if (locale === "vi") return destination;
-  const tr = destinationTranslations[destination.id];
+  const tr: DestinationTranslation | undefined = translations.destination[destination.id];
   if (!tr) return destination;
   return {
     ...destination,
     name: tr.name ?? destination.name,
     province: tr.province ?? destination.province,
     summary: tr.summary ?? destination.summary,
-    image: tr.imageAlt ? { ...destination.image, alt: tr.imageAlt } : destination.image,
+    image: tr.imageAlt && destination.image ? { ...destination.image, alt: tr.imageAlt } : destination.image,
   };
 }
+
+type ArticleBlockTranslationLike = {
+  text?: string;
+  title?: string;
+  items?: readonly string[];
+  cite?: string;
+  alt?: string;
+  caption?: string;
+};
 
 function mergeArticleBlock(block: ArticleBlock, tr: ArticleBlockTranslationLike): ArticleBlock {
   switch (block.type) {
@@ -146,24 +197,19 @@ function mergeArticleBlock(block: ArticleBlock, tr: ArticleBlockTranslationLike)
   }
 }
 
-type ArticleBlockTranslationLike = {
-  text?: string;
-  title?: string;
-  items?: readonly string[];
-  cite?: string;
-  alt?: string;
-  caption?: string;
-};
-
-export function resolveArticle(article: TravelArticle, locale: Locale): TravelArticle {
+export function resolveArticle(
+  article: TravelArticle,
+  locale: Locale,
+  translations: Translations,
+): TravelArticle {
   if (locale === "vi") return article;
-  const tr = articleTranslations[article.id];
+  const tr: ArticleTranslation | undefined = translations.article[article.id];
   if (!tr) return article;
 
   const body = tr.body
     ? article.body.map((block, index) => {
-        const t = tr.body?.[index];
-        return t ? mergeArticleBlock(block, t as ArticleBlockTranslationLike) : block;
+        const overlay = tr.body?.[index];
+        return overlay ? mergeArticleBlock(block, overlay as ArticleBlockTranslationLike) : block;
       })
     : article.body;
 
@@ -173,7 +219,8 @@ export function resolveArticle(article: TravelArticle, locale: Locale): TravelAr
     excerpt: tr.excerpt ?? article.excerpt,
     tags: tr.tags ?? article.tags,
     body,
-    cover: tr.coverAlt ? { ...article.cover, alt: tr.coverAlt } : article.cover,
+    cover:
+      tr.coverAlt && article.cover ? { ...article.cover, alt: tr.coverAlt } : article.cover,
     seo: tr.seo ? { ...article.seo, ...tr.seo } : article.seo,
   };
 }

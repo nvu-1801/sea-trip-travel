@@ -30,11 +30,13 @@ async function resolveLocale(params: Promise<{ locale: string }>): Promise<Local
   return isLocale(locale) ? locale : defaultLocale;
 }
 
-function homeIndexable(locale: Locale): boolean {
+async function homeIndexable(locale: Locale): Promise<boolean> {
   if (locale === "vi") return true;
-  return getFeaturedTours(6, "en").every((tour) =>
-    isIndexable(tourTranslationStatus(tour.id, "en"), "en"),
+  const featured = await getFeaturedTours(6, "en");
+  const statuses = await Promise.all(
+    featured.map(async (tour) => tourTranslationStatus(tour.id, "en")),
   );
+  return statuses.every((status) => isIndexable(status, "en"));
 }
 
 export async function generateMetadata({
@@ -42,7 +44,7 @@ export async function generateMetadata({
 }: PageProps<"/[locale]">): Promise<Metadata> {
   const locale = await resolveLocale(params);
   const m = getMessages(locale);
-  const indexable = homeIndexable(locale);
+  const indexable = await homeIndexable(locale);
 
   return buildMetadata({
     title: `${siteConfig.name} — ${m.site.tagline}`,
@@ -61,7 +63,7 @@ export async function generateMetadata({
 export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const locale = await resolveLocale(params);
   const m = getMessages(locale);
-  const indexable = homeIndexable(locale);
+  const indexable = await homeIndexable(locale);
 
   return (
     <>

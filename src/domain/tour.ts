@@ -53,12 +53,27 @@ export const tourSchema = z.object({
   tourCode: z.string().min(1).optional(),
   /** Editorial provenance; never render source filenames in the customer flow. */
   sourceDocuments: z.array(z.string().min(1)).default([]),
-  pricingOptions: z.array(z.object({
-    id: z.string().min(1),
-    label: z.string().min(1),
-    adultPrice: z.number().int().positive(),
-    childPrice: z.number().int().nonnegative(),
-  })).default([]),
+  /**
+   * Package/accommodation price table. Per-tour, never normalised to a single
+   * site-wide rate. `adultPrice` is the lowest package price and must match
+   * `priceFrom.amount` when the table is not empty.
+   */
+  pricingOptions: z.array(
+    z.object({
+      id: z.string().min(1),
+      label: z.string().min(1),
+      /** Accommodation class, e.g. "Khách sạn 3 sao". */
+      accommodationClass: z.string().min(1).optional(),
+      adultPrice: z.number().int().positive(),
+      childPrice: z.number().int().nonnegative(),
+      /** Extra-charge note, e.g. "Phụ thu lễ/Tết". */
+      surcharge: z.string().min(1).optional(),
+      /** ISO date the rate applies from / to. */
+      validFrom: z.iso.date().optional(),
+      validTo: z.iso.date().optional(),
+      note: z.string().min(1).optional(),
+    }),
+  ).default([]),
   gifts: z.array(z.string().min(1)).default([]),
   /** `null` ⇒ "Liên hệ tư vấn". Never render 0 ₫. */
   priceFrom: moneySchema.nullable().default(null),

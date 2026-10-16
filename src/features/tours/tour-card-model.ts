@@ -36,7 +36,7 @@ export type TourCardModel = {
   viewDetailsText: string;
 };
 
-export function toTourCard(tour: Tour, locale: Locale): TourCardModel {
+export async function toTourCard(tour: Tour, locale: Locale): Promise<TourCardModel> {
   const m = getMessages(locale);
   const departure = tour.departurePoints[0];
 
@@ -49,7 +49,7 @@ export function toTourCard(tour: Tour, locale: Locale): TourCardModel {
     durationDays: tour.duration.days,
     priceLabel: formatPriceFrom(tour.priceFrom, locale),
     priceIsContact: !hasPublishedPrice(tour.priceFrom),
-    destinationsLabel: formatDestinationNames(tour.destinationIds, locale),
+    destinationsLabel: await formatDestinationNames(tour.destinationIds, locale),
     departureText: departure
       ? format(m.common.departurePrefix, { place: departure })
       : null,

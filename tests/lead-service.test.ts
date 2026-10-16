@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import "./helpers";
 import type { ContactLead } from "@/domain/lead";
 import { submitLead } from "@/server/leads/service";
 import {

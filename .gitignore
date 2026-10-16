@@ -13,9 +13,11 @@
 # testing
 /coverage
 
-# generated verification artefacts (regenerate with 
-pm run verify:ui)
+# generated verification artefacts (regenerate with `npm run verify:ui`)
 /verify-screenshots
+
+# runtime data: SQLite database + uploaded media (never committed)
+/data/
 
 # next.js
 /.next/

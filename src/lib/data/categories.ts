@@ -1,32 +1,60 @@
-import { tourCategories, tours } from "@/content";
 import type { TourCategory } from "@/domain/category";
 import type { Locale } from "@/i18n/config";
+import type { ContentSnapshot } from "@/server/repo/types";
+import { loadPublishedSnapshot, translationsFor } from "./snapshot";
+import { getAllDescendantCategoryIds } from "./internal";
 import { resolveCategory } from "./localize";
 
 /** Read-only access to the category tree, resolved for the requested locale. */
 
-export function getCategories(locale: Locale): readonly TourCategory[] {
-  return tourCategories.map((category) => resolveCategory(category, locale));
+async function snap(source?: ContentSnapshot): Promise<ContentSnapshot> {
+  return source ?? loadPublishedSnapshot();
 }
 
-export function getTopLevelCategories(locale: Locale): readonly TourCategory[] {
-  return getCategories(locale)
+export async function getCategories(
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TourCategory[]> {
+  const snapshot = await snap(source);
+  const translations = translationsFor(snapshot, locale);
+  return snapshot.categories.map((category) => resolveCategory(category, locale, translations));
+}
+
+export async function getTopLevelCategories(
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TourCategory[]> {
+  return (await getCategories(locale, source))
     .filter((category) => category.parentId === null)
     .sort((a, b) => a.order - b.order);
 }
 
-export function getCategoryById(id: string, locale: Locale): TourCategory | undefined {
-  const category = tourCategories.find((candidate) => candidate.id === id);
-  return category ? resolveCategory(category, locale) : undefined;
+export async function getCategoryById(
+  id: string,
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TourCategory | undefined> {
+  const snapshot = await snap(source);
+  const category = snapshot.categories.find((candidate) => candidate.id === id);
+  return category ? resolveCategory(category, locale, translationsFor(snapshot, locale)) : undefined;
 }
 
-export function getCategoryByPath(path: string, locale: Locale): TourCategory | undefined {
-  const category = tourCategories.find((candidate) => candidate.path === path);
-  return category ? resolveCategory(category, locale) : undefined;
+export async function getCategoryByPath(
+  path: string,
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TourCategory | undefined> {
+  const snapshot = await snap(source);
+  const category = snapshot.categories.find((candidate) => candidate.path === path);
+  return category ? resolveCategory(category, locale, translationsFor(snapshot, locale)) : undefined;
 }
 
-export function getChildCategories(parentId: string, locale: Locale): readonly TourCategory[] {
-  return getCategories(locale)
+export async function getChildCategories(
+  parentId: string,
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TourCategory[]> {
+  return (await getCategories(locale, source))
     .filter((category) => category.parentId === parentId)
     .sort((a, b) => a.order - b.order);
 }
@@ -36,36 +64,39 @@ export function getChildCategories(parentId: string, locale: Locale): readonly T
  * A parent listing must include the tours filed under its children —
  * "Tour Quy Nhơn - Phú Yên" (parent) for example must list its two children.
  */
-export function getCategoryAndDescendantIds(id: string): readonly string[] {
-  const ids = new Set<string>([id]);
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const category of tourCategories) {
-      if (category.parentId && ids.has(category.parentId) && !ids.has(category.id)) {
-        ids.add(category.id);
-        changed = true;
-      }
-    }
-  }
-  return [...ids];
+export async function getCategoryAndDescendantIds(
+  id: string,
+  source?: ContentSnapshot,
+): Promise<string[]> {
+  const snapshot = await snap(source);
+  return [...getAllDescendantCategoryIds(snapshot.categories, id)];
 }
 
 /** Breadcrumb trail from the root category down to `id`. */
-export function getCategoryTrail(id: string, locale: Locale): readonly TourCategory[] {
+export async function getCategoryTrail(
+  id: string,
+  locale: Locale,
+  source?: ContentSnapshot,
+): Promise<TourCategory[]> {
+  const categories = await getCategories(locale, source);
   const trail: TourCategory[] = [];
-  let current = getCategoryById(id, locale);
+  let current = categories.find((category) => category.id === id);
   let guard = 0;
   while (current && guard < 10) {
     trail.unshift(current);
-    current = current.parentId ? getCategoryById(current.parentId, locale) : undefined;
+    const parentId = current.parentId;
+    current = parentId ? categories.find((category) => category.id === parentId) : undefined;
     guard += 1;
   }
   return trail;
 }
 
-/** Categories that actually contain at least one tour (after descendants). */
-export function getCategoryTourCount(categoryId: string): number {
-  const ids = new Set(getCategoryAndDescendantIds(categoryId));
-  return tours.filter((tour) => tour.categoryIds.some((id) => ids.has(id))).length;
+/** Number of published tours in `categoryId` (including descendants). */
+export async function getCategoryTourCount(
+  categoryId: string,
+  source?: ContentSnapshot,
+): Promise<number> {
+  const snapshot = await snap(source);
+  const ids = new Set(getAllDescendantCategoryIds(snapshot.categories, categoryId));
+  return snapshot.tours.filter((tour) => tour.categoryIds.some((id) => ids.has(id))).length;
 }

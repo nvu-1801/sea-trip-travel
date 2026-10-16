@@ -23,9 +23,9 @@ export async function generateMetadata({
 }: PageProps<"/[locale]">): Promise<Metadata> {
   const locale = await resolveLocaleFromParams(params);
   const m = getMessages(locale);
-  const featured = getFeaturedArticle(locale);
+  const featured = await getFeaturedArticle(locale);
   const indexable = featured
-    ? isIndexable(articleTranslationStatus(featured.id, locale), locale)
+    ? isIndexable(await articleTranslationStatus(featured.id, locale), locale)
     : locale === "vi";
 
   return buildMetadata({
@@ -41,12 +41,17 @@ export async function generateMetadata({
 export default async function GuidesPage({ params }: PageProps<"/[locale]">) {
   const locale = await resolveLocaleFromParams(params);
   const m = getMessages(locale);
-  const featured = getFeaturedArticle(locale);
-  const rest = getNonFeaturedArticles(locale);
-  const categories = getTopLevelCategories(locale);
+  const featured = await getFeaturedArticle(locale);
+  const rest = await getNonFeaturedArticles(locale);
+  const categories = await getTopLevelCategories(locale);
   const indexable = featured
-    ? isIndexable(articleTranslationStatus(featured.id, locale), locale)
+    ? isIndexable(await articleTranslationStatus(featured.id, locale), locale)
     : locale === "vi";
+  const tourCounts = new Map(
+    await Promise.all(
+      categories.map(async (category) => [category.id, await getCategoryTourCount(category.id)] as const),
+    ),
+  );
 
   const crumbs = [
     { label: m.common.home, href: localizePath(locale, "/") },
@@ -135,7 +140,7 @@ export default async function GuidesPage({ params }: PageProps<"/[locale]">) {
                 <CategoryCard
                   category={category}
                   locale={locale}
-                  tourCount={getCategoryTourCount(category.id)}
+                  tourCount={tourCounts.get(category.id) ?? 0}
                   className="w-full"
                 />
               </Reveal>

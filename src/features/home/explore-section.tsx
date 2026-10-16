@@ -17,10 +17,15 @@ import { localizePath } from "@/i18n/routing";
  * Every tile is real navigation: top-level categories first, then the
  * destinations inside the focus region. No decorative filters.
  */
-export function ExploreSection({ locale }: { locale: Locale }) {
+export async function ExploreSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const topLevel = getCategories(locale).filter((category) => category.parentId === null);
-  const focusDestinations = getDestinationsByRegion("quy-nhon-phu-yen", locale).slice(0, 4);
+  const topLevel = (await getCategories(locale)).filter((category) => category.parentId === null);
+  const focusDestinations = (await getDestinationsByRegion("quy-nhon-phu-yen", locale)).slice(0, 4);
+  const tourCounts = new Map(
+    await Promise.all(
+      topLevel.map(async (category) => [category.id, await getCategoryTourCount(category.id)] as const),
+    ),
+  );
 
   return (
     <Section tone="default" spacing="default">
@@ -45,7 +50,7 @@ export function ExploreSection({ locale }: { locale: Locale }) {
               <CategoryCard
                 category={category}
                 locale={locale}
-                tourCount={getCategoryTourCount(category.id)}
+                tourCount={tourCounts.get(category.id) ?? 0}
                 className="w-full"
               />
             </Reveal>

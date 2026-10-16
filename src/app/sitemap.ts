@@ -1,27 +1,21 @@
 import type { MetadataRoute } from "next";
-import { articles, tours } from "@/content";
-import { getCategories } from "@/lib/data/categories";
 import { ROUTES } from "@/config/navigation";
 import { absoluteUrl } from "@/lib/seo";
 import { localizePath } from "@/i18n/routing";
 import { isIndexable } from "@/domain/localization";
-import {
-  articleTranslationStatus,
-  categoryTranslationStatus,
-  tourTranslationStatus,
-} from "@/lib/data/localize";
+import { loadPublishedSnapshot, translationsFor } from "@/lib/data/snapshot";
+import { articleStatusOf, categoryStatusOf, tourStatusOf } from "@/lib/data/localize";
 
 /**
  * sitemap.xml
  *
- * `lastModified` is derived from the content records rather than `new Date()`,
+ * `lastModified` is derived from the published records rather than `new Date()`,
  * so the value is deterministic (safe under Cache Components) and actually
  * meaningful to crawlers.
  *
  * Publishing rule: an English URL is listed only when its translation is
  * `reviewed`. Draft or missing translations never appear, and `x-default` always
- * points at the Vietnamese page. Alternates are emitted two-way for any page
- * that has an eligible pair.
+ * points at the Vietnamese page.
  */
 function newestDate(...dates: string[]): Date {
   const valid = dates
@@ -70,10 +64,13 @@ function entry(
   return [vi, en];
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const snapshot = await loadPublishedSnapshot();
+  const english = translationsFor(snapshot, "en");
+
   const contentDate = newestDate(
-    ...tours.map((tour) => tour.updatedAt),
-    ...articles.map((article) => article.updatedAt ?? article.publishedAt),
+    ...snapshot.tours.map((tour) => tour.updatedAt),
+    ...snapshot.articles.map((article) => article.updatedAt ?? article.publishedAt),
   );
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -85,33 +82,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...entry(ROUTES.privacy, contentDate, 0.2, "yearly", false),
   ];
 
-  const categoryRoutes: MetadataRoute.Sitemap = getCategories("vi").flatMap((category) =>
+  const categoryRoutes: MetadataRoute.Sitemap = snapshot.categories.flatMap((category) =>
     entry(
       category.path,
       contentDate,
       category.parentId === null ? 0.9 : 0.8,
       "monthly",
-      isIndexable(categoryTranslationStatus(category.id, "en"), "en"),
+      isIndexable(categoryStatusOf(category.id, english), "en"),
     ),
   );
 
-  const tourRoutes: MetadataRoute.Sitemap = tours.flatMap((tour) =>
+  const tourRoutes: MetadataRoute.Sitemap = snapshot.tours.flatMap((tour) =>
     entry(
       `/tour/${tour.slug}`,
       new Date(tour.updatedAt),
       0.85,
       "monthly",
-      isIndexable(tourTranslationStatus(tour.id, "en"), "en"),
+      isIndexable(tourStatusOf(tour, english), "en"),
     ),
   );
 
-  const articleRoutes: MetadataRoute.Sitemap = articles.flatMap((article) =>
+  const articleRoutes: MetadataRoute.Sitemap = snapshot.articles.flatMap((article) =>
     entry(
       `/cam-nang-du-lich/${article.slug}`,
       new Date(article.updatedAt ?? article.publishedAt),
       0.6,
       "monthly",
-      isIndexable(articleTranslationStatus(article.id, "en"), "en"),
+      isIndexable(articleStatusOf(article.id, english), "en"),
     ),
   );
 

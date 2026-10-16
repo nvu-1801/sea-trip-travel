@@ -2,8 +2,9 @@ import { cacheLife } from "next/cache";
 import Link from "next/link";
 import { footerLegalNav, ROUTES } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
-import { primarySocialLinks, secondarySocialLinks } from "@/config/social-links";
+import { resolveSocialLinks } from "@/config/social-links";
 import { getCategories } from "@/lib/data/categories";
+import { getSiteSettings } from "@/lib/data/settings";
 import { Container } from "@/components/ui/layout";
 import { MailIcon, MapPinIcon, PhoneIcon, ClockIcon } from "@/components/ui/icons";
 import type { Locale } from "@/i18n/config";
@@ -46,10 +47,12 @@ function FooterHeading({ children }: { children: React.ReactNode }) {
 const linkClass =
   "font-medium text-foreground-muted transition-colors hover:text-primary-strong";
 
-export function SiteFooter({ locale }: { locale: Locale }) {
+export async function SiteFooter({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const topLevel = getCategories(locale).filter((category) => category.parentId === null);
-  const socials = [...primarySocialLinks, ...secondarySocialLinks];
+  const settings = await getSiteSettings(locale);
+  const topLevel = (await getCategories(locale)).filter((category) => category.parentId === null);
+  const { primary, secondary } = resolveSocialLinks(settings.social, settings.contact.hotline);
+  const socials = [...primary, ...secondary];
 
   return (
     <footer className="bg-surface-sunken">
@@ -110,28 +113,28 @@ export function SiteFooter({ locale }: { locale: Locale }) {
               <li className="flex items-start gap-2.5">
                 <PhoneIcon className="mt-3.5 h-4 w-4 shrink-0 text-primary-strong" />
                 <a
-                  href={siteConfig.contact.hotlineHref}
+                  href={settings.contact.hotlineHref}
                   className="inline-flex min-h-11 items-center font-semibold text-foreground transition-colors hover:text-primary-strong"
                 >
-                  {siteConfig.contact.hotline}
+                  {settings.contact.hotline}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">
                 <MailIcon className="mt-3.5 h-4 w-4 shrink-0 text-primary-strong" />
                 <a
-                  href={`mailto:${siteConfig.contact.email}`}
+                  href={`mailto:${settings.contact.email}`}
                   className="inline-flex min-h-11 items-center break-all transition-colors hover:text-primary-strong"
                 >
-                  {siteConfig.contact.email}
+                  {settings.contact.email}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">
                 <MapPinIcon className="mt-1 h-4 w-4 shrink-0 text-primary-strong" />
-                <span className="py-1.5 leading-relaxed">{siteConfig.contact.address}</span>
+                <span className="py-1.5 leading-relaxed">{settings.contact.address}</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <ClockIcon className="mt-1 h-4 w-4 shrink-0 text-primary-strong" />
-                <span className="py-1.5 leading-relaxed">{m.site.workingHours}</span>
+                <span className="py-1.5 leading-relaxed">{settings.contact.workingHours}</span>
               </li>
             </ul>
 

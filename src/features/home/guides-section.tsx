@@ -18,10 +18,10 @@ import { localizePath } from "@/i18n/routing";
  * told to fill its column (`imageFill`) so neither column can stretch the other
  * into an empty strip.
  */
-export function GuidesSection({ locale }: { locale: Locale }) {
+export async function GuidesSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const featured = getFeaturedArticle(locale);
-  const rest = getNonFeaturedArticles(locale).slice(0, 3);
+  const featured = await getFeaturedArticle(locale);
+  const rest = (await getNonFeaturedArticles(locale)).slice(0, 3);
 
   if (!featured) return null;
 

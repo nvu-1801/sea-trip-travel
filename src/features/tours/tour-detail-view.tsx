@@ -36,15 +36,15 @@ import {
 } from "./tour-facts";
 import { MobileConsultBar } from "./mobile-consult-bar";
 
-function crumbsFor(slug: string, tourTitle: string, locale: Locale): Crumb[] {
+async function crumbsFor(slug: string, tourTitle: string, locale: Locale): Promise<Crumb[]> {
   const m = getMessages(locale);
-  const tour = getTourBySlug(slug, locale);
+  const tour = await getTourBySlug(slug, locale);
   const crumbs: Crumb[] = [{ label: m.common.home, href: localizePath(locale, ROUTES.home) }];
 
   if (tour) {
-    const category = getCategoryById(tour.categoryIds[0], locale);
+    const category = await getCategoryById(tour.categoryIds[0], locale);
     if (category) {
-      const trail = getCategoryTrail(category.id, locale);
+      const trail = await getCategoryTrail(category.id, locale);
       trail.forEach((item) => crumbs.push({ label: item.name, href: localizePath(locale, item.path) }));
     }
   }
@@ -53,9 +53,9 @@ function crumbsFor(slug: string, tourTitle: string, locale: Locale): Crumb[] {
   return crumbs;
 }
 
-export function buildTourMetadata(slug: string, locale: Locale): Metadata {
+export async function buildTourMetadata(slug: string, locale: Locale): Promise<Metadata> {
   const m = getMessages(locale);
-  const tour = getTourBySlug(slug, locale);
+  const tour = await getTourBySlug(slug, locale);
   if (!tour) {
     return buildMetadata({
       title: m.tour.notFoundTitle,
@@ -67,7 +67,7 @@ export function buildTourMetadata(slug: string, locale: Locale): Metadata {
     });
   }
 
-  const indexable = isIndexable(tourTranslationStatus(tour.id, locale), locale);
+  const indexable = isIndexable(await tourTranslationStatus(tour.id, locale), locale);
 
   return buildMetadata({
     title: tour.seo?.title ?? tour.title,
@@ -77,21 +77,23 @@ export function buildTourMetadata(slug: string, locale: Locale): Metadata {
     keywords: tour.tags,
     image: tour.seo?.ogImage ?? tour.images[0]?.src,
     noIndex: !indexable,
-    hreflang: indexable && tourTranslationStatus(tour.id, "en") === "reviewed",
+    hreflang: indexable && (await tourTranslationStatus(tour.id, "en")) === "reviewed",
   });
 }
 
-export function TourDetailView({ slug, locale }: { slug: string; locale: Locale }) {
+export async function TourDetailView({ slug, locale }: { slug: string; locale: Locale }) {
   const m = getMessages(locale);
-  const tour = getTourBySlug(slug, locale);
+  const tour = await getTourBySlug(slug, locale);
   if (!tour) notFound();
 
-  const destinations = getDestinationsByIds(tour.destinationIds, locale);
-  const related = getRelatedTours(tour.slug, 3, locale).map((item) => toTourCard(item, locale));
-  const crumbs = crumbsFor(tour.slug, tour.title, locale);
-  const primaryCategory = getCategoryById(tour.categoryIds[0], locale);
+  const destinations = await getDestinationsByIds(tour.destinationIds, locale);
+  const related = await Promise.all(
+    (await getRelatedTours(tour.slug, 3, locale)).map((item) => toTourCard(item, locale)),
+  );
+  const crumbs = await crumbsFor(tour.slug, tour.title, locale);
+  const primaryCategory = await getCategoryById(tour.categoryIds[0], locale);
   const cover = tour.images[0]?.src ?? "/opengraph-image.png";
-  const indexable = isIndexable(tourTranslationStatus(tour.id, locale), locale);
+  const indexable = isIndexable(await tourTranslationStatus(tour.id, locale), locale);
 
   const sections = [
     { id: "tong-quan", label: m.tour.sections.overview },

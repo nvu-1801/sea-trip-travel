@@ -11,7 +11,8 @@ import {
   type LeadResponse,
 } from "@/domain/lead";
 import { siteConfig } from "@/config/site";
-import { getTourBySlug } from "@/lib/data/tours";
+import { getTourRecordBySlug } from "@/server/repo/tours";
+import { insertLead, leadExists, updateLeadEmailStatus } from "@/server/repo/leads";
 import { getMailer } from "@/server/email/mailer";
 import {
   buildLeadNotificationHtml,
@@ -206,7 +207,11 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
   const now = new Date();
   const requestId = buildRequestId(now);
 
-  const tour = input.tourSlug ? getTourBySlug(input.tourSlug, input.locale) : undefined;
+  const tourRecord = input.tourSlug ? getTourRecordBySlug(input.tourSlug) : undefined;
+  const tour =
+    tourRecord && tourRecord.status === "published" && tourRecord.deletedAt === null
+      ? tourRecord.tour
+      : undefined;
   const lead: ContactLead = {
     requestId,
     receivedAt: now.toISOString(),
@@ -223,16 +228,63 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
     ...(input.utm ? { utm: input.utm } : {}),
   };
 
-  // --- 5. Build + send -----------------------------------------------------
+  // --- 5. Persist ----------------------------------------------------------
+  // The request is written to SQLite *before* the notification email is
+  // attempted, so a mail outage never loses a genuine enquiry. `email_status`
+  // records what the transport did; the customer-facing copy never claims an
+  // email was delivered.
+  if (!leadExists(lead.requestId)) {
+    try {
+      insertLead({
+        requestId: lead.requestId,
+        receivedAt: lead.receivedAt,
+        fullName: lead.fullName,
+        phone: lead.phone,
+        email: lead.email,
+        interest: lead.interest,
+        tourSlug: lead.tourSlug,
+        travelDate: lead.travelDate,
+        partySize: lead.partySize,
+        message: lead.message,
+        sourcePage: lead.sourcePage,
+        locale: lead.locale,
+        utm: input.utm as Record<string, string> | undefined,
+        ipHash: clientKey(context.ip, undefined),
+        uaHash: clientKey(undefined, context.userAgent),
+      });
+    } catch (error) {
+      // Never log the payload — it contains customer PII.
+      const detail = error instanceof Error ? error.message : "unknown error";
+      console.error(`[lead] failed to persist ${requestId}: ${detail}`);
+      return fail(500, "INTERNAL_ERROR", "Chưa lưu được yêu cầu. Vui lòng thử lại.", {
+        requestId,
+      });
+    }
+  }
+
+  // --- 6. Build + send -----------------------------------------------------
   const mailer = getMailer();
 
+  /**
+   * The request is already stored, so a retry carrying the same submission id
+   * must return this same result instead of creating a second lead. We therefore
+   * remember *every* outcome from here on — not just the happy path.
+   */
+  const settle = async (result: SubmitLeadResult): Promise<SubmitLeadResult> => {
+    if (idempotencyKey) await rememberSubmission(idempotencyKey, result);
+    return result;
+  };
+
   if (!mailer.isConfigured()) {
-    console.error("[lead] mail transport not configured — refusing to report success");
-    return fail(
-      503,
-      "MAIL_NOT_CONFIGURED",
-      `Hệ thống gửi email đang tạm thời chưa sẵn sàng. Vui lòng gọi hotline ${siteConfig.contact.hotline} để được tư vấn ngay.`,
-      { requestId },
+    console.error("[lead] mail transport not configured — request stored, notification not sent");
+    updateLeadEmailStatus(requestId, "not_configured");
+    return settle(
+      fail(
+        503,
+        "MAIL_NOT_CONFIGURED",
+        `Yêu cầu đã được ghi nhận nhưng hệ thống email đang tạm thời chưa sẵn sàng. Vui lòng gọi hotline ${siteConfig.contact.hotline} để được tư vấn ngay.`,
+        { requestId },
+      ),
     );
   }
 
@@ -261,23 +313,31 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
     // Never log the payload — it contains customer PII.
     const detail = error instanceof Error ? error.message : "unknown error";
     console.error(`[lead] unexpected mailer error: ${detail}`);
-    return fail(500, "INTERNAL_ERROR", "Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại.", {
-      requestId,
-    });
+    updateLeadEmailStatus(requestId, "failed");
+    return settle(
+      fail(500, "INTERNAL_ERROR", "Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại.", {
+        requestId,
+      }),
+    );
   }
 
   if (!result.ok) {
     const code: LeadErrorCode =
       result.reason === "NOT_CONFIGURED" ? "MAIL_NOT_CONFIGURED" : "MAIL_DELIVERY_FAILED";
-    return fail(
-      code === "MAIL_NOT_CONFIGURED" ? 503 : 502,
-      code,
-      code === "MAIL_NOT_CONFIGURED"
-        ? `Hệ thống gửi email đang tạm thời chưa sẵn sàng. Vui lòng gọi hotline ${siteConfig.contact.hotline}.`
-        : `Chưa gửi được yêu cầu tới bộ phận tư vấn. Vui lòng thử lại, hoặc gọi hotline ${siteConfig.contact.hotline}.`,
-      { requestId },
+    updateLeadEmailStatus(requestId, code === "MAIL_NOT_CONFIGURED" ? "not_configured" : "failed");
+    return settle(
+      fail(
+        code === "MAIL_NOT_CONFIGURED" ? 503 : 502,
+        code,
+        code === "MAIL_NOT_CONFIGURED"
+          ? `Yêu cầu đã được ghi nhận nhưng hệ thống email đang tạm thời chưa sẵn sàng. Vui lòng gọi hotline ${siteConfig.contact.hotline}.`
+          : `Yêu cầu đã được ghi nhận nhưng chưa gửi được thông báo tới bộ phận tư vấn. Vui lòng gọi hotline ${siteConfig.contact.hotline}.`,
+        { requestId },
+      ),
     );
   }
+
+  updateLeadEmailStatus(requestId, "sent");
 
   console.info(
     `[lead] delivered ${requestId} via ${result.transport} (recipients=${salesRecipients().length})`,
