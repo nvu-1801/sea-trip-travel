@@ -4,7 +4,7 @@
 
 Áp dụng 11 chương trình phân biệt từ 13 file Word; có hai cặp trùng nội dung. Người dùng dự kiến 14 file, còn thiếu một file chưa xác định. Catalogue có 22 tour: 11 chương trình từ tài liệu khách và 11 chương trình demo chưa có tài liệu đối ứng. Giữ các slug cũ.
 
-Bản phát hành code không kèm 28 ảnh từ Word. Ảnh khách cung cấp chưa được xác nhận riêng cho việc công khai lên repo public; src ảnh mới được để trống và giao diện dùng placeholder hiện có. Không có đường dẫn ảnh hỏng. Ảnh vẫn được giữ ngoài repo phát hành và trong nhánh local feat/import-tour-documents; không đưa lịch sử chứa các ảnh này lên GitHub. Mã nguồn phát hành được tạo trên base main đã kiểm tra.
+Người dùng đã xác nhận công khai 28 ảnh ngày 16/10/2026. Nhánh `feat/tour-admin-preparation` đã khôi phục đủ ảnh cùng tham chiếu; các kết quả browser bên dưới thuộc lượt kiểm tra trước khi khôi phục và được ghi rõ để không nhầm với xác minh production. GitHub vẫn trả 403 khi tạo nhánh; chưa push/merge/deploy.
 
 ## Kết quả rà soát logic
 
@@ -38,6 +38,10 @@ Browser chạy Chromium 153 ở 360/390/768/1440 px, thêm breakpoint hotline 15
 
 ## Phần chưa xác minh hoặc chờ bổ sung
 
-Ảnh gốc, file thứ 14, hạn áp dụng giá, phụ thu, bản dịch EN đầy đủ và tài liệu cho các tour demo còn lại được bổ sung sau. Không suy dữ liệu thiếu thành giá 0 hoặc cam kết thương mại. Ranh giới phí hủy chưa đủ kín để tự động tính phí; web chỉ nhận tư vấn. SMTP production và hộp thư thật chưa được kiểm chứng trong môi trường này.
+Ảnh gốc độ phân giải cao, file thứ 14, hạn áp dụng giá, phụ thu, bản dịch EN đầy đủ và tài liệu cho các tour demo còn lại được bổ sung sau. Không suy dữ liệu thiếu thành giá 0 hoặc cam kết thương mại. Ranh giới phí hủy chưa đủ kín để tự động tính phí; web chỉ nhận tư vấn. SMTP production và hộp thư thật chưa được kiểm chứng trong môi trường này.
 
 Trạng thái phát hành được kiểm tra theo SHA trên GitHub/Vercel và báo riêng; không coi việc tạo commit là deploy thành công.
+
+## Kiểm tra sau khi khôi phục ảnh được phép công khai
+
+Nhánh chuẩn bị admin: typecheck đạt, unit tests 132/132. Đủ 28 file ảnh, hash khớp bản nhập gốc; đường dẫn ảnh được khôi phục trong tour/danh mục/điểm đến đều tồn tại. Chưa chạy lại browser trên build mới có ảnh; kết quả browser phía trên thuộc bản trước đó. Admin, database và tìm kiếm mới là kế hoạch, chưa triển khai.

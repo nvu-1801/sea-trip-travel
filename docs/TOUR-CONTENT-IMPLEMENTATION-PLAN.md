@@ -1,8 +1,8 @@
 # Kế hoạch áp dụng tài liệu tour vào SEA TRIP TRAVEL
 
-## Bản phát hành code không kèm ảnh khách hàng
+## Cập nhật xác nhận công khai ảnh
 
-Trong lượt rà soát tiếp theo ngày 16/10/2026, người dùng yêu cầu kiểm tra và đưa code lên main. Bản phát hành này không công khai 28 ảnh lấy từ Word vì chưa có xác nhận riêng cho ảnh. Các trường src mới được để trống, dùng placeholder hiện hữu; không có URL ảnh hỏng. Nội dung tour, bảng giá và các chức năng vẫn hoạt động. Ảnh gốc còn được giữ ngoài repo phát hành và trong nhánh local feat/import-tour-documents, chưa được đẩy công khai. Các mô tả ảnh ở phần kế hoạch trước đó là phương án đầy đủ chờ xác nhận.
+Ngày 16/10/2026, người dùng đã yêu cầu công khai 28 ảnh khách cung cấp. Nhánh `feat/tour-admin-preparation` khôi phục toàn bộ ảnh và tham chiếu từ nhánh nhập đầy đủ. Xác nhận này thay thế trạng thái trước đó chỉ phát hành code dùng placeholder. Chưa push/merge/deploy thành công vì quyền ghi GitHub trả 403. Kế hoạch admin mới ở `docs/admin-roadmap.md`; phạm vi MVP bên dưới ghi lại đợt nhập nội dung trước đó.
 
 Rà soát bổ sung đã sửa nội dung lịch trình bị ẩn khi in accordion và đường dẫn breadcrumb SEO tiếng Anh bị lặp /en. Kết quả kiểm tra cuối được cập nhật sau khi chạy lại trên clean build.
 

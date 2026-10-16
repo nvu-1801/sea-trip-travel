@@ -1,115 +1,57 @@
-# Lộ trình admin / CMS sau MVP
+# Kế hoạch landing page tour và admin
 
-MVP **không có** admin, không có dashboard, không có auth. Tài liệu này mô tả
-những điểm mở rộng đã được chuẩn bị sẵn, để khi cần thì không phải viết lại UI.
+Cập nhật 16/10/2026 theo yêu cầu khách. Trạng thái: kế hoạch triển khai; admin/database chưa được xây dựng. Website hiện đọc nội dung TypeScript qua repository. Nhánh chuẩn bị: `feat/tour-admin-preparation`.
 
-## 1. Nguyên tắc
+## Phạm vi đã chốt
 
-Mọi thay đổi dữ liệu sau này phải đi qua `src/lib/data/*` (repository). UI chưa
-bao giờ import trực tiếp `src/content/`. Nhờ vậy:
+- Landing page tour có chuyển động nhẹ, tìm nhanh hữu ích trên mobile.
+- Một tài khoản chủ quản trị; không tài khoản nhân viên, phân vai, đăng ký công khai hoặc quy trình duyệt nhiều người.
+- Admin quản lý tour, bài viết, thư viện ảnh, yêu cầu tư vấn và thông tin trang chủ. Bài viết có nháp, xem trước, xuất bản/ẩn, ảnh đại diện, SEO và ghim nổi bật.
+- Người dùng đã cho phép công khai 28 ảnh trích từ tài liệu khách ngày 16/10/2026. Đã khôi phục ảnh và tham chiếu; việc push/deploy báo riêng.
+- Thông tin thương mại còn thiếu để sau; giá thiếu không thành 0. Website nhận tư vấn, chưa thanh toán/đặt chỗ tự động.
 
-```
-Hôm nay:   UI  →  lib/data  →  content/*.ts
-Sau này:   UI  →  lib/data  →  API/CMS/DB
-```
+## Lựa chọn database và hosting
 
-Chữ ký hàm không đổi. Đây là lý do ranh giới này tồn tại ngay từ đầu, chứ không
-phải để "cho đẹp kiến trúc".
+Khuyến nghị SQLite nếu chạy Next.js/backend trên một VPS có ổ đĩa bền vững, ít người ghi dữ liệu. Lưu file DB trên volume local, bật foreign keys, migrations, WAL, busy timeout phù hợp và sao lưu có kiểm chứng phục hồi. Không đặt SQLite trên network filesystem hoặc dùng một file riêng cho mỗi instance.
 
-## 2. Phần dùng lại được nguyên vẹn
+Nếu giữ frontend Vercel, backend SQLite phải chạy trên VPS/service riêng. Không dùng file SQLite cục bộ trong Vercel Functions vì không có filesystem bền vững dùng chung. Nếu muốn toàn bộ backend serverless, chọn PostgreSQL managed hoặc dịch vụ SQLite từ xa và đánh giá adapter riêng.
 
-| Thành phần | Vì sao dùng lại được |
-| --- | --- |
-| `domain/*` (kiểu + Zod schema) | Schema là hợp đồng. CMS phải trả về đúng shape này, hoặc có adapter chuẩn hoá |
-| Toàn bộ `components/ui` | Không biết domain, không biết nguồn dữ liệu |
-| Toàn bộ `features/*` | Nhận props đã qua projection (`TourCardModel`, `TravelArticle`…) |
-| `lib/format.ts`, `lib/seo.ts`, `lib/json-ld.ts` | Thuần tuý |
-| `lib/sanitize.ts` | Thuần tuý, dùng lại được cho kênh mới |
-| `server/email/*` | Chỉ biết `ContactLead`, không biết lead lấy từ đâu |
-| Toàn bộ `app/` routes | Không đổi khi nguồn dữ liệu đổi |
+Ảnh không lưu BLOB trong DB: dùng object storage hoặc thư mục uploads trên volume bền vững; DB lưu đường dẫn, kích thước, alt, hash. RAM/dung lượng phụ thuộc dữ liệu, index và cách truy vấn; không có tỷ lệ SQLite/PG cố định. PostgreSQL phù hợp hơn khi cần nhiều writer hoặc nhiều instance. Lập lịch backup DB và ảnh, đo latency và contention trước khi quyết định chuyển DB.
 
-## 3. Phần cần thêm hoặc thay
+Nguồn: https://www.sqlite.org/whentouse.html ; https://sqlite.org/wal.html ; https://vercel.com/kb/guide/is-sqlite-supported-in-vercel
 
-| Việc | File | Ghi chú |
+## Tiêu chuẩn ảnh cho khách và admin
+
+| Vị trí | Kích thước khuyến nghị | Mục tiêu dung lượng sau tối ưu |
 | --- | --- | --- |
-| Adapter nguồn dữ liệu | thêm `lib/data/adapters/*` | Chuyển JSON từ CMS → shape trong `domain/` |
-| Validate dữ liệu từ nguồn ngoài | dùng lại schema trong `domain/` | **Không tin** dữ liệu từ CMS: parse bằng Zod trước khi dùng |
-| Cache + revalidate | `lib/data/*` | Bọc hàm đọc bằng `'use cache'` + `cacheTag`, rồi gọi `revalidateTag` khi nội dung đổi |
-| Auth nhân viên | `proxy.ts` + route group `app/(admin)/` | Cần trước khi mở admin |
-| Phân quyền | — | Vai trò tối thiểu: `editor` (nội dung) và `sales` (lead). Tách quyền vì mục đích khác nhau |
-| Audit | bảng `audit_log` | Ai đổi gì, lúc nào. Cần cho nội dung công khai |
+| Banner desktop | 1920 × 1080 px | 700 KB–1 MB |
+| Ảnh bìa tour/bài viết | 1200 × 800 px (3:2) | 300–500 KB |
+| Gallery/nội dung | Rộng 1600 px, cao theo ảnh | 500–800 KB |
+| Banner mobile riêng (tùy chọn) | 1080 × 1440 px | 500–800 KB |
 
-## 4. Các bước chuyển từ file sang database
+Đầu vào JPG/JPEG, PNG, WebP; đề xuất tối đa 10 MB/ảnh. Server xác minh chữ ký/MIME, giới hạn số pixel, tạo tên an toàn và biến thể WebP; không chỉ kiểm tra đuôi. Các mức KB trong bảng là mục tiêu ảnh phục vụ web, khác giới hạn file gốc tải lên. Không phóng lớn giả 28 ảnh Word vốn chủ yếu 400–600 px. Tên file không dấu, có mã tour và thứ tự; alt mô tả địa điểm.
 
-Thực hiện theo thứ tự, mỗi bước đều deploy được và không làm hỏng URL:
+Upload 10 MB phải đi thẳng storage bằng URL ký hoặc qua backend VPS: Vercel Functions giới hạn body request/response 4.5 MB (https://vercel.com/docs/functions/limitations). Xóa ảnh phải kiểm tra còn được tham chiếu; không nhận SVG/HTML thực thi như ảnh nội dung.
 
-1. **Tạo bảng theo đúng shape của `domain/`.** Field có `.default()` trong Zod
-   tương ứng cột có default. Quan hệ nhiều-nhiều (`categoryIds`, `destinationIds`)
-   thành bảng nối, **không** lưu mảng trong một cột.
-2. **Import dữ liệu** từ `content/*.ts` bằng một script một lần. Vì dữ liệu đã
-   qua Zod, có thể `parse` rồi `insert` trực tiếp.
-3. **Đổi `lib/data/*` sang đọc DB**, giữ nguyên chữ ký hàm. UI không đổi một dòng.
-4. **Giữ validation như cũ.** Zod schema ở `domain/` trở thành lớp bảo vệ khi
-   đọc từ DB, phòng trường hợp migration hoặc sửa tay làm dữ liệu lệch.
-5. **Xoá dần `content/*.ts`** sau khi xác nhận dữ liệu đã khớp, nhưng giữ lại
-   như nguồn seed cho môi trường dev/test.
+## Giao diện và tìm kiếm
 
-## 5. Giữ URL, slug, SEO và ảnh ổn định
+Giữ nhận diện SEA TRIP hiện có. Website đã có reveal/parallax và reduced-motion; bổ sung có chọn lọc hero chuyển động nhẹ, card hover, chuyển trạng thái accordion. Không để nội dung vô hình nếu animation lỗi; giữ dùng được bằng bàn phím và tôn trọng reduced-motion.
 
-Đây là rủi ro lớn nhất của mọi lần chuyển CMS. Quy tắc bắt buộc:
+Tìm nhanh theo tên tour/địa điểm có hoặc không dấu, phối hợp điểm đến, số ngày và khoảng giá; URL lưu bộ lọc, có xóa lọc và trạng thái không kết quả. Giá liên hệ không được coi là tour miễn phí. Kết quả là tour thật, không chỉ chuyển sang trang danh mục. Có phân trang và index; không tải toàn bộ bài viết vào trình duyệt.
 
-- **Slug là bất biến.** `domain/*` đã ghi rõ: đổi slug sẽ làm hỏng link và SEO.
-  Nếu buộc phải đổi, tạo bản ghi redirect 301 từ slug cũ, và **giữ** slug cũ
-  trong bảng redirect vĩnh viễn.
-- **`id` không tái sử dụng** cho bản ghi khác.
-- **Đường dẫn danh mục là hằng số** (`/tour-trong-nuoc/tour-mien-bac`), không
-  sinh tự động từ tên.
-- **Ảnh**: khi chuyển sang CMS, giữ nguyên đường dẫn `/images/…` hoặc chuyển sang
-  CDN nhưng cập nhật `next.config.ts` `images.remotePatterns` **theo đúng host,
-  path** (không dùng wildcard rộng).
-- **JSON-LD**: các builder trong `lib/json-ld.ts` sinh dữ liệu có cấu trúc từ nội
-  dung thật. Sau khi chuyển CMS phải kiểm tra lại rằng không phát sinh
-  `aggregateRating`/`review` giả.
-- **`sitemap.ts`**: `lastModified` lấy từ dữ liệu nội dung. Sau khi chuyển CMS,
-  trỏ vào `updatedAt` của bản ghi thật.
+Admin có sidebar gọn, header, form rõ ràng, preview và báo lỗi cạnh trường. Có thể tham khảo bố cục admin SDT nhưng không sao chép tính năng nhân sự, phân quyền hoặc quy trình nhiều cấp vào tour.
 
-## 6. Cập nhật cache sau khi nội dung thay đổi
+## Thứ tự thực hiện và nghiệm thu
 
-Với Cache Components:
+1. Chốt nơi chạy backend; thiết lập DB, media volume/storage, migrations và backup/restore. Giữ nội dung TS làm seed và đối chiếu sau import.
+2. Xây đăng nhập cho một admin: hash mật khẩu, cookie HttpOnly/Secure/SameSite, bảo vệ mutation/CSRF, giới hạn đăng nhập, thu hồi phiên khi đổi mật khẩu. Bootstrap/reset bằng CLI; không mật khẩu mặc định hoặc đăng ký công khai.
+3. Tạo bảng tours, pricing options, itinerary, articles, media, categories/destinations, leads, settings và sessions. Validate bằng domain schema hiện tại, không tin dữ liệu form/DB. Bảo toàn id/slug; đổi slug phải có redirect.
+4. Chuyển repository sang DB. Các hàm đọc có thể thành async: phải cập nhật caller/routes/tests; không hứa giữ nguyên toàn bộ chữ ký hoặc app routes. Xác minh cache, nội dung riêng tư không cache công khai, invalidation sau publish và slug mới hoạt động mà không rebuild.
+5. Xây màn hình tour/bài viết/media và import dữ liệu hiện có; nháp không xuất hiện trong tìm kiếm, sitemap, JSON-LD hoặc trang public. Theo dõi updatedAt thật, kiểm tra VI/EN và fallback bản dịch.
+6. Hoàn thiện tìm nhanh và animation; lưu lead trước khi gửi email, có xử lý retry để lỗi mail không mất yêu cầu.
+7. Kiểm tra đăng nhập/phân tách public-admin, upload sai định dạng/quá lớn, publish/ẩn/slug, lọc giá liên hệ, cache, backup restore, mobile, reduced-motion và các luồng tư vấn. Chạy typecheck/lint/unit/build và browser regression phù hợp.
+8. Commit/push nhánh, chỉ merge main sau khi kiểm tra đạt; xác minh deploy theo commit SHA và smoke test production. Quyền đọc repo không đồng nghĩa quyền ghi; hiện connector trả 403 khi tạo nhánh repo tour.
 
-```ts
-// lib/data/tours.ts (sau khi chuyển CMS)
-export async function getTourBySlug(slug: string) {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("tour", `tour:${slug}`);
-  return parseTour(await cms.getTour(slug));
-}
-```
+## Dữ liệu để bổ sung sau
 
-Khi admin lưu nội dung → gọi `revalidateTag("tour")` và
-`revalidateTag(\`tour:${slug}\`)` trong route handler của admin. URL không đổi,
-nên không cần `revalidatePath` cho từng trang.
-
-## 7. Quản lý lead
-
-Khi bổ sung bảng lead, **thứ tự quan trọng**: lưu lead vào DB **trước**, rồi mới
-gửi email. Nếu gửi email thất bại, lead vẫn còn và có thể retry.
-
-Cần có:
-
-- Trạng thái xử lý: `new → contacted → quoted → won / lost`.
-- Ghi chú nội bộ + lịch sử liên hệ.
-- Retry gửi email với backoff cho lead ở trạng thái `new` mà lần gửi đầu thất bại.
-- **Không** hiển thị toàn bộ số điện thoại/email trong log hay trong màn hình
-  danh sách dùng chung. Che một phần và chỉ hiện đầy đủ khi mở chi tiết.
-
-## 8. Những gì KHÔNG đưa vào
-
-- Không dựng dashboard giả, không thêm màn hình quản trị "để đó".
-- Không thêm auth khi chưa có nội dung thật cần bảo vệ.
-- Không thêm thanh toán/đặt tour trực tuyến nếu chưa có quy trình xác nhận và
-  chính sách hoàn tiền được duyệt. Website hiện nói rõ: chỉ tiếp nhận yêu cầu
-  tư vấn.
-- Không thêm đăng ký nhận tin marketing khi chưa có cơ chế huỷ đăng ký và hậu
-  thuẫn pháp lý.
+Còn thiếu file thứ 14, giá bảy tour một ngày, thời hạn giá/phụ thu, bản dịch EN đầy đủ và tài liệu cho một số tour demo. Không tự bịa nội dung để lấp mục trống.

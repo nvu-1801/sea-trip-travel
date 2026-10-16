@@ -32,16 +32,19 @@ export const customerTours: readonly TourInput[] = [
     "pricingOptions": [],
     "images": [
       {
+        "src": "/images/tours/e16bd7abd194bb4a.jpeg",
         "alt": "Bãi biển Kỳ Co",
         "width": 458,
         "height": 616
       },
       {
+        "src": "/images/tours/d9f1eba12f44da9c.jpeg",
         "alt": "Tham quan cung đường ven biển Eo Gió",
         "width": 481,
         "height": 642
       },
       {
+        "src": "/images/tours/60d2dc5e955d8e81.jpeg",
         "alt": "Trải nghiệm tham quan biển đảo",
         "width": 440,
         "height": 587
@@ -150,16 +153,19 @@ export const customerTours: readonly TourInput[] = [
     "pricingOptions": [],
     "images": [
       {
+        "src": "/images/tours/d0a65704b7b9b73c.jpeg",
         "alt": "Ghềnh Đá Đĩa Phú Yên",
         "width": 503,
         "height": 335
       },
       {
+        "src": "/images/tours/35e61fba77ada41e.png",
         "alt": "Tháp Nghinh Phong",
         "width": 503,
         "height": 335
       },
       {
+        "src": "/images/tours/6098697b3083575b.jpeg",
         "alt": "Nhà thờ Mằng Lăng",
         "width": 440,
         "height": 547
@@ -266,16 +272,19 @@ export const customerTours: readonly TourInput[] = [
     "pricingOptions": [],
     "images": [
       {
+        "src": "/images/tours/27a72f664ca5f7b0.jpeg",
         "alt": "Du khách tại bãi biển Kỳ Co",
         "width": 464,
         "height": 348
       },
       {
+        "src": "/images/tours/71ff013613e10dd2.jpeg",
         "alt": "Du khách trên đường ven biển",
         "width": 458,
         "height": 641
       },
       {
+        "src": "/images/tours/60d2dc5e955d8e81.jpeg",
         "alt": "Trải nghiệm biển đảo Quy Nhơn",
         "width": 440,
         "height": 587
@@ -390,16 +399,19 @@ export const customerTours: readonly TourInput[] = [
     "pricingOptions": [],
     "images": [
       {
+        "src": "/images/tours/9f31ed3d65b2fc52.jpeg",
         "alt": "Tham quan đảo Cù Lao Xanh",
         "width": 447,
         "height": 335
       },
       {
+        "src": "/images/tours/98e0571fa92e6715.jpeg",
         "alt": "Du khách trên đảo",
         "width": 481,
         "height": 642
       },
       {
+        "src": "/images/tours/0b9ce4ae92e92c28.jpeg",
         "alt": "Bãi đá trên đảo",
         "width": 459,
         "height": 612
@@ -505,16 +517,19 @@ export const customerTours: readonly TourInput[] = [
     "pricingOptions": [],
     "images": [
       {
+        "src": "/images/tours/d0a65704b7b9b73c.jpeg",
         "alt": "Ghềnh Đá Đĩa Phú Yên",
         "width": 503,
         "height": 335
       },
       {
+        "src": "/images/tours/54d5c606cdbb5e8c.png",
         "alt": "Đường tham quan Mũi Điện",
         "width": 481,
         "height": 602
       },
       {
+        "src": "/images/tours/6098697b3083575b.jpeg",
         "alt": "Nhà thờ Mằng Lăng",
         "width": 440,
         "height": 547
@@ -618,16 +633,19 @@ export const customerTours: readonly TourInput[] = [
     "pricingOptions": [],
     "images": [
       {
+        "src": "/images/tours/e3f8bec18299e3f7.jpeg",
         "alt": "Cảnh quan sông đá Hầm Hô",
         "width": 504,
         "height": 335
       },
       {
+        "src": "/images/tours/ac2cd607eed75d18.jpg",
         "alt": "Bảo tàng Quang Trung",
         "width": 600,
         "height": 320
       },
       {
+        "src": "/images/tours/0214fee768223035.jpeg",
         "alt": "Tháp Dương Long",
         "width": 502,
         "height": 335
@@ -734,16 +752,19 @@ export const customerTours: readonly TourInput[] = [
     "pricingOptions": [],
     "images": [
       {
+        "src": "/images/tours/eb7d8935a9a463df.jpeg",
         "alt": "Du khách trên cano đi Bãi Dứa",
         "width": 447,
         "height": 335
       },
       {
+        "src": "/images/tours/e80ef0f776e5e3f9.jpeg",
         "alt": "Trải nghiệm tại Bãi Dứa",
         "width": 482,
         "height": 642
       },
       {
+        "src": "/images/tours/0e31c87d5c344ad5.jpeg",
         "alt": "Du khách tham gia trải nghiệm biển",
         "width": 458,
         "height": 612
@@ -871,31 +892,37 @@ export const customerTours: readonly TourInput[] = [
     ],
     "images": [
       {
+        "src": "/images/tours/d7233006cc4fd0f9.jpeg",
         "alt": "Bãi biển Kỳ Co",
         "width": 596,
         "height": 336
       },
       {
+        "src": "/images/tours/76968392e32c23c0.jpeg",
         "alt": "Cung đường ven biển Eo Gió",
         "width": 459,
         "height": 344
       },
       {
+        "src": "/images/tours/be29f9c7f7008249.jpeg",
         "alt": "Bãi đá Hoàng Hậu",
         "width": 443,
         "height": 296
       },
       {
+        "src": "/images/tours/9bcf91f5fa419e5d.jpeg",
         "alt": "Tháp Đôi Quy Nhơn",
         "width": 412,
         "height": 308
       },
       {
+        "src": "/images/tours/f81a05c485f58fca.jpeg",
         "alt": "Ghềnh Đá Đĩa",
         "width": 504,
         "height": 335
       },
       {
+        "src": "/images/tours/f8aa6067ba6ce8ad.jpeg",
         "alt": "Tháp Nghinh Phong",
         "width": 411,
         "height": 329
@@ -1091,31 +1118,37 @@ export const customerTours: readonly TourInput[] = [
     ],
     "images": [
       {
+        "src": "/images/tours/d7233006cc4fd0f9.jpeg",
         "alt": "Bãi biển Kỳ Co",
         "width": 596,
         "height": 336
       },
       {
+        "src": "/images/tours/76968392e32c23c0.jpeg",
         "alt": "Cung đường ven biển Eo Gió",
         "width": 459,
         "height": 344
       },
       {
+        "src": "/images/tours/be29f9c7f7008249.jpeg",
         "alt": "Bãi đá Hoàng Hậu",
         "width": 443,
         "height": 296
       },
       {
+        "src": "/images/tours/9bcf91f5fa419e5d.jpeg",
         "alt": "Tháp Đôi Quy Nhơn",
         "width": 412,
         "height": 308
       },
       {
+        "src": "/images/tours/e58a823508e08a30.jpeg",
         "alt": "Ghềnh Đá Đĩa",
         "width": 470,
         "height": 327
       },
       {
+        "src": "/images/tours/f8aa6067ba6ce8ad.jpeg",
         "alt": "Tháp Nghinh Phong",
         "width": 411,
         "height": 329
@@ -1332,31 +1365,37 @@ export const customerTours: readonly TourInput[] = [
     ],
     "images": [
       {
+        "src": "/images/tours/d7233006cc4fd0f9.jpeg",
         "alt": "Bãi biển Kỳ Co",
         "width": 596,
         "height": 336
       },
       {
+        "src": "/images/tours/76968392e32c23c0.jpeg",
         "alt": "Cung đường ven biển Eo Gió",
         "width": 459,
         "height": 344
       },
       {
+        "src": "/images/tours/be29f9c7f7008249.jpeg",
         "alt": "Bãi đá Hoàng Hậu",
         "width": 443,
         "height": 296
       },
       {
+        "src": "/images/tours/9bcf91f5fa419e5d.jpeg",
         "alt": "Tháp Đôi Quy Nhơn",
         "width": 412,
         "height": 308
       },
       {
+        "src": "/images/tours/e58a823508e08a30.jpeg",
         "alt": "Ghềnh Đá Đĩa",
         "width": 470,
         "height": 327
       },
       {
+        "src": "/images/tours/f8aa6067ba6ce8ad.jpeg",
         "alt": "Tháp Nghinh Phong",
         "width": 411,
         "height": 329
@@ -1574,36 +1613,43 @@ export const customerTours: readonly TourInput[] = [
     ],
     "images": [
       {
+        "src": "/images/tours/d7233006cc4fd0f9.jpeg",
         "alt": "Bãi biển Kỳ Co",
         "width": 596,
         "height": 336
       },
       {
+        "src": "/images/tours/76968392e32c23c0.jpeg",
         "alt": "Cung đường ven biển Eo Gió",
         "width": 459,
         "height": 344
       },
       {
+        "src": "/images/tours/be29f9c7f7008249.jpeg",
         "alt": "Bãi đá Hoàng Hậu",
         "width": 443,
         "height": 296
       },
       {
+        "src": "/images/tours/9bcf91f5fa419e5d.jpeg",
         "alt": "Tháp Đôi Quy Nhơn",
         "width": 412,
         "height": 308
       },
       {
+        "src": "/images/tours/afdf37ef08e566b9.png",
         "alt": "Đảo Cù Lao Xanh",
         "width": 582,
         "height": 327
       },
       {
+        "src": "/images/tours/0e8d90cce17fd9d5.jpeg",
         "alt": "Cột cờ trên đảo Cù Lao Xanh",
         "width": 412,
         "height": 549
       },
       {
+        "src": "/images/tours/32859bc9cf302eda.png",
         "alt": "Trải nghiệm trên đảo Cù Lao Xanh",
         "width": 411,
         "height": 308
