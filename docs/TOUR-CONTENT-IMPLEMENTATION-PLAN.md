@@ -1,5 +1,11 @@
 # Kế hoạch áp dụng tài liệu tour vào SEA TRIP TRAVEL
 
+## Bản phát hành code không kèm ảnh khách hàng
+
+Trong lượt rà soát tiếp theo ngày 16/10/2026, người dùng yêu cầu kiểm tra và đưa code lên main. Bản phát hành này không công khai 28 ảnh lấy từ Word vì chưa có xác nhận riêng cho ảnh. Các trường src mới được để trống, dùng placeholder hiện hữu; không có URL ảnh hỏng. Nội dung tour, bảng giá và các chức năng vẫn hoạt động. Ảnh gốc còn được giữ ngoài repo phát hành và trong nhánh local feat/import-tour-documents, chưa được đẩy công khai. Các mô tả ảnh ở phần kế hoạch trước đó là phương án đầy đủ chờ xác nhận.
+
+Rà soát bổ sung đã sửa nội dung lịch trình bị ẩn khi in accordion và đường dẫn breadcrumb SEO tiếng Anh bị lặp /en. Kết quả kiểm tra cuối được cập nhật sau khi chạy lại trên clean build.
+
 Ngày lập: 16/10/2026. Repo: nvu-1801/sea-trip-travel. Baseline: 9996a37.
 Nhánh thực hiện: feat/import-tour-documents.
 
@@ -88,7 +94,7 @@ Các mục sau không cản nhập nội dung đã rõ, nhưng không được t
 - [x] ST01 đi đường bộ, ST03 có Hòn Khô; QN 4 ngày có Cù Lao Xanh; hai tuyến QN–PY 4 ngày khác điểm trả.
 - [x] Trẻ em ST02/ST04/ST05/ST06 là 50%; ST01/ST03/ST10 và tour dài ngày là 60%, giữ điều kiện đi kèm.
 - [x] Giá bảng đúng từng gói, không gán giá 0 cho giá thiếu hoặc suy giá người lớn từ bảo hiểm.
-- [x] Ảnh tồn tại, không icon/logo, alt có nghĩa; gallery bàn phím hoạt động.
+- [x] Bản code không công khai ảnh khách hàng; placeholder và gallery bàn phím hoạt động. Ảnh gốc chờ xác nhận riêng.
 - [x] Giao diện VI/EN không xuất hiện lịch trình dịch cũ; EN draft không index.
 - [x] 360/390/768/1440 px không tràn ngang; sticky CTA không che form/footer; accordions dùng bàn phím.
 - [x] Form tư vấn giữ đúng tour, thành công/thất bại rõ, không báo gửi thành công khi mail lỗi.

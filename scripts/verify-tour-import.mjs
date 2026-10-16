@@ -34,9 +34,13 @@ try {
         const brokenAnchors = await page.locator('nav[aria-label] a[href^="#"]').evaluateAll((links) => links.filter((a) => !document.getElementById(a.hash.slice(1))).map((a) => a.hash));
         assert.deepEqual(brokenAnchors, [], tour.slug);
         const image = page.locator('#tour-gallery-panel img');
-        await image.waitFor();
-        await image.evaluate((img) => img.complete ? null : new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; }));
-        assert.ok(await image.evaluate((img) => img.naturalWidth > 0), `broken photo ${tour.slug}`);
+        if (await image.count()) {
+          await image.waitFor();
+          await image.evaluate((img) => img.complete ? null : new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; }));
+          assert.ok(await image.evaluate((img) => img.naturalWidth > 0), `broken photo ${tour.slug}`);
+        } else {
+          assert.equal(await page.locator('#tour-gallery-panel [role="img"]').count(), 1, `missing image fallback ${tour.slug}`);
+        }
         assert.equal(await page.locator('h1').count(), 1);
         const breadcrumbs = await page.locator('#ld-breadcrumb').evaluate((element) => JSON.parse(element.textContent).itemListElement.map((item) => new URL(item.item).pathname));
         assert.ok(breadcrumbs.every((path) => !path.startsWith('/en/en')), `duplicate locale in breadcrumb ${tour.slug}`);

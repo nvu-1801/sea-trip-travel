@@ -89,7 +89,7 @@ Xem `.env.example`. Không có secret nào được ghi vào source. Chỉ biế
 
 ## Nội dung và dữ liệu
 
-Nội dung nằm trong `src/content/`. Đợt 16/10/2026 đã nhập 11 chương trình từ tài liệu khách hàng, bảng giá lưu trú và 28 ảnh gốc trong Word. Xem `docs/TOUR-CONTENT-IMPLEMENTATION-PLAN.md` và `docs/TOUR-IMPORT-VERIFICATION.md`.
+Nội dung nằm trong `src/content/`. Đợt 16/10/2026 đã nhập 11 chương trình từ tài liệu khách hàng, bảng giá lưu trú và metadata ảnh. 28 ảnh gốc từ Word chưa được công khai; bản code sử dụng placeholder. Xem `docs/TOUR-CONTENT-IMPLEMENTATION-PLAN.md` và `docs/TOUR-IMPORT-VERIFICATION.md`.
 
 - Tour từ tài liệu khách có `contentStatus: "verified"`; tour chưa có tài liệu đối ứng giữ `demo`. Đây là **metadata theo dõi nội bộ** (dùng
   cho `docs/CONTENT-TODO.md` và checklist nghiệm thu) — trường này **không** được

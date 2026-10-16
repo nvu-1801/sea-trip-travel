@@ -1,54 +1,43 @@
-# Kiểm chứng đợt nhập chương trình tour ngày 16 tháng 10 năm 2026
+# Kiểm chứng code và dữ liệu tour ngày 16 tháng 10 năm 2026
 
-## Kết quả
+## Phạm vi bản phát hành
 
-Đã áp dụng 11 chương trình phân biệt từ 13 file Word nhận được. Người dùng dự kiến tổng 14 file; còn thiếu một file chưa biết tên. Hai cặp bản sao ST10 và QN–PY 4N3Đ đón tiễn QN chỉ được nhập một lần. Bản kê nguồn, hash văn bản và slug đích nằm ở tour-source-manifest.json.
+Áp dụng 11 chương trình phân biệt từ 13 file Word; có hai cặp trùng nội dung. Người dùng dự kiến 14 file, còn thiếu một file chưa xác định. Catalogue có 22 tour: 11 chương trình từ tài liệu khách và 11 chương trình demo chưa có tài liệu đối ứng. Giữ các slug cũ.
 
-Catalogue sau thay đổi có 22 tour: 11 chương trình từ tài liệu khách và 11 tour demo chưa có tài liệu đối ứng. Giữ URL các tour cũ, không xóa nội dung các khu vực đang chờ bổ sung.
+Bản phát hành code không kèm 28 ảnh từ Word. Ảnh khách cung cấp chưa được xác nhận riêng cho việc công khai lên repo public; src ảnh mới được để trống và giao diện dùng placeholder hiện có. Không có đường dẫn ảnh hỏng. Ảnh vẫn được giữ ngoài repo phát hành và trong nhánh local feat/import-tour-documents; không đưa lịch sử chứa các ảnh này lên GitHub. Mã nguồn phát hành được tạo trên base main đã kiểm tra.
 
-## Dữ liệu và giao diện
+## Kết quả rà soát logic
 
-- Nhập lịch trình đầy đủ theo ngày và mốc giờ, bữa ăn, nơi nghỉ, bao gồm/không bao gồm, quà tặng, trẻ em, thanh toán/hủy theo từng tour.
-- Bốn chương trình dài ngày có bảng giá bốn gói lưu trú, giá người lớn và trẻ em; giá từ được kiểm tra khớp gói thấp nhất. Ghi rõ gói thấp nhất không khách sạn, chưa VAT, cần xác nhận thời điểm.
-- Bảy tour một ngày chưa có giá giữ null, hiển thị Liên hệ tư vấn.
-- Trích 28 ảnh gốc khác nhau, loại icon và logo du lịch Gia Lai. Dùng lại ảnh phù hợp cho hero, danh mục và điểm đến; không nâng kích thước ảnh gốc giả.
-- Thêm bảng so sánh giá responsive; gallery giữ nguyên hình dọc, thao tác bàn phím; accordion từng ngày mở sẵn ngày đầu; hiển thị điểm trả, phương tiện, mã tour; chia rõ quà tặng và chính sách.
-- Trang chủ hiển thị cả tour ngày và tour nghỉ đêm, giữ font và màu thương hiệu hiện có.
+- Bốn tour dài ngày có bốn gói lưu trú; giá người lớn/trẻ em đúng bảng Word. Giá từ là gói không khách sạn, chưa VAT, có ghi chú cần xác nhận thời điểm.
+- Bảy tour một ngày chưa có giá, tiếp tục hiển thị Liên hệ tư vấn.
+- Chính sách trẻ em 50% và 60% giữ theo từng tour; đọc bảng bao gồm/không bao gồm theo từng ô, không trộn hai cột.
+- Hai tuyến QN–PY 4N3Đ có điểm trả khác nhau và được lưu thành hai tour; ST10 không cam kết xe đón Quy Nhơn.
+- Bản dịch demo cũ không được ghi đè lịch trình, bữa ăn và bảo hiểm của nguồn mới. EN chưa duyệt vẫn noindex; dữ liệu thiếu được fallback VI với thông báo.
+- Form gửi đúng tourSlug, không báo thành công khi gửi mail thất bại; không bổ sung đặt chỗ hay thanh toán trực tuyến.
 
-## Các lỗi đã sửa
+## Lỗi đã sửa trong lượt rà soát bổ sung
 
-1. Production rewrite / → /vi rồi redirect /vi → / gây vòng lặp chuyển hướng tiếng Việt. Proxy nay cho /vi đi qua, canonical vẫn không prefix. Chạy browser production xác nhận các route VI/EN trả 200.
-2. Bản dịch tiếng Anh demo có thể ghi đè lịch trình, phương tiện, bữa ăn và bảo hiểm của nguồn mới. Overlay của tour nhập có phiên bản nguồn; không khớp thì fallback VI. Bản mới chỉ dịch tiêu đề, phần chưa dịch có thông báo hiện hữu và noindex; không quảng bá EN chưa duyệt qua hreflang của tour.
-3. npm ci thất bại do lockfile picomatch không nhất quán. Đã sửa lockfile và cài sạch thành công.
-4. Typecheck trên checkout sạch thiếu PageProps/LayoutProps vì chưa sinh route types. Script typecheck nay chạy next typegen trước tsc.
-5. Anchor nội trang vẫn xuất hiện khi mục đích bị ẩn. Danh sách anchor nay chỉ chứa mục thực sự có nội dung.
-6. Chính sách chiếm nửa trang trống khi không có ghi chú; nay dùng chiều rộng phù hợp.
-7. Các nhầm lẫn tên tour 3N2Đ trong file 4N3Đ được chuẩn hóa theo tiêu đề và lịch trình. Bỏ câu trả phòng ngày 2 mâu thuẫn với nghỉ đêm QN của tuyến tiễn PY. Không quảng bá xe Quy Nhơn cho ST10 tự đến Nhơn Lý.
-8. Không giữ lời hứa lặn san hô trong highlight tour dài ngày khi lịch trình và dịch vụ không xác nhận trải nghiệm này; giữ điểm đến Kỳ Co.
+1. Các ngày lịch trình đóng accordion bị ẩn khi in/PDF. CSS print nay mở nội dung details-content để bản in có đủ mọi ngày; không thay trạng thái accordion trên màn hình.
+2. Breadcrumb JSON-LD tiếng Anh bị thêm /en hai lần ở tour và danh mục. Chỉ thêm locale vào đường dẫn chưa được bản địa hóa; kiểm tra browser bao gồm cả hai loại trang.
 
-## Kiểm tra đã thực hiện
+Các bản sửa trước đó vẫn được giữ: vòng lặp rewrite tiếng Việt, lockfile làm npm ci thất bại, typecheck chưa sinh route types, anchor trỏ tới phần ẩn và khoảng trống chính sách.
+
+## Kiểm tra
 
 | Kiểm tra | Kết quả |
 | --- | --- |
-| npm ci --no-audit --no-fund | Đạt sau sửa lockfile |
-| npm run typecheck | Đạt |
-| npm run lint | Đạt |
-| npm test | 132/132, gồm 8 kiểm tra mới cho nguồn tour |
-| npm run build | Đạt, production prerender 107 trang |
-| npm run verify:ui | 161/161 kiểm tra production browser, gồm form gửi vào SMTP sink cục bộ |
-| npm run verify:tour-import | 88 tổ hợp: 11 chương trình × VI/EN × 360/390/768/1440 px |
-| Kiểm tra bổ sung trong verify:tour-import | Ảnh tải được, anchor tồn tại, bảng giá, accordion và gallery bàn phím, payload form đúng tour, không pageerror |
-| git diff --check | Đạt |
-| Visual QA | Đã xem ảnh trang chủ, chi tiết desktop/mobile, bảng giá và lịch trình/dịch vụ |
+| Production build sạch | Đạt, 107 trang; kiểm tra CSS print mới thực sự nằm trong bundle |
+| Typecheck và lint | Đạt |
+| Unit tests | 132/132 |
+| Browser tour import | Đạt 88 tổ hợp tour/ngôn ngữ/viewport; thêm kiểm tra breadcrumb tour và danh mục EN |
+| Browser UI toàn site | Đạt 162/162, gồm kiểm tra mọi ngày lịch trình khi in |
+| Print trực tiếp trên production build | Tất cả 4 ngày hiển thị, gồm 3 accordion đang đóng |
+| Giá và form | Đạt; kiểm tra gửi email dùng SMTP sink cục bộ, không gửi tới người thật |
 
-Browser chạy Chromium 153 trong môi trường kiểm tra, trên production build. Thêm tùy chọn CHROMIUM_EXECUTABLE_PATH cho nơi không có Chrome hệ thống; mặc định vẫn dùng channel chrome. Script verify:ui bind 127.0.0.1 để không phụ thuộc quyền đọc networkInterfaces. Kiểm tra hotline cập nhật theo breakpoint 2xl thực tế: ẩn 1280 px để giữ menu thoáng, hiện 1536 px; không bỏ assertion.
+Browser chạy Chromium 153 ở 360/390/768/1440 px, thêm breakpoint hotline 1536 px. Ảnh chưa công khai được kiểm tra bằng placeholder; kiểm tra file ảnh chỉ áp dụng khi src đã được cung cấp.
 
-## Phần chờ bổ sung và giới hạn
+## Phần chưa xác minh hoặc chờ bổ sung
 
-Chưa có ảnh độ phân giải cao, thời hạn áp dụng giá, phụ thu đầy đủ, file thứ 14, bản dịch EN hoàn chỉnh, hoặc tài liệu cho các tour demo còn lại. Các mục này không được tự điền. Gói không khách sạn có mô tả dịch vụ chung cần được tư vấn xác nhận quyền lợi. Ranh giới phí hủy chưa đủ để tự động tính phí; website chỉ nhận yêu cầu tư vấn.
+Ảnh gốc, file thứ 14, hạn áp dụng giá, phụ thu, bản dịch EN đầy đủ và tài liệu cho các tour demo còn lại được bổ sung sau. Không suy dữ liệu thiếu thành giá 0 hoặc cam kết thương mại. Ranh giới phí hủy chưa đủ kín để tự động tính phí; web chỉ nhận tư vấn. SMTP production và hộp thư thật chưa được kiểm chứng trong môi trường này.
 
-Email đã được kiểm tra end to end bằng SMTP sink của môi trường thử nghiệm, không gửi tới người thật. Không có quyền truy cập cấu hình SMTP production để xác nhận hộp thư thật. Trạng thái Vercel sau merge được kiểm tra theo SHA GitHub; không suy thành công từ việc push.
-
-## Thực hiện phát hành
-
-Nhánh thực hiện: feat/import-tour-documents. Baseline main: 9996a372b0c3e9d32ccca671a9c86493a22d6a9e. Chỉ merge sau khi các kiểm tra trên đạt. Không force push. SHA phát hành và kết quả Vercel được báo riêng sau khi merge, tránh lưu một trạng thái deploy suy đoán vào tài liệu này.
+Trạng thái phát hành được kiểm tra theo SHA trên GitHub/Vercel và báo riêng; không coi việc tạo commit là deploy thành công.
