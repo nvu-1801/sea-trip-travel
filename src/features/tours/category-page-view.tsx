@@ -126,7 +126,7 @@ export function CategoryPageView({
         data={breadcrumbJsonLd(
           crumbs.map((crumb) => ({
             label: crumb.label,
-            path: localizePath(locale, crumb.href ?? categoryPath),
+            path: crumb.href ?? localizePath(locale, categoryPath),
           })),
         )}
       />

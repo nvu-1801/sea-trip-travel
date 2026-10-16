@@ -123,7 +123,7 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
         data={breadcrumbJsonLd(
           crumbs.map((crumb) => ({
             label: crumb.label,
-            path: localizePath(locale, crumb.href ?? `/tour/${tour.slug}`),
+            path: crumb.href ?? localizePath(locale, `/tour/${tour.slug}`),
           })),
         )}
       />

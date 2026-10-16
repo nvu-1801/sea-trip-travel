@@ -1158,6 +1158,10 @@ async function checkPrint(browser) {
       printHiddenStillVisible: printHidden.filter((n) => getComputedStyle(n).display !== "none").length,
       deepHeight: deepSection ? Math.round(deepSection.getBoundingClientRect().height) : -1,
       deepHeadingHeight: deepHeading ? Math.round(deepHeading.getBoundingClientRect().height) : -1,
+      itineraryDays: Array.from(document.querySelectorAll("#lich-trinh details"), (day) => ({
+        closed: !day.open,
+        visible: day.querySelector("ul")?.checkVisibility() ?? false,
+      })),
     };
   });
 
@@ -1166,6 +1170,7 @@ async function checkPrint(browser) {
   check("print — no scroll-animated element is transparent", m.stillTransparent === 0, `${m.stillTransparent}/${m.animated}`);
   check("print — no scroll-animated element collapses", m.collapsed === 0, `${m.collapsed}/${m.animated}`);
   check("print — content far below the fold still lays out", m.deepHeight > 200 && m.deepHeadingHeight > 10, `#tu-van=${m.deepHeight}px, heading=${m.deepHeadingHeight}px`);
+  check("print — every itinerary day is visible, including closed accordions", m.itineraryDays.length > 1 && m.itineraryDays.some((day) => day.closed) && m.itineraryDays.every((day) => day.visible), `${m.itineraryDays.filter((day) => day.visible).length}/${m.itineraryDays.length} days visible`);
 
   // Real artefact, not just a CSS assertion.
   mkdirSync(SHOT_DIR, { recursive: true });

@@ -601,6 +601,16 @@ select option {
  * every animation and transform so the printed page is the plain document.
  */
 @media print {
+  /* Closed itinerary days must remain in the printed programme. Modern
+     Chromium hides the details-content box using content-visibility. */
+  details::details-content {
+    content-visibility: visible !important;
+  }
+
+  details > :not(summary) {
+    display: block !important;
+  }
+
   [data-reveal],
   [data-parallax],
   [data-entrance] {

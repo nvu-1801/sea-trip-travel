@@ -38,10 +38,18 @@ try {
         await image.evaluate((img) => img.complete ? null : new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; }));
         assert.ok(await image.evaluate((img) => img.naturalWidth > 0), `broken photo ${tour.slug}`);
         assert.equal(await page.locator('h1').count(), 1);
+        const breadcrumbs = await page.locator('#ld-breadcrumb').evaluate((element) => JSON.parse(element.textContent).itemListElement.map((item) => new URL(item.item).pathname));
+        assert.ok(breadcrumbs.every((path) => !path.startsWith('/en/en')), `duplicate locale in breadcrumb ${tour.slug}`);
+        if (locale === 'en') assert.ok(breadcrumbs.every((path) => path === '/en' || path.startsWith('/en/')));
         if (locale === 'en') assert.match(await page.locator('meta[name="robots"]').getAttribute('content'), /noindex/);
         checks++;
       }
     }
+  }
+  for (const path of ['/tour-quy-nhon-phu-yen', '/tour-quy-nhon-phu-yen/tour-quy-nhon-1-ngay']) {
+    await page.goto(`${base}/en${path}`);
+    const breadcrumbs = await page.locator('#ld-breadcrumb').evaluate((element) => JSON.parse(element.textContent).itemListElement.map((item) => new URL(item.item).pathname));
+    assert.ok(breadcrumbs.every((url) => url === '/en' || (url.startsWith('/en/') && !url.startsWith('/en/en'))));
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${base}/tour/quy-nhon-phu-yen-4-ngay-3-dem`);
