@@ -14,11 +14,11 @@ export type { TourCardModel } from "./tour-card-model";
  */
 export function TourCard({ tour, priority = false }: { tour: TourCardModel; priority?: boolean }) {
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-soft transition-[box-shadow,transform,border-color] duration-300 ease-out hover:-translate-y-1 hover:border-brand-200 hover:shadow-lifted">
+    <article className="stt-tour-card group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-soft">
       {/* Brand gradient hairline that draws in on hover. */}
       <span
         aria-hidden="true"
-        className="brand-gradient absolute inset-x-0 top-0 z-20 h-0.5 origin-left scale-x-0 transition-transform duration-300 ease-out group-hover:scale-x-100"
+        className="stt-card-rule brand-gradient pointer-events-none absolute inset-x-0 top-0 z-20 h-0.5 origin-left scale-x-0"
       />
 
       <div className="relative overflow-hidden">
@@ -27,7 +27,7 @@ export function TourCard({ tour, priority = false }: { tour: TourCardModel; prio
           altFallback={tour.title}
           priority={priority}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="aspect-[4/3] w-full transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+          className="stt-card-photo aspect-[4/3] w-full"
         />
         <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1 text-xs font-semibold text-foreground shadow-soft backdrop-blur-sm">
@@ -90,7 +90,7 @@ export function TourCard({ tour, priority = false }: { tour: TourCardModel; prio
           </div>
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-strong">
             {tour.viewDetailsText}
-            <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+            <ArrowRightIcon className="stt-card-arrow h-4 w-4" />
           </span>
         </div>
       </div>

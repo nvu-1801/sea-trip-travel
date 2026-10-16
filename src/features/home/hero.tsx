@@ -36,16 +36,25 @@ export function Hero({ locale }: { locale: Locale }) {
   ].filter((item): item is string => Boolean(item));
 
   return (
-    <section className="relative overflow-x-clip bg-background">
+    <section className="stt-travel-hero relative isolate overflow-x-clip bg-background">
       {/* Brand field: two soft blooms plus a faint dot grid, no heavy wash. */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -right-40 -top-48 h-[34rem] w-[34rem] rounded-full bg-brand-200/45 blur-3xl"
+        className="stt-hero-bloom pointer-events-none absolute -right-40 -top-48 h-[34rem] w-[34rem] rounded-full bg-brand-200/45 blur-3xl"
       />
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -left-36 bottom-0 h-80 w-80 rounded-full bg-sun-300/25 blur-3xl"
+        className="stt-hero-bloom stt-hero-bloom-sun pointer-events-none absolute -left-36 bottom-0 h-80 w-80 rounded-full bg-sun-300/25 blur-3xl"
       />
+
+      {/* A quiet coastal contour, kept behind the content and out of hit areas. */}
+      <div aria-hidden="true" className="stt-coastal-lines pointer-events-none absolute inset-x-0 bottom-0 h-36 overflow-hidden text-brand-300/35 sm:h-52">
+        <svg className="h-full w-full" viewBox="0 0 1440 200" fill="none" preserveAspectRatio="none">
+          <path d="M-80 115C180 0 360 200 650 100S1120 20 1520 100" stroke="currentColor" strokeWidth="1" />
+          <path d="M-80 140C180 25 360 225 650 125S1120 45 1520 125" stroke="currentColor" strokeWidth="1" />
+          <path d="M-80 165C180 50 360 250 650 150S1120 70 1520 150" stroke="currentColor" strokeWidth="1" />
+        </svg>
+      </div>
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.05]"
@@ -154,7 +163,7 @@ export function Hero({ locale }: { locale: Locale }) {
               </div>
 
               {/* Brand badge card */}
-              <div className="absolute -right-2 top-5 max-w-[9.5rem] rounded-2xl border border-border bg-surface/95 p-3 shadow-card backdrop-blur-sm sm:-right-6 sm:top-6 sm:max-w-52 sm:p-4">
+              <div className="stt-hero-badge absolute -right-2 top-5 max-w-[9.5rem] rounded-2xl border border-border bg-surface/95 p-3 shadow-card backdrop-blur-sm sm:-right-6 sm:top-6 sm:max-w-52 sm:p-4">
                 <span className="flex items-center gap-1.5 text-[0.625rem] font-bold uppercase tracking-wider text-primary-strong sm:gap-2 sm:text-[0.6875rem]">
                   <CompassIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {m.home.hero.focusBadge}

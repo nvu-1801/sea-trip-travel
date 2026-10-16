@@ -517,6 +517,105 @@ select option {
   }
 }
 
+/* Coastal atmosphere: one gentle arrival, then a quiet reading surface.
+   Only transforms move; the blurred gradients themselves never repaint. */
+@keyframes stt-bloom-arrive {
+  from { transform: translate3d(1.5rem, -1rem, 0) scale(0.94); }
+  to { transform: none; }
+}
+
+@keyframes stt-coast-arrive {
+  from { transform: translate3d(-1.5rem, 0.5rem, 0); }
+  to { transform: none; }
+}
+
+@keyframes stt-badge-arrive {
+  from { transform: translate3d(0, 0.5rem, 0); }
+  to { transform: none; }
+}
+
+.stt-tour-card {
+  transition: border-color 280ms ease, box-shadow 360ms ease;
+}
+
+.stt-tour-card:focus-within {
+  border-color: var(--color-brand-300);
+  box-shadow: 0 0 0 3px var(--color-brand-100), var(--shadow-lifted);
+}
+
+/* The entire card is one link. Show the keyboard ring around its full area,
+   rather than clipping a title-only ring inside the media container. */
+.stt-tour-card a:focus-visible {
+  outline: none;
+}
+
+.stt-card-rule {
+  transition: transform 420ms var(--ease-out-soft);
+}
+
+.stt-tour-card:focus-within .stt-card-rule {
+  transform: scaleX(1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stt-tour-card:hover {
+    border-color: var(--color-brand-200);
+    box-shadow: var(--shadow-lifted);
+  }
+
+  .stt-tour-card:hover .stt-card-rule {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stt-hero-bloom {
+    animation: stt-bloom-arrive 4.8s var(--ease-out-soft) both;
+  }
+
+  .stt-hero-bloom-sun {
+    animation-name: stt-coast-arrive;
+  }
+
+  .stt-coastal-lines {
+    animation: stt-coast-arrive 4.8s var(--ease-out-soft) both;
+  }
+
+  .stt-hero-badge {
+    animation: stt-badge-arrive 2.4s var(--ease-out-soft) both;
+  }
+
+  .stt-card-photo {
+    transition: transform 700ms var(--ease-out-soft);
+  }
+
+  .stt-card-arrow {
+    transition: transform 300ms var(--ease-out-soft);
+  }
+
+  .stt-tour-card:focus-within .stt-card-arrow {
+    transform: translateX(0.2rem);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .stt-tour-card {
+    transition: transform 420ms var(--ease-out-soft), border-color 280ms ease, box-shadow 360ms ease;
+  }
+
+  .stt-tour-card:hover {
+    transform: translateY(-0.3rem);
+  }
+
+  .stt-tour-card:hover .stt-card-photo {
+    transform: scale(1.035);
+  }
+
+  .stt-tour-card:hover .stt-card-arrow {
+    transform: translateX(0.2rem);
+  }
+}
+
 @keyframes stt-drawer-in {
   from {
     opacity: 0;
@@ -613,7 +712,10 @@ select option {
 
   [data-reveal],
   [data-parallax],
-  [data-entrance] {
+  [data-entrance],
+  .stt-hero-bloom,
+  .stt-coastal-lines,
+  .stt-hero-badge {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;
@@ -647,9 +749,17 @@ select option {
 
   /* Never leave a scroll-driven effect parked at its end state. */
   [data-reveal],
-  [data-parallax] {
+  [data-parallax],
+  [data-entrance],
+  .stt-tour-card,
+  .stt-card-photo,
+  .stt-card-arrow,
+  .stt-hero-bloom,
+  .stt-coastal-lines,
+  .stt-hero-badge {
     animation: none !important;
     transform: none !important;
+    transition: none !important;
   }
 
   /* The header may still condense, but it must not slide out of reach. */

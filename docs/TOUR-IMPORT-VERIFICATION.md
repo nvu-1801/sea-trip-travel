@@ -45,3 +45,7 @@ Trạng thái phát hành được kiểm tra theo SHA trên GitHub/Vercel và b
 ## Kiểm tra sau khi khôi phục ảnh được phép công khai
 
 Nhánh chuẩn bị admin: typecheck đạt, unit tests 132/132. Đủ 28 file ảnh, hash khớp bản nhập gốc; đường dẫn ảnh được khôi phục trong tour/danh mục/điểm đến đều tồn tại. Chưa chạy lại browser trên build mới có ảnh; kết quả browser phía trên thuộc bản trước đó. Admin, database và tìm kiếm mới là kế hoạch, chưa triển khai.
+
+## Đợt hoàn thiện motion và ảnh
+
+Nhánh `feat/travel-soft-motion`: production build sạch 107 trang, lint/typecheck đạt, unit 132/132, UI 174/174, tour import 88 tổ hợp đạt. 28 ảnh đã được người dùng cho phép công khai và URL tĩnh trả 200. Đã sửa card bị co chiều rộng trong lưới, bổ sung nền sóng nhẹ/hover/reveal và dừng transition ngay khi reduced-motion. Xem `docs/TRAVEL-MOTION-PLAN.md`. Kết quả này thay thế giới hạn browser dùng placeholder của đợt trước; chưa coi là deploy thành công.

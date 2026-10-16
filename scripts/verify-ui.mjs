@@ -22,7 +22,7 @@ import path from "node:path";
 import process from "node:process";
 import { chromium } from "playwright";
 
-const PORT = 3100;
+const PORT = Number(process.env.VERIFY_PORT ?? 3100);
 const BASE = `http://127.0.0.1:${PORT}`;
 const SHOT_DIR = path.resolve("verify-screenshots");
 
@@ -1221,6 +1221,51 @@ async function captureScreenshots(browser) {
 /* Runner                                                                     */
 /* -------------------------------------------------------------------------- */
 
+async function checkTravelMotion(browser) {
+  section("9. Travel motion, keyboard and touch");
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await context.newPage();
+  await page.goto(BASE, { waitUntil: "load" });
+  const bloom = page.locator(".stt-hero-bloom").first();
+  const ambient = await bloom.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { name: style.animationName, duration: parseFloat(style.animationDuration), count: style.animationIterationCount };
+  });
+  check("hero atmosphere settles within five seconds", ambient.name !== "none" && ambient.duration <= 5 && ambient.count === "1");
+  const card = page.locator(".stt-tour-card").first();
+  check("tour cards fill their grid cells", await page.locator(".stt-tour-card").evaluateAll((cards) => cards.every((el) => Math.abs(el.getBoundingClientRect().width - el.parentElement.getBoundingClientRect().width) < 1)));
+  await card.hover();
+  await page.waitForTimeout(750);
+  check("mouse hover lifts card and enlarges photo", await card.evaluate((el) => {
+    const cardMatrix = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+    const photoMatrix = new DOMMatrixReadOnly(getComputedStyle(el.querySelector(".stt-card-photo")).transform);
+    return cardMatrix.m42 < 0 && photoMatrix.a > 1;
+  }));
+  await page.mouse.move(0, 0);
+  await card.locator("a").focus();
+  check("keyboard focus reaches the full card", await card.evaluate((el) => el.matches(":focus-within") && getComputedStyle(el).boxShadow !== "none"));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  check("reduced motion stops hero atmosphere", await bloom.evaluate((el) => getComputedStyle(el).animationName === "none"));
+  await card.hover();
+  await page.waitForTimeout(50);
+  check("reduced motion keeps hovered card still", await card.evaluate((el) => getComputedStyle(el).transform === "none" && getComputedStyle(el.querySelector(".stt-card-photo")).transform === "none"));
+  await page.emulateMedia({ media: "print", reducedMotion: "no-preference" });
+  check("print stops decorative motion", await bloom.evaluate((el) => getComputedStyle(el).animationName === "none"));
+  await page.emulateMedia({ media: "screen", reducedMotion: "reduce" });
+  for (const width of [360, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`${BASE}/en`, { waitUntil: "load" });
+    check(`English home ${width}px stays within viewport`, await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= document.documentElement.clientWidth + 1));
+  }
+  await context.close();
+
+  const touch = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const touchPage = await touch.newPage();
+  await touchPage.goto(BASE, { waitUntil: "load" });
+  check("touch cards keep a stable layout", await touchPage.locator(".stt-tour-card").first().evaluate((el) => getComputedStyle(el).transform === "none"));
+  await touch.close();
+}
+
 async function main() {
   if (!existsSync(".next/BUILD_ID")) {
     console.error("No production build found. Run `npm run build` first.");
@@ -1232,8 +1277,8 @@ async function main() {
   console.log(`SMTP sink listening on 127.0.0.1:${smtpPort}`);
 
   const server = spawn(
-    process.platform === "win32" ? "npx.cmd" : "npx",
-    ["next", "start", "--hostname", "127.0.0.1", "--port", String(PORT)],
+    process.execPath,
+    ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", String(PORT)],
     {
       env: {
         ...process.env,
@@ -1252,7 +1297,6 @@ async function main() {
         LEAD_RATE_LIMIT_STORE: "memory",
       },
       stdio: ["ignore", "pipe", "pipe"],
-      shell: process.platform === "win32",
     },
   );
 
@@ -1284,6 +1328,7 @@ async function main() {
     await checkFloatingRail(browser);
     await checkAnchorNav(browser);
     await checkPrint(browser);
+    await checkTravelMotion(browser);
     await captureScreenshots(browser);
   } finally {
     if (browser) await browser.close();
