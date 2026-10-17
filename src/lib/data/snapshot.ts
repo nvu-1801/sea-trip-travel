@@ -12,6 +12,7 @@ import { listPublishedArticles } from "@/server/repo/articles";
 import { listPublishedTours, newestTourUpdatedAt } from "@/server/repo/tours";
 import { listCategories, listDestinations } from "@/server/repo/taxonomy";
 import { contentSourceKind, getDb } from "@/server/db/connection";
+import { ensureLocalDatabase } from "@/server/db/bootstrap";
 import type { ContentSnapshot } from "@/server/repo/types";
 import { nowIso } from "@/server/db/json";
 
@@ -49,6 +50,10 @@ const snapshotSchema = z.object({
 
 /** Read everything directly from SQLite (no Next cache APIs — usable by tests). */
 export function readLocalSnapshot(): ContentSnapshot {
+  // A database-less machine (Vercel build, fresh CI) gets the schema and the
+  // shipped content created on first read, instead of `no such table`.
+  ensureLocalDatabase();
+
   const translations: Record<string, Translations> = {};
   for (const locale of CONTENT_LOCALES) {
     translations[locale] = loadTranslations(locale);

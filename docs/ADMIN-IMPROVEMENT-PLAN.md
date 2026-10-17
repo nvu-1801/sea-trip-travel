@@ -16,6 +16,7 @@ Nhánh thực hiện: `feat/tour-admin` (tiếp). Baseline: `de9fc2f`.
 | B7 | Thấp (hiệu năng) | Trang danh sách tour gọi `listTourRecords()` 4 lần + `listTrashedTours()` 2 lần, mỗi lần nạp cả children | Tải danh sách chậm dần khi dữ liệu lớn |
 | B8 | Thiếu | Không có thùng rác cho **lead**; nút xoá chỉ có ở trang danh sách, không có ở trang sửa; không có màn hình thùng rác tổng hợp | Không thể khôi phục lead đã xoá; xoá mềm khó thấy |
 | B9 | Thấp (UX) | Ở chế độ `remote`, `/admin` hiện form đăng nhập thay vì thông báo “không khả dụng” | Gây hiểu nhầm là sai mật khẩu |
+| B10 | **Cao (chặn deploy)** | `next build` trên Vercel **thất bại**: `no such table: content_translation` khi collect page data, vì máy build không có file SQLite và `instrumentation.ts` không chạy trong build worker | Không thể deploy frontend lên Vercel |
 
 ---
 
@@ -68,6 +69,18 @@ dùng chúng cho bộ đếm, thay vì nạp toàn bộ danh sách để đếm.
 Layout `/admin` render màn hình “không khả dụng” khi `isAdminEnabled()` sai, thay vì
 form đăng nhập.
 
+### B10 — Build không được phụ thuộc vào một database có sẵn
+1. `getDb()` chạy migration ngay khi mở kết nối → mọi reader (build worker, script,
+   test) luôn thấy đủ bảng.
+2. `ensureLocalDatabase()` (memoised) chạy **trước lần đọc nội dung đầu tiên**: tạo
+   schema và **nhập nội dung có sẵn nếu DB chưa có tour**. Nhờ vậy máy không có DB
+   (Vercel build, CI sạch) vẫn dựng được site thật thay vì lỗi hoặc site rỗng.
+3. Đường dẫn DB/upload mặc định dùng `path.join(process.cwd(), "data", …)` để bundler
+   trace đúng thư mục `./data` (không trace cả project), kèm
+   `outputFileTracingIncludes: { "/**": ["./data/**"] }` để file DB đi theo output.
+4. Trên Vercel (`VERCEL=1`), admin **tự tắt** trừ khi đặt `ADMIN_ENABLED=true`, vì
+   filesystem của deployment là chỉ đọc — mọi thao tác ghi sẽ lỗi.
+
 ---
 
 ## 2. Tiêu chí nghiệm thu
@@ -109,6 +122,7 @@ Tất cả mục B1–B9 đã sửa. Chi tiết kiểm chứng: `docs/ADMIN-VERI
 | B7 | Bộ đếm dùng `countToursByState`/`countTrashed*` thay vì nạp danh sách | `server/repo/*`, trang danh sách |
 | B8 | Thêm `deleted_at` cho lead + `softDeleteLead`/`restoreLead`; **trang `/admin/trash` tổng hợp** (tour kèm mã ST, bài viết, ảnh, lead) có Khôi phục; nút Xoá trên trang sửa tour/bài viết và trang chi tiết lead; mục “Thùng rác” trên sidebar | `server/repo/leads.ts`, `server/admin/actions.ts`, `app/(admin)/.../trash/`, `components/admin/nav.tsx` |
 | B9 | `/admin` hiện thông báo “không khả dụng” khi admin bị tắt | `app/(admin)/admin/(dashboard)/layout.tsx` |
+| B10 | Build tự tạo schema + seed khi máy không có DB; `./data` được trace vào output; admin tự tắt trên Vercel | `server/db/connection.ts`, `server/db/bootstrap.ts`, `lib/data/snapshot.ts`, `next.config.ts`, `server/auth/session.ts` |
 
 ### Ghi chú còn lại
 

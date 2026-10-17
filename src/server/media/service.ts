@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, resolve, isAbsolute } from "node:path";
 import sharp from "sharp";
 import type { Metadata as SharpMetadata } from "sharp";
 import { getMedia, insertMedia, restoreMedia, setMediaAlt, type NewMedia } from "@/server/repo/media";
@@ -52,10 +52,12 @@ export const VARIANT_SPECS: readonly VariantSpec[] = [
 
 export function uploadDir(): string {
   const configured = process.env.UPLOAD_DIR?.trim();
-  const dir = configured && configured.length > 0 ? configured : "./data/uploads";
-  // turbopackIgnore: true — the path is intentionally resolved at runtime; the
-  // default keeps bundle tracing from pulling the whole project into the output.
-  return resolve(/* turbopackIgnore: true */ process.cwd(), dir);
+  if (configured && configured.length > 0) {
+    return isAbsolute(configured) ? configured : resolve(process.cwd(), configured);
+  }
+  // Statically scoped to `./data` on purpose: the bundler traces that folder
+  // instead of warning about tracing the whole project.
+  return join(process.cwd(), "data", "uploads");
 }
 
 export type UploadProblem = { code: string; message: string };

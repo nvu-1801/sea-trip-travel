@@ -174,3 +174,53 @@ BASE_URL=http://localhost:3001 ADMIN_COOKIE=… node scripts/verify-admin.mjs   
 - `PostalAddress` trong JSON-LD còn dùng thành phần địa chỉ có cấu trúc từ
   `config/site.ts` (telephone/email/sameAs đã theo settings).
 
+---
+
+## 7. Đợt 3 — sửa build Vercel (17/10/2026)
+
+**Triệu chứng từ log deploy Vercel:** `next build` đỏ ở bước
+`Collecting page data`:
+
+```
+⨯ Error: no such table: content_translation
+    at src/server/repo/translations.ts:43
+Error: Failed to collect page data for /[locale]/cam-nang-du-lich/[slug]
+```
+
+**Nguyên nhân:** máy build của Vercel không có file SQLite (đúng — `data/` bị
+gitignore), và `instrumentation.ts` **không chạy trong build worker**, nên
+`getDb()` mở một file rỗng rồi truy vấn ngay ⇒ `no such table`.
+
+**Cách sửa:** `connection.ts` chạy migration ngay khi mở kết nối;
+`ensureLocalDatabase()` (memoised) tạo schema + seed nội dung trước lần đọc đầu tiên;
+`outputFileTracingIncludes` mang `./data` theo output; `isAdminEnabled()` tự tắt admin
+khi `VERCEL=1` (filesystem deployment là chỉ đọc).
+
+**Kiểm chứng (mô phỏng đúng môi trường Vercel: xoá `data/` + `.next`, `VERCEL=1`, không
+đặt biến môi trường nào):**
+
+```bash
+rm -rf data .next
+VERCEL=1 npm run build
+```
+
+| Kiểm tra | Kết quả |
+| --- | --- |
+| Build | ✅ `Compiled successfully`; `Generating static pages (85/85)` |
+| DB tự tạo | ✅ `data/sea-trip.db` (+ WAL) được tạo trong lúc build |
+| Nội dung thật | ✅ Trang tour prerender ~230 KB (`.next/server/app/vi/tour/quy-nhon-ky-co-eo-gio-1-ngay.html`) |
+| `GET /` (chạy `next start` với `VERCEL=1`) | ✅ 200, HTML chứa tour thật |
+| `GET /api/public/content` | ✅ 200, có `tours` |
+| `/admin` khi `VERCEL=1` | ✅ `/admin/login` hiện “Khu quản trị không khả dụng”, **không** hiện form đăng nhập |
+| Không còn cảnh báo trace | ✅ Không còn `Dynamic filesystem access causes tracing of the whole project` |
+| Sau đó chạy lại bình thường (không `VERCEL`) | ✅ `npm test` 169/169 · build xanh · `verify:admin` 27/27 |
+
+### Chưa xác minh
+
+- Chưa deploy thật lên Vercel trong phiên này (không có quyền/không có VPS). Kiểm
+  chứng trên là mô phỏng chính xác các điều kiện gây lỗi: thiếu DB, `VERCEL=1`,
+  không biến môi trường.
+- Chế độ `CONTENT_SOURCE=remote` **đọc API trong lúc build**; chưa kiểm với một backend
+  thật đang chạy.
+
+

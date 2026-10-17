@@ -1,7 +1,8 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { existsSync } from "node:fs";
-import { dirname, isAbsolute, resolve } from "node:path";
+import { isAbsolute, join, resolve, dirname } from "node:path";
+import { runMigrations } from "./migrate";
 
 /**
  * SQLite connection (server only).
@@ -9,7 +10,11 @@ import { dirname, isAbsolute, resolve } from "node:path";
  * `node:sqlite` is synchronous, which is exactly what a single-admin CMS on one
  * VPS wants: no pool, no async ceremony, sub-millisecond reads. The file lives
  * on a persistent disk (`DATABASE_PATH`), never inside `public/`, and never on a
- * serverless filesystem.
+ * serverless filesystem as the *source of truth*.
+ *
+ * Opening the connection also brings the schema up to date. That matters for
+ * `next build`: on a machine without a database (Vercel, CI) the build must still
+ * be able to read content instead of exploding with "no such table".
  *
  * The handle is cached on `globalThis` so Next's dev HMR and route modules reuse
  * one connection instead of reopening the file on every edit.
@@ -23,12 +28,25 @@ export function contentSourceKind(): DbKind {
   return raw === "remote" ? "remote" : "local";
 }
 
+/**
+ * Default database file.
+ *
+ * Deliberately built with `path.join(process.cwd(), "data", …)` rather than a
+ * template string: the bundler can then see that only `./data` is involved, so
+ * it traces that folder into the server output (and does not warn about tracing
+ * the whole project). A deployment that sets `DATABASE_PATH` to an absolute path
+ * on a VPS is resolved at runtime instead — that file must not be traced.
+ */
+function defaultDatabasePath(): string {
+  return join(process.cwd(), "data", "sea-trip.db");
+}
+
 export function databasePath(): string {
   const configured = process.env.DATABASE_PATH?.trim();
-  const path = configured && configured.length > 0 ? configured : "./data/sea-trip.db";
-  // turbopackIgnore: true — resolved at runtime on purpose; the default would
-  // make bundle tracing pull the whole project into the server output.
-  return isAbsolute(path) ? path : resolve(/* turbopackIgnore: true */ process.cwd(), path);
+  if (configured && configured.length > 0) {
+    return isAbsolute(configured) ? configured : resolve(process.cwd(), configured);
+  }
+  return defaultDatabasePath();
 }
 
 type DbGlobal = typeof globalThis & { __seaTripDb?: DatabaseSync };
@@ -47,10 +65,13 @@ function open(path: string): DatabaseSync {
   return db;
 }
 
-/** The process-wide database handle. Creates the file/dir on first use. */
+/** The process-wide database handle. Creates the file/dir and the schema. */
 export function getDb(): DatabaseSync {
   if (globalForDb.__seaTripDb) return globalForDb.__seaTripDb;
   const db = open(databasePath());
+  // Guarantees every reader sees the tables, even when `instrumentation.ts`
+  // has not run (build workers, one-off scripts, tests).
+  runMigrations(db);
   globalForDb.__seaTripDb = db;
   return db;
 }
@@ -63,7 +84,9 @@ export function databaseExists(): boolean {
 
 /** Test-only: build an isolated in-memory database. */
 export function createMemoryDb(): DatabaseSync {
-  return open(":memory:");
+  const db = open(":memory:");
+  runMigrations(db);
+  return db;
 }
 
 /** Close the cached handle (used by scripts that want a clean shutdown). */

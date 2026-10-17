@@ -39,6 +39,12 @@ export type CurrentAdmin = {
 /** Admin is only meaningful where the database lives (the VPS profile). */
 export function isAdminEnabled(): boolean {
   if (contentSourceKind() === "remote") return false;
+  // A serverless deployment has a read-only bundle: the admin would look
+  // available and then fail on every write. Enable deliberately if that is
+  // really what you want.
+  if (process.env.VERCEL === "1" && (process.env.ADMIN_ENABLED ?? "").toLowerCase() !== "true") {
+    return false;
+  }
   return (process.env.ADMIN_ENABLED ?? "true").toLowerCase() !== "false";
 }
 

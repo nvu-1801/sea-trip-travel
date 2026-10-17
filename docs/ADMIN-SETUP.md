@@ -19,8 +19,12 @@ Sao chép `.env.example` → `.env.local` (không commit). Các biến của khu
 | `UPLOAD_DIR` | không | `./data/uploads` | Ảnh tải lên (**ổ đĩa bền vững**) |
 | `MEDIA_MAX_BYTES` | không | `10485760` | Dung lượng ảnh gốc tối đa (byte) |
 | `ADMIN_SESSION_SECRET` | **nên đặt** | — | Salt cho hash phiên/fingerprint. Chuỗi ngẫu nhiên dài |
-| `ADMIN_ENABLED` | không | `true` | `false` để tắt khu admin trên một instance vẫn có DB |
+| `ADMIN_ENABLED` | không | `true` (tự `false` khi `VERCEL=1`) | `false` để tắt khu admin trên một instance vẫn có DB |
 | `SEED_ON_BOOT` | không | `false` | Import nội dung khi khởi động lần đầu (chỉ non-production) |
+
+> Cơ chế tự phục hồi: mở kết nối DB sẽ chạy migration, và lần đọc nội dung đầu tiên sẽ
+> tạo schema + nhập nội dung nếu DB chưa có tour. Nhờ vậy `next build` và `next start`
+> chạy được cả trên máy **chưa có** database (Vercel, CI sạch).
 | `NEXT_PUBLIC_SITE_URL` | **production** | `http://localhost:3000` | Domain thật (canonical, OG, link trong email) |
 | `SALES_RECIPIENTS`, `MAIL_*`, `LEAD_*` | production | — | Xem phần lead trong `.env.example` |
 
@@ -104,20 +108,50 @@ next start -p 3000
 
 ### 4.2 Frontend trên Vercel (tuỳ chọn)
 
+Có **hai** cách, chọn theo việc bạn đã có backend VPS hay chưa.
+
+#### a) Chưa có VPS — để mặc định, build tự dựng nội dung
+
+Không cần biến môi trường nào. Khi build, `next build` sẽ tự:
+tạo schema → nhập nội dung trong `src/content` → prerender site thật.
+Nội dung **đóng băng tại thời điểm build**; muốn cập nhật phải build lại.
+Admin tự động **bị tắt** trên Vercel (`VERCEL=1`), vì filesystem của deployment
+là chỉ đọc.
+
+Đặt thêm nếu muốn:
+
+| Biến | Giá trị | Vì sao |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | `https://seatriptravel.vn` | canonical / OG / link trong email |
+| `SALES_RECIPIENTS`, `MAIL_*` | … | form tư vấn gửi được email |
+
+#### b) Đã có VPS — đọc nội dung sống từ backend
+
 | Biến | Giá trị |
 | --- | --- |
 | `CONTENT_SOURCE` | `remote` |
 | `CONTENT_API_BASE_URL` | `https://<vps-cua-ban>` |
 | `NEXT_PUBLIC_SITE_URL` | domain công khai |
+| `SALES_RECIPIENTS`, `MAIL_*` | … |
 
 **Không** đặt `DATABASE_PATH`/`UPLOAD_DIR` trên Vercel. Ở chế độ này `/admin` báo
-“không khả dụng” (đúng thiết kế) và nội dung được đọc từ
-`GET {CONTENT_API_BASE_URL}/api/public/content`.
+“không khả dụng” và nội dung đọc từ `GET {CONTENT_API_BASE_URL}/api/public/content`.
 
-> Lưu ý: đổi xuất bản/ẩn trên VPS làm mới cache **của VPS**. Instance Vercel đọc qua
-> HTTP nên nhận bản mới ở lần đọc kế tiếp; nếu bật cache ở tầng Vercel, cache đó phải
-> được gắn tag `content` (adapter `remote` đã gắn `next: { tags: ["content"] }`) hoặc
-> gọi revalidation sau khi xuất bản.
+> Lưu ý: chế độ `remote` đọc API **ngay trong lúc build** để prerender trang. Vì vậy
+> backend phải truy cập được từ môi trường build của Vercel; nếu API chưa lên, build
+> sẽ báo lỗi rõ ràng (đúng ý đồ — không âm thầm dựng site rỗng).
+>
+> Đổi xuất bản/ẩn trên VPS làm mới cache **của VPS**. Instance Vercel đọc qua HTTP nên
+> nhận bản mới ở lần đọc kế tiếp; nếu bật cache ở tầng Vercel, cache đó phải gắn tag
+> `content` (adapter `remote` đã gắn `next: { tags: ["content"] }`).
+
+#### Ghi chú kỹ thuật
+
+- `getDb()` chạy migration khi mở kết nối, và `ensureLocalDatabase()` tạo schema +
+  seed trước lần đọc nội dung đầu tiên ⇒ **build không cần DB có sẵn**.
+- `next.config.ts` có `outputFileTracingIncludes: { "/**": ["./data/**"] }` để file
+  SQLite (và thư mục upload) đi theo server output.
+- `serverExternalPackages: ["sharp"]` là bắt buộc (native module).
 
 ---
 
