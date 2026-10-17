@@ -152,6 +152,8 @@ là chỉ đọc.
 - `next.config.ts` có `outputFileTracingIncludes: { "/**": ["./data/**"] }` để file
   SQLite (và thư mục upload) đi theo server output.
 - `serverExternalPackages: ["sharp"]` là bắt buộc (native module).
+- Trên Vercel, WAL **không** được bật: bundle chỉ đọc không tạo được `-wal`/`-shm`, nên
+  DB gửi kèm là một file duy nhất và được mở ở chế độ chỉ đọc khi cần.
 
 ---
 

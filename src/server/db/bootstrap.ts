@@ -1,4 +1,4 @@
-import { databaseExists, getDb } from "./connection";
+import { databaseExists, databaseIsWritable, getDb } from "./connection";
 import { runMigrations } from "./migrate";
 import { importContent } from "./import-content";
 
@@ -26,6 +26,14 @@ export type BootstrapReport = {
 
 export function ensureDatabase(): BootstrapReport {
   const created = !databaseExists();
+  const writable = databaseIsWritable();
+
+  // On a read-only bundle the schema and content were produced by the build, so
+  // there is nothing to migrate or seed — and SQLite would reject the writes.
+  if (!writable) {
+    return { created: false, appliedMigrations: [], seeded: false };
+  }
+
   const { applied } = runMigrations(getDb());
 
   let seeded = false;

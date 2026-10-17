@@ -196,6 +196,16 @@ gitignore), và `instrumentation.ts` **không chạy trong build worker**, nên
 `outputFileTracingIncludes` mang `./data` theo output; `isAdminEnabled()` tự tắt admin
 khi `VERCEL=1` (filesystem deployment là chỉ đọc).
 
+**Thêm: WAL không dùng được trên bundle chỉ đọc.** SQLite ở chế độ WAL cần tạo hai
+file `-wal`/`-shm` cạnh DB — bundle của Vercel chỉ đọc nên không tạo được. Vì vậy:
+
+- khi `VERCEL=1`, không bật WAL ⇒ file DB gửi đi là **một file duy nhất**;
+- `databaseIsWritable()` kiểm tra thư mục gần nhất đã tồn tại (tạo được `data/` hay
+  không) rồi mới quyết định mở ghi hay mở `readOnly: true`;
+- mở ghi thất bại (mount chỉ đọc, quyền) ⇒ tự động mở lại read-only thay vì lỗi;
+- ở chế độ read-only, **bỏ qua migration** (SQLite từ chối cả
+  `CREATE TABLE IF NOT EXISTS` trên kết nối chỉ đọc) và dùng schema đã tạo lúc build.
+
 **Kiểm chứng (mô phỏng đúng môi trường Vercel: xoá `data/` + `.next`, `VERCEL=1`, không
 đặt biến môi trường nào):**
 
@@ -206,12 +216,14 @@ VERCEL=1 npm run build
 
 | Kiểm tra | Kết quả |
 | --- | --- |
-| Build | ✅ `Compiled successfully`; `Generating static pages (85/85)` |
-| DB tự tạo | ✅ `data/sea-trip.db` (+ WAL) được tạo trong lúc build |
+| Build | ✅ `Compiled successfully`; `Generating static pages (123/123)` |
+| DB tự tạo | ✅ `data/sea-trip.db` được tạo trong lúc build, **chỉ một file** (không `-wal`/`-shm`) |
 | Nội dung thật | ✅ Trang tour prerender ~230 KB (`.next/server/app/vi/tour/quy-nhon-ky-co-eo-gio-1-ngay.html`) |
 | `GET /` (chạy `next start` với `VERCEL=1`) | ✅ 200, HTML chứa tour thật |
 | `GET /api/public/content` | ✅ 200, có `tours` |
 | `/admin` khi `VERCEL=1` | ✅ `/admin/login` hiện “Khu quản trị không khả dụng”, **không** hiện form đăng nhập |
+| `DATABASE_PATH` trỏ vào DB chỉ đọc | ✅ `/` và `/api/public/content` vẫn 200 (đọc được, không ghi) |
+| Mở `readOnly: true` (kiểm trực tiếp) | ✅ Đọc bảng OK; thao tác ghi bị SQLite từ chối |
 | Không còn cảnh báo trace | ✅ Không còn `Dynamic filesystem access causes tracing of the whole project` |
 | Sau đó chạy lại bình thường (không `VERCEL`) | ✅ `npm test` 169/169 · build xanh · `verify:admin` 27/27 |
 
@@ -220,6 +232,9 @@ VERCEL=1 npm run build
 - Chưa deploy thật lên Vercel trong phiên này (không có quyền/không có VPS). Kiểm
   chứng trên là mô phỏng chính xác các điều kiện gây lỗi: thiếu DB, `VERCEL=1`,
   không biến môi trường.
+- **Mount chỉ đọc thật** của Vercel không tái tạo được trên Windows: `databaseIsWritable()`
+  và nhánh `readOnly` đã kiểm bằng cách trỏ `DATABASE_PATH` vào DB chỉ đọc và bằng một
+  phép thử mở `readOnly: true` độc lập, nhưng chưa chạy trên filesystem read-only thật.
 - Chế độ `CONTENT_SOURCE=remote` **đọc API trong lúc build**; chưa kiểm với một backend
   thật đang chạy.
 

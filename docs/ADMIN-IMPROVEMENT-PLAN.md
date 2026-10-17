@@ -80,6 +80,10 @@ form đăng nhập.
    `outputFileTracingIncludes: { "/**": ["./data/**"] }` để file DB đi theo output.
 4. Trên Vercel (`VERCEL=1`), admin **tự tắt** trừ khi đặt `ADMIN_ENABLED=true`, vì
    filesystem của deployment là chỉ đọc — mọi thao tác ghi sẽ lỗi.
+5. **Không bật WAL trên Vercel**: SQLite ở chế độ WAL cần tạo `-wal`/`-shm` cạnh file,
+   mà bundle chỉ đọc không cho phép. Nhờ vậy DB gửi đi là một file duy nhất, và
+   `getDb()` mở `readOnly: true` khi thư mục không ghi được (bỏ qua migration vì SQLite
+   từ chối cả `CREATE TABLE IF NOT EXISTS` trên kết nối chỉ đọc).
 
 ---
 
