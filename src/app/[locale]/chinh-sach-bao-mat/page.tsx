@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { AlertIcon } from "@/components/ui/icons";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { format, getMessages } from "@/i18n/messages";
+import { getSiteSettings } from "@/lib/data/settings";
 import { localizePath } from "@/i18n/routing";
 import { resolveLocaleFromParams } from "@/i18n/params";
 import { defaultLocale } from "@/i18n/config";
@@ -47,6 +48,7 @@ export async function generateMetadata({
 export default async function PrivacyPage({ params }: PageProps<"/[locale]">) {
   const locale = await resolveLocaleFromParams(params);
   const m = getMessages(locale);
+  const settings = await getSiteSettings(locale);
   const updated = POLICY_UPDATED_AT.split("-").reverse().join("/");
 
   return (
@@ -97,19 +99,19 @@ export default async function PrivacyPage({ params }: PageProps<"/[locale]">) {
             <h2>1. Đơn vị xử lý thông tin</h2>
             <p>
               Website này do <strong>{siteConfig.name}</strong> vận hành
-              {siteConfig.contact.address.includes("cập nhật") ? (
+              {settings.contact.address.includes("cập nhật") ? (
                 <>
-                  . Địa chỉ liên hệ hiện tại: <em>{siteConfig.contact.address}</em>
+                  . Địa chỉ liên hệ hiện tại: <em>{settings.contact.address}</em>
                 </>
               ) : (
-                <>, địa chỉ {siteConfig.contact.address}</>
+                <>, địa chỉ {settings.contact.address}</>
               )}
               .
             </p>
             <p>
               Mọi câu hỏi về việc xử lý thông tin cá nhân, bạn có thể gửi tới{" "}
-              <a href={`mailto:${siteConfig.contact.email}`}>{siteConfig.contact.email}</a> hoặc gọi{" "}
-              <a href={siteConfig.contact.hotlineHref}>{siteConfig.contact.hotline}</a>.
+              <a href={`mailto:${settings.contact.email}`}>{settings.contact.email}</a> hoặc gọi{" "}
+              <a href={settings.contact.hotlineHref}>{settings.contact.hotline}</a>.
             </p>
 
             <h2>2. Chúng tôi thu thập những thông tin nào</h2>

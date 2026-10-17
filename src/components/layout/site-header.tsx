@@ -1,8 +1,8 @@
 import { ROUTES } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
 import { ButtonLink } from "@/components/ui/button";
 import { PhoneIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
+import { getSiteSettings } from "@/lib/data/settings";
 import { getMessages } from "@/i18n/messages";
 import { localizePath } from "@/i18n/routing";
 import type { Locale } from "@/i18n/config";
@@ -40,8 +40,10 @@ export function HeaderContainer({
  * inside the mobile drawer, which keeps the 360–390px bar to the logo, the call
  * button and the menu button.
  */
-export function SiteHeader({ locale }: { locale: Locale }) {
+export async function SiteHeader({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
+  const settings = await getSiteSettings(locale);
+  const contact = settings.contact;
   const navLabels = { nav: m.nav, header: m.header, allOf: m.common.allOf };
   return (
     <HeaderShell>
@@ -56,7 +58,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
 
           <div className="flex shrink-0 items-center gap-2">
             <a
-              href={siteConfig.contact.hotlineHref}
+              href={contact.hotlineHref}
               className="hidden shrink-0 items-center gap-2 rounded-full py-2 pl-2.5 pr-3 transition-colors hover:bg-primary-soft 2xl:inline-flex"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft">
@@ -67,7 +69,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
                   {m.common.hotline}
                 </span>
                 <span className="text-sm font-bold text-foreground">
-                  {siteConfig.contact.hotline}
+                  {contact.hotline}
                 </span>
               </span>
             </a>
@@ -92,8 +94,8 @@ export function SiteHeader({ locale }: { locale: Locale }) {
 
             {/* Phones get a direct call action instead of the text CTA. */}
             <a
-              href={siteConfig.contact.hotlineHref}
-              aria-label={m.common.callHotlineAria.replace("{phone}", siteConfig.contact.hotline)}
+              href={contact.hotlineHref}
+              aria-label={m.common.callHotlineAria.replace("{phone}", contact.hotline)}
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-primary-strong transition-colors hover:border-primary sm:hidden"
             >
               <PhoneIcon className="h-5 w-5" />
@@ -102,6 +104,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
             <MobileNav
               locale={locale}
               labels={navLabels}
+              contact={contact}
               ui={{
                 openMenu: m.header.openMenu,
                 closeMenu: m.header.closeMenu,

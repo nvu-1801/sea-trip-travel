@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { getCurrentAdmin } from "@/server/auth/session";
 import type { Metadata } from "next";
 import {
+  countTrashedArticles,
   listArticleRecords,
   listTrashedArticles,
   type ArticleListOptions,
@@ -46,7 +47,7 @@ export default async function ArticlesPage({
   const showTrash = params.trash === "1";
 
   const records = showTrash ? listTrashedArticles() : listArticleRecords({ status, query });
-  const trashed = listTrashedArticles();
+  const trashedCount = countTrashedArticles();
 
   return (
     <div className="flex flex-col gap-6">
@@ -94,7 +95,7 @@ export default async function ArticlesPage({
           href={showTrash ? "/admin/articles" : "/admin/articles?trash=1"}
           className="ml-auto inline-flex min-h-11 items-center rounded-xl border border-border-strong bg-surface px-4 text-sm font-semibold"
         >
-          {showTrash ? "← Về danh sách" : `Thùng rác (${trashed.length})`}
+          {showTrash ? "← Về danh sách" : `Thùng rác (${trashedCount})`}
         </Link>
       </form>
 

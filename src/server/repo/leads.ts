@@ -218,3 +218,32 @@ export function addLeadNote(requestId: string, body: string): void {
 export function deleteLeadNote(noteId: string): void {
   getDb().prepare("DELETE FROM lead_note WHERE id = ?").run(noteId);
 }
+
+/* --- Soft delete / trash -------------------------------------------------- */
+
+export function softDeleteLead(requestId: string): void {
+  const now = nowIso();
+  getDb()
+    .prepare("UPDATE lead SET deleted_at = ?, updated_at = ? WHERE request_id = ?")
+    .run(now, now, requestId);
+}
+
+export function restoreLead(requestId: string): void {
+  getDb()
+    .prepare("UPDATE lead SET deleted_at = NULL, updated_at = ? WHERE request_id = ?")
+    .run(nowIso(), requestId);
+}
+
+export function listTrashedLeads(limit = 100): LeadRecord[] {
+  const rows = getDb()
+    .prepare("SELECT * FROM lead WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT ?")
+    .all(limit) as LeadRow[];
+  return rows.map(toLead);
+}
+
+export function countTrashedLeads(): number {
+  const row = getDb().prepare("SELECT COUNT(*) AS n FROM lead WHERE deleted_at IS NOT NULL").get() as {
+    n: number;
+  };
+  return row.n;
+}

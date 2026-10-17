@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { getCurrentAdmin } from "@/server/auth/session";
+import { getCurrentAdmin, isAdminEnabled } from "@/server/auth/session";
 import { logoutAction } from "@/server/admin/actions";
 import { AdminNav } from "@/components/admin/nav";
 import { SubmitButton } from "@/components/admin/buttons";
@@ -24,6 +24,23 @@ export const instant = false;
  */
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   await connection();
+
+  // Read-only deployments (CONTENT_SOURCE=remote, or ADMIN_ENABLED=false) have no
+  // database to write to, so say so instead of showing a form that cannot work.
+  if (!isAdminEnabled()) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-5 py-16">
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-card">
+          <h1 className="text-xl font-bold text-foreground">Khu quản trị không khả dụng</h1>
+          <p className="mt-3 text-sm leading-relaxed text-foreground-muted">
+            Bản triển khai này đang chạy ở chế độ chỉ đọc nội dung (không có cơ sở dữ liệu). Hãy
+            đăng nhập trên máy chủ VPS nơi đặt cơ sở dữ liệu.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   const admin = await getCurrentAdmin();
   if (!admin) return <AdminLoginCard notice="Vui lòng đăng nhập để tiếp tục." />;
 

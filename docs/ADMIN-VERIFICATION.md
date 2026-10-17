@@ -137,3 +137,40 @@ Kết quả (đã chạy thật): **26/26 PASS**
 | `node:sqlite` experimental | Thấp | Không có dependency native; dễ thay bằng `better-sqlite3` nếu cần |
 | Migration chưa có công cụ rollback | Thấp | Chỉ thêm bảng/cột; khôi phục bằng backup |
 | Ảnh tĩnh chưa có width/height trong DB | Thấp | Vẫn phục vụ đúng URL; thêm sau khi nhập siêu dữ liệu |
+
+---
+
+## 6. Đợt 2 — sửa lỗi & thùng rác (17/10/2026)
+
+Kế hoạch: `docs/ADMIN-IMPROVEMENT-PLAN.md`. Đã chạy lại toàn bộ kiểm tra.
+
+```bash
+npm run lint        # ✅ 0 lỗi, 0 cảnh báo
+npm run typecheck   # ✅ 0 lỗi
+npm test            # ✅ 169/169  (thêm tests/admin-workflows.test.ts)
+npm run build       # ✅ thành công; /admin/trash là Dynamic (ƒ)
+BASE_URL=http://localhost:3001 ADMIN_COOKIE=… node scripts/verify-admin.mjs   # ✅ 27/27
+```
+
+### Kiểm chứng theo từng lỗi
+
+| # | Cách kiểm | Kết quả |
+| --- | --- | --- |
+| B1 | Đặt hotline `0911222333` trong `site_settings`, đợi cửa sổ cache rồi tải `/`, `/en`, `/lien-he`, `/en/lien-he`, `/chinh-sach-bao-mat` | ✅ Cả 5 trang hiển thị hotline mới; hotline cũ `0969 297 064` **không còn xuất hiện** ở đâu (kể cả JSON-LD). Unit test cũng khẳng định `getSiteSettings("en").contact.hotline` = giá trị VI, còn `hero` vẫn tách theo ngôn ngữ |
+| B2 | Đặt 1 tour `hidden` + ghim + `sortOrder=4242` → `importContent()` | ✅ Sau import vẫn `hidden`/ghim/4242; bản ghi khác vẫn `published`. Tour đã ở thùng rác **không** bị khôi phục |
+| B3 | Giữ `priceFrom` khi `pricingOptions` rỗng | ✅ Sửa ở action (giữ giá cũ); repo cũng đảm bảo không bao giờ ghi 0 ₫ |
+| B4 | Upload 1 PNG → xoá mềm → upload lại cùng tệp | ✅ Cùng `id`, `restored: true`, bản ghi ra khỏi thùng rác, biến thể WebP được tạo lại |
+| B5 | Tour 3 ngày nhưng 2 ngày lịch trình | ✅ Action trả lỗi “Cần đúng 3 ngày lịch trình…”, không ghi DB |
+| B6 | Slug rỗng cho tour/bài viết | ✅ Schema chấp nhận slug rỗng; vẫn từ chối slug có dấu/khoảng trắng |
+| B7 | Trang danh sách tour | ✅ Bộ đếm dùng `countToursByState` + `countTrashedTours` (một truy vấn mỗi loại) |
+| B8 | Xoá mềm lead → mở `/admin/trash` | ✅ Lead xuất hiện trong thùng rác (HTTP 200, có `requestId`); có nút Khôi phục; xoá tour/bài viết/ảnh cũng vào đây |
+| B9 | `isAdminEnabled()` sai | ✅ Layout render thông báo “Khu quản trị không khả dụng” |
+
+### Vẫn chưa xác minh ở đợt 2
+
+- Click-through trên browser thật vẫn không chạy được (không có desktop browser kết
+  nối trong phiên này). Các thao tác qua Server Action (bấm Lưu, Khôi phục) được kiểm
+  ở tầng repository/HTTP + unit test, **chưa** bấm tay trên trình duyệt.
+- `PostalAddress` trong JSON-LD còn dùng thành phần địa chỉ có cấu trúc từ
+  `config/site.ts` (telephone/email/sameAs đã theo settings).
+

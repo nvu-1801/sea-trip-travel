@@ -9,6 +9,8 @@ import { listPublishedTours } from "@/server/repo/tours";
 import { listMedia } from "@/server/repo/media";
 import { PageHeader, StatusPill } from "@/components/admin/ui";
 import { AdminLoginCard } from "@/components/admin/login-card";
+import { ConfirmSubmit } from "@/components/admin/buttons";
+import { deleteArticleAction } from "@/server/admin/actions";
 import { ArticleForm } from "../article-form";
 import { articleToFormState } from "../article-form-model";
 
@@ -51,6 +53,12 @@ export default async function EditArticlePage({
               status={record.status}
               label={record.status === "published" ? "Đã xuất bản" : record.status === "hidden" ? "Đang ẩn" : "Nháp"}
             />
+            <form action={deleteArticleAction}>
+              <input type="hidden" name="id" value={record.article.id} />
+              <ConfirmSubmit message={`Chuyển bài “${record.article.title}” vào thùng rác? Có thể khôi phục ở mục Thùng rác.`}>
+                Xoá (vào thùng rác)
+              </ConfirmSubmit>
+            </form>
             <Link href="/admin/articles" className="inline-flex min-h-11 items-center text-sm font-semibold text-foreground-muted hover:text-primary-strong">
               ← Danh sách bài viết
             </Link>

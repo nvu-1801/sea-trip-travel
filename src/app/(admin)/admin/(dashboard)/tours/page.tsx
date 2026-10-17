@@ -3,6 +3,8 @@ import { connection } from "next/server";
 import { getCurrentAdmin } from "@/server/auth/session";
 import type { Metadata } from "next";
 import {
+  countTrashedTours,
+  countToursByState,
   listTourRecords,
   listTrashedTours,
   type TourListOptions,
@@ -53,19 +55,11 @@ export default async function ToursPage({
   const query = params.q ?? "";
   const showTrash = params.trash === "1";
 
-  const records = showTrash
-    ? listTrashedTours()
-    : listTourRecords({ status, query });
+  const records = showTrash ? listTrashedTours() : listTourRecords({ status, query });
   const categories = listCategories();
   const categoryName = (id: string) => categories.find((category) => category.id === id)?.name ?? id;
-
-  const counts = {
-    all: listTourRecords({ status: "all" }).length,
-    published: listTourRecords({ status: "published" }).length,
-    draft: listTourRecords({ status: "draft" }).length,
-    hidden: listTourRecords({ status: "hidden" }).length,
-  };
-  const trashed = listTrashedTours();
+  const counts = countToursByState();
+  const trashedCount = countTrashedTours();
 
   return (
     <div className="flex flex-col gap-6">
@@ -99,7 +93,7 @@ export default async function ToursPage({
             defaultValue={status}
             className="min-h-11 rounded-xl border border-border-strong bg-surface px-3.5 text-sm"
           >
-            <option value="all">Tất cả ({counts.all})</option>
+            <option value="all">Tất cả ({counts.total})</option>
             <option value="published">Đã xuất bản ({counts.published})</option>
             <option value="draft">Nháp ({counts.draft})</option>
             <option value="hidden">Đang ẩn ({counts.hidden})</option>
@@ -120,7 +114,7 @@ export default async function ToursPage({
           href={showTrash ? "/admin/tours" : "/admin/tours?trash=1"}
           className="ml-auto inline-flex min-h-11 items-center rounded-xl border border-border-strong bg-surface px-4 text-sm font-semibold"
         >
-          {showTrash ? "← Về danh sách" : `Thùng rác (${trashed.length})`}
+          {showTrash ? "← Về danh sách" : `Thùng rác (${trashedCount})`}
         </Link>
       </form>
 

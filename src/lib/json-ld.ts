@@ -18,8 +18,24 @@ type Json = Record<string, unknown>;
 
 const lang = (locale: Locale) => localeMeta[locale].htmlLang;
 
-export function travelAgencyJsonLd(locale: Locale): Json {
+export type JsonLdContact = {
+  hotline: string;
+  email: string;
+  /** Free-text address the owner edits; falls back to the shipped parts. */
+  address?: string;
+  /** Owner-edited social links; empty strings are dropped from `sameAs`. */
+  social?: { facebook?: string; zalo?: string };
+};
+
+export function travelAgencyJsonLd(locale: Locale, contact?: JsonLdContact): Json {
   const m = getMessages(locale);
+  const hotline = contact?.hotline ?? siteConfig.contact.hotline;
+  const email = contact?.email ?? siteConfig.contact.email;
+  const socials = [
+    contact?.social?.facebook ?? siteConfig.social.facebook,
+    contact?.social?.zalo ?? siteConfig.social.zalo,
+  ].filter((link) => link.length > 0);
+
   return {
     "@context": "https://schema.org",
     "@type": "TravelAgency",
@@ -29,8 +45,8 @@ export function travelAgencyJsonLd(locale: Locale): Json {
     slogan: m.site.tagline,
     image: absoluteUrl("/opengraph-image.png"),
     logo: absoluteUrl("/brand/logo-lockup.png"),
-    telephone: siteConfig.contact.hotline,
-    email: siteConfig.contact.email,
+    telephone: hotline,
+    email,
     address: {
       "@type": "PostalAddress",
       streetAddress: siteConfig.contact.addressParts.street,
@@ -40,7 +56,7 @@ export function travelAgencyJsonLd(locale: Locale): Json {
     },
     areaServed: { "@type": "Country", name: locale === "vi" ? "Việt Nam" : "Vietnam" },
     // Only channels the owner has actually set — never a fallback platform URL.
-    sameAs: [siteConfig.social.facebook, siteConfig.social.zalo].filter((link) => link.length > 0),
+    sameAs: socials,
   };
 }
 

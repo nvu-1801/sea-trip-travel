@@ -19,10 +19,15 @@ export function MobileConsultBar({
   tourTitle,
   priceLabel,
   labels,
+  hotline = siteConfig.contact.hotline,
+  hotlineHref = siteConfig.contact.hotlineHref,
 }: {
   tourTitle: string;
   priceLabel: string;
   labels: { consult: string; callHotlineAria: string };
+  /** Owner-edited hotline, resolved on the server (falls back to site config). */
+  hotline?: string;
+  hotlineHref?: string;
 }) {
   const [pastIntro, setPastIntro] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
@@ -66,8 +71,8 @@ export function MobileConsultBar({
           <p className="truncate text-base font-extrabold text-foreground">{priceLabel}</p>
         </div>
         <a
-          href={siteConfig.contact.hotlineHref}
-          aria-label={labels.callHotlineAria.replace("{phone}", siteConfig.contact.hotline)}
+          href={hotlineHref}
+          aria-label={labels.callHotlineAria.replace("{phone}", hotline)}
           tabIndex={visible ? 0 : -1}
           className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-primary-strong"
         >

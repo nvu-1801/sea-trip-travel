@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { primaryNav } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
 import type { Locale } from "@/i18n/config";
 import { localizePath, stripLocaleFromPath } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -43,10 +42,13 @@ export function MobileNav({
   locale,
   labels,
   ui,
+  contact,
 }: {
   locale: Locale;
   labels: NavLabels;
   ui: MobileNavUi;
+  /** Owner-edited contact details, resolved on the server. */
+  contact: { hotline: string; hotlineHref: string; email: string };
 }) {
   const pathname = usePathname();
   const currentPath = stripLocaleFromPath(pathname ?? "/").path;
@@ -251,10 +253,10 @@ export function MobileNav({
                 <dt className="sr-only">{ui.hotline}</dt>
                 <dd>
                   <a
-                    href={siteConfig.contact.hotlineHref}
+                    href={contact.hotlineHref}
                     className="font-semibold whitespace-nowrap text-foreground hover:text-primary-strong"
                   >
-                    {siteConfig.contact.hotline}
+                    {contact.hotline}
                   </a>
                 </dd>
               </div>
@@ -263,10 +265,10 @@ export function MobileNav({
                 <dt className="sr-only">{ui.email}</dt>
                 <dd>
                   <a
-                    href={`mailto:${siteConfig.contact.email}`}
+                    href={`mailto:${contact.email}`}
                     className="text-foreground-muted hover:text-primary-strong"
                   >
-                    {siteConfig.contact.email}
+                    {contact.email}
                   </a>
                 </dd>
               </div>

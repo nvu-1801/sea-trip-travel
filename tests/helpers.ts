@@ -15,6 +15,9 @@ import { join } from "node:path";
 if (!process.env.DATABASE_PATH) {
   process.env.DATABASE_PATH = join(mkdtempSync(join(tmpdir(), "sea-trip-test-")), "test.db");
 }
+if (!process.env.UPLOAD_DIR) {
+  process.env.UPLOAD_DIR = mkdtempSync(join(tmpdir(), "sea-trip-uploads-"));
+}
 process.env.CONTENT_SOURCE = "sqlite";
 
 import { getDb } from "@/server/db/connection";

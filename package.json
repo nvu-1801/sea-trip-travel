@@ -10,7 +10,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "verify:ui": "node scripts/verify-ui.mjs",
     "content:report": "node --env-file-if-exists=.env.local --import tsx scripts/content-report.ts",
-    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/lead-store.test.ts tests/content.test.ts tests/mail-transport.test.ts tests/i18n.test.ts tests/search.test.ts tests/admin-auth.test.ts tests/db-content.test.ts",
+    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/lead-store.test.ts tests/content.test.ts tests/mail-transport.test.ts tests/i18n.test.ts tests/search.test.ts tests/admin-auth.test.ts tests/db-content.test.ts tests/admin-workflows.test.ts",
     "verify:tour-import": "node scripts/verify-tour-import.mjs",
     "db:migrate": "node --env-file-if-exists=.env.local --import tsx scripts/db-migrate.ts",
     "db:import": "node --env-file-if-exists=.env.local --import tsx scripts/import-content.ts",

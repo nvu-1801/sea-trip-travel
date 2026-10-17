@@ -4,7 +4,7 @@ import { getCurrentAdmin } from "@/server/auth/session";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLead } from "@/server/repo/leads";
-import { addLeadNoteAction, deleteLeadNoteAction, updateLeadStatusAction } from "@/server/admin/actions";
+import { addLeadNoteAction, deleteLeadAction, deleteLeadNoteAction, updateLeadStatusAction } from "@/server/admin/actions";
 import { AdminCard, CodeChip, PageHeader, StatusPill } from "@/components/admin/ui";
 import { AdminLoginCard } from "@/components/admin/login-card";
 import { ConfirmSubmit, SubmitButton } from "@/components/admin/buttons";
@@ -49,6 +49,12 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         actions={
           <>
             <StatusPill status={lead.status} label={STATUS_LABELS[lead.status] ?? lead.status} />
+            <form action={deleteLeadAction}>
+              <input type="hidden" name="requestId" value={lead.requestId} />
+              <ConfirmSubmit message="Chuyển yêu cầu này vào thùng rác? Có thể khôi phục ở mục Thùng rác.">
+                Xoá (vào thùng rác)
+              </ConfirmSubmit>
+            </form>
             <Link href="/admin/leads" className="inline-flex min-h-11 items-center text-sm font-semibold text-foreground-muted hover:text-primary-strong">
               ← Danh sách
             </Link>

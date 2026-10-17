@@ -1,9 +1,9 @@
 import { ROUTES } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
+import type { Locale } from "@/i18n/config";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
 import { PhoneIcon, ClockIcon, ShieldIcon, SparkleIcon } from "@/components/ui/icons";
-import type { Locale } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
+import { getSiteSettings } from "@/lib/data/settings";
 import { localizePath } from "@/i18n/routing";
 import { LeadForm } from "./lead-form";
 import { leadFormLabels } from "./lead-form-labels";
@@ -13,7 +13,7 @@ import { leadFormLabels } from "./lead-form-labels";
  * detail page and the contact page. `tourSlug`/`defaultInterest` pre-fill it so
  * a request started from a tour page arrives with that context attached.
  */
-export function ConsultSection({
+export async function ConsultSection({
   locale,
   id = "tu-van",
   tourSlug,
@@ -33,6 +33,7 @@ export function ConsultSection({
   description?: string;
 }) {
   const m = getMessages(locale);
+  const settings = await getSiteSettings(locale);
   const assurances = [
     { icon: ClockIcon, ...m.consult.assurances[0] },
     { icon: SparkleIcon, ...m.consult.assurances[1] },
@@ -71,13 +72,13 @@ export function ConsultSection({
                 {m.consult.directLabel}
               </p>
               <a
-                href={siteConfig.contact.hotlineHref}
+                href={settings.contact.hotlineHref}
                 className="mt-2 inline-flex min-h-11 items-center gap-2 text-xl font-extrabold text-primary-strong transition-colors hover:text-primary-strong-hover"
               >
                 <PhoneIcon className="h-5 w-5" />
-                {siteConfig.contact.hotline}
+                {settings.contact.hotline}
               </a>
-              <p className="mt-1 text-sm text-foreground-muted">{m.site.workingHours}</p>
+              <p className="mt-1 text-sm text-foreground-muted">{settings.contact.workingHours}</p>
             </div>
           </div>
 
@@ -89,6 +90,8 @@ export function ConsultSection({
                 tourSlug={tourSlug}
                 defaultInterest={defaultInterest}
                 compact={Boolean(tourSlug)}
+                hotline={settings.contact.hotline}
+                hotlineHref={settings.contact.hotlineHref}
               />
             </div>
             <p className="mt-4 text-center text-xs text-foreground-subtle">

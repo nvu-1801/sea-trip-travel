@@ -268,6 +268,14 @@ export function listTrashedArticles(): ArticleRecord[] {
   return rows.map(articleRecordFromRow);
 }
 
+/** Cheap count for the trash badge — no blocks loaded. */
+export function countTrashedArticles(): number {
+  const row = getDb().prepare("SELECT COUNT(*) AS n FROM article WHERE deleted_at IS NOT NULL").get() as {
+    n: number;
+  };
+  return row.n;
+}
+
 export function nextArticleSortOrder(): number {
   const row = getDb().prepare("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM article").get() as {
     next: number;

@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { getCurrentAdmin } from "@/server/auth/session";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { listMedia } from "@/server/repo/media";
+import { countTrashedMedia, listMedia } from "@/server/repo/media";
 import { AdminCard, EmptyState, PageHeader } from "@/components/admin/ui";
 import { AdminLoginCard } from "@/components/admin/login-card";
 import { MediaAltForm, MediaDeleteForm, MediaRestoreForm, MediaUploader } from "./media-manager";
@@ -39,7 +39,7 @@ export default async function MediaPage({
   const items = listMedia({ query, includeDeleted: showTrash, storage: "all" }).filter((item) =>
     showTrash ? Boolean(item.deletedAt) : !item.deletedAt,
   );
-  const trashedCount = listMedia({ includeDeleted: true, limit: 500 }).filter((item) => item.deletedAt).length;
+  const trashedCount = countTrashedMedia();
 
   return (
     <div className="flex flex-col gap-6">

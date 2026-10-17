@@ -2,7 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { getCurrentAdmin } from "@/server/auth/session";
 import type { Metadata } from "next";
-import { countLeads, listLeads, type LeadListOptions } from "@/server/repo/leads";
+import { countLeads, countTrashedLeads, listLeads, type LeadListOptions } from "@/server/repo/leads";
 import { EmptyState, PageHeader, StatusPill } from "@/components/admin/ui";
 import { AdminLoginCard } from "@/components/admin/login-card";
 
@@ -96,6 +96,12 @@ export default async function LeadsPage({
             Xoá bộ lọc
           </Link>
         ) : null}
+        <Link
+          href="/admin/trash"
+          className="ml-auto inline-flex min-h-11 items-center rounded-xl border border-border-strong bg-surface px-4 text-sm font-semibold"
+        >
+          Thùng rác ({countTrashedLeads()})
+        </Link>
       </form>
 
       {leads.length === 0 ? (

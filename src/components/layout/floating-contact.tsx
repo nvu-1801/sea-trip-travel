@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { siteConfig } from "@/config/site";
-import { facebookLink, zaloLink } from "@/config/social-links";
+
 import { cn } from "@/lib/utils";
 import {
   ArrowUpIcon,
@@ -75,7 +74,17 @@ export type FloatingContactLabels = {
   backToTop: string;
 };
 
-export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
+export function FloatingContact({
+  labels,
+  contact,
+  social,
+}: {
+  labels: FloatingContactLabels;
+  /** Owner-edited contact details, resolved on the server. */
+  contact: { hotline: string; hotlineHref: string };
+  /** Owner-edited social links, resolved on the server. */
+  social: { zalo: string; facebook: string };
+}) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -91,21 +100,21 @@ export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
     {
       key: "zalo",
       label: labels.zalo,
-      href: zaloLink.url,
+      href: social.zalo,
       background: ZALO_BLUE,
       icon: <span className="text-[0.6875rem] font-extrabold tracking-tight">Zalo</span>,
     },
     {
       key: "facebook",
       label: labels.facebook,
-      href: facebookLink.url,
+      href: social.facebook,
       background: FACEBOOK_BLUE,
       icon: <FacebookIcon className="h-5 w-5" />,
     },
     {
       key: "phone",
-      label: labels.phone.replace("{phone}", siteConfig.contact.hotline),
-      href: siteConfig.contact.hotlineHref,
+      label: labels.phone.replace("{phone}", contact.hotline),
+      href: contact.hotlineHref,
       className: "bg-primary-strong hover:bg-primary-strong-hover",
       icon: <PhoneIcon className="h-5 w-5" />,
     },

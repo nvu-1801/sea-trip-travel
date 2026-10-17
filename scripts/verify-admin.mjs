@@ -108,6 +108,7 @@ async function main() {
       ["/admin/articles", "Bài viết"],
       ["/admin/media", "Thư viện ảnh"],
       ["/admin/leads", "Yêu cầu tư vấn"],
+      ["/admin/trash", "Thùng rác"],
       ["/admin/settings", "Trang chủ"],
       ["/admin/account", "Đổi mật khẩu"],
       ["/admin/tours/new", "Thêm tour"],

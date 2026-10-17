@@ -15,6 +15,7 @@ import {
 import { SITE_SETTING_KEYS, type SiteSettingKey } from "@/domain/settings";
 import type { ArticleBlock } from "@/domain/article";
 import type { Tour } from "@/domain/tour";
+import type { Money } from "@/domain/common";
 import { newId, nowIso } from "@/server/db/json";
 import { CONTENT_TAG } from "@/lib/data/snapshot";
 import { changePassword, getCurrentAdmin, login, logout } from "@/server/auth/session";
@@ -47,7 +48,7 @@ import {
   setMediaAlt,
   softDeleteMedia,
 } from "@/server/repo/media";
-import { addLeadNote, deleteLeadNote, updateLeadStatus } from "@/server/repo/leads";
+import { addLeadNote, deleteLeadNote, restoreLead, softDeleteLead, updateLeadStatus } from "@/server/repo/leads";
 import { saveSettingSection } from "@/server/repo/settings";
 import { recordAudit } from "@/server/repo/admin";
 import { fieldErrorsFrom, type ActionState } from "./action-state";
@@ -154,7 +155,7 @@ function uniqueSlug(base: string, fallback: string): string {
     .replace(/^-+|-+$/g, "") || fallback;
 }
 
-function buildTour(payload: AdminTourPayload, id: string): Tour {
+function buildTour(payload: AdminTourPayload, id: string, previousPriceFrom: Money | null): Tour {
   const minAdult = payload.pricingOptions.length
     ? Math.min(...payload.pricingOptions.map((option) => option.adultPrice))
     : null;
@@ -184,8 +185,10 @@ function buildTour(payload: AdminTourPayload, id: string): Tour {
       note: option.note,
     })),
     gifts: payload.gifts,
-    // A tour with no published package is "Liên hệ tư vấn" — never 0 ₫.
-    priceFrom: minAdult === null ? null : { amount: minAdult, currency: "VND" },
+    // No package table ⇒ keep whatever price the record already had, so simply
+    // opening and saving a tour cannot wipe a published "from" price. A tour
+    // that never had one stays on "Liên hệ tư vấn" — never 0 ₫.
+    priceFrom: minAdult === null ? previousPriceFrom : { amount: minAdult, currency: "VND" },
     priceNote: payload.priceNote,
     highlights: payload.highlights,
     images: payload.images,
@@ -233,15 +236,26 @@ export async function saveTourAction(_prev: ActionState, form: FormData): Promis
   if (!existing && payload.id) return { ok: false, message: "Tour không tồn tại." };
 
   const id = existing?.tour.id ?? newId("tour");
-  const slug = existing ? payload.slug : uniqueSlug(payload.slug, id);
+  const slug = payload.slug || existing?.tour.slug || uniqueSlug(payload.title, id);
   if (tourSlugExists(slug, existing?.tour.id)) {
     return { ok: false, message: `Slug "${slug}" đã được dùng cho tour khác.`, fieldErrors: { slug: ["Slug đã tồn tại"] } };
+  }
+
+  // The shipped content gate required the itinerary to cover every day.
+  if (payload.itinerary.length !== payload.durationDays) {
+    return {
+      ok: false,
+      message: `Tour ${payload.durationDays} ngày cần đúng ${payload.durationDays} ngày lịch trình (đang có ${payload.itinerary.length}).`,
+      fieldErrors: {
+        itinerary: [`Cần ${payload.durationDays} ngày, hiện có ${payload.itinerary.length}`],
+      },
+    };
   }
 
   let saved;
   try {
     saved = saveTour({
-      tour: buildTour({ ...payload, slug }, id),
+      tour: buildTour({ ...payload, slug }, id, existing?.tour.priceFrom ?? null),
       status: payload.status,
       featured: payload.featured,
       sortOrder: payload.sortOrder || existing?.sortOrder || nextTourSortOrder(),
@@ -360,7 +374,7 @@ export async function saveArticleAction(_prev: ActionState, form: FormData): Pro
   if (!existing && payload.id) return { ok: false, message: "Bài viết không tồn tại." };
 
   const id = existing?.article.id ?? newId("art");
-  const slug = existing ? payload.slug : uniqueSlug(payload.slug, id);
+  const slug = payload.slug || existing?.article.slug || uniqueSlug(payload.title, id);
   if (articleSlugExists(slug, existing?.article.id)) {
     return { ok: false, message: `Slug "${slug}" đã được dùng cho bài viết khác.`, fieldErrors: { slug: ["Slug đã tồn tại"] } };
   }
@@ -504,6 +518,27 @@ export async function deleteLeadNoteAction(form: FormData): Promise<void> {
   if (!requestId || !noteId) return;
   deleteLeadNote(noteId);
   revalidatePath(`/admin/leads/${requestId}`);
+}
+
+/** Soft delete: the lead moves to the trash and can be restored. */
+export async function deleteLeadAction(form: FormData): Promise<void> {
+  const admin = await requireAdminOrRedirect();
+  const requestId = text(form, "requestId");
+  if (!requestId) return;
+  softDeleteLead(requestId);
+  recordAudit({ actor: admin.username, action: "lead.trash", entity: "lead", entityId: requestId });
+  revalidatePath("/admin/leads");
+  revalidatePath("/admin/trash");
+  redirect("/admin/leads");
+}
+
+export async function restoreLeadAction(form: FormData): Promise<void> {
+  await requireAdminOrRedirect();
+  const requestId = text(form, "requestId");
+  if (!requestId) return;
+  restoreLead(requestId);
+  revalidatePath("/admin/leads");
+  revalidatePath("/admin/trash");
 }
 
 /* --- Site settings -------------------------------------------------------- */

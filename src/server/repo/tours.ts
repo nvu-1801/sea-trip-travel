@@ -403,6 +403,14 @@ export function listTrashedTours(): TourRecord[] {
   return rows.map(tourRecordFromRow);
 }
 
+/** Cheap count for the trash badge — no children loaded. */
+export function countTrashedTours(): number {
+  const row = getDb().prepare("SELECT COUNT(*) AS n FROM tour WHERE deleted_at IS NOT NULL").get() as {
+    n: number;
+  };
+  return row.n;
+}
+
 export function nextTourSortOrder(): number {
   const row = getDb().prepare("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM tour").get() as {
     next: number;

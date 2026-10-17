@@ -31,24 +31,37 @@ export async function getSiteSettings(
   source?: ContentSnapshot,
 ): Promise<ResolvedSettings> {
   const snapshot = source ?? (await loadPublishedSnapshot());
-  const stored = snapshot.settings[locale] ?? {};
+
+  // Vietnamese is the source of truth for everything that is *not* language
+  // specific: one hotline, one set of social links, one featured selection. Only
+  // the hero copy is edited per language, so an English page still shows the
+  // hotline the owner typed in Vietnamese instead of the shipped default.
+  const shared = snapshot.settings.vi ?? {};
+  const perLocale = snapshot.settings[locale] ?? {};
+
+  // Hero copy is language specific: an English page must fall back to the English
+  // catalog default, never to the Vietnamese override.
+  const hero = perLocale.hero ?? {};
+  const contact = shared.contact ?? {};
+  const social = shared.social ?? {};
+  const home = shared.home ?? perLocale.home;
 
   return {
-    hero: stored.hero ?? {},
+    hero,
     contact: {
-      hotline: stored.contact?.hotline ?? siteConfig.contact.hotline,
-      hotlineHref: stored.contact?.hotlineHref ?? siteConfig.contact.hotlineHref,
-      email: stored.contact?.email ?? siteConfig.contact.email,
-      address: stored.contact?.address ?? siteConfig.contact.address,
-      workingHours: stored.contact?.workingHours ?? siteConfig.contact.workingHours,
+      hotline: contact.hotline ?? siteConfig.contact.hotline,
+      hotlineHref: contact.hotlineHref ?? siteConfig.contact.hotlineHref,
+      email: contact.email ?? siteConfig.contact.email,
+      address: contact.address ?? siteConfig.contact.address,
+      workingHours: contact.workingHours ?? siteConfig.contact.workingHours,
     },
     social: {
-      facebook: stored.social?.facebook ?? siteConfig.social.facebook,
-      zalo: stored.social?.zalo ?? siteConfig.social.zalo,
-      instagram: stored.social?.instagram ?? siteConfig.social.instagram,
-      tiktok: stored.social?.tiktok ?? siteConfig.social.tiktok,
-      youtube: stored.social?.youtube ?? siteConfig.social.youtube,
+      facebook: social.facebook ?? siteConfig.social.facebook,
+      zalo: social.zalo ?? siteConfig.social.zalo,
+      instagram: social.instagram ?? siteConfig.social.instagram,
+      tiktok: social.tiktok ?? siteConfig.social.tiktok,
+      youtube: social.youtube ?? siteConfig.social.youtube,
     },
-    home: stored.home,
+    home,
   };
 }

@@ -8,6 +8,8 @@ import { listCategories, listDestinations } from "@/server/repo/taxonomy";
 import { listMedia } from "@/server/repo/media";
 import { PageHeader, StatusPill } from "@/components/admin/ui";
 import { AdminLoginCard } from "@/components/admin/login-card";
+import { ConfirmSubmit } from "@/components/admin/buttons";
+import { deleteTourAction } from "@/server/admin/actions";
 import { TourForm } from "../tour-form";
 import { tourToFormState } from "../tour-form-model";
 
@@ -57,6 +59,12 @@ export default async function EditTourPage({
               status={record.status}
               label={record.status === "published" ? "Đã xuất bản" : record.status === "hidden" ? "Đang ẩn" : "Nháp"}
             />
+            <form action={deleteTourAction}>
+              <input type="hidden" name="id" value={record.tour.id} />
+              <ConfirmSubmit message={`Chuyển tour “${record.tour.title}” vào thùng rác? Có thể khôi phục ở mục Thùng rác.`}>
+                Xoá (vào thùng rác)
+              </ConfirmSubmit>
+            </form>
             <Link href="/admin/tours" className="inline-flex min-h-11 items-center text-sm font-semibold text-foreground-muted hover:text-primary-strong">
               ← Danh sách tour
             </Link>

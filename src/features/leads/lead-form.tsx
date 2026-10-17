@@ -126,6 +126,8 @@ export function LeadForm({
   defaultInterest,
   className,
   compact = false,
+  hotline = siteConfig.contact.hotline,
+  hotlineHref = siteConfig.contact.hotlineHref,
 }: {
   locale: Locale;
   labels: LeadFormLabels;
@@ -134,6 +136,9 @@ export function LeadForm({
   defaultInterest?: string;
   className?: string;
   compact?: boolean;
+  /** Owner-edited hotline, resolved on the server (falls back to site config). */
+  hotline?: string;
+  hotlineHref?: string;
 }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const id = (name: string) => `lead-${uid}-${name}`;
@@ -252,7 +257,7 @@ export function LeadForm({
       }
       const template = error ? labels.errors[error.code] : undefined;
       setSystemMessage(
-        (template ?? labels.genericError).replace("{phone}", siteConfig.contact.hotline),
+        (template ?? labels.genericError).replace("{phone}", hotline),
       );
       setStatus("error");
       if (error?.fieldErrors) focusFirstError(error.fieldErrors);
@@ -291,7 +296,7 @@ export function LeadForm({
         </p>
         <div className="flex flex-wrap gap-2">
           <ButtonLink
-            href={siteConfig.contact.hotlineHref}
+            href={hotlineHref}
             variant="secondary"
             size="md"
             external

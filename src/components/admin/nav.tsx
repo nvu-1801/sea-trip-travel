@@ -19,6 +19,7 @@ export const ADMIN_NAV: readonly NavItem[] = [
   { href: "/admin/articles", label: "Bài viết", icon: "📝" },
   { href: "/admin/media", label: "Thư viện ảnh", icon: "🖼️" },
   { href: "/admin/leads", label: "Yêu cầu tư vấn", icon: "📨" },
+  { href: "/admin/trash", label: "Thùng rác", icon: "🗑️" },
   { href: "/admin/settings", label: "Trang chủ & liên hệ", icon: "⚙️" },
   { href: "/admin/account", label: "Tài khoản", icon: "🔑" },
 ];

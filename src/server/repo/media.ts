@@ -135,6 +135,20 @@ export function countMedia(): number {
   return row.n;
 }
 
+export function countTrashedMedia(): number {
+  const row = getDb().prepare("SELECT COUNT(*) AS n FROM media WHERE deleted_at IS NOT NULL").get() as {
+    n: number;
+  };
+  return row.n;
+}
+
+export function listTrashedMedia(limit = 100): MediaRecord[] {
+  const rows = getDb()
+    .prepare("SELECT * FROM media WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT ?")
+    .all(limit) as MediaRow[];
+  return rows.map(toMedia);
+}
+
 export function setMediaAlt(id: string, alt: string): void {
   getDb().prepare("UPDATE media SET alt_default = ? WHERE id = ?").run(alt, id);
 }

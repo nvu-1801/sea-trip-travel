@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { ROUTES } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/json-ld";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
@@ -11,6 +10,7 @@ import { ClockIcon, MailIcon, MapPinIcon, PhoneIcon, SendIcon } from "@/componen
 import { LeadForm } from "@/features/leads/lead-form";
 import { leadFormLabels } from "@/features/leads/lead-form-labels";
 import { getMessages } from "@/i18n/messages";
+import { getSiteSettings } from "@/lib/data/settings";
 import { localizePath } from "@/i18n/routing";
 import { resolveLocaleFromParams } from "@/i18n/params";
 
@@ -30,26 +30,27 @@ export async function generateMetadata({
 export default async function ContactPage({ params }: PageProps<"/[locale]">) {
   const locale = await resolveLocaleFromParams(params);
   const m = getMessages(locale);
+  const settings = await getSiteSettings(locale);
 
   const channels = [
     {
       icon: PhoneIcon,
       label: m.contact.channelHotline,
-      value: siteConfig.contact.hotline,
-      href: siteConfig.contact.hotlineHref,
-      note: m.site.workingHours,
+      value: settings.contact.hotline,
+      href: settings.contact.hotlineHref,
+      note: settings.contact.workingHours,
     },
     {
       icon: MailIcon,
       label: m.contact.channelEmail,
-      value: siteConfig.contact.email,
-      href: `mailto:${siteConfig.contact.email}`,
+      value: settings.contact.email,
+      href: `mailto:${settings.contact.email}`,
       note: m.contact.emailNote,
     },
     {
       icon: MapPinIcon,
       label: m.contact.channelAddress,
-      value: siteConfig.contact.address,
+      value: settings.contact.address,
       href: null,
       note: m.contact.addressNote,
     },

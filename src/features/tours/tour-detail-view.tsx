@@ -18,6 +18,7 @@ import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { isIndexable } from "@/domain/localization";
 import { tourTranslationStatus } from "@/lib/data/localize";
+import { getSiteSettings } from "@/lib/data/settings";
 import type { Locale } from "@/i18n/config";
 import { format, getMessages } from "@/i18n/messages";
 import { localizePath } from "@/i18n/routing";
@@ -83,6 +84,7 @@ export async function buildTourMetadata(slug: string, locale: Locale): Promise<M
 
 export async function TourDetailView({ slug, locale }: { slug: string; locale: Locale }) {
   const m = getMessages(locale);
+  const settings = await getSiteSettings(locale);
   const tour = await getTourBySlug(slug, locale);
   if (!tour) notFound();
 
@@ -399,6 +401,8 @@ export async function TourDetailView({ slug, locale }: { slug: string; locale: L
       <MobileConsultBar
         tourTitle={tour.title}
         priceLabel={formatPriceFrom(tour.priceFrom, locale)}
+        hotline={settings.contact.hotline}
+        hotlineHref={settings.contact.hotlineHref}
         labels={{
           consult: m.common.requestConsultation,
           callHotlineAria: m.common.callHotlineAria,

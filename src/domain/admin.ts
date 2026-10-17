@@ -61,7 +61,10 @@ export const adminTourPayloadSchema = z.object({
   slug: z
     .string()
     .trim()
-    .regex(/^[a-z0-9-]+$/, "Slug chỉ gồm chữ thường, số và dấu gạch ngang"),
+    .max(160)
+    // Empty is allowed: the action derives it from the title, so the owner does
+    // not have to invent a URL-safe slug by hand.
+    .regex(/^[a-z0-9-]*$/, "Slug chỉ gồm chữ thường, số và dấu gạch ngang"),
   title: trimmed(200).min(1, "Cần nhập tên tour"),
   summary: trimmed(220).min(1, "Cần nhập mô tả ngắn"),
   tourCode: trimmed(60).optional(),
@@ -101,7 +104,9 @@ export const adminArticlePayloadSchema = z.object({
   slug: z
     .string()
     .trim()
-    .regex(/^[a-z0-9-]+$/, "Slug chỉ gồm chữ thường, số và dấu gạch ngang"),
+    .max(160)
+    // Empty is allowed: the action derives it from the title.
+    .regex(/^[a-z0-9-]*$/, "Slug chỉ gồm chữ thường, số và dấu gạch ngang"),
   title: trimmed(200).min(1, "Cần nhập tiêu đề"),
   excerpt: trimmed(240).min(1, "Cần nhập tóm tắt"),
   author: trimmed(120).default("SEA TRIP TRAVEL"),

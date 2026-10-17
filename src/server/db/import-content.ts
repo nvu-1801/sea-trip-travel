@@ -11,8 +11,8 @@ import {
 import { getDb } from "./connection";
 import { runMigrations } from "./migrate";
 import { upsertCategory, upsertDestination } from "@/server/repo/taxonomy";
-import { saveTour, getTourRecordById } from "@/server/repo/tours";
-import { saveArticle, getArticleRecordById } from "@/server/repo/articles";
+import { saveTour, getTourRecordById, softDeleteTour } from "@/server/repo/tours";
+import { saveArticle, getArticleRecordById, softDeleteArticle } from "@/server/repo/articles";
 import { saveTranslation, getTranslation } from "@/server/repo/translations";
 import { findMediaByUrl, insertMedia } from "@/server/repo/media";
 
@@ -106,15 +106,30 @@ export function importContent(): ImportReport {
   }
 
   tours.forEach((tour, index) => {
-    const existed = Boolean(getTourRecordById(tour.id));
-    saveTour({ tour, status: "published", featured: false, sortOrder: index });
-    report.tours[existed ? "updated" : "inserted"] += 1;
+    const before = getTourRecordById(tour.id);
+    // Re-importing must never undo an editorial decision: keep the existing
+    // publish state, pin and order (and the trash flag) for records that are
+    // already in the database. Only brand-new records get defaults.
+    saveTour({
+      tour,
+      status: before?.status ?? "published",
+      featured: before?.featured ?? false,
+      sortOrder: before?.sortOrder ?? index,
+    });
+    if (before?.deletedAt) softDeleteTour(tour.id);
+    report.tours[before ? "updated" : "inserted"] += 1;
   });
 
   articles.forEach((article, index) => {
-    const existed = Boolean(getArticleRecordById(article.id));
-    saveArticle({ article, status: "published", featured: article.featured, sortOrder: index });
-    report.articles[existed ? "updated" : "inserted"] += 1;
+    const before = getArticleRecordById(article.id);
+    saveArticle({
+      article,
+      status: before?.status ?? "published",
+      featured: before?.featured ?? article.featured,
+      sortOrder: before?.sortOrder ?? index,
+    });
+    if (before?.deletedAt) softDeleteArticle(article.id);
+    report.articles[before ? "updated" : "inserted"] += 1;
   });
 
   const translationBatches: [string, Record<string, Record<string, unknown>>][] = [

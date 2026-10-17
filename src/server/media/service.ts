@@ -5,7 +5,7 @@ import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import sharp from "sharp";
 import type { Metadata as SharpMetadata } from "sharp";
-import { getMedia, insertMedia, type NewMedia } from "@/server/repo/media";
+import { getMedia, insertMedia, restoreMedia, setMediaAlt, type NewMedia } from "@/server/repo/media";
 import type { MediaRecord } from "@/server/repo/types";
 
 /**
@@ -77,6 +77,8 @@ export type ProcessedUpload = {
   height: number | null;
   format: string;
   dupeOf?: MediaRecord;
+  /** True when a previously trashed file was revived by this upload. */
+  restored?: boolean;
 };
 
 /** Validate, optimise and persist one uploaded image. */
@@ -153,7 +155,13 @@ export async function processUpload(
   };
 
   const existing = getMedia(id);
-  const media = existing ?? insertMedia(payload);
+  // Re-uploading a file that was previously trashed must bring it back, not
+  // silently return a record that is still in the trash.
+  if (existing?.deletedAt) {
+    restoreMedia(id);
+    if (options.alt) setMediaAlt(id, options.alt);
+  }
+  const media = existing ? (getMedia(id) ?? existing) : insertMedia(payload);
 
   return {
     ok: true,
@@ -162,7 +170,7 @@ export async function processUpload(
       width: media.width,
       height: media.height,
       format,
-      ...(existing ? { dupeOf: existing } : {}),
+      ...(existing ? { dupeOf: media, restored: Boolean(existing.deletedAt) } : {}),
     },
   };
 }

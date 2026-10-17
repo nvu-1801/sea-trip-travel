@@ -5,6 +5,8 @@ import { siteConfig } from "@/config/site";
 import { SkipLink, SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { FloatingContact } from "@/components/layout/floating-contact";
+import { resolveSocialLinks } from "@/config/social-links";
+import { getSiteSettings } from "@/lib/data/settings";
 import { JsonLd } from "@/components/seo/json-ld";
 import { travelAgencyJsonLd, websiteJsonLd } from "@/lib/json-ld";
 import { defaultLocale, isLocale, localeMeta, locales, type Locale } from "@/i18n/config";
@@ -87,6 +89,14 @@ export default async function LocaleLayout({
   const { locale: raw } = await params;
   const locale: Locale = isLocale(raw) ? raw : defaultLocale;
   const m = getMessages(locale);
+  // Owner-edited contact + social details, resolved once for the chrome.
+  const settings = await getSiteSettings(locale);
+  const resolvedSocial = resolveSocialLinks(settings.social, settings.contact.hotline);
+  const socialLinks = {
+    zalo: resolvedSocial.primary.find((link) => link.key === "zalo")?.url ?? resolvedSocial.primary[1].url,
+    facebook:
+      resolvedSocial.primary.find((link) => link.key === "facebook")?.url ?? resolvedSocial.primary[0].url,
+  };
 
   return (
     <html
@@ -94,7 +104,15 @@ export default async function LocaleLayout({
       className={`${beVietnamPro.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <JsonLd id="ld-agency" data={travelAgencyJsonLd(locale)} />
+        <JsonLd
+          id="ld-agency"
+          data={travelAgencyJsonLd(locale, {
+            hotline: settings.contact.hotline,
+            email: settings.contact.email,
+            address: settings.contact.address,
+            social: { facebook: settings.social.facebook, zalo: settings.social.zalo },
+          })}
+        />
         <JsonLd id="ld-website" data={websiteJsonLd(locale)} />
 
         <SkipLink label={m.common.skipToContent} />
@@ -114,6 +132,8 @@ export default async function LocaleLayout({
             close: m.floating.close,
             backToTop: m.common.backToTop,
           }}
+          contact={{ hotline: settings.contact.hotline, hotlineHref: settings.contact.hotlineHref }}
+          social={socialLinks}
         />
       </body>
     </html>
