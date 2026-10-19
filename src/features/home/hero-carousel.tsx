@@ -1,0 +1,260 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import type { HeroConfig } from "@/domain/home-hero";
+import type { Locale } from "@/i18n/config";
+import { localizePath } from "@/i18n/routing";
+import { ArrowRightIcon, ChevronRightIcon } from "@/components/ui/icons";
+import type { HeroCopy } from "./hero-copy";
+
+export function HeroCarousel({
+  config,
+  copy,
+  locale,
+  motionEnabled,
+}: {
+  config: HeroConfig;
+  copy: HeroCopy;
+  locale: Locale;
+  motionEnabled: boolean;
+}) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(!config.autoplay);
+  const [blocked, setBlocked] = useState(true);
+  const [hovered, setHovered] = useState(false);
+  const [failed, setFailed] = useState<string[]>([]);
+  const frame = useRef<HTMLElement>(null);
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const english = locale === "en";
+  const stopped = paused || blocked;
+  const count = config.slides.length;
+  const active = config.slides[index % count];
+  const label = english ? active.captionEn : active.caption;
+  const title = (english ? active.titleEn : active.title) || copy.titleLine1;
+  const description =
+    (english ? active.descriptionEn : active.description) || copy.description;
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let visible = true;
+    const update = () =>
+      setBlocked(
+        !motionEnabled ||
+          media.matches ||
+          document.hidden ||
+          !visible ||
+          document.documentElement.dataset.motionPaused === "true",
+      );
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-motion-paused"],
+    });
+    const intersection = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      update();
+    });
+    if (frame.current) intersection.observe(frame.current);
+    media.addEventListener("change", update);
+    document.addEventListener("visibilitychange", update);
+    queueMicrotask(update);
+    return () => {
+      observer.disconnect();
+      intersection.disconnect();
+      media.removeEventListener("change", update);
+      document.removeEventListener("visibilitychange", update);
+    };
+  }, [motionEnabled]);
+  useEffect(() => {
+    if (!config.autoplay || paused || blocked || hovered || count < 2) return;
+    const timer = setTimeout(
+      () => setIndex((current) => (current + 1) % count),
+      config.intervalSeconds * 1000,
+    );
+    return () => clearTimeout(timer);
+  }, [
+    index,
+    count,
+    config.autoplay,
+    config.intervalSeconds,
+    paused,
+    blocked,
+    hovered,
+  ]);
+
+  const navigate = (direction: number) => {
+    setPaused(true);
+    setIndex((current) => (current + direction + count) % count);
+  };
+  return (
+    <section
+      ref={frame}
+      data-hero-mode="carousel"
+      data-motion-enabled={motionEnabled}
+      data-motion-blocked={blocked}
+      className="stt-travel-hero stt-cinematic-hero"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={english ? "Travel inspiration" : "Cảm hứng hành trình"}
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+          event.preventDefault();
+          navigate(event.key === "ArrowRight" ? 1 : -1);
+        }
+      }}
+      onFocusCapture={() => setPaused(true)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onPointerDown={(event) => {
+        if (
+          (event.target as HTMLElement).closest("a,button") ||
+          event.pointerType === "mouse"
+        )
+          return;
+        touch.current = { x: event.clientX, y: event.clientY };
+      }}
+      onPointerUp={(event) => {
+        if (!touch.current) return;
+        const x = event.clientX - touch.current.x,
+          y = event.clientY - touch.current.y;
+        if (Math.abs(x) > 50 && Math.abs(x) > Math.abs(y) * 1.4)
+          navigate(x < 0 ? 1 : -1);
+        touch.current = null;
+      }}
+      onPointerCancel={() => {
+        touch.current = null;
+      }}
+    >
+      <div className="stt-cinema-stage">
+        {config.slides.map((slide, position) => (
+          <div
+            key={slide.id}
+            className="stt-cinema-image"
+            data-active={position === index % count}
+            aria-hidden={position !== index % count}
+          >
+            {!failed.includes(slide.id) && (
+              <Image
+                src={slide.image.src}
+                alt={slide.image.alt}
+                fill
+                sizes="100vw"
+                preload={position === 0}
+                loading={position === 0 ? undefined : "lazy"}
+                style={{
+                  objectPosition: `${slide.image.positionX}% ${slide.image.positionY}%`,
+                }}
+                className="object-cover"
+                onError={() => setFailed((items) => [...items, slide.id])}
+              />
+            )}
+          </div>
+        ))}
+        <div className="stt-cinema-shade" aria-hidden="true" />
+        <div className="stt-cinema-copy" key={active.id}>
+          <p className="stt-cinema-eyebrow">
+            <span />
+            {copy.badge}
+          </p>
+          <h1>
+            {title}
+            <span>{copy.titleLine2}</span>
+          </h1>
+          <p className="stt-cinema-description">{description}</p>
+          <div className="stt-cinema-actions">
+            <Link
+              href={localizePath(locale, config.primaryHref)}
+              className="stt-cinema-primary"
+            >
+              {copy.primaryLabel}
+              <ArrowRightIcon className="h-5 w-5" />
+            </Link>
+            <Link
+              href={localizePath(locale, config.secondaryHref)}
+              className="stt-cinema-secondary"
+            >
+              {copy.secondaryLabel}
+              <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+        </div>
+        <div className="stt-cinema-bottom">
+          <div
+            className="stt-cinema-caption"
+            aria-live={paused || blocked ? "polite" : "off"}
+            aria-atomic="true"
+          >
+            <span>
+              {String((index % count) + 1).padStart(2, "0")} /{" "}
+              {String(count).padStart(2, "0")}
+            </span>
+            <p>{label}</p>
+          </div>
+          {count > 1 && (
+            <div className="stt-cinema-controls">
+              <div
+                className="stt-cinema-dots"
+                role="group"
+                aria-label={english ? "Choose a photo" : "Chọn ảnh mở đầu"}
+              >
+                {config.slides.map((slide, position) => (
+                  <button
+                    key={slide.id}
+                    type="button"
+                    aria-label={`${english ? "Photo" : "Ảnh"} ${position + 1}: ${english ? slide.captionEn : slide.caption}`}
+                    aria-current={
+                      position === index % count ? "true" : undefined
+                    }
+                    onClick={() => {
+                      setPaused(true);
+                      setIndex(position);
+                    }}
+                  >
+                    <span />
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                aria-label={english ? "Previous photo" : "Ảnh trước"}
+                onClick={() => navigate(-1)}
+              >
+                <ChevronRightIcon className="h-5 w-5 rotate-180" />
+              </button>
+              <button
+                type="button"
+                aria-label={english ? "Next photo" : "Ảnh tiếp theo"}
+                onClick={() => navigate(1)}
+              >
+                <ChevronRightIcon className="h-5 w-5" />
+              </button>
+              {config.autoplay && (
+                <button
+                  type="button"
+                  disabled={blocked}
+                  aria-label={
+                    english
+                      ? stopped
+                        ? "Play slideshow"
+                        : "Pause slideshow"
+                      : stopped
+                        ? "Phát trình chiếu"
+                        : "Dừng trình chiếu"
+                  }
+                  aria-pressed={!paused && !blocked}
+                  onClick={() => setPaused((value) => !value)}
+                >
+                  {paused || blocked ? "▶" : "Ⅱ"}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}

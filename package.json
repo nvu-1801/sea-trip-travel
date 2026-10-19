@@ -14,7 +14,8 @@
     "verify:tour-import": "node scripts/verify-tour-import.mjs",
     "admin": "node --env-file-if-exists=.env.local scripts/admin.mjs",
     "test:cms": "node --import tsx --conditions=react-server --test tests/cms.test.ts",
-    "verify:cms": "node scripts/verify-cms.mjs"
+    "verify:cms": "node scripts/verify-cms.mjs",
+    "verify:hero": "node scripts/verify-hero.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -62,6 +62,7 @@ export function Logo({
       />
       <span className="flex flex-col whitespace-nowrap leading-none">
         <span
+          data-logo-wordmark=""
           className={cn(
             "whitespace-nowrap font-extrabold uppercase tracking-tight text-brand-500",
             wordClass,

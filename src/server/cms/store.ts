@@ -6,6 +6,7 @@ import { travelArticleSchema } from "@/domain/article";
 import { destinationSchema } from "@/domain/destination";
 import { tourCategorySchema } from "@/domain/category";
 import { db, audit, transaction } from "./db";
+import { defaultHero, heroSchema } from "@/domain/home-hero";
 import {
   defaultSettings,
   messageSeeds,
@@ -59,6 +60,7 @@ export const schemas = {
     _enReviewed: z.boolean().optional(),
   }),
   settings: settingsSchema,
+  hero: heroSchema,
   messages: messagesSchema,
 };
 export type Collection = keyof typeof schemas;
@@ -68,6 +70,7 @@ const seeds = {
   categories: tourCategories,
   destinations,
   settings: [defaultSettings],
+  hero: [defaultHero],
   messages: messageSeeds,
 };
 export type CmsRecord = {
@@ -177,7 +180,7 @@ export function save(
         );
     }
     if (
-      (collection === "settings" || collection === "messages") &&
+      ["settings", "messages", "hero"].includes(collection) &&
       action !== "publish" &&
       action !== "save"
     )
@@ -355,6 +358,9 @@ export function save(
 }
 export function settings() {
   return published("settings", [defaultSettings])[0] ?? defaultSettings;
+}
+export function homeHero() {
+  return heroSchema.parse(published("hero", [defaultHero])[0] ?? defaultHero);
 }
 export function consumeLimit(key: string, max: number, windowMs: number) {
   return transaction(() => {

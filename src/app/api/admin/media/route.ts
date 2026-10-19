@@ -7,6 +7,7 @@ import { db, audit } from "@/server/cms/db";
 import { handle, jsonBody, reply } from "@/server/cms/http";
 import { z } from "zod";
 import { tours } from "@/content";
+import { heroPhotos } from "@/domain/home-hero";
 const directory = () =>
   process.env.CMS_UPLOAD_DIR ?? path.resolve("data/uploads");
 export async function GET(request: Request) {
@@ -38,7 +39,17 @@ export async function GET(request: Request) {
       src: `/api/media/${item.name}`,
       original: false,
     }));
-    return reply([...uploaded, ...originals]);
+    return reply([
+      ...uploaded,
+      ...originals,
+      ...heroPhotos.map((photo) => ({
+        id: `hero:${photo.src}`,
+        name: photo.src.split("/").pop(),
+        src: photo.src,
+        alt: photo.alt,
+        original: true,
+      })),
+    ]);
   });
 }
 export async function POST(request: Request) {

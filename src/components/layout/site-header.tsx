@@ -1,10 +1,7 @@
-import { ROUTES } from "@/config/navigation";
 import { siteConfig } from "@/config/runtime-site";
-import { ButtonLink } from "@/components/ui/button";
 import { PhoneIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { getMessages } from "@/i18n/server";
-import { localizePath } from "@/i18n/routing";
 import type { Locale } from "@/i18n/config";
 import { DesktopNav } from "./desktop-nav";
 import { HeaderShell } from "./header-shell";
@@ -50,8 +47,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
   const navLabels = { nav: m.nav, header: m.header, allOf: m.common.allOf };
   return (
     <HeaderShell>
-      {/* 1px brand rule, always visible — this is the identity mark. */}
-      <div className="brand-gradient h-px w-full" aria-hidden="true" />
+      <div className="stt-header-brandline brand-gradient h-px w-full" aria-hidden="true" />
 
       <HeaderContainer>
         <div className="flex h-16 items-center justify-between gap-4 transition-[height] duration-300 ease-out sm:h-18 sm:gap-6 sm:group-data-[condensed=true]:h-16 xl:gap-4">
@@ -62,7 +58,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           <div className="flex shrink-0 items-center gap-2">
             <a
               href={siteConfig.contact.hotlineHref}
-              className="hidden shrink-0 items-center gap-2 rounded-full py-2 pl-2.5 pr-3 transition-colors hover:bg-primary-soft 2xl:inline-flex"
+              className="stt-header-hotline hidden shrink-0 items-center gap-2 rounded-full py-2 pl-2.5 pr-3 transition-colors hover:bg-primary-soft 2xl:inline-flex"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft">
                 <PhoneIcon className="h-4 w-4 text-primary-strong" />
@@ -83,17 +79,8 @@ export function SiteHeader({ locale }: { locale: Locale }) {
               switchToLabel={m.locale.switchTo}
               currentLabel={m.locale.current}
               leaveWarning={m.lead.leaveWarning}
-              className="hidden xl:block"
+              className="stt-header-locale hidden xl:block"
             />
-
-            <ButtonLink
-              href={localizePath(locale, ROUTES.contact)}
-              size="sm"
-              sheen
-              className="hidden shrink-0 whitespace-nowrap sm:inline-flex"
-            >
-              {m.common.requestConsultation}
-            </ButtonLink>
 
             {/* Phones get a direct call action instead of the text CTA. */}
             <a
@@ -102,7 +89,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
                 "{phone}",
                 siteConfig.contact.hotline,
               )}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-primary-strong transition-colors hover:border-primary sm:hidden"
+              className="stt-header-call inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-primary-strong transition-colors hover:border-primary sm:hidden"
             >
               <PhoneIcon className="h-5 w-5" />
             </a>

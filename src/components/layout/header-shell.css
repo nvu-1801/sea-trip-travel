@@ -1,0 +1,31 @@
+/* Only the home carousel places navigation directly over photography. */
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] {
+  color: white;
+  background: transparent;
+  backdrop-filter: none;
+}
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] [data-logo-wordmark],
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-desktop-nav > ul > li > a,
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-desktop-nav > ul > li > div > button,
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-header-hotline > span:last-child > span {
+  color: white;
+}
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-header-brandline {
+  opacity: 0;
+}
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-menu-trigger,
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-header-call,
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-header-locale > ul {
+  color: white;
+  background: transparent;
+  border-color: #ffffff70;
+}
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-header-locale a:not([aria-current="true"]) {
+  color: white;
+}
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] :is(a, button):focus-visible {
+  outline-color: white;
+}
+@media print {
+  .stt-site-header { position: static; }
+}

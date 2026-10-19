@@ -1,14 +1,26 @@
 import { Container } from "@/components/ui/layout";
-import {
-  CompassIcon,
-  ArrowRightIcon,
-  ChevronDownIcon,
-} from "@/components/ui/icons";
+import { CompassIcon, ArrowRightIcon } from "@/components/ui/icons";
+import { TimeSelect, type TimeOption } from "./time-select";
 import type { Locale } from "@/i18n/config";
 import { localizePath } from "@/i18n/routing";
 export function QuickFinder({ locale }: { locale: Locale }) {
   const en = locale === "en",
     action = localizePath(locale, "/tim-tour");
+  const timeOptions: readonly TimeOption[] = en
+    ? [
+        { value: "", label: "I am flexible", hint: "Any duration" },
+        { value: "1", label: "A day away", hint: "1 day" },
+        { value: "2", label: "A weekend escape", hint: "2 days" },
+        { value: "3", label: "Three days to explore", hint: "3 days" },
+        { value: "4+", label: "A longer journey", hint: "4+ days" },
+      ]
+    : [
+        { value: "", label: "Mình linh hoạt", hint: "Mọi thời lượng" },
+        { value: "1", label: "Một ngày đổi gió", hint: "1 ngày" },
+        { value: "2", label: "Hai ngày thư thả", hint: "2 ngày" },
+        { value: "3", label: "Ba ngày khám phá", hint: "3 ngày" },
+        { value: "4+", label: "Bốn ngày trở lên", hint: "Từ 4 ngày" },
+      ];
   return (
     <section id="tim-hanh-trinh" className="stt-finder-section">
       <Container>
@@ -18,8 +30,11 @@ export function QuickFinder({ locale }: { locale: Locale }) {
               <CompassIcon className="h-6 w-6" />
             </span>
             <div>
-              <p>{en ? "A little inspiration" : "Một chút cảm hứng"}</p>
-              <h2>{en ? "Where to next?" : "Bạn muốn đi đâu tiếp theo?"}</h2>
+              <h2>
+                {en
+                  ? "Find your next journey"
+                  : "Tìm hành trình phù hợp với bạn"}
+              </h2>
             </div>
           </div>
           <form action={action} className="stt-finder-fields">
@@ -41,29 +56,11 @@ export function QuickFinder({ locale }: { locale: Locale }) {
               <span className="stt-finder-caption">
                 {en ? "Your time" : "Thời gian của bạn"}
               </span>
-              <span className="stt-finder-select">
-                <select
-                  name="days"
-                  aria-label={en ? "Your time" : "Thời gian của bạn"}
-                >
-                  <option value="">
-                    {en ? "I am flexible" : "Mình linh hoạt"}
-                  </option>
-                  <option value="1">
-                    {en ? "A day away" : "Một ngày đổi gió"}
-                  </option>
-                  <option value="2">
-                    {en ? "A weekend escape" : "Hai ngày thư thả"}
-                  </option>
-                  <option value="3">
-                    {en ? "Three days to explore" : "Ba ngày khám phá"}
-                  </option>
-                  <option value="4+">
-                    {en ? "A longer journey" : "Bốn ngày trở lên"}
-                  </option>
-                </select>
-                <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
-              </span>
+              <TimeSelect
+                name="days"
+                label={en ? "Your time" : "Thời gian của bạn"}
+                options={timeOptions}
+              />
             </label>
             <button type="submit">
               {en ? "Explore" : "Khám phá"}

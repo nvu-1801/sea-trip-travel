@@ -1587,7 +1587,7 @@ async function checkTravelMotion(browser) {
   });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "load" });
-  const bloom = page.locator(".stt-hero-bloom").first();
+  const bloom = page.locator(".stt-hero-bloom, .stt-cinema-copy").first();
   const ambient = await bloom.evaluate((el) => {
     const style = getComputedStyle(el);
     return {

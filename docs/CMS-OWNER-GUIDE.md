@@ -39,6 +39,19 @@ unset ADMIN_PASSWORD ADMIN_USERNAME
 
 ## Nội dung
 
+### Giao diện trang chủ
+
+Trong tab **Giao diện trang chủ**, chọn **Chỉnh sửa** để chọn giữa **Carousel ảnh lớn** và **Bố cục ảnh ghép**. Mỗi kiểu giữ cấu hình riêng; chuyển kiểu không làm mất dữ liệu kiểu còn lại.
+
+Carousel phủ toàn màn hình đầu và chạy ra sau header trong suốt. Khi cuộn xuống hoặc mở menu, header hiện nền sáng để giữ chữ dễ đọc; trở về đầu trang sẽ trong suốt lại.
+
+- Carousel giữ 1–8 slide: chọn ảnh trong thư viện, sửa mô tả ảnh, chỉnh vị trí lấy nét ngang/dọc, chú thích VI/EN và tiêu đề/mô tả riêng của slide. Có thể thêm, đưa lên/xuống và bỏ slide. Bỏ slide chỉ bỏ mục khỏi cấu hình, không xoá file ảnh, không đưa file ảnh vào Thùng rác.
+- Ảnh ghép có ảnh chính và ảnh phụ, đều chọn lại được và chỉnh vị trí lấy nét.
+- Nội dung dùng chung có bản VI/EN và nhãn/đường dẫn hai nút. Trường chữ để trống sẽ dùng nội dung tương ứng ở tab Nội dung VI / EN; tiêu đề/mô tả riêng của slide ghi đè phần dùng chung.
+- Tự chuyển mặc định tắt; nếu bật, mỗi slide giữ 6–20 giây. Trình chiếu dừng khi giảm chuyển động, tab ẩn, hero ngoài màn hình hoặc tương tác bàn phím. Vẫn chuyển ảnh thủ công được.
+- Tải ảnh mới tại Thư viện ảnh trước khi chọn. Năm ảnh hero khách cung cấp đã có sẵn, bên cạnh 28 ảnh tour gốc được giữ nguyên.
+- **Lưu bản nháp** giữ giao diện public cũ. **Xuất bản thay đổi** cập nhật trang đang mở trong khoảng 5 giây; không cần rebuild. Mục cấu hình hero không có thao tác xoá/ẩn toàn bộ.
+
 - Tour: thông tin, ảnh, lịch trình, thời lượng, danh mục/điểm đến, gói giá, bao gồm/không bao gồm, chính sách và SEO. Danh mục, điểm đến và ảnh được chọn bằng tên. Giữ giá liên hệ khi chưa có bảng giá chính thức; không dùng 0 để thay cho giá chưa biết.
 - Bài viết: tiêu đề, giới thiệu, nội dung bằng khối đoạn văn/tiêu đề/danh sách/trích dẫn/ghi chú/ảnh, ngày đăng, tác giả, nổi bật và SEO. Không nhập HTML hay script.
 - Danh mục/điểm đến: thông tin, thứ tự, hình ảnh và phân nhóm. Danh mục mới có URL `/danh-muc/<slug>`, hoạt động ngay sau xuất bản.

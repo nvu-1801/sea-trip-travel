@@ -101,7 +101,7 @@ export function MobileNav({
         data-focus-ring=""
         aria-label={ui.openMenu}
         aria-haspopup="dialog"
-        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-foreground transition-colors hover:border-primary hover:text-primary-strong xl:hidden"
+        className="stt-menu-trigger inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-foreground transition-colors hover:border-primary hover:text-primary-strong xl:hidden"
       >
         <MenuIcon className="h-5 w-5" />
       </button>

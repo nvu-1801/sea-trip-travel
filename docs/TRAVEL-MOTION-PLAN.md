@@ -1,19 +1,23 @@
 # Kế hoạch chuyển động landing page tour
 
+## Cập nhật 18/10/2026
+
+Theo yêu cầu mới, bổ sung sóng SVG chuyển động nhẹ lúc trang nghỉ, nút tạm dừng/bật lại, hỗ trợ reduced-motion và chế độ in; hiệu ứng bloom ban đầu vẫn kết thúc trong 4.8 giây. Nút tạm dừng cũng đưa nội dung entrance về trạng thái hiện đầy đủ. Thêm khối tìm hành trình theo điểm đến/thời lượng trên trang chủ. Xem `IMPLEMENTATION-2026-10.md` cho CMS và kết quả kiểm tra mới.
+
 Ngày 16/10/2026 — nhánh `feat/travel-soft-motion`. Admin để lượt sau.
 
 ## Phương án chọn: sóng biển nhẹ
 
 Giữ màu thương hiệu, Fraunces cho tiêu đề và Be Vietnam Pro cho nội dung. Dùng ảnh tour thật làm trọng tâm; chuyển động hỗ trợ khám phá và CTA tư vấn.
 
-| Khu vực | Chuyển động | Giới hạn |
-| --- | --- | --- |
-| Nền hero | Mảng màu và ba đường sóng mảnh trôi về vị trí | Một lần, tối đa 4.8 giây, không chặn click |
-| Nội dung hero | Hiện lần lượt với độ trễ ngắn | Dùng entrance hiện có, không chờ tải JS |
-| Collage | Giữ parallax theo cuộn; badge đi vào nhẹ | Không tự chạy ảnh liên tục; không thay đổi khung layout |
-| Section và lưới tour | Dịch lên nhẹ theo cuộn | Không ẩn opacity; trình duyệt không hỗ trợ vẫn đọc đủ |
-| Card tour | Nâng 4.8 px, ảnh zoom 3.5%, viền và mũi tên chuyển mềm | Chỉ hover chuột chính xác; touch không bị trạng thái hover dính |
-| Bàn phím | Viền focus bao quanh card, đường màu và mũi tên phản hồi | Vùng click/link hiện hữu giữ nguyên |
+| Khu vực              | Chuyển động                                              | Giới hạn                                                        |
+| -------------------- | -------------------------------------------------------- | --------------------------------------------------------------- |
+| Nền hero             | Mảng màu và ba đường sóng mảnh trôi về vị trí            | Một lần, tối đa 4.8 giây, không chặn click                      |
+| Nội dung hero        | Hiện lần lượt với độ trễ ngắn                            | Dùng entrance hiện có, không chờ tải JS                         |
+| Collage              | Giữ parallax theo cuộn; badge đi vào nhẹ                 | Không tự chạy ảnh liên tục; không thay đổi khung layout         |
+| Section và lưới tour | Dịch lên nhẹ theo cuộn                                   | Không ẩn opacity; trình duyệt không hỗ trợ vẫn đọc đủ           |
+| Card tour            | Nâng 4.8 px, ảnh zoom 3.5%, viền và mũi tên chuyển mềm   | Chỉ hover chuột chính xác; touch không bị trạng thái hover dính |
+| Bàn phím             | Viền focus bao quanh card, đường màu và mũi tên phản hồi | Vùng click/link hiện hữu giữ nguyên                             |
 
 Không thêm thư viện/client JS cho animation. Chỉ animate transform/opacity; không animate blur hoặc kích thước layout. Tôn trọng prefers-reduced-motion, nội dung vẫn hiện ngay, print không có transform. Hiệu ứng nền kết thúc trước 5 giây và không lặp vô hạn.
 

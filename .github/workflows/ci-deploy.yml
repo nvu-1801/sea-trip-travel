@@ -31,6 +31,7 @@ jobs:
       - run: npm run verify:ui
       - run: npm run verify:tour-import
       - run: npm run verify:cms
+      - run: npm run verify:hero
       - name: Build production container
         run: docker build --build-arg APP_SHA="$GITHUB_SHA" -t sea-trip:check .
       - name: Smoke test container with persistent data and read-only filesystem

@@ -531,7 +531,8 @@ try {
   ).json();
   check(
     "all 28 original photos retained in media library",
-    library.filter((item) => item.original).length === 28,
+    library.filter((item) => item.original && !item.id.startsWith("hero:"))
+      .length === 28,
   );
   const linked = {
     ...source.data,

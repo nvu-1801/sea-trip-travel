@@ -8,6 +8,8 @@ import { DatabaseSync } from "node:sqlite";
 import { spawnSync } from "node:child_process";
 import { contentVersion, transaction } from "../src/server/cms/db";
 import { versionResponse } from "../src/server/cms/version-response";
+import { defaultHero, heroSchema } from "../src/domain/home-hero";
+import { homeHero } from "../src/server/cms/store";
 import { searchKey } from "../src/lib/search";
 import {
   resolveArticle,
@@ -392,4 +394,60 @@ test("public version endpoint exposes only its counter and supports conditional 
   );
   assert.equal(unchanged.status, 304);
   assert.equal(await unchanged.text(), "");
+});
+
+test("hero mode and both photo configurations survive draft, publish and switching", () => {
+  const row = list("hero")[0];
+  assert.equal(homeHero().mode, "carousel");
+  const draft = {
+    ...row.data,
+    mode: "collage",
+    vi: { ...defaultHero.vi, titleLine1: "Hero đang chuẩn bị" },
+  };
+  save("hero", draft, row.revision, "save");
+  assert.equal(homeHero().mode, "carousel");
+  assert.notEqual(homeHero().vi.titleLine1, "Hero đang chuẩn bị");
+  save("hero", draft, row.revision + 1, "publish");
+  assert.equal(homeHero().mode, "collage");
+  assert.equal(homeHero().vi.titleLine1, "Hero đang chuẩn bị");
+  assert.equal(homeHero().slides.length, 5);
+  save("hero", { ...draft, mode: "carousel" }, row.revision + 2, "publish");
+  assert.equal(homeHero().collageMain.src, defaultHero.collageMain.src);
+  assert.throws(() => save("hero", draft, row.revision + 3, "delete"));
+  assert.throws(() => save("hero", draft, row.revision, "publish"));
+});
+
+test("hero validation rejects empty/duplicate slides, unsafe links and excessive autoplay", () => {
+  assert.equal(
+    heroSchema.safeParse({ ...defaultHero, slides: [] }).success,
+    false,
+  );
+  assert.equal(
+    heroSchema.safeParse({
+      ...defaultHero,
+      slides: [defaultHero.slides[0], defaultHero.slides[0]],
+    }).success,
+    false,
+  );
+  for (const primaryHref of [
+    "javascript:alert(1)",
+    "//evil.test",
+    "/\\evil.test",
+    "/../admin",
+  ])
+    assert.equal(
+      heroSchema.safeParse({ ...defaultHero, primaryHref }).success,
+      false,
+    );
+  assert.equal(
+    heroSchema.safeParse({ ...defaultHero, intervalSeconds: 2 }).success,
+    false,
+  );
+  assert.equal(
+    heroSchema.safeParse({
+      ...defaultHero,
+      collageMain: { ...defaultHero.collageMain, positionX: 101 },
+    }).success,
+    false,
+  );
 });

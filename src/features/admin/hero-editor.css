@@ -1,0 +1,216 @@
+.adm-hero-editor {
+  display: grid;
+  gap: 28px;
+  min-width: 0;
+}
+.adm-hero-mode-picker {
+  border: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.adm-hero-mode-picker legend {
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.adm-hero-mode-picker > label {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid #e7d7df;
+  border-radius: 16px;
+  cursor: pointer;
+}
+.adm-hero-mode-picker > label[data-selected="true"] {
+  border-color: #d90057;
+  background: #fff3f7;
+  box-shadow: 0 0 0 1px #d90057;
+}
+.adm-hero-mode-picker > label > input {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 18px;
+  min-height: 18px;
+  accent-color: #d90057;
+}
+.adm-hero-mode-picker > label > span:last-child {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #786575;
+}
+.adm-hero-wireframe {
+  height: 90px;
+  max-width: 200px;
+  position: relative;
+  display: block;
+  margin: 8px 28px 6px 0;
+}
+.adm-hero-wireframe i {
+  position: absolute;
+  display: block;
+  background: #ead4df;
+  border-radius: 8px;
+}
+.adm-hero-wireframe-carousel i:first-child {
+  inset: 0;
+  background: linear-gradient(140deg, #bad4ce, #5f9d9b);
+}
+.adm-hero-wireframe-carousel i:nth-child(2) {
+  width: 52%;
+  height: 7px;
+  left: 12px;
+  bottom: 30px;
+  background: #fff;
+}
+.adm-hero-wireframe-carousel i:last-child {
+  width: 30%;
+  height: 5px;
+  left: 12px;
+  bottom: 16px;
+  background: #fff9;
+}
+.adm-hero-wireframe-collage i:first-child {
+  top: 25%;
+  left: 0;
+  width: 44%;
+  height: 10px;
+}
+.adm-hero-wireframe-collage i:nth-child(2) {
+  inset: 0 0 0 52%;
+  background: #9abdb3;
+}
+.adm-hero-wireframe-collage i:last-child {
+  bottom: -6px;
+  left: 45%;
+  width: 26%;
+  height: 42px;
+  border: 3px solid #fff;
+  background: #4f8e96;
+}
+.adm-hero-hint {
+  background: #fff6f9;
+  padding: 14px 18px;
+  border-left: 3px solid #d90057;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.adm-hero-copy-editor {
+  border-bottom: 1px solid #eddee4;
+  padding-bottom: 24px;
+  display: grid;
+  gap: 14px;
+}
+.adm-hero-copy-editor > p,
+.adm-hero-playback > p {
+  color: #786575;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.adm-hero-language,
+.adm-hero-slide-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.adm-hero-language button[aria-pressed="true"] {
+  background: #d90057;
+  color: #fff;
+}
+.adm-hero-image-picker {
+  border: 1px solid #eddee4;
+  border-radius: 14px;
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.adm-hero-image-picker legend {
+  font-weight: 650;
+  padding-inline: 6px;
+}
+.adm-hero-image-preview {
+  position: relative;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #eee3e8;
+}
+.adm-hero-image-picker label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.adm-hero-image-picker input,
+.adm-hero-image-picker select {
+  width: 100%;
+  min-width: 0;
+}
+.adm-hero-focal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+.adm-hero-focal input {
+  grid-row: 2;
+  min-height: 32px;
+  padding: 0;
+  accent-color: #d90057;
+}
+.adm-hero-collage-images {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.adm-hero-slide {
+  border: 1px solid #eddee4;
+  border-radius: 14px;
+  padding: 18px;
+}
+.adm-hero-slide > summary {
+  font-weight: 650;
+  cursor: pointer;
+  display: list-item;
+}
+.adm-hero-slide > summary > span {
+  color: #d90057;
+  font-size: 12px;
+  margin-right: 14px;
+}
+.adm-hero-slide > .adm-hero-slide-toolbar {
+  margin: 18px 0;
+}
+.adm-hero-slide > .adm-object {
+  margin-top: 18px;
+}
+.adm-hero-slide-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.adm-hero-slide-heading small {
+  font-size: 12px;
+  color: #786575;
+}
+.adm-hero-playback {
+  display: grid;
+  gap: 14px;
+}
+.adm-hero-playback input[type="number"] {
+  max-width: 160px;
+  margin-left: 14px;
+}
+@media (max-width: 640px) {
+  .adm-hero-mode-picker,
+  .adm-hero-collage-images {
+    grid-template-columns: 1fr;
+  }
+  .adm-hero-mode-picker > label {
+    padding: 16px;
+  }
+  .adm-hero-image-picker {
+    padding: 12px;
+  }
+}

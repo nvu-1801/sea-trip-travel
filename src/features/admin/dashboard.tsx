@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
 import { useContentUpdates } from "@/lib/use-content-updates";
+import { HeroEditor } from "./hero-editor";
+import type { HeroConfig } from "@/domain/home-hero";
 type RecordRow = {
   id: string;
   data: Record<string, EditorValue>;
@@ -24,6 +26,7 @@ const tabs = [
   ["articles", "Cẩm nang", "▤"],
   ["categories", "Danh mục", "▦"],
   ["destinations", "Điểm đến", "◎"],
+  ["hero", "Giao diện trang chủ", "◫"],
   ["media", "Thư viện ảnh", "▧"],
   ["messages", "Nội dung VI / EN", "Aa"],
   ["settings", "Website & footer", "⚙"],
@@ -56,6 +59,23 @@ const LIFECYCLE: Guide = {
     "Hai người cùng sửa: phiên cũ bị từ chối ghi đè — tải lại trang trước khi lưu tiếp.",
 };
 const GUIDES: Record<string, Guide> = {
+  hero: {
+    purpose:
+      "Chọn giữa carousel ảnh lớn và bố cục ảnh ghép cho section đầu trang chủ.",
+    steps: [
+      "Chỉnh sửa cấu hình home, chọn kiểu section đầu.",
+      "Chọn ảnh từ thư viện; chỉnh vị trí ngang/dọc để giữ chủ thể trên màn hình nhỏ.",
+      "Nhập nội dung tiếng Việt/English và các đường dẫn CTA nội bộ.",
+      "Carousel cho phép thêm, bỏ, đổi thứ tự slide và bật/tắt tự chuyển.",
+      "Lưu nháp chưa đổi website. Xuất bản để các trang đang mở cập nhật trong khoảng 5 giây.",
+    ],
+    required:
+      "Luôn giữ 1–8 slide, mô tả ảnh, chú thích VI/EN; đường dẫn nút bắt đầu bằng /.",
+    result:
+      "Chuyển kiểu không làm mất cấu hình của kiểu còn lại. Bỏ slide không xoá file ảnh.",
+    pitfalls:
+      "Tự chuyển dừng khi giảm chuyển động, tab ẩn hoặc thao tác bàn phím. Ảnh mới tải ở Thư viện ảnh trước khi chọn.",
+  },
   tours: {
     purpose:
       "Quản lý tour: thông tin, ảnh, lịch trình, thời lượng, danh mục/điểm đến, bảng giá và SEO.",
@@ -1031,9 +1051,13 @@ export function Dashboard({
                   ← Danh sách
                 </button>
                 <h2>
-                  {String(
-                    selected.data.title ?? selected.data.name ?? selected.id,
-                  )}
+                  {tab === "hero"
+                    ? "Khối mở đầu trang chủ"
+                    : String(
+                        selected.data.title ??
+                          selected.data.name ??
+                          selected.id,
+                      )}
                 </h2>
                 <p>
                   {selected.state === "published"
@@ -1055,111 +1079,130 @@ export function Dashboard({
                 </Link>
               )}
             </div>
-            <div className="adm-optional">
-              <p>Thêm phần nội dung cần dùng:</p>
-              {Object.entries(
-                tab === "tours"
-                  ? {
-                      seo: { title: "", description: "" },
-                      priceNote: "",
-                      tourCode: "",
-                      _en: {
-                        title: String(selected.data.title ?? ""),
-                        summary: String(selected.data.summary ?? ""),
-                        overview: selected.data.overview,
-                        itinerary: selected.data.itinerary,
-                        highlights: selected.data.highlights,
-                        included: selected.data.included,
-                        excluded: selected.data.excluded,
-                        notes: selected.data.notes,
-                        policies: selected.data.policies,
-                        tags: selected.data.tags,
-                      },
-                      _enReviewed: false,
-                    }
-                  : tab === "articles"
+            {tab !== "hero" && (
+              <div className="adm-optional">
+                <p>Thêm phần nội dung cần dùng:</p>
+                {Object.entries(
+                  tab === "tours"
                     ? {
                         seo: { title: "", description: "" },
-                        readingMinutes: 5,
+                        priceNote: "",
+                        tourCode: "",
                         _en: {
                           title: String(selected.data.title ?? ""),
-                          excerpt: String(selected.data.excerpt ?? ""),
-                          body: selected.data.body,
+                          summary: String(selected.data.summary ?? ""),
+                          overview: selected.data.overview,
+                          itinerary: selected.data.itinerary,
+                          highlights: selected.data.highlights,
+                          included: selected.data.included,
+                          excluded: selected.data.excluded,
+                          notes: selected.data.notes,
+                          policies: selected.data.policies,
                           tags: selected.data.tags,
                         },
                         _enReviewed: false,
                       }
-                    : tab === "categories"
+                    : tab === "articles"
                       ? {
+                          seo: { title: "", description: "" },
+                          readingMinutes: 5,
                           _en: {
-                            name: String(selected.data.name ?? ""),
-                            description: String(
-                              selected.data.description ?? "",
-                            ),
+                            title: String(selected.data.title ?? ""),
+                            excerpt: String(selected.data.excerpt ?? ""),
+                            body: selected.data.body,
+                            tags: selected.data.tags,
                           },
                           _enReviewed: false,
                         }
-                      : tab === "destinations"
+                      : tab === "categories"
                         ? {
                             _en: {
                               name: String(selected.data.name ?? ""),
-                              summary: String(selected.data.summary ?? ""),
+                              description: String(
+                                selected.data.description ?? "",
+                              ),
                             },
                             _enReviewed: false,
                           }
-                        : {},
-              )
-                .filter(([key]) => !(key in selected.data))
-                .map(([key, value]) => (
+                        : tab === "destinations"
+                          ? {
+                              _en: {
+                                name: String(selected.data.name ?? ""),
+                                summary: String(selected.data.summary ?? ""),
+                              },
+                              _enReviewed: false,
+                            }
+                          : {},
+                )
+                  .filter(([key]) => !(key in selected.data))
+                  .map(([key, value]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        setSelected({
+                          ...selected,
+                          data: {
+                            ...selected.data,
+                            [key]: value as EditorValue,
+                          },
+                        });
+                        setDirty(true);
+                      }}
+                    >
+                      ＋{" "}
+                      {key === "_en"
+                        ? "Nội dung tiếng Anh"
+                        : key === "_enReviewed"
+                          ? "Trạng thái duyệt bản dịch"
+                          : key}
+                    </button>
+                  ))}
+                {tab === "tours" && selected.data.priceFrom !== null && (
                   <button
-                    key={key}
-                    type="button"
                     onClick={() => {
                       setSelected({
                         ...selected,
-                        data: { ...selected.data, [key]: value as EditorValue },
+                        data: {
+                          ...selected.data,
+                          priceFrom: null,
+                          pricingOptions: [],
+                        },
                       });
                       setDirty(true);
                     }}
                   >
-                    ＋{" "}
-                    {key === "_en"
-                      ? "Nội dung tiếng Anh"
-                      : key === "_enReviewed"
-                        ? "Trạng thái duyệt bản dịch"
-                        : key}
+                    Chuyển giá thành liên hệ tư vấn
                   </button>
-                ))}
-              {tab === "tours" && selected.data.priceFrom !== null && (
-                <button
-                  onClick={() => {
-                    setSelected({
-                      ...selected,
-                      data: {
-                        ...selected.data,
-                        priceFrom: null,
-                        pricingOptions: [],
-                      },
-                    });
-                    setDirty(true);
-                  }}
-                >
-                  Chuyển giá thành liên hệ tư vấn
-                </button>
-              )}
-            </div>
-            <Editor
-              references={references}
-              value={selected.data}
-              locked={selected.revision > 0}
-              onChange={(data) => {
-                setSelected({
-                  ...selected,
-                  data: data as Record<string, EditorValue>,
-                });
-                setDirty(true);
-              }}
-            />
+                )}
+              </div>
+            )}
+            {tab === "hero" ? (
+              <HeroEditor
+                value={selected.data as unknown as HeroConfig}
+                references={references}
+                onChange={(data) => {
+                  setSelected({
+                    ...selected,
+                    data: data as unknown as Record<string, EditorValue>,
+                  });
+                  setDirty(true);
+                }}
+              />
+            ) : (
+              <Editor
+                references={references}
+                value={selected.data}
+                locked={selected.revision > 0}
+                onChange={(data) => {
+                  setSelected({
+                    ...selected,
+                    data: data as Record<string, EditorValue>,
+                  });
+                  setDirty(true);
+                }}
+              />
+            )}
             <div className="adm-savebar">
               <button disabled={busy} onClick={() => void save("save")}>
                 Lưu bản nháp
@@ -1171,7 +1214,7 @@ export function Dashboard({
               >
                 {busy ? "Đang lưu…" : "Xuất bản thay đổi ↗"}
               </button>
-              {!["settings", "messages"].includes(tab) && (
+              {!["settings", "messages", "hero"].includes(tab) && (
                 <button
                   disabled={busy}
                   onClick={() => {
@@ -1227,7 +1270,7 @@ export function Dashboard({
                     {rows.filter((r) => r.state === "deleted").length})
                   </option>
                 </select>
-                {!["messages", "settings"].includes(tab) && (
+                {!["messages", "settings", "hero"].includes(tab) && (
                   <button
                     className="adm-primary"
                     disabled={busy}
@@ -1252,7 +1295,9 @@ export function Dashboard({
                             : "Bản nháp"}
                       </span>
                       <h2>
-                        {String(row.data.title ?? row.data.name ?? row.id)}
+                        {tab === "hero"
+                          ? "Section đầu trang chủ"
+                          : String(row.data.title ?? row.data.name ?? row.id)}
                       </h2>
                       <p>
                         {String(
@@ -1277,7 +1322,7 @@ export function Dashboard({
                       >
                         Chỉnh sửa ↗
                       </button>
-                      {!["settings", "messages"].includes(tab) && (
+                      {!["settings", "messages", "hero"].includes(tab) && (
                         <button
                           onClick={() => {
                             const action =

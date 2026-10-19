@@ -33,7 +33,13 @@ export type NavLabels = {
  *   - Escape closes and returns focus to the trigger
  *   - focus leaving the item closes it
  */
-export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabels }) {
+export function DesktopNav({
+  locale,
+  labels,
+}: {
+  locale: Locale;
+  labels: NavLabels;
+}) {
   const pathname = usePathname();
   // Links are authored in their Vietnamese-canonical form; strip any prefix
   // before comparing so EN pages still highlight the right item.
@@ -103,7 +109,9 @@ export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabe
     return (
       currentPath === href ||
       currentPath.startsWith(`${href}/`) ||
-      childHrefs.some((child) => currentPath === child || currentPath.startsWith(`${child}/`))
+      childHrefs.some(
+        (child) => currentPath === child || currentPath.startsWith(`${child}/`),
+      )
     );
   };
 
@@ -111,7 +119,9 @@ export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabe
     cn(
       "group/item relative inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2",
       "text-[0.8125rem] font-semibold transition-colors duration-200 hover:bg-primary-soft/70",
-      active || expanded ? "text-primary-strong" : "text-foreground hover:text-primary-strong",
+      active || expanded
+        ? "text-primary-strong"
+        : "text-foreground hover:text-primary-strong",
     );
 
   const underlineClass = (active: boolean) =>
@@ -122,7 +132,10 @@ export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabe
     );
 
   return (
-    <nav aria-label={labels.header.primaryNavAria} className="hidden min-w-0 xl:block">
+    <nav
+      aria-label={labels.header.primaryNavAria}
+      className="stt-desktop-nav hidden min-w-0 xl:block"
+    >
       <ul className="flex items-center gap-0.5 xl:gap-1">
         {primaryNav.map((item) => {
           const label = labels.nav[item.labelKey];
@@ -140,7 +153,10 @@ export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabe
                 >
                   <span className="relative">
                     {label}
-                    <span aria-hidden="true" className={underlineClass(active)} />
+                    <span
+                      aria-hidden="true"
+                      className={underlineClass(active)}
+                    />
                   </span>
                 </Link>
               </li>
@@ -160,7 +176,11 @@ export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabe
                 onMouseEnter={() => open(item.labelKey)}
                 onMouseLeave={scheduleClose}
                 onBlur={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                  if (
+                    !event.currentTarget.contains(
+                      event.relatedTarget as Node | null,
+                    )
+                  ) {
                     applyOpen(null);
                   }
                 }}
@@ -183,7 +203,10 @@ export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabe
                 >
                   <span className="relative">
                     {label}
-                    <span aria-hidden="true" className={underlineClass(active || expanded)} />
+                    <span
+                      aria-hidden="true"
+                      className={underlineClass(active || expanded)}
+                    />
                   </span>
                   <ChevronDownIcon
                     className={cn(
@@ -235,7 +258,7 @@ export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabe
                     </p>
                   ) : null}
 
-                  <ul className="mt-1">
+                  <ul className="mt-2 flex flex-wrap gap-2">
                     {item.children.map((child) => (
                       <li key={child.href}>
                         <Link
@@ -243,19 +266,23 @@ export function DesktopNav({ locale, labels }: { locale: Locale; labels: NavLabe
                           data-nav-panel-link=""
                           tabIndex={expanded ? 0 : -1}
                           onClick={() => applyOpen(null)}
-                          aria-current={currentPath === child.href ? "page" : undefined}
+                          aria-current={
+                            currentPath === child.href ? "page" : undefined
+                          }
                           className={cn(
-                            "flex items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
+                            "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-semibold whitespace-nowrap transition-all duration-200 hover:-translate-y-px",
                             currentPath === child.href
-                              ? "bg-surface-sunken text-primary-strong"
-                              : "text-foreground hover:bg-surface-muted hover:text-primary-strong",
+                              ? "border-primary-strong bg-primary-soft text-primary-strong shadow-[0_6px_16px_#e0005a18]"
+                              : "border-border-strong bg-surface text-foreground-muted hover:border-primary-strong hover:bg-primary-soft hover:text-primary-strong hover:shadow-[0_6px_16px_#e0005a18]",
                           )}
                         >
                           {labels.nav[child.labelKey]}
                           <span
                             aria-hidden="true"
-                            className="h-px w-4 bg-border-strong transition-all duration-300 group-hover:w-6"
-                          />
+                            className="text-[11px] leading-none"
+                          >
+                            ↗
+                          </span>
                         </Link>
                       </li>
                     ))}

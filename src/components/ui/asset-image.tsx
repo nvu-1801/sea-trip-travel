@@ -41,6 +41,8 @@ export type AssetImageInput = {
   alt: string;
   width?: number;
   height?: number;
+  positionX?: number;
+  positionY?: number;
 };
 
 type AssetImageProps = {
@@ -85,7 +87,10 @@ export function AssetImage({
     return (
       <div
         data-parallax={parallax ? "" : undefined}
-        className={cn("relative isolate overflow-hidden bg-surface-sunken", className)}
+        className={cn(
+          "relative isolate overflow-hidden bg-surface-sunken",
+          className,
+        )}
       >
         <Image
           src={src}
@@ -93,6 +98,13 @@ export function AssetImage({
           fill
           sizes={sizes}
           priority={priority}
+          style={
+            image?.positionX !== undefined || image?.positionY !== undefined
+              ? {
+                  objectPosition: `${image?.positionX ?? 50}% ${image?.positionY ?? 50}%`,
+                }
+              : undefined
+          }
           className={fit === "contain" ? "object-contain" : "object-cover"}
         />
       </div>
