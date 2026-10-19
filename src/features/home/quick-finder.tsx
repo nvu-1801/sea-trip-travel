@@ -25,6 +25,7 @@ export function QuickFinder({ locale }: { locale: Locale }) {
     <section id="tim-hanh-trinh" className="stt-finder-section">
       <Container>
         <div className="stt-finder-island">
+          <div className="stt-finder-glow" aria-hidden="true" />
           <div className="stt-finder-intro">
             <span className="stt-finder-symbol" aria-hidden="true">
               <CompassIcon className="h-6 w-6" />

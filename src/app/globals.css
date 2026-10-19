@@ -834,16 +834,23 @@ select option {
   padding: 28px 30px;
   border: 1px solid var(--color-border);
   border-radius: 28px;
-  background:
-    radial-gradient(120% 100% at 6% 0%, #ffe4ef 0%, transparent 52%),
-    radial-gradient(90% 80% at 100% 100%, #fff6e8 0%, transparent 50%),
-    var(--color-surface);
+  background: var(--color-surface);
   box-shadow:
     0 16px 60px #ad3d5512,
     inset 0 1px 0 #ffffff;
-  overflow: hidden;
+  overflow: visible;
 }
-.stt-finder-island:before {
+.stt-finder-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 100% at 6% 0%, #ffe4ef 0%, transparent 52%),
+    radial-gradient(90% 80% at 100% 100%, #fff6e8 0%, transparent 50%);
+}
+.stt-finder-glow:before {
   content: "";
   position: absolute;
   right: -50px;
@@ -854,6 +861,10 @@ select option {
   border-radius: 50%;
   transform: rotate(-20deg);
   pointer-events: none;
+}
+.stt-finder-island > :not(.stt-finder-glow) {
+  position: relative;
+  z-index: 1;
 }
 .stt-finder-intro {
   display: flex;
