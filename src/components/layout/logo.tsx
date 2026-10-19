@@ -1,4 +1,6 @@
+"use client";
 import Image from "next/image";
+import { useSiteContact } from "./site-context";
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
@@ -30,6 +32,7 @@ export function Logo({
   tagline?: string;
   priority?: boolean;
 }) {
+  const identity = useSiteContact();
   const markClass =
     size === "sm"
       ? "h-8 w-8"
@@ -64,7 +67,7 @@ export function Logo({
             wordClass,
           )}
         >
-          {siteConfig.name}
+          {identity.name ?? siteConfig.name}
         </span>
         {showTagline ? (
           <span className="mt-1 whitespace-nowrap text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-foreground-muted">
@@ -90,13 +93,22 @@ export function LogoLink({
   priority?: boolean;
 }) {
   const m = getMessages(locale);
+  const identity = useSiteContact();
   return (
     <Link
       href={localizePath(locale, "/")}
-      className={cn("inline-flex min-h-11 shrink-0 items-center rounded-sm", className)}
-      aria-label={`${siteConfig.name} – ${m.common.home}`}
+      className={cn(
+        "inline-flex min-h-11 shrink-0 items-center rounded-sm",
+        className,
+      )}
+      aria-label={`${identity.name ?? siteConfig.name} – ${m.common.home}`}
     >
-      <Logo size={size} showTagline={showTagline} tagline={m.site.tagline} priority={priority} />
+      <Logo
+        size={size}
+        showTagline={showTagline}
+        tagline={m.site.tagline}
+        priority={priority}
+      />
     </Link>
   );
 }

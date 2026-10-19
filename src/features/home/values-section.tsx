@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { AssetImage } from "@/components/ui/asset-image";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import type { Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
 /**
@@ -24,7 +24,7 @@ export function ValuesSection({ locale }: { locale: Locale }) {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-5">
             <Reveal>
-              <div className="relative">
+              <div className="stt-mask-reveal relative">
                 <AssetImage
                   image={{ alt: m.home.values.imageAlt }}
                   sizes="(max-width: 1024px) 90vw, 30vw"
@@ -62,7 +62,9 @@ export function ValuesSection({ locale }: { locale: Locale }) {
                       {index + 1}
                     </span>
                     <div>
-                      <h3 className="text-base font-bold text-foreground">{principle.title}</h3>
+                      <h3 className="text-base font-bold text-foreground">
+                        {principle.title}
+                      </h3>
                       <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-foreground-muted">
                         {principle.body}
                       </p>
@@ -73,7 +75,10 @@ export function ValuesSection({ locale }: { locale: Locale }) {
             </ol>
 
             <Reveal>
-              <ButtonLink href={localizePath(locale, ROUTES.contact)} className="mt-9">
+              <ButtonLink
+                href={localizePath(locale, ROUTES.contact)}
+                className="mt-9"
+              >
                 {m.home.values.cta}
                 <ArrowRightIcon className="h-4 w-4" />
               </ButtonLink>

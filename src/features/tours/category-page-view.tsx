@@ -25,7 +25,7 @@ import { categoryTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
 import { absoluteUrl } from "@/lib/seo";
 import type { Locale } from "@/i18n/config";
-import { format, getMessages } from "@/i18n/messages";
+import { format, getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { ROUTES } from "@/config/navigation";
 
@@ -39,10 +39,13 @@ import { ROUTES } from "@/config/navigation";
 function crumbsFor(path: string, locale: Locale): Crumb[] {
   const m = getMessages(locale);
   const category = getCategoryByPath(path, locale);
-  if (!category) return [{ label: m.common.home, href: localizePath(locale, "/") }];
+  if (!category)
+    return [{ label: m.common.home, href: localizePath(locale, "/") }];
 
   const trail = getCategoryTrail(category.id, locale);
-  const crumbs: Crumb[] = [{ label: m.common.home, href: localizePath(locale, "/") }];
+  const crumbs: Crumb[] = [
+    { label: m.common.home, href: localizePath(locale, "/") },
+  ];
   trail.forEach((item, index) => {
     const isLast = index === trail.length - 1;
     crumbs.push(
@@ -54,7 +57,10 @@ function crumbsFor(path: string, locale: Locale): Crumb[] {
   return crumbs;
 }
 
-export function buildCategoryMetadata(categoryPath: string, locale: Locale): Metadata {
+export function buildCategoryMetadata(
+  categoryPath: string,
+  locale: Locale,
+): Metadata {
   const m = getMessages(locale);
   const category = getCategoryByPath(categoryPath, locale);
   if (!category) {
@@ -68,7 +74,10 @@ export function buildCategoryMetadata(categoryPath: string, locale: Locale): Met
     });
   }
 
-  const indexable = isIndexable(categoryTranslationStatus(category.id, locale), locale);
+  const indexable = isIndexable(
+    categoryTranslationStatus(category.id, locale),
+    locale,
+  );
 
   return buildMetadata({
     title: category.seo?.title ?? category.name,
@@ -92,7 +101,9 @@ export function CategoryPageView({
   if (!category) notFound();
 
   const children = getChildCategories(category.id, locale);
-  const parent = category.parentId ? getCategoryById(category.parentId, locale) : undefined;
+  const parent = category.parentId
+    ? getCategoryById(category.parentId, locale)
+    : undefined;
 
   const tours = getToursByCategoryId(category.id, locale).map((tour) =>
     toTourCard(tour, locale),
@@ -101,13 +112,18 @@ export function CategoryPageView({
   const crumbs = crumbsFor(categoryPath, locale);
 
   const siblings = parent
-    ? getChildCategories(parent.id, locale).filter((item) => item.id !== category.id)
+    ? getChildCategories(parent.id, locale).filter(
+        (item) => item.id !== category.id,
+      )
     : getCategories(locale).filter(
         (item) => item.parentId === null && item.id !== category.id,
       );
 
   const descendantCount = getCategoryAndDescendantIds(category.id).length;
-  const indexable = isIndexable(categoryTranslationStatus(category.id, locale), locale);
+  const indexable = isIndexable(
+    categoryTranslationStatus(category.id, locale),
+    locale,
+  );
 
   return (
     <>
@@ -117,7 +133,10 @@ export function CategoryPageView({
           name: category.name,
           description: category.description,
           url: absoluteUrl(localizePath(locale, category.path)),
-          tours: tours.map((tour) => ({ title: tour.title, url: absoluteUrl(tour.href) })),
+          tours: tours.map((tour) => ({
+            title: tour.title,
+            url: absoluteUrl(tour.href),
+          })),
           locale,
         })}
       />
@@ -143,7 +162,8 @@ export function CategoryPageView({
         <Container>
           <div className="relative flex flex-col gap-5 py-12 sm:py-16">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary-strong">
-              {parent ? parent.name : m.tour.categoryFallback} · {m.regions[category.region]}
+              {parent ? parent.name : m.tour.categoryFallback} ·{" "}
+              {m.regions[category.region]}
             </p>
 
             <h1 className="max-w-3xl text-display font-display font-semibold text-foreground">
@@ -177,7 +197,9 @@ export function CategoryPageView({
 
       <Section tone="default" spacing="default">
         <Container>
-          <h2 className="sr-only">{format(m.category.listHeadingSr, { name: category.name })}</h2>
+          <h2 className="sr-only">
+            {format(m.category.listHeadingSr, { name: category.name })}
+          </h2>
           <Reveal>
             <TourExplorer
               tours={tours}

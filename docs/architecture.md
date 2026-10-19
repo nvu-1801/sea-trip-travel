@@ -194,3 +194,9 @@ Bất biến:
 5. **i18n first-party.** `next-intl` chưa hỗ trợ `cacheComponents`
    (`amannn/next-intl#1493`), nên không thêm dependency ngoài.
 
+# Cập nhật CMS/VPS — 18/10/2026
+
+`CMS_ENABLED=1` dùng SQLite và snapshot xuất bản qua `src/server/cms`, giữ TypeScript làm seed; `CMS_ENABLED=0` giữ nguồn seed phục vụ kiểm tra regression. Các route public render động để publish/ẩn/thêm slug có hiệu lực ngay, không dùng Cache Components cho bản CMS. `src/i18n/server.ts` đọc copy runtime; các client chỉ nhận dữ liệu cần thiết qua props/context. `/admin` có root layout riêng, không đi qua locale rewrite. `SITE_URL` là URL server cấu hình được lúc chạy Docker.
+
+CMS lưu revision/nháp/public/thùng rác, kiểm tra domain schema và tham chiếu. Dữ liệu khách/ghi chú mã hóa AES-GCM, session chỉ lưu hash. Giới hạn đăng nhập/lead và idempotency dùng SQLite trên VPS một instance. Đổi nguồn đã xuất bản khiến bản dịch seed cũ không được âm thầm dùng lại. Xem [hướng dẫn triển khai](VPS-DEPLOY.md), [hướng dẫn chủ quản trị](CMS-OWNER-GUIDE.md) và [báo cáo nghiệm thu](IMPLEMENTATION-2026-10.md). Phần mô tả dưới đây là kiến trúc seed ban đầu, cần đọc cùng cập nhật này.
+

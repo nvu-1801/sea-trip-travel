@@ -1,13 +1,27 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { leadInputSchema, type LeadResponse, type UtmParams } from "@/domain/lead";
+import {
+  leadInputSchema,
+  type LeadResponse,
+  type UtmParams,
+} from "@/domain/lead";
 import type { Locale } from "@/i18n/config";
-import { siteConfig } from "@/config/site";
-import { CheckCircleIcon, AlertIcon, SendIcon, SpinnerIcon } from "@/components/ui/icons";
+import { useSiteContact } from "@/components/layout/site-context";
+import {
+  CheckCircleIcon,
+  AlertIcon,
+  SendIcon,
+  SpinnerIcon,
+} from "@/components/ui/icons";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { DatePicker, type DatePickerLabels } from "@/components/ui/date-picker";
-import { Checkbox, Field, Input, Textarea } from "@/components/ui/form-controls";
+import {
+  Checkbox,
+  Field,
+  Input,
+  Textarea,
+} from "@/components/ui/form-controls";
 import { cn } from "@/lib/utils";
 import { setFormDirty } from "./draft-guard";
 
@@ -35,7 +49,12 @@ export type LeadFormLabels = {
     partySize: string;
     message: string;
   };
-  hints: { phone: string; travelDate: string; partySize: string; message: string };
+  hints: {
+    phone: string;
+    travelDate: string;
+    partySize: string;
+    message: string;
+  };
   placeholders: {
     fullName: string;
     phone: string;
@@ -78,7 +97,10 @@ export type LeadFormLabels = {
   datePicker: DatePickerLabels;
 };
 
-const clientSchema = leadInputSchema.omit({ company: true, submissionId: true });
+const clientSchema = leadInputSchema.omit({
+  company: true,
+  submissionId: true,
+});
 
 type Values = {
   fullName: string;
@@ -102,7 +124,13 @@ const EMPTY: Values = {
   consent: false,
 };
 
-const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+const UTM_KEYS = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+] as const;
 
 /** Pathname only, plus whitelisted UTM keys — never the raw query string. */
 function collectContext(): { sourcePage?: string; utm?: UtmParams } {
@@ -135,6 +163,7 @@ export function LeadForm({
   className?: string;
   compact?: boolean;
 }) {
+  const contact = useSiteContact();
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const id = (name: string) => `lead-${uid}-${name}`;
 
@@ -143,7 +172,9 @@ export function LeadForm({
     interest: defaultInterest ?? "",
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "submitting" | "success" | "error"
+  >("idle");
   const [systemMessage, setSystemMessage] = useState<string | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
 
@@ -215,8 +246,11 @@ export function LeadForm({
     setSystemMessage(null);
     setFieldErrors({});
 
-    const honeypot = (event.currentTarget.elements.namedItem("company") as HTMLInputElement | null)
-      ?.value;
+    const honeypot = (
+      event.currentTarget.elements.namedItem(
+        "company",
+      ) as HTMLInputElement | null
+    )?.value;
 
     try {
       const response = await fetch("/api/leads", {
@@ -225,11 +259,15 @@ export function LeadForm({
         body: JSON.stringify({
           ...payload,
           company: honeypot ?? "",
-          ...(submissionIdRef.current ? { submissionId: submissionIdRef.current } : {}),
+          ...(submissionIdRef.current
+            ? { submissionId: submissionIdRef.current }
+            : {}),
         }),
       });
 
-      const data = (await response.json().catch(() => null)) as LeadResponse | null;
+      const data = (await response
+        .json()
+        .catch(() => null)) as LeadResponse | null;
 
       if (response.ok && data?.ok) {
         setRequestId(data.requestId);
@@ -252,7 +290,7 @@ export function LeadForm({
       }
       const template = error ? labels.errors[error.code] : undefined;
       setSystemMessage(
-        (template ?? labels.genericError).replace("{phone}", siteConfig.contact.hotline),
+        (template ?? labels.genericError).replace("{phone}", contact.hotline),
       );
       setStatus("error");
       if (error?.fieldErrors) focusFirstError(error.fieldErrors);
@@ -278,11 +316,15 @@ export function LeadForm({
       >
         <CheckCircleIcon className="h-10 w-10 text-success" />
         <div>
-          <h3 className="text-xl font-bold text-foreground">{labels.success.title}</h3>
+          <h3 className="text-xl font-bold text-foreground">
+            {labels.success.title}
+          </h3>
           {requestId ? (
             <p className="mt-1 text-sm text-foreground-muted">
               {labels.success.requestId}{" "}
-              <strong className="font-semibold text-foreground">{requestId}</strong>
+              <strong className="font-semibold text-foreground">
+                {requestId}
+              </strong>
             </p>
           ) : null}
         </div>
@@ -291,7 +333,7 @@ export function LeadForm({
         </p>
         <div className="flex flex-wrap gap-2">
           <ButtonLink
-            href={siteConfig.contact.hotlineHref}
+            href={contact.hotlineHref}
             variant="secondary"
             size="md"
             external
@@ -322,7 +364,10 @@ export function LeadForm({
       className={cn("flex flex-col gap-5", className)}
     >
       {/* Honeypot: off-screen, not announced, not tabbable. */}
-      <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden opacity-0">
+      <div
+        aria-hidden="true"
+        className="absolute h-0 w-0 overflow-hidden opacity-0"
+      >
         <label htmlFor={id("company")}>{labels.company}</label>
         <input
           id={id("company")}
@@ -501,7 +546,9 @@ export function LeadForm({
           role={errorFor("consent") ? "alert" : undefined}
           className={cn(
             "flex min-h-4 items-start gap-1.5 text-xs leading-4",
-            errorFor("consent") ? "font-medium text-danger" : "text-foreground-subtle",
+            errorFor("consent")
+              ? "font-medium text-danger"
+              : "text-foreground-subtle",
           )}
         >
           {errorFor("consent") ? (
@@ -540,7 +587,9 @@ export function LeadForm({
             </>
           )}
         </Button>
-        <p className="text-xs leading-relaxed text-foreground-subtle">{labels.footnote}</p>
+        <p className="text-xs leading-relaxed text-foreground-subtle">
+          {labels.footnote}
+        </p>
       </div>
 
       <div aria-live="polite" className="sr-only">

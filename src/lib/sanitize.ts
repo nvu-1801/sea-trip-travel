@@ -1,4 +1,4 @@
-import { siteConfig } from "@/config/site";
+import { siteConfig } from "@/config/runtime-site";
 
 /**
  * Output-safety helpers.
@@ -30,7 +30,9 @@ export function safeTelHref(phone: string): string | null {
 }
 
 /** `mailto:` href only when the address is strictly well formed. */
-export function safeMailtoHref(email: string | undefined | null): string | null {
+export function safeMailtoHref(
+  email: string | undefined | null,
+): string | null {
   if (!email) return null;
   if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return null;
   // encodeURIComponent leaves no room for a second header or a scheme break-out.

@@ -1,15 +1,19 @@
-import { cacheLife } from "next/cache";
+import { settings } from "@/server/cms/store";
 import Link from "next/link";
-import { footerLegalNav, ROUTES } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
-import { primarySocialLinks, secondarySocialLinks } from "@/config/social-links";
+
 import { getCategories } from "@/lib/data/categories";
 import { Container } from "@/components/ui/layout";
-import { MailIcon, MapPinIcon, PhoneIcon, ClockIcon } from "@/components/ui/icons";
+import {
+  MailIcon,
+  MapPinIcon,
+  PhoneIcon,
+  ClockIcon,
+} from "@/components/ui/icons";
 import type { Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { Logo } from "./logo";
+import { MotionControl } from "@/features/home/motion-control";
 
 /**
  * Copyright year.
@@ -19,8 +23,6 @@ import { Logo } from "./logo";
  * output until the cache lifetime lapses — which is exactly right for a year.
  */
 async function CopyrightYear() {
-  "use cache";
-  cacheLife("days");
   return <>{new Date().getFullYear()}</>;
 }
 
@@ -37,7 +39,10 @@ function renderCopyright(template: string, name: string): React.ReactNode {
 function FooterHeading({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="flex items-center gap-2.5 text-sm font-bold uppercase tracking-wider text-foreground">
-      <span aria-hidden="true" className="brand-gradient h-0.5 w-5 rounded-full" />
+      <span
+        aria-hidden="true"
+        className="brand-gradient h-0.5 w-5 rounded-full"
+      />
       {children}
     </h2>
   );
@@ -48,8 +53,15 @@ const linkClass =
 
 export function SiteFooter({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const topLevel = getCategories(locale).filter((category) => category.parentId === null);
-  const socials = [...primarySocialLinks, ...secondarySocialLinks];
+  const config = settings();
+  const topLevel = getCategories(locale).filter(
+    (category) => category.parentId === null,
+  );
+  const socials = config.socialLinks.map((item, index) => ({
+    key: String(index),
+    label: item.label,
+    url: item.href,
+  }));
 
   return (
     <footer className="bg-surface-sunken">
@@ -73,7 +85,10 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             <ul className="mt-5 space-y-3 text-sm">
               {topLevel.map((category) => (
                 <li key={category.id}>
-                  <Link href={localizePath(locale, category.path)} className={linkClass}>
+                  <Link
+                    href={localizePath(locale, category.path)}
+                    className={linkClass}
+                  >
                     {category.name}
                   </Link>
                 </li>
@@ -84,20 +99,17 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <nav aria-label={m.footer.infoAria} className="lg:col-span-2">
             <FooterHeading>{m.footer.infoTitle}</FooterHeading>
             <ul className="mt-5 space-y-3 text-sm">
-              <li>
-                <Link href={localizePath(locale, ROUTES.guides)} className={linkClass}>
-                  {m.nav.guides}
-                </Link>
-              </li>
-              <li>
-                <Link href={localizePath(locale, ROUTES.contact)} className={linkClass}>
-                  {m.nav.contact}
-                </Link>
-              </li>
-              {footerLegalNav.map((item) => (
+              {config.footerLinks.map((item) => (
                 <li key={item.href}>
-                  <Link href={localizePath(locale, item.href)} className={linkClass}>
-                    {m.nav[item.labelKey]}
+                  <Link
+                    href={
+                      item.href.startsWith("/")
+                        ? localizePath(locale, item.href)
+                        : item.href
+                    }
+                    className={linkClass}
+                  >
+                    {locale === "en" ? item.labelEn || item.label : item.label}
                   </Link>
                 </li>
               ))}
@@ -110,28 +122,35 @@ export function SiteFooter({ locale }: { locale: Locale }) {
               <li className="flex items-start gap-2.5">
                 <PhoneIcon className="mt-3.5 h-4 w-4 shrink-0 text-primary-strong" />
                 <a
-                  href={siteConfig.contact.hotlineHref}
+                  href={config.contact.hotlineHref}
                   className="inline-flex min-h-11 items-center font-semibold text-foreground transition-colors hover:text-primary-strong"
                 >
-                  {siteConfig.contact.hotline}
+                  {config.contact.hotline}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">
                 <MailIcon className="mt-3.5 h-4 w-4 shrink-0 text-primary-strong" />
                 <a
-                  href={`mailto:${siteConfig.contact.email}`}
+                  href={`mailto:${config.contact.email}`}
                   className="inline-flex min-h-11 items-center break-all transition-colors hover:text-primary-strong"
                 >
-                  {siteConfig.contact.email}
+                  {config.contact.email}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">
                 <MapPinIcon className="mt-1 h-4 w-4 shrink-0 text-primary-strong" />
-                <span className="py-1.5 leading-relaxed">{siteConfig.contact.address}</span>
+                <span className="py-1.5 leading-relaxed">
+                  {config.contact.address}
+                </span>
               </li>
               <li className="flex items-start gap-2.5">
                 <ClockIcon className="mt-1 h-4 w-4 shrink-0 text-primary-strong" />
-                <span className="py-1.5 leading-relaxed">{m.site.workingHours}</span>
+                <span className="py-1.5 leading-relaxed">
+                  {locale === "en"
+                    ? config.contact.workingHoursEn ||
+                      config.contact.workingHours
+                    : config.contact.workingHours}
+                </span>
               </li>
             </ul>
 
@@ -155,8 +174,11 @@ export function SiteFooter({ locale }: { locale: Locale }) {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-border py-6 text-xs text-foreground-subtle sm:flex-row sm:items-center sm:justify-between">
-          <p>{renderCopyright(m.footer.copyright, siteConfig.name)}</p>
-          <p className="sm:max-w-xl sm:text-right">{m.footer.disclaimer}</p>
+          <p>{renderCopyright(m.footer.copyright, config.name)}</p>
+          <div className="flex flex-col gap-3 sm:items-end">
+            <MotionControl english={locale === "en"} enabled={config.motion} />
+            <p className="sm:max-w-xl sm:text-right">{m.footer.disclaimer}</p>
+          </div>
         </div>
       </Container>
     </footer>

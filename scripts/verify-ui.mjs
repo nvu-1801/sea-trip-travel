@@ -30,7 +30,8 @@ const results = [];
 let failures = 0;
 
 const overflowOf = (metrics) =>
-  Math.max(metrics.htmlScrollWidth, metrics.bodyScrollWidth) - metrics.clientWidth;
+  Math.max(metrics.htmlScrollWidth, metrics.bodyScrollWidth) -
+  metrics.clientWidth;
 
 function check(name, ok, detail = "") {
   results.push({ name, ok, detail });
@@ -190,7 +191,11 @@ async function measureOverflow(page) {
       // An `absolute` child resolving against a `relative` ancestor is not an
       // overflow, so only compare against a parent that establishes the box.
       const parent = element.parentElement;
-      if (parent && style.position !== "absolute" && style.position !== "fixed") {
+      if (
+        parent &&
+        style.position !== "absolute" &&
+        style.position !== "fixed"
+      ) {
         const parentRect = parent.getBoundingClientRect();
         if (
           rect.right > parentRect.right + 0.5 &&
@@ -249,9 +254,9 @@ async function checkNoHorizontalOverflow(browser) {
         overflow <= 1,
         overflow > 1
           ? `html=${metrics.htmlScrollWidth} body=${metrics.bodyScrollWidth} client=${metrics.clientWidth}` +
-            (metrics.widest.length
-              ? ` | ${metrics.widest.map((row) => `${row.kind}:${row.el}+${row.over}`).join(", ")}`
-              : "")
+              (metrics.widest.length
+                ? ` | ${metrics.widest.map((row) => `${row.kind}:${row.el}+${row.over}`).join(", ")}`
+                : "")
           : transient
             ? `note: ${overflowOf(early)}px during first paint, gone at rest`
             : "",
@@ -276,8 +281,12 @@ async function checkReducedMotion(browser) {
     await page.waitForTimeout(200);
 
     const audit = await page.evaluate(() => {
-      const revealNodes = Array.from(document.querySelectorAll("[data-reveal]"));
-      const parallaxNodes = Array.from(document.querySelectorAll("[data-parallax]"));
+      const revealNodes = Array.from(
+        document.querySelectorAll("[data-reveal]"),
+      );
+      const parallaxNodes = Array.from(
+        document.querySelectorAll("[data-parallax]"),
+      );
 
       const invisible = [...revealNodes, ...parallaxNodes].filter((node) => {
         const style = getComputedStyle(node);
@@ -306,26 +315,34 @@ async function checkReducedMotion(browser) {
     check(
       `reduced-motion ${route} — all content visible`,
       audit.invisible === 0,
-      audit.invisible ? `${audit.invisible} element(s) hidden or collapsed` : "",
+      audit.invisible
+        ? `${audit.invisible} element(s) hidden or collapsed`
+        : "",
     );
     check(`reduced-motion ${route} — page has height`, audit.bodyHeight > 1000);
   }
 
   // Without reduced motion, scroll-linked reveals must STILL not hide content:
   // anything below the fold is captured by full-page renders and by printing.
-  const plainContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const plainContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
   const plainPage = await plainContext.newPage();
   await plainPage.goto(BASE, { waitUntil: "load" });
   await plainPage.evaluate(() => document.fonts.ready);
   await plainPage.waitForTimeout(700);
 
   const belowFold = await plainPage.evaluate(() => {
-    const nodes = Array.from(document.querySelectorAll("[data-reveal], [data-parallax]"));
+    const nodes = Array.from(
+      document.querySelectorAll("[data-reveal], [data-parallax]"),
+    );
     const outOfView = nodes.filter((node) => {
       const rect = node.getBoundingClientRect();
       return rect.top > window.innerHeight;
     });
-    const invisible = outOfView.filter((node) => Number(getComputedStyle(node).opacity) < 0.99);
+    const invisible = outOfView.filter(
+      (node) => Number(getComputedStyle(node).opacity) < 0.99,
+    );
     return { outOfView: outOfView.length, invisible: invisible.length };
   });
 
@@ -340,9 +357,13 @@ async function checkReducedMotion(browser) {
 }
 
 async function checkAnimationGating(browser) {
-  section("3. Scroll animations are structurally gated (can never hide content)");
+  section(
+    "3. Scroll animations are structurally gated (can never hide content)",
+  );
 
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "load" });
 
@@ -373,7 +394,10 @@ async function checkAnimationGating(browser) {
 
         if (type !== STYLE) continue;
 
-        if (rule.selectorText && /\[data-(reveal|parallax)\]/.test(rule.selectorText)) {
+        if (
+          rule.selectorText &&
+          /\[data-(reveal|parallax)\]/.test(rule.selectorText)
+        ) {
           found.push({
             selector: rule.selectorText.slice(0, 60),
             opacity: rule.style.opacity || "",
@@ -434,7 +458,9 @@ async function checkAnimationGating(browser) {
   check(
     "no rule sets opacity:0 on a scroll-animated element outside a motion query",
     hidesByDefault.length === 0,
-    hidesByDefault.map((rule) => `${rule.selector} (media: ${rule.media ?? "none"})`).join(", "),
+    hidesByDefault
+      .map((rule) => `${rule.selector} (media: ${rule.media ?? "none"})`)
+      .join(", "),
   );
 
   await context.close();
@@ -443,22 +469,36 @@ async function checkAnimationGating(browser) {
 async function checkDesktopKeyboardNav(browser) {
   section("4. Header menu — keyboard only (1280px)");
 
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "load" });
 
-  const trigger = page.locator('nav[aria-label="Điều hướng chính"] button[aria-haspopup="true"]').first();
-  check("a dropdown trigger exists in the desktop nav", (await trigger.count()) > 0);
+  const trigger = page
+    .locator('nav[aria-label="Điều hướng chính"] button[aria-haspopup="true"]')
+    .first();
+  check(
+    "a dropdown trigger exists in the desktop nav",
+    (await trigger.count()) > 0,
+  );
 
   await trigger.focus();
-  check("trigger is focusable", await trigger.evaluate((el) => el === document.activeElement));
+  check(
+    "trigger is focusable",
+    await trigger.evaluate((el) => el === document.activeElement),
+  );
 
   // ArrowDown must open the panel AND move focus into it.
   await page.keyboard.press("ArrowDown");
   await page.waitForTimeout(250);
 
   const expanded = await trigger.getAttribute("aria-expanded");
-  check("ArrowDown sets aria-expanded=true", expanded === "true", `aria-expanded=${expanded}`);
+  check(
+    "ArrowDown sets aria-expanded=true",
+    expanded === "true",
+    `aria-expanded=${expanded}`,
+  );
 
   const panelVisible = await page
     .locator('nav[aria-label="Điều hướng chính"] a[data-nav-panel-link]')
@@ -479,7 +519,9 @@ async function checkDesktopKeyboardNav(browser) {
         : "none",
       panelVisibility: style?.visibility ?? "n/a",
       panelTabIndex: panelLink ? panelLink.tabIndex : "n/a",
-      linkFocusable: Boolean(panelLink && panelLink.tabIndex >= 0 && style?.visibility !== "hidden"),
+      linkFocusable: Boolean(
+        panelLink && panelLink.tabIndex >= 0 && style?.visibility !== "hidden",
+      ),
     };
   });
   check(
@@ -493,7 +535,11 @@ async function checkDesktopKeyboardNav(browser) {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(250);
   const collapsed = await trigger.getAttribute("aria-expanded");
-  check("Escape sets aria-expanded=false", collapsed === "false", `aria-expanded=${collapsed}`);
+  check(
+    "Escape sets aria-expanded=false",
+    collapsed === "false",
+    `aria-expanded=${collapsed}`,
+  );
   check(
     "Escape returns focus to the trigger",
     await trigger.evaluate((el) => el === document.activeElement),
@@ -502,7 +548,10 @@ async function checkDesktopKeyboardNav(browser) {
   // Enter must toggle too.
   await page.keyboard.press("Enter");
   await page.waitForTimeout(200);
-  check("Enter opens the panel", (await trigger.getAttribute("aria-expanded")) === "true");
+  check(
+    "Enter opens the panel",
+    (await trigger.getAttribute("aria-expanded")) === "true",
+  );
   await page.keyboard.press("Escape");
 
   await context.close();
@@ -511,20 +560,28 @@ async function checkDesktopKeyboardNav(browser) {
 async function checkMobileDrawer(browser) {
   section("5. Mobile drawer — keyboard + focus trap (390px)");
 
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "load" });
 
   const menuButton = page.locator('button[aria-label="Mở menu"]');
   check("hamburger is visible at 390px", await menuButton.isVisible());
-  check("desktop nav is hidden at 390px", !(await page.locator('nav[aria-label="Điều hướng chính"]').isVisible()));
+  check(
+    "desktop nav is hidden at 390px",
+    !(await page.locator('nav[aria-label="Điều hướng chính"]').isVisible()),
+  );
 
   await menuButton.click();
   await page.waitForTimeout(300);
 
   const dialog = page.locator('dialog[aria-label="Menu"]');
   check("drawer opens", await dialog.isVisible());
-  check("drawer is modal (showModal)", await dialog.evaluate((el) => el.open === true));
+  check(
+    "drawer is modal (showModal)",
+    await dialog.evaluate((el) => el.open === true),
+  );
   check(
     "background is inert while the drawer is open",
     await page.evaluate(() => {
@@ -540,9 +597,16 @@ async function checkMobileDrawer(browser) {
   if (accordionCount > 0) {
     await accordion.click();
     await page.waitForTimeout(350);
-    check("mobile accordion expands", (await accordion.getAttribute("aria-expanded")) === "true");
+    check(
+      "mobile accordion expands",
+      (await accordion.getAttribute("aria-expanded")) === "true",
+    );
   } else {
-    check("mobile accordion exists", false, "no button with aria-controls found");
+    check(
+      "mobile accordion exists",
+      false,
+      "no button with aria-controls found",
+    );
   }
 
   await page.keyboard.press("Escape");
@@ -555,23 +619,34 @@ async function checkMobileDrawer(browser) {
 async function checkDatePicker(browser) {
   section("6. Date picker — pointer + keyboard");
 
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
   const page = await context.newPage();
   await page.goto(`${BASE}/lien-he`, { waitUntil: "load" });
 
   const trigger = page.locator('form button[aria-haspopup="dialog"]').first();
   check("date picker trigger exists", (await trigger.count()) > 0);
-  check("trigger shows the placeholder", (await trigger.innerText()).includes("Chọn ngày"));
+  check(
+    "trigger shows the placeholder",
+    (await trigger.innerText()).includes("Chọn ngày"),
+  );
 
   await trigger.click();
   await page.waitForTimeout(250);
 
-  const dialog = page.locator('[role="dialog"][aria-label="Chọn ngày khởi hành"]');
+  const dialog = page.locator(
+    '[role="dialog"][aria-label="Chọn ngày khởi hành"]',
+  );
   check("calendar popover opens", await dialog.isVisible());
-  check("calendar exposes a grid", (await page.locator('[role="grid"]').count()) > 0);
+  check(
+    "calendar exposes a grid",
+    (await page.locator('[role="grid"]').count()) > 0,
+  );
   check(
     "weekday header uses Vietnamese Monday-first labels",
-    (await dialog.innerText()).includes("T2") && (await dialog.innerText()).includes("CN"),
+    (await dialog.innerText()).includes("T2") &&
+      (await dialog.innerText()).includes("CN"),
   );
   check(
     "six full weeks are rendered (stable height)",
@@ -587,7 +662,10 @@ async function checkDatePicker(browser) {
   await page.waitForTimeout(250);
 
   const afterText = await trigger.innerText();
-  check("Enter commits a date and closes the popover", !(await dialog.isVisible()));
+  check(
+    "Enter commits a date and closes the popover",
+    !(await dialog.isVisible()),
+  );
   check(
     "trigger now shows a dd/mm/yyyy value",
     /\d{2}\/\d{2}\/\d{4}/.test(afterText),
@@ -606,7 +684,10 @@ async function checkDatePicker(browser) {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(200);
   check("Escape closes the popover", !(await dialog.isVisible()));
-  check("Escape does not change the committed value", (await trigger.innerText()) === afterText);
+  check(
+    "Escape does not change the committed value",
+    (await trigger.innerText()) === afterText,
+  );
 
   await context.close();
 }
@@ -614,7 +695,9 @@ async function checkDatePicker(browser) {
 async function checkConsultationFlow(browser, sink) {
   section("7. Consultation request — full flow, browser to SMTP");
 
-  const context = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 1000 },
+  });
   const page = await context.newPage();
 
   const consoleErrors = [];
@@ -623,7 +706,9 @@ async function checkConsultationFlow(browser, sink) {
     if (message.type() === "error") consoleErrors.push(message.text());
   });
 
-  await page.goto(`${BASE}/tour/quy-nhon-phu-yen-4-ngay-3-dem`, { waitUntil: "load" });
+  await page.goto(`${BASE}/tour/quy-nhon-phu-yen-4-ngay-3-dem`, {
+    waitUntil: "load",
+  });
 
   // The tour page form must arrive pre-filled with the tour context.
   const interest = page.locator('input[name="interest"]').first();
@@ -642,19 +727,30 @@ async function checkConsultationFlow(browser, sink) {
   );
 
   // Fill the required fields.
-  await page.locator('input[name="fullName"]').first().fill("Trần Thị Kiểm Thử");
+  await page
+    .locator('input[name="fullName"]')
+    .first()
+    .fill("Trần Thị Kiểm Thử");
   await page.locator('input[name="phone"]').first().fill("0912 345 678");
   await page.locator('input[name="email"]').first().fill("kiemthu@example.com");
-  await page.locator('textarea[name="message"]').first().fill("Kiểm thử luồng tư vấn từ trình duyệt.");
+  await page
+    .locator('textarea[name="message"]')
+    .first()
+    .fill("Kiểm thử luồng tư vấn từ trình duyệt.");
 
   // Pick a date three days out through our own picker.
-  const dateTrigger = page.locator('form button[aria-haspopup="dialog"]').first();
+  const dateTrigger = page
+    .locator('form button[aria-haspopup="dialog"]')
+    .first();
   await dateTrigger.click();
   await page.waitForTimeout(200);
   for (let i = 0; i < 3; i += 1) await page.keyboard.press("PageDown");
   await page.keyboard.press("Enter");
   await page.waitForTimeout(200);
-  check("a travel date was selected", /\d{2}\/\d{2}\/\d{4}/.test(await dateTrigger.innerText()));
+  check(
+    "a travel date was selected",
+    /\d{2}\/\d{2}\/\d{4}/.test(await dateTrigger.innerText()),
+  );
 
   // Consent, then submit.
   await page.locator('input[name="consent"]').first().check();
@@ -668,7 +764,11 @@ async function checkConsultationFlow(browser, sink) {
 
   const successText = await page.locator('[role="status"]').first().innerText();
   check("success panel is shown", successText.includes("Đã tiếp nhận yêu cầu"));
-  check("success panel carries a request code", /STT-\d{8}-[0-9A-F]{4}/.test(successText), successText.split("\n").slice(0, 3).join(" / "));
+  check(
+    "success panel carries a request code",
+    /STT-\d{8}-[0-9A-F]{4}/.test(successText),
+    successText.split("\n").slice(0, 3).join(" / "),
+  );
   check(
     "success copy does not claim the email was delivered",
     !/đã gửi email|gửi thành công/i.test(successText),
@@ -676,17 +776,37 @@ async function checkConsultationFlow(browser, sink) {
 
   // The email must actually have left the app.
   await page.waitForTimeout(500);
-  check("exactly one email arrived at the SMTP server", sink.received.length === sinkBefore + 1, `received=${sink.received.length}`);
+  check(
+    "exactly one email arrived at the SMTP server",
+    sink.received.length === sinkBefore + 1,
+    `received=${sink.received.length}`,
+  );
 
   const message = sink.received.at(-1);
   if (message) {
-    check("email went to the configured sales recipient", message.rcptTo.join(" ").includes("sales@example.com"));
-    check("email body contains the guest name", message.data.includes("Tr") || message.data.includes("Ki"));
-    check("email has both HTML and plain-text parts", /text\/html/i.test(message.data) && /text\/plain/i.test(message.data));
-    check("email replies to the customer", /^Reply-To: kiemthu@example\.com$/m.test(message.data));
+    check(
+      "email went to the configured sales recipient",
+      message.rcptTo.join(" ").includes("sales@example.com"),
+    );
+    check(
+      "email body contains the guest name",
+      message.data.includes("Tr") || message.data.includes("Ki"),
+    );
+    check(
+      "email has both HTML and plain-text parts",
+      /text\/html/i.test(message.data) && /text\/plain/i.test(message.data),
+    );
+    check(
+      "email replies to the customer",
+      /^Reply-To: kiemthu@example\.com$/m.test(message.data),
+    );
   }
 
-  check("no uncaught page errors during the flow", consoleErrors.length === 0, consoleErrors.slice(0, 2).join(" | "));
+  check(
+    "no uncaught page errors during the flow",
+    consoleErrors.length === 0,
+    consoleErrors.slice(0, 2).join(" | "),
+  );
 
   await context.close();
 }
@@ -694,29 +814,47 @@ async function checkConsultationFlow(browser, sink) {
 async function checkContactDetails(browser) {
   section("9. Contact details wired to the real values");
 
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
   const page = await context.newPage();
 
   const HOTLINE_DISPLAY = "0969 297 064";
   const HOTLINE_HREF = "tel:+84969297064";
   const EMAIL = "seatriptravel@gmail.com";
-  const ADDRESS = "42-44 Chế Lan Viên, Phường Quy Nhơn Nam, Tỉnh Gia Lai, Việt Nam";
+  const ADDRESS =
+    "42-44 Chế Lan Viên, Phường Quy Nhơn Nam, Tỉnh Gia Lai, Việt Nam";
   const FACEBOOK = "https://www.facebook.com/share/1C64q28Cz5/";
 
   await page.goto(`${BASE}/lien-he`, { waitUntil: "load" });
   const contactHtml = await page.content();
 
-  check("contact page shows the hotline", contactHtml.includes(HOTLINE_DISPLAY));
-  check("contact page links the dialable hotline", contactHtml.includes(HOTLINE_HREF));
+  check(
+    "contact page shows the hotline",
+    contactHtml.includes(HOTLINE_DISPLAY),
+  );
+  check(
+    "contact page links the dialable hotline",
+    contactHtml.includes(HOTLINE_HREF),
+  );
   check("contact page shows the email", contactHtml.includes(EMAIL));
-  check("contact page links the mailto", contactHtml.includes("mailto:seatriptravel"));
+  check(
+    "contact page links the mailto",
+    contactHtml.includes("mailto:seatriptravel"),
+  );
   check("contact page shows the address", contactHtml.includes(ADDRESS));
 
   // The full hotline appears from 2xl; 1280px leaves room for the long menu.
   const headerPhone = page.locator(`header a[href="${HOTLINE_HREF}"]`).first();
-  check("full header hotline is hidden at 1280px to preserve menu spacing", !(await headerPhone.isVisible()));
+  check(
+    "full header hotline is hidden at 1280px to preserve menu spacing",
+    !(await headerPhone.isVisible()),
+  );
   await page.setViewportSize({ width: 1536, height: 900 });
-  check("header hotline link is visible at 1536px", await headerPhone.isVisible());
+  check(
+    "header hotline link is visible at 1536px",
+    await headerPhone.isVisible(),
+  );
   check(
     "header hotline shows the number",
     (await headerPhone.innerText()).includes(HOTLINE_DISPLAY),
@@ -724,7 +862,9 @@ async function checkContactDetails(browser) {
   await page.setViewportSize({ width: 1280, height: 900 });
 
   // Floating rail: closed items are hidden, so open it first.
-  const railToggle = page.locator('button[aria-controls="floating-contact-list"]');
+  const railToggle = page.locator(
+    'button[aria-controls="floating-contact-list"]',
+  );
   await railToggle.click();
   await page.waitForTimeout(400);
 
@@ -732,13 +872,21 @@ async function checkContactDetails(browser) {
     .locator('#floating-contact-list a[href*="facebook.com"]')
     .first()
     .getAttribute("href");
-  check("floating rail links Facebook to the real page", Boolean(facebookHref?.includes(FACEBOOK)), facebookHref ?? "not found");
+  check(
+    "floating rail links Facebook to the real page",
+    Boolean(facebookHref?.includes(FACEBOOK)),
+    facebookHref ?? "not found",
+  );
 
   const phoneHref = await page
     .locator(`#floating-contact-list a[href="${HOTLINE_HREF}"]`)
     .first()
     .getAttribute("href");
-  check("floating rail links the dialable hotline", phoneHref === HOTLINE_HREF, phoneHref ?? "not found");
+  check(
+    "floating rail links the dialable hotline",
+    phoneHref === HOTLINE_HREF,
+    phoneHref ?? "not found",
+  );
 
   const zaloHref = await page
     .locator('#floating-contact-list a[href*="zalo"]')
@@ -765,24 +913,50 @@ async function checkContactDetails(browser) {
   });
   check("TravelAgency JSON-LD is present", Boolean(ld));
   if (ld) {
-    check("JSON-LD telephone is the real hotline", ld.telephone === HOTLINE_DISPLAY, String(ld.telephone));
-    check("JSON-LD email is the real email", ld.email === EMAIL, String(ld.email));
-    check("JSON-LD address has real parts", ld.address?.streetAddress === "42-44 Chế Lan Viên", JSON.stringify(ld.address));
+    check(
+      "JSON-LD telephone is the real hotline",
+      ld.telephone === HOTLINE_DISPLAY,
+      String(ld.telephone),
+    );
+    check(
+      "JSON-LD email is the real email",
+      ld.email === EMAIL,
+      String(ld.email),
+    );
+    check(
+      "JSON-LD address has real parts",
+      ld.address?.streetAddress === "42-44 Chế Lan Viên",
+      JSON.stringify(ld.address),
+    );
     check("JSON-LD addressCountry is VN", ld.address?.addressCountry === "VN");
     check(
       "JSON-LD sameAs contains the Facebook page",
-      Array.isArray(ld.sameAs) && ld.sameAs.some((url) => String(url).includes("facebook.com")),
+      Array.isArray(ld.sameAs) &&
+        ld.sameAs.some((url) => String(url).includes("facebook.com")),
       JSON.stringify(ld.sameAs),
     );
   }
 
   // No placeholder may survive anywhere the visitor can see.
-  const placeholders = ["0000 000 000", "hello@example.com", "sẽ được cập nhật"];
-  for (const route of ["/", "/lien-he", "/chinh-sach-bao-mat", "/tour/quy-nhon-phu-yen-4-ngay-3-dem"]) {
+  const placeholders = [
+    "0000 000 000",
+    "hello@example.com",
+    "sẽ được cập nhật",
+  ];
+  for (const route of [
+    "/",
+    "/lien-he",
+    "/chinh-sach-bao-mat",
+    "/tour/quy-nhon-phu-yen-4-ngay-3-dem",
+  ]) {
     await page.goto(`${BASE}${route}`, { waitUntil: "load" });
     const html = await page.content();
     const found = placeholders.filter((value) => html.includes(value));
-    check(`${route} — no placeholder contact value`, found.length === 0, found.join(", "));
+    check(
+      `${route} — no placeholder contact value`,
+      found.length === 0,
+      found.join(", "),
+    );
   }
 
   await context.close();
@@ -840,9 +1014,12 @@ async function checkTapTargets(browser) {
     };
 
     const labelledCheckbox = (el) => {
-      if (el.tagName !== "INPUT" || !["checkbox", "radio"].includes(el.type)) return false;
+      if (el.tagName !== "INPUT" || !["checkbox", "radio"].includes(el.type))
+        return false;
       const wrapper = el.closest("label");
-      const explicit = el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
+      const explicit = el.id
+        ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`)
+        : null;
       const owner = wrapper ?? explicit;
       if (!owner) return false;
       const r = owner.getBoundingClientRect();
@@ -860,7 +1037,11 @@ async function checkTapTargets(browser) {
       if (start.w === 0 || start.h === 0) continue;
 
       const r = el.getBoundingClientRect();
-      const inView = r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth;
+      const inView =
+        r.top >= 0 &&
+        r.bottom <= innerHeight &&
+        r.left >= 0 &&
+        r.right <= innerWidth;
       if (!inView) {
         el.scrollIntoView({ block: "center", inline: "center" });
       }
@@ -869,7 +1050,12 @@ async function checkTapTargets(browser) {
       if (labelledCheckbox(el)) continue;
 
       const size = box(el);
-      const entry = { el: label(el), w: size.w, h: size.h, text: (el.textContent ?? "").trim().slice(0, 20) };
+      const entry = {
+        el: label(el),
+        w: size.w,
+        h: size.h,
+        text: (el.textContent ?? "").trim().slice(0, 20),
+      };
 
       if (size.w < 24 || size.h < 24) failUnder24.push(entry);
       else between24And44.push(entry);
@@ -878,7 +1064,10 @@ async function checkTapTargets(browser) {
     // Tier 2 — the controls the visitor uses to navigate and to convert, checked
     // by name so the requirement is explicit rather than implied.
     const PRIMARY = [
-      { name: "filter chips", nodes: () => document.querySelectorAll("button[aria-pressed]") },
+      {
+        name: "filter chips",
+        nodes: () => document.querySelectorAll("button[aria-pressed]"),
+      },
       {
         name: "clear-filters button",
         nodes: () =>
@@ -888,15 +1077,30 @@ async function checkTapTargets(browser) {
       },
       {
         name: "in-page anchors",
-        nodes: () => document.querySelectorAll('nav[aria-label="Nội dung trang"] a'),
+        nodes: () =>
+          document.querySelectorAll('nav[aria-label="Nội dung trang"] a'),
       },
       {
         name: "footer contact links",
-        nodes: () => document.querySelectorAll('footer a[href^="tel:"], footer a[href^="mailto:"]'),
+        nodes: () =>
+          document.querySelectorAll(
+            'footer a[href^="tel:"], footer a[href^="mailto:"]',
+          ),
       },
-      { name: "social pills", nodes: () => document.querySelectorAll('footer a[target="_blank"]') },
-      { name: "logo link", nodes: () => document.querySelectorAll('header a[aria-label*="trang chủ"]') },
-      { name: "breadcrumb links", nodes: () => document.querySelectorAll('nav[aria-label="Breadcrumb"] a') },
+      {
+        name: "social pills",
+        nodes: () => document.querySelectorAll('footer a[target="_blank"]'),
+      },
+      {
+        name: "logo link",
+        nodes: () =>
+          document.querySelectorAll('header a[aria-label*="trang chủ"]'),
+      },
+      {
+        name: "breadcrumb links",
+        nodes: () =>
+          document.querySelectorAll('nav[aria-label="Breadcrumb"] a'),
+      },
       {
         name: "form controls",
         // `input[name="company"]` is the honeypot: deliberately off-screen and
@@ -915,7 +1119,10 @@ async function checkTapTargets(browser) {
         return r.width > 0 && r.height > 0;
       });
       const bad = nodes
-        .map((n) => ({ ...box(n), text: (n.textContent ?? "").trim().slice(0, 18) }))
+        .map((n) => ({
+          ...box(n),
+          text: (n.textContent ?? "").trim().slice(0, 18),
+        }))
         .filter((s) => s.w < 44 || s.h < 44);
       primary[entry.name] = { total: nodes.length, bad };
     }
@@ -925,10 +1132,17 @@ async function checkTapTargets(browser) {
   };
 
   for (const width of [360, 390]) {
-    const context = await browser.newContext({ viewport: { width, height: 844 } });
+    const context = await browser.newContext({
+      viewport: { width, height: 844 },
+    });
     const page = await context.newPage();
 
-    for (const route of ["/", "/tour-quy-nhon-phu-yen", "/tour/quy-nhon-phu-yen-5-ngay-4-dem", "/lien-he"]) {
+    for (const route of [
+      "/",
+      "/tour-quy-nhon-phu-yen",
+      "/tour/quy-nhon-phu-yen-5-ngay-4-dem",
+      "/lien-he",
+    ]) {
       await page.goto(`${BASE}${route}`, { waitUntil: "load" });
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(500);
@@ -938,15 +1152,22 @@ async function checkTapTargets(browser) {
       check(
         `${width}px ${route} — every hittable control is ≥24px (WCAG 2.5.8)`,
         m.failUnder24.length === 0,
-        m.failUnder24.map((t) => `${t.el} ${t.w}×${t.h} "${t.text}"`).join(" | "),
+        m.failUnder24
+          .map((t) => `${t.el} ${t.w}×${t.h} "${t.text}"`)
+          .join(" | "),
       );
 
-      const primaryBad = Object.entries(m.primary).filter(([, v]) => v.bad.length > 0);
+      const primaryBad = Object.entries(m.primary).filter(
+        ([, v]) => v.bad.length > 0,
+      );
       check(
         `${width}px ${route} — primary controls are ≥44px`,
         primaryBad.length === 0,
         primaryBad
-          .map(([name, v]) => `${name}: ${v.bad.map((b) => `${b.w}×${b.h} "${b.text}"`).join(", ")}`)
+          .map(
+            ([name, v]) =>
+              `${name}: ${v.bad.map((b) => `${b.w}×${b.h} "${b.text}"`).join(", ")}`,
+          )
           .join(" | "),
       );
 
@@ -974,7 +1195,9 @@ async function checkTapTargets(browser) {
 async function checkFloatingRail(browser) {
   section("11. Floating contact rail — pointer + keyboard");
 
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "load" });
   await page.evaluate(() => document.fonts.ready);
@@ -982,7 +1205,9 @@ async function checkFloatingRail(browser) {
 
   const probe = () =>
     page.evaluate(() => {
-      const toggle = document.querySelector('button[aria-controls="floating-contact-list"]');
+      const toggle = document.querySelector(
+        'button[aria-controls="floating-contact-list"]',
+      );
       const wrapper = toggle.parentElement;
       const wr = wrapper.getBoundingClientRect();
       const points = [];
@@ -999,15 +1224,23 @@ async function checkFloatingRail(browser) {
       }
       const links = Array.from(wrapper.querySelectorAll("a"));
       return {
-        box: { top: Math.round(wr.top), height: Math.round(wr.height), width: Math.round(wr.width) },
+        box: {
+          top: Math.round(wr.top),
+          height: Math.round(wr.height),
+          width: Math.round(wr.width),
+        },
         points,
         linkTabIndex: links.map((a) => a.tabIndex),
-        linksVisible: links.filter((a) => Number(getComputedStyle(a).opacity) > 0.5).length,
+        linksVisible: links.filter(
+          (a) => Number(getComputedStyle(a).opacity) > 0.5,
+        ).length,
       };
     });
 
   const closed = await probe();
-  const deadPoints = closed.points.filter((p) => p.insideRailBox && !p.onControl);
+  const deadPoints = closed.points.filter(
+    (p) => p.insideRailBox && !p.onControl,
+  );
 
   check(
     "closed rail — no control is covered at the toggle's centre",
@@ -1024,18 +1257,31 @@ async function checkFloatingRail(browser) {
     closed.linkTabIndex.every((index) => index === -1),
     closed.linkTabIndex.join(","),
   );
-  check("closed rail — collapsed links are invisible", closed.linksVisible === 0);
+  check(
+    "closed rail — collapsed links are invisible",
+    closed.linksVisible === 0,
+  );
 
   // Toggle by keyboard.
   const toggle = page.locator('button[aria-controls="floating-contact-list"]');
   await toggle.focus();
-  check("toggle is focusable", await toggle.evaluate((el) => el === document.activeElement));
+  check(
+    "toggle is focusable",
+    await toggle.evaluate((el) => el === document.activeElement),
+  );
   await page.keyboard.press("Enter");
   await page.waitForTimeout(450);
-  check("Enter opens the rail", (await toggle.getAttribute("aria-expanded")) === "true");
+  check(
+    "Enter opens the rail",
+    (await toggle.getAttribute("aria-expanded")) === "true",
+  );
 
   const open = await probe();
-  check("open rail — links become visible", open.linksVisible === 3, `${open.linksVisible} visible`);
+  check(
+    "open rail — links become visible",
+    open.linksVisible === 3,
+    `${open.linksVisible} visible`,
+  );
   check(
     "open rail — links enter the Tab order",
     open.linkTabIndex.every((index) => index === 0),
@@ -1043,12 +1289,19 @@ async function checkFloatingRail(browser) {
   );
 
   const deadOpen = open.points.filter((p) => p.insideRailBox && !p.onControl);
-  check("open rail — only controls capture events", deadOpen.length === 0, deadOpen.length ? "dead zone remains" : "");
+  check(
+    "open rail — only controls capture events",
+    deadOpen.length === 0,
+    deadOpen.length ? "dead zone remains" : "",
+  );
 
   // Escape closes and returns focus.
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
-  check("Escape closes the rail", (await toggle.getAttribute("aria-expanded")) === "false");
+  check(
+    "Escape closes the rail",
+    (await toggle.getAttribute("aria-expanded")) === "false",
+  );
   check(
     "Escape returns focus to the toggle",
     await toggle.evaluate((el) => el === document.activeElement),
@@ -1062,9 +1315,13 @@ async function checkAnchorNav(browser) {
   section("12. Tour anchor nav — reachable, not sticky, heading not covered");
 
   for (const width of [360, 390, 768, 1440]) {
-    const context = await browser.newContext({ viewport: { width, height: 900 } });
+    const context = await browser.newContext({
+      viewport: { width, height: 900 },
+    });
     const page = await context.newPage();
-    await page.goto(`${BASE}/tour/quy-nhon-phu-yen-5-ngay-4-dem`, { waitUntil: "load" });
+    await page.goto(`${BASE}/tour/quy-nhon-phu-yen-5-ngay-4-dem`, {
+      waitUntil: "load",
+    });
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(600);
 
@@ -1079,22 +1336,47 @@ async function checkAnchorNav(browser) {
         overflowX: ul.scrollWidth - ul.clientWidth,
         position: getComputedStyle(nav).position,
         count: links.length,
-        minHeight: Math.min(...links.map((a) => Math.round(a.getBoundingClientRect().height))),
+        minHeight: Math.min(
+          ...links.map((a) => Math.round(a.getBoundingClientRect().height)),
+        ),
         allInside: links.every((a) => {
           const r = a.getBoundingClientRect();
           return r.left >= ulRect.left - 1 && r.right <= ulRect.right + 1;
         }),
-        rows: new Set(links.map((a) => Math.round(a.getBoundingClientRect().top))).size,
+        rows: new Set(
+          links.map((a) => Math.round(a.getBoundingClientRect().top)),
+        ).size,
         navHeight: Math.round(navRect.height),
-        overlapsNext: next ? next.getBoundingClientRect().top < navRect.bottom - 1 : false,
+        overlapsNext: next
+          ? next.getBoundingClientRect().top < navRect.bottom - 1
+          : false,
       };
     });
 
-    check(`${width}px anchor nav — all ${m.count} anchors fully inside the bar`, m.allInside);
-    check(`${width}px anchor nav — every anchor ≥44px tall`, m.minHeight >= 44, `min=${m.minHeight}px`);
-    check(`${width}px anchor nav — no sideways scroll inside the bar`, m.overflowX <= 1, `overflow=${m.overflowX}px`);
-    check(`${width}px anchor nav — not sticky, so it cannot cover content`, m.position === "static", m.position);
-    check(`${width}px anchor nav — next section starts below the bar`, !m.overlapsNext, `bar ${m.navHeight}px`);
+    check(
+      `${width}px anchor nav — all ${m.count} anchors fully inside the bar`,
+      m.allInside,
+    );
+    check(
+      `${width}px anchor nav — every anchor ≥44px tall`,
+      m.minHeight >= 44,
+      `min=${m.minHeight}px`,
+    );
+    check(
+      `${width}px anchor nav — no sideways scroll inside the bar`,
+      m.overflowX <= 1,
+      `overflow=${m.overflowX}px`,
+    );
+    check(
+      `${width}px anchor nav — not sticky, so it cannot cover content`,
+      m.position === "static",
+      m.position,
+    );
+    check(
+      `${width}px anchor nav — next section starts below the bar`,
+      !m.overlapsNext,
+      `bar ${m.navHeight}px`,
+    );
     if (width <= 390) {
       // Six 44px-tall Vietnamese labels need 2 rows at 390 and 3 at 360. What
       // matters is that nothing is hidden and the bar stays bounded; asserting an
@@ -1108,7 +1390,9 @@ async function checkAnchorNav(browser) {
 
     // Jump to a section and confirm the sticky header does not cover the heading.
     if (width === 390) {
-      await page.click('nav[aria-label="Nội dung trang"] a[href="#lich-trinh"]');
+      await page.click(
+        'nav[aria-label="Nội dung trang"] a[href="#lich-trinh"]',
+      );
       await page.waitForTimeout(1200);
       const jump = await page.evaluate(() => {
         const header = document.querySelector("header");
@@ -1133,9 +1417,13 @@ async function checkAnchorNav(browser) {
 async function checkPrint(browser) {
   section("13. Print media");
 
-  const context = await browser.newContext({ viewport: { width: 1024, height: 1400 } });
+  const context = await browser.newContext({
+    viewport: { width: 1024, height: 1400 },
+  });
   const page = await context.newPage();
-  await page.goto(`${BASE}/tour/quy-nhon-phu-yen-5-ngay-4-dem`, { waitUntil: "load" });
+  await page.goto(`${BASE}/tour/quy-nhon-phu-yen-5-ngay-4-dem`, {
+    waitUntil: "load",
+  });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(700);
 
@@ -1144,39 +1432,91 @@ async function checkPrint(browser) {
 
   const m = await page.evaluate(() => {
     const animated = Array.from(
-      document.querySelectorAll("[data-reveal],[data-parallax],[data-entrance]"),
+      document.querySelectorAll(
+        "[data-reveal],[data-parallax],[data-entrance]",
+      ),
     );
-    const printHidden = Array.from(document.querySelectorAll("[data-print-hidden]"));
+    const printHidden = Array.from(
+      document.querySelectorAll("[data-print-hidden]"),
+    );
     const deepSection = document.querySelector("#tu-van");
     const deepHeading = document.querySelector("#lich-trinh h2");
     return {
       animated: animated.length,
       printHidden: printHidden.length,
-      stillTransformed: animated.filter((n) => getComputedStyle(n).transform !== "none").length,
-      stillTransparent: animated.filter((n) => Number(getComputedStyle(n).opacity) < 0.99).length,
-      collapsed: animated.filter((n) => n.getBoundingClientRect().height < 1).length,
-      printHiddenStillVisible: printHidden.filter((n) => getComputedStyle(n).display !== "none").length,
-      deepHeight: deepSection ? Math.round(deepSection.getBoundingClientRect().height) : -1,
-      deepHeadingHeight: deepHeading ? Math.round(deepHeading.getBoundingClientRect().height) : -1,
-      itineraryDays: Array.from(document.querySelectorAll("#lich-trinh details"), (day) => ({
-        closed: !day.open,
-        visible: day.querySelector("ul")?.checkVisibility() ?? false,
-      })),
+      stillTransformed: animated.filter(
+        (n) => getComputedStyle(n).transform !== "none",
+      ).length,
+      stillTransparent: animated.filter(
+        (n) => Number(getComputedStyle(n).opacity) < 0.99,
+      ).length,
+      collapsed: animated.filter((n) => n.getBoundingClientRect().height < 1)
+        .length,
+      printHiddenStillVisible: printHidden.filter(
+        (n) => getComputedStyle(n).display !== "none",
+      ).length,
+      deepHeight: deepSection
+        ? Math.round(deepSection.getBoundingClientRect().height)
+        : -1,
+      deepHeadingHeight: deepHeading
+        ? Math.round(deepHeading.getBoundingClientRect().height)
+        : -1,
+      itineraryDays: Array.from(
+        document.querySelectorAll("#lich-trinh details"),
+        (day) => ({
+          closed: !day.open,
+          visible: day.querySelector("ul")?.checkVisibility() ?? false,
+        }),
+      ),
     };
   });
 
-  check("print — floating controls are hidden", m.printHidden > 0 && m.printHiddenStillVisible === 0, `${m.printHidden} marked, ${m.printHiddenStillVisible} still shown`);
-  check("print — no scroll-animated element keeps a transform", m.stillTransformed === 0, `${m.stillTransformed}/${m.animated}`);
-  check("print — no scroll-animated element is transparent", m.stillTransparent === 0, `${m.stillTransparent}/${m.animated}`);
-  check("print — no scroll-animated element collapses", m.collapsed === 0, `${m.collapsed}/${m.animated}`);
-  check("print — content far below the fold still lays out", m.deepHeight > 200 && m.deepHeadingHeight > 10, `#tu-van=${m.deepHeight}px, heading=${m.deepHeadingHeight}px`);
-  check("print — every itinerary day is visible, including closed accordions", m.itineraryDays.length > 1 && m.itineraryDays.some((day) => day.closed) && m.itineraryDays.every((day) => day.visible), `${m.itineraryDays.filter((day) => day.visible).length}/${m.itineraryDays.length} days visible`);
+  check(
+    "print — floating controls are hidden",
+    m.printHidden > 0 && m.printHiddenStillVisible === 0,
+    `${m.printHidden} marked, ${m.printHiddenStillVisible} still shown`,
+  );
+  check(
+    "print — no scroll-animated element keeps a transform",
+    m.stillTransformed === 0,
+    `${m.stillTransformed}/${m.animated}`,
+  );
+  check(
+    "print — no scroll-animated element is transparent",
+    m.stillTransparent === 0,
+    `${m.stillTransparent}/${m.animated}`,
+  );
+  check(
+    "print — no scroll-animated element collapses",
+    m.collapsed === 0,
+    `${m.collapsed}/${m.animated}`,
+  );
+  check(
+    "print — content far below the fold still lays out",
+    m.deepHeight > 200 && m.deepHeadingHeight > 10,
+    `#tu-van=${m.deepHeight}px, heading=${m.deepHeadingHeight}px`,
+  );
+  check(
+    "print — every itinerary day is visible, including closed accordions",
+    m.itineraryDays.length > 1 &&
+      m.itineraryDays.some((day) => day.closed) &&
+      m.itineraryDays.every((day) => day.visible),
+    `${m.itineraryDays.filter((day) => day.visible).length}/${m.itineraryDays.length} days visible`,
+  );
 
   // Real artefact, not just a CSS assertion.
   mkdirSync(SHOT_DIR, { recursive: true });
   const pdfPath = path.join(SHOT_DIR, "print-tour-detail.pdf");
-  const pdf = await page.pdf({ path: pdfPath, format: "A4", printBackground: true });
-  check("print — a PDF was produced", pdf.length > 10_000, `${Math.round(pdf.length / 1024)} KB`);
+  const pdf = await page.pdf({
+    path: pdfPath,
+    format: "A4",
+    printBackground: true,
+  });
+  check(
+    "print — a PDF was produced",
+    pdf.length > 10_000,
+    `${Math.round(pdf.length / 1024)} KB`,
+  );
   console.log(`  saved ${path.relative(process.cwd(), pdfPath)}`);
 
   await page.emulateMedia({ media: "screen" });
@@ -1188,11 +1528,27 @@ async function captureScreenshots(browser) {
   mkdirSync(SHOT_DIR, { recursive: true });
 
   const shots = [
-    { viewport: { width: 1280, height: 900 }, route: "/", name: "home-desktop" },
+    {
+      viewport: { width: 1280, height: 900 },
+      route: "/",
+      name: "home-desktop",
+    },
     { viewport: { width: 390, height: 844 }, route: "/", name: "home-mobile" },
-    { viewport: { width: 390, height: 844 }, route: "/tour/quy-nhon-phu-yen-4-ngay-3-dem", name: "tour-mobile" },
-    { viewport: { width: 1280, height: 900 }, route: "/tour/quy-nhon-phu-yen-4-ngay-3-dem", name: "tour-desktop" },
-    { viewport: { width: 390, height: 844 }, route: "/lien-he", name: "contact-mobile" },
+    {
+      viewport: { width: 390, height: 844 },
+      route: "/tour/quy-nhon-phu-yen-4-ngay-3-dem",
+      name: "tour-mobile",
+    },
+    {
+      viewport: { width: 1280, height: 900 },
+      route: "/tour/quy-nhon-phu-yen-4-ngay-3-dem",
+      name: "tour-desktop",
+    },
+    {
+      viewport: { width: 390, height: 844 },
+      route: "/lien-he",
+      name: "contact-mobile",
+    },
   ];
 
   for (const shot of shots) {
@@ -1209,7 +1565,10 @@ async function captureScreenshots(browser) {
       window.scrollTo(0, 0);
     });
     await page.waitForTimeout(300);
-    await page.screenshot({ path: path.join(SHOT_DIR, `${shot.name}.png`), fullPage: true });
+    await page.screenshot({
+      path: path.join(SHOT_DIR, `${shot.name}.png`),
+      fullPage: true,
+    });
     await context.close();
     console.log(`  saved verify-screenshots/${shot.name}.png`);
   }
@@ -1223,46 +1582,114 @@ async function captureScreenshots(browser) {
 
 async function checkTravelMotion(browser) {
   section("9. Travel motion, keyboard and touch");
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+  });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "load" });
   const bloom = page.locator(".stt-hero-bloom").first();
   const ambient = await bloom.evaluate((el) => {
     const style = getComputedStyle(el);
-    return { name: style.animationName, duration: parseFloat(style.animationDuration), count: style.animationIterationCount };
+    return {
+      name: style.animationName,
+      duration: parseFloat(style.animationDuration),
+      count: style.animationIterationCount,
+    };
   });
-  check("hero atmosphere settles within five seconds", ambient.name !== "none" && ambient.duration <= 5 && ambient.count === "1");
+  check(
+    "hero atmosphere settles within five seconds",
+    ambient.name !== "none" && ambient.duration <= 5 && ambient.count === "1",
+  );
   const card = page.locator(".stt-tour-card").first();
-  check("tour cards fill their grid cells", await page.locator(".stt-tour-card").evaluateAll((cards) => cards.every((el) => Math.abs(el.getBoundingClientRect().width - el.parentElement.getBoundingClientRect().width) < 1)));
+  check(
+    "tour cards fill their grid cells",
+    await page
+      .locator(".stt-tour-card")
+      .evaluateAll((cards) =>
+        cards.every(
+          (el) =>
+            Math.abs(
+              el.getBoundingClientRect().width -
+                el.parentElement.getBoundingClientRect().width,
+            ) < 1,
+        ),
+      ),
+  );
   await card.hover();
   await page.waitForTimeout(750);
-  check("mouse hover lifts card and enlarges photo", await card.evaluate((el) => {
-    const cardMatrix = new DOMMatrixReadOnly(getComputedStyle(el).transform);
-    const photoMatrix = new DOMMatrixReadOnly(getComputedStyle(el.querySelector(".stt-card-photo")).transform);
-    return cardMatrix.m42 < 0 && photoMatrix.a > 1;
-  }));
+  check(
+    "mouse hover lifts card and enlarges photo",
+    await card.evaluate((el) => {
+      const cardMatrix = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+      const photoMatrix = new DOMMatrixReadOnly(
+        getComputedStyle(el.querySelector(".stt-card-photo")).transform,
+      );
+      return cardMatrix.m42 < 0 && photoMatrix.a > 1;
+    }),
+  );
   await page.mouse.move(0, 0);
   await card.locator("a").focus();
-  check("keyboard focus reaches the full card", await card.evaluate((el) => el.matches(":focus-within") && getComputedStyle(el).boxShadow !== "none"));
+  check(
+    "keyboard focus reaches the full card",
+    await card.evaluate(
+      (el) =>
+        el.matches(":focus-within") &&
+        getComputedStyle(el).boxShadow !== "none",
+    ),
+  );
   await page.emulateMedia({ reducedMotion: "reduce" });
-  check("reduced motion stops hero atmosphere", await bloom.evaluate((el) => getComputedStyle(el).animationName === "none"));
+  check(
+    "reduced motion stops hero atmosphere",
+    await bloom.evaluate((el) => getComputedStyle(el).animationName === "none"),
+  );
   await card.hover();
   await page.waitForTimeout(50);
-  check("reduced motion keeps hovered card still", await card.evaluate((el) => getComputedStyle(el).transform === "none" && getComputedStyle(el.querySelector(".stt-card-photo")).transform === "none"));
+  check(
+    "reduced motion keeps hovered card still",
+    await card.evaluate(
+      (el) =>
+        getComputedStyle(el).transform === "none" &&
+        getComputedStyle(el.querySelector(".stt-card-photo")).transform ===
+          "none",
+    ),
+  );
   await page.emulateMedia({ media: "print", reducedMotion: "no-preference" });
-  check("print stops decorative motion", await bloom.evaluate((el) => getComputedStyle(el).animationName === "none"));
+  check(
+    "print stops decorative motion",
+    await bloom.evaluate((el) => getComputedStyle(el).animationName === "none"),
+  );
   await page.emulateMedia({ media: "screen", reducedMotion: "reduce" });
   for (const width of [360, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`${BASE}/en`, { waitUntil: "load" });
-    check(`English home ${width}px stays within viewport`, await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) <= document.documentElement.clientWidth + 1));
+    check(
+      `English home ${width}px stays within viewport`,
+      await page.evaluate(
+        () =>
+          Math.max(
+            document.documentElement.scrollWidth,
+            document.body.scrollWidth,
+          ) <=
+          document.documentElement.clientWidth + 1,
+      ),
+    );
   }
   await context.close();
 
-  const touch = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const touch = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
   const touchPage = await touch.newPage();
   await touchPage.goto(BASE, { waitUntil: "load" });
-  check("touch cards keep a stable layout", await touchPage.locator(".stt-tour-card").first().evaluate((el) => getComputedStyle(el).transform === "none"));
+  check(
+    "touch cards keep a stable layout",
+    await touchPage
+      .locator(".stt-tour-card")
+      .first()
+      .evaluate((el) => getComputedStyle(el).transform === "none"),
+  );
   await touch.close();
 }
 
@@ -1278,12 +1705,21 @@ async function main() {
 
   const server = spawn(
     process.execPath,
-    ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", String(PORT)],
+    [
+      "node_modules/next/dist/bin/next",
+      "start",
+      "--hostname",
+      "127.0.0.1",
+      "--port",
+      String(PORT),
+    ],
     {
       env: {
         ...process.env,
         NODE_ENV: "production",
         NEXT_PUBLIC_SITE_URL: BASE,
+        SITE_URL: BASE,
+        CMS_ENABLED: "0",
         MAIL_TRANSPORT: "smtp",
         SMTP_HOST: "127.0.0.1",
         SMTP_PORT: String(smtpPort),
@@ -1303,7 +1739,8 @@ async function main() {
   server.stdout.on("data", () => {});
   server.stderr.on("data", (chunk) => {
     const text = String(chunk);
-    if (/error/i.test(text)) process.stderr.write(`  [server] ${text.trim()}\n`);
+    if (/error/i.test(text))
+      process.stderr.write(`  [server] ${text.trim()}\n`);
   });
 
   let browser;
@@ -1312,9 +1749,14 @@ async function main() {
     if (!up) throw new Error(`next start did not become ready on ${BASE}`);
     console.log(`Production server ready on ${BASE} (NODE_ENV=production)\n`);
 
-    browser = await chromium.launch(process.env.CHROMIUM_EXECUTABLE_PATH
-      ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH, args: ["--no-sandbox", "--disable-dev-shm-usage"] }
-      : { channel: "chrome" });
+    browser = await chromium.launch(
+      process.env.CHROMIUM_EXECUTABLE_PATH
+        ? {
+            executablePath: process.env.CHROMIUM_EXECUTABLE_PATH,
+            args: ["--no-sandbox", "--disable-dev-shm-usage"],
+          }
+        : { channel: "chrome" },
+    );
 
     await checkNoHorizontalOverflow(browser);
     await checkReducedMotion(browser);
@@ -1343,7 +1785,9 @@ async function main() {
   if (failures > 0) {
     console.log("\nFailed checks:");
     for (const result of results.filter((r) => !r.ok)) {
-      console.log(`  - ${result.name}${result.detail ? ` (${result.detail})` : ""}`);
+      console.log(
+        `  - ${result.name}${result.detail ? ` (${result.detail})` : ""}`,
+      );
     }
   }
   console.log("=".repeat(64));

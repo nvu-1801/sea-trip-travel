@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { siteConfig } from "@/config/site";
+import { siteConfig } from "@/config/runtime-site";
 import { localeMeta, type Locale } from "@/i18n/config";
 import { localizePath } from "@/i18n/routing";
 
@@ -68,7 +68,9 @@ export function buildMetadata({
       description,
       siteName: siteConfig.name,
       locale: localeMeta[locale].ogLocale,
-      images: [{ url: absoluteUrl(image), width: 1200, height: 630, alt: title }],
+      images: [
+        { url: absoluteUrl(image), width: 1200, height: 630, alt: title },
+      ],
       ...(publishedTime ? { publishedTime } : {}),
     },
     twitter: {

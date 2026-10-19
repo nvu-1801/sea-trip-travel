@@ -1,22 +1,13 @@
-import { locale as localeParam } from "next/root-params";
-import { defaultLocale, isLocale, type Locale } from "./config";
-import { getMessages, type Messages } from "./messages";
-
-/**
- * Server-side locale access.
- *
- * `next/root-params` reads the `[locale]` segment from the root layout, so any
- * Server Component or server-side utility can resolve the language without prop
- * drilling. Only importable from Server Components — the import itself fails at
- * build time inside a Client Component.
- */
-export async function getLocale(): Promise<Locale> {
-  const value = await localeParam();
-  return isLocale(value) ? value : defaultLocale;
-}
-
-/** Locale + the resolved catalog, in one call. */
-export async function getTranslations(): Promise<{ locale: Locale; m: Messages }> {
-  const locale = await getLocale();
-  return { locale, m: getMessages(locale) };
+import "server-only";
+import { getMessages as original, type Messages } from "./messages";
+import { published } from "@/server/cms/store";
+import { messageSeeds } from "@/server/cms/settings";
+import type { Locale } from "./config";
+export { format, plural } from "./messages";
+export type { Messages, Plural } from "./messages";
+export function getMessages(locale: Locale): Messages {
+  return (
+    published("messages", messageSeeds).find((item) => item.id === locale) ??
+    original(locale)
+  );
 }

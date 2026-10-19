@@ -19,14 +19,22 @@ export function proxy(request: NextRequest) {
 
   // Never touch API routes or framework internals (defence in depth on top of
   // the matcher below).
-  if (pathname.startsWith("/_next") || pathname.startsWith("/api")) {
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/")
+  ) {
     return NextResponse.next();
   }
 
   // An internal rewrite can re-enter the proxy at `/vi/...`. Redirecting that
   // path back to `/...` creates a production redirect loop. Accept both forms;
   // page metadata consistently selects the unprefixed Vietnamese canonical.
-  if (pathname === `/${defaultLocale}` || pathname.startsWith(`/${defaultLocale}/`)) {
+  if (
+    pathname === `/${defaultLocale}` ||
+    pathname.startsWith(`/${defaultLocale}/`)
+  ) {
     return NextResponse.next();
   }
 

@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { ROUTES } from "@/config/navigation";
-import { getFeaturedArticle, getNonFeaturedArticles } from "@/lib/data/articles";
-import { getCategoryTourCount, getTopLevelCategories } from "@/lib/data/categories";
+import {
+  getFeaturedArticle,
+  getNonFeaturedArticles,
+} from "@/lib/data/articles";
+import {
+  getCategoryTourCount,
+  getTopLevelCategories,
+} from "@/lib/data/categories";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/json-ld";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
@@ -14,7 +20,7 @@ import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { articleTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { resolveLocaleFromParams } from "@/i18n/params";
 
@@ -92,7 +98,11 @@ export default async function GuidesPage({ params }: PageProps<"/[locale]">) {
           <Container>
             <h2 className="sr-only">{m.guides.featuredSr}</h2>
             <Reveal>
-              <ArticleCard article={featured} locale={locale} variant="feature" />
+              <ArticleCard
+                article={featured}
+                locale={locale}
+                variant="feature"
+              />
             </Reveal>
           </Container>
         </Section>
@@ -111,7 +121,11 @@ export default async function GuidesPage({ params }: PageProps<"/[locale]">) {
             <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {rest.map((article) => (
                 <Reveal as="li" key={article.slug} className="flex">
-                  <ArticleCard article={article} locale={locale} className="w-full" />
+                  <ArticleCard
+                    article={article}
+                    locale={locale}
+                    className="w-full"
+                  />
                 </Reveal>
               ))}
             </ul>

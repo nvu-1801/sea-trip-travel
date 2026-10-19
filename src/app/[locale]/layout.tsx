@@ -1,14 +1,26 @@
+export const dynamic = "force-dynamic";
+import { SiteContactProvider } from "@/components/layout/site-context";
+import { settings } from "@/server/cms/store";
+import { contentVersion } from "@/server/cms/db";
+import { LiveContent } from "@/components/layout/live-content";
 import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, Fraunces } from "next/font/google";
 import "../globals.css";
-import { siteConfig } from "@/config/site";
+import { siteConfig } from "@/config/runtime-site";
 import { SkipLink, SiteHeader } from "@/components/layout/site-header";
+import { IdleMotionManager } from "@/features/home/idle-motion-manager";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { FloatingContact } from "@/components/layout/floating-contact";
 import { JsonLd } from "@/components/seo/json-ld";
 import { travelAgencyJsonLd, websiteJsonLd } from "@/lib/json-ld";
-import { defaultLocale, isLocale, localeMeta, locales, type Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import {
+  defaultLocale,
+  isLocale,
+  localeMeta,
+  locales,
+  type Locale,
+} from "@/i18n/config";
+import { getMessages } from "@/i18n/server";
 
 /**
  * Be Vietnam Pro — designed for Vietnamese. Full diacritic coverage at every
@@ -84,37 +96,50 @@ export default async function LocaleLayout({
   children,
   params,
 }: LayoutProps<"/[locale]">) {
+  const version =
+    process.env.CMS_ENABLED === "1" ? contentVersion("public") : null;
   const { locale: raw } = await params;
   const locale: Locale = isLocale(raw) ? raw : defaultLocale;
   const m = getMessages(locale);
 
   return (
     <html
+      data-motion-paused={!settings().motion}
       lang={localeMeta[locale].htmlLang}
       className={`${beVietnamPro.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <JsonLd id="ld-agency" data={travelAgencyJsonLd(locale)} />
-        <JsonLd id="ld-website" data={websiteJsonLd(locale)} />
-
-        <SkipLink label={m.common.skipToContent} />
-        <SiteHeader locale={locale} />
-
-        <main id="noi-dung-chinh" className="flex-1">
-          {children}
-        </main>
-
-        <SiteFooter locale={locale} />
-        <FloatingContact
-          labels={{
-            zalo: m.floating.zalo,
-            facebook: m.floating.facebook,
-            phone: m.floating.phone,
-            open: m.floating.open,
-            close: m.floating.close,
-            backToTop: m.common.backToTop,
+        <SiteContactProvider
+          value={{
+            ...siteConfig.contact,
+            name: siteConfig.name,
+            socialLinks: settings().socialLinks,
           }}
-        />
+        >
+          <JsonLd id="ld-agency" data={travelAgencyJsonLd(locale)} />
+          <JsonLd id="ld-website" data={websiteJsonLd(locale)} />
+
+          <SkipLink label={m.common.skipToContent} />
+          <IdleMotionManager />
+          {version !== null && <LiveContent version={version} />}
+          <SiteHeader locale={locale} />
+
+          <main id="noi-dung-chinh" className="flex-1">
+            {children}
+          </main>
+
+          <SiteFooter locale={locale} />
+          <FloatingContact
+            labels={{
+              zalo: m.floating.zalo,
+              facebook: m.floating.facebook,
+              phone: m.floating.phone,
+              open: m.floating.open,
+              close: m.floating.close,
+              backToTop: m.common.backToTop,
+            }}
+          />
+        </SiteContactProvider>
       </body>
     </html>
   );

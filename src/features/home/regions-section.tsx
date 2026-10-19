@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { ROUTES } from "@/config/navigation";
-import { getCategories, getChildCategories, getCategoryTourCount } from "@/lib/data/categories";
+import {
+  getCategories,
+  getChildCategories,
+  getCategoryTourCount,
+} from "@/lib/data/categories";
 import { getToursByCategoryId } from "@/lib/data/tours";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
@@ -8,7 +12,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon, MapPinIcon } from "@/components/ui/icons";
 import { AssetImage } from "@/components/ui/asset-image";
 import type { Locale } from "@/i18n/config";
-import { format, getMessages, plural } from "@/i18n/messages";
+import { format, getMessages, plural } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
 /**
@@ -20,7 +24,9 @@ import { localizePath } from "@/i18n/routing";
  */
 export function RegionsSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const domestic = getCategories(locale).find((category) => category.path === ROUTES.domestic);
+  const domestic = getCategories(locale).find(
+    (category) => category.path === ROUTES.domestic,
+  );
   if (!domestic) return null;
 
   const regions = getChildCategories(domestic.id, locale);
@@ -34,7 +40,10 @@ export function RegionsSection({ locale }: { locale: Locale }) {
             title={m.home.regions.title}
             description={m.home.regions.description}
             action={
-              <ButtonLink href={localizePath(locale, ROUTES.domestic)} variant="secondary">
+              <ButtonLink
+                href={localizePath(locale, ROUTES.domestic)}
+                variant="secondary"
+              >
                 {m.home.regions.cta}
                 <ArrowRightIcon className="h-4 w-4" />
               </ButtonLink>
@@ -44,7 +53,10 @@ export function RegionsSection({ locale }: { locale: Locale }) {
 
         <ul className="mt-10 flex flex-col gap-5">
           {regions.map((region) => {
-            const regionTours = getToursByCategoryId(region.id, locale).slice(0, 3);
+            const regionTours = getToursByCategoryId(region.id, locale).slice(
+              0,
+              3,
+            );
             return (
               <Reveal as="li" key={region.id}>
                 <Link
@@ -53,7 +65,9 @@ export function RegionsSection({ locale }: { locale: Locale }) {
                 >
                   <AssetImage
                     image={region.image}
-                    altFallback={format(m.home.regions.regionAlt, { name: region.name })}
+                    altFallback={format(m.home.regions.regionAlt, {
+                      name: region.name,
+                    })}
                     sizes="(max-width: 640px) 100vw, 240px"
                     className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-44"
                   />
@@ -65,7 +79,10 @@ export function RegionsSection({ locale }: { locale: Locale }) {
                       </h3>
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary-strong">
                         <MapPinIcon className="h-3.5 w-3.5" />
-                        {plural(m.common.tourCount, getCategoryTourCount(region.id))}
+                        {plural(
+                          m.common.tourCount,
+                          getCategoryTourCount(region.id),
+                        )}
                       </span>
                     </div>
 

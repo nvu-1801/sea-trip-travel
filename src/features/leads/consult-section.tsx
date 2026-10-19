@@ -1,9 +1,14 @@
 import { ROUTES } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
+import { siteConfig } from "@/config/runtime-site";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
-import { PhoneIcon, ClockIcon, ShieldIcon, SparkleIcon } from "@/components/ui/icons";
+import {
+  PhoneIcon,
+  ClockIcon,
+  ShieldIcon,
+  SparkleIcon,
+} from "@/components/ui/icons";
 import type { Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { LeadForm } from "./lead-form";
 import { leadFormLabels } from "./lead-form-labels";
@@ -57,7 +62,9 @@ export function ConsultSection({
                     <item.icon className="h-5 w-5 text-primary-strong" />
                   </span>
                   <div>
-                    <p className="font-semibold text-foreground">{item.title}</p>
+                    <p className="font-semibold text-foreground">
+                      {item.title}
+                    </p>
                     <p className="mt-0.5 text-sm leading-relaxed text-foreground-muted">
                       {item.body}
                     </p>
@@ -77,7 +84,9 @@ export function ConsultSection({
                 <PhoneIcon className="h-5 w-5" />
                 {siteConfig.contact.hotline}
               </a>
-              <p className="mt-1 text-sm text-foreground-muted">{m.site.workingHours}</p>
+              <p className="mt-1 text-sm text-foreground-muted">
+                {m.site.workingHours}
+              </p>
             </div>
           </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { siteConfig } from "@/config/site";
+import { useSiteContact } from "@/components/layout/site-context";
 import { facebookLink, zaloLink } from "@/config/social-links";
 import { cn } from "@/lib/utils";
 import {
@@ -76,6 +76,7 @@ export type FloatingContactLabels = {
 };
 
 export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
+  const contact = useSiteContact();
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -91,21 +92,35 @@ export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
     {
       key: "zalo",
       label: labels.zalo,
-      href: zaloLink.url,
+      href: contact.socialLinks
+        ? (contact.socialLinks.find(
+            (link) => new URL(link.href).hostname === "zalo.me",
+          )?.href ?? "")
+        : zaloLink.url,
       background: ZALO_BLUE,
-      icon: <span className="text-[0.6875rem] font-extrabold tracking-tight">Zalo</span>,
+      icon: (
+        <span className="text-[0.6875rem] font-extrabold tracking-tight">
+          Zalo
+        </span>
+      ),
     },
     {
       key: "facebook",
       label: labels.facebook,
-      href: facebookLink.url,
+      href: contact.socialLinks
+        ? (contact.socialLinks.find((link) =>
+            /(^|\.)facebook\.com$|(^|\.)fb\.com$/.test(
+              new URL(link.href).hostname,
+            ),
+          )?.href ?? "")
+        : facebookLink.url,
       background: FACEBOOK_BLUE,
       icon: <FacebookIcon className="h-5 w-5" />,
     },
     {
       key: "phone",
-      label: labels.phone.replace("{phone}", siteConfig.contact.hotline),
-      href: siteConfig.contact.hotlineHref,
+      label: labels.phone.replace("{phone}", contact.hotline),
+      href: contact.hotlineHref,
       className: "bg-primary-strong hover:bg-primary-strong-hover",
       icon: <PhoneIcon className="h-5 w-5" />,
     },
@@ -149,7 +164,8 @@ export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
         }
       }}
       onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) close();
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+          close();
       }}
     >
       {/* Back to top — appears once the visitor has committed to the page. */}
@@ -171,42 +187,51 @@ export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
       </button>
 
       {/* Contact channels. The id is the target of the toggle's aria-controls. */}
-      <ul id="floating-contact-list" className="flex flex-col items-end gap-2.5">
-        {items.map((item, index) => (
-          <li key={item.key} className="group relative flex items-center">
-            <span
-              className={cn(
-                "pointer-events-none absolute right-full mr-3 hidden whitespace-nowrap rounded-full bg-foreground px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition-opacity duration-200",
-                "group-hover:opacity-100 group-focus-within:opacity-100 lg:block",
-              )}
-            >
-              {item.label}
-            </span>
+      <ul
+        id="floating-contact-list"
+        className="flex flex-col items-end gap-2.5"
+      >
+        {items
+          .filter((item) => item.href)
+          .map((item, index) => (
+            <li key={item.key} className="group relative flex items-center">
+              <span
+                className={cn(
+                  "pointer-events-none absolute right-full mr-3 hidden whitespace-nowrap rounded-full bg-foreground px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition-opacity duration-200",
+                  "group-hover:opacity-100 group-focus-within:opacity-100 lg:block",
+                )}
+              >
+                {item.label}
+              </span>
 
-            <a
-              href={item.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={item.label}
-              tabIndex={open ? 0 : -1}
-              style={{
-                ...(item.background ? { backgroundColor: item.background } : {}),
-                // Nearest item (last in the list) arrives first on expand.
-                transitionDelay: open ? `${(items.length - 1 - index) * 55}ms` : "0ms",
-              }}
-              className={cn(
-                "pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full text-white shadow-card",
-                "transition-[opacity,transform,background-color] duration-300 ease-out",
-                item.className,
-                open
-                  ? "translate-y-0 scale-100 opacity-100"
-                  : "pointer-events-none translate-y-3 scale-90 opacity-0",
-              )}
-            >
-              {item.icon}
-            </a>
-          </li>
-        ))}
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={item.label}
+                tabIndex={open ? 0 : -1}
+                style={{
+                  ...(item.background
+                    ? { backgroundColor: item.background }
+                    : {}),
+                  // Nearest item (last in the list) arrives first on expand.
+                  transitionDelay: open
+                    ? `${(items.length - 1 - index) * 55}ms`
+                    : "0ms",
+                }}
+                className={cn(
+                  "pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full text-white shadow-card",
+                  "transition-[opacity,transform,background-color] duration-300 ease-out",
+                  item.className,
+                  open
+                    ? "translate-y-0 scale-100 opacity-100"
+                    : "pointer-events-none translate-y-3 scale-90 opacity-0",
+                )}
+              >
+                {item.icon}
+              </a>
+            </li>
+          ))}
       </ul>
 
       {/* Toggle */}
@@ -225,7 +250,11 @@ export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
             "after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:content-[''] after:animate-[stt-pulse-ring_2.8s_var(--ease-out-soft)_infinite]",
         )}
       >
-        {open ? <CloseIcon className="h-5 w-5" /> : <ChatIcon className="h-6 w-6" />}
+        {open ? (
+          <CloseIcon className="h-5 w-5" />
+        ) : (
+          <ChatIcon className="h-6 w-6" />
+        )}
       </button>
     </div>
   );

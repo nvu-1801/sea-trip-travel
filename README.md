@@ -48,19 +48,19 @@ Quy tắc phụ thuộc và lý do: **`docs/architecture.md`**.
 
 Giữ đúng thứ tự yêu cầu. Nguồn duy nhất: `src/config/navigation.ts`.
 
-| Cấp 1 | Cấp 2 | URL |
-| --- | --- | --- |
-| Trang chủ | | `/` |
-| Tour Quy Nhơn - Phú Yên | | `/tour-quy-nhon-phu-yen` |
-| | Tour Quy Nhơn 1 Ngày | `/tour-quy-nhon-phu-yen/tour-quy-nhon-1-ngay` |
-| | Tour Quy Nhơn dài Ngày | `/tour-quy-nhon-phu-yen/tour-quy-nhon-dai-ngay` |
-| Tour Trong Nước | | `/tour-trong-nuoc` |
-| | Tour Miền Bắc | `/tour-trong-nuoc/tour-mien-bac` |
-| | Tour Miền Trung | `/tour-trong-nuoc/tour-mien-trung` |
-| | Tour Miền Nam | `/tour-trong-nuoc/tour-mien-nam` |
-| | Tour Tây Nguyên | `/tour-trong-nuoc/tour-tay-nguyen` |
-| Cẩm Nang Du Lịch | | `/cam-nang-du-lich` |
-| Liên Hệ | | `/lien-he` |
+| Cấp 1                   | Cấp 2                  | URL                                             |
+| ----------------------- | ---------------------- | ----------------------------------------------- |
+| Trang chủ               |                        | `/`                                             |
+| Tour Quy Nhơn - Phú Yên |                        | `/tour-quy-nhon-phu-yen`                        |
+|                         | Tour Quy Nhơn 1 Ngày   | `/tour-quy-nhon-phu-yen/tour-quy-nhon-1-ngay`   |
+|                         | Tour Quy Nhơn dài Ngày | `/tour-quy-nhon-phu-yen/tour-quy-nhon-dai-ngay` |
+| Tour Trong Nước         |                        | `/tour-trong-nuoc`                              |
+|                         | Tour Miền Bắc          | `/tour-trong-nuoc/tour-mien-bac`                |
+|                         | Tour Miền Trung        | `/tour-trong-nuoc/tour-mien-trung`              |
+|                         | Tour Miền Nam          | `/tour-trong-nuoc/tour-mien-nam`                |
+|                         | Tour Tây Nguyên        | `/tour-trong-nuoc/tour-tay-nguyen`              |
+| Cẩm Nang Du Lịch        |                        | `/cam-nang-du-lich`                             |
+| Liên Hệ                 |                        | `/lien-he`                                      |
 
 Trang khác: `/tour/[slug]`, `/cam-nang-du-lich/[slug]`, `/chinh-sach-bao-mat`,
 `/api/leads`, `sitemap.xml`, `robots.txt`.
@@ -80,7 +80,6 @@ Website hiện hỗ trợ **tiếng Việt** (mặc định, URL không prefix) 
 
 Vận hành: **`docs/I18N_GUIDE.md`**. Danh sách bản dịch cần duyệt:
 **`docs/I18N_CONTENT_REVIEW.md`**.
-
 
 ## Biến môi trường
 
@@ -103,18 +102,18 @@ Danh sách việc cần chủ website cung cấp: **`docs/CONTENT-TODO.md`**.
 
 ## Tài liệu
 
-| File | Nội dung |
-| --- | --- |
-| `docs/PLAN.md` | Kế hoạch triển khai: phạm vi, sitemap, art direction, lộ trình |
-| `docs/verification.md` | **Báo cáo kiểm chứng**: email thật, rate limit, mobile, animation, và những gì còn chưa kiểm được |
-| `docs/architecture.md` | Kiến trúc, cây thư mục, quy tắc phụ thuộc, luồng dữ liệu |
-| `docs/design-tokens.md` | Token màu/chữ/khoảng cách + lý do đạt WCAG AA |
-| `docs/lead-flow.md` | Luồng form → email, chống spam, xử lý lỗi, biến môi trường |
-| `docs/admin-roadmap.md` | Lộ trình bổ sung admin/CMS sau MVP |
-| `docs/I18N_GUIDE.md` | Vận hành song ngữ vi/en: thêm chuỗi, thêm tour/bài viết, bật index EN |
-| `docs/I18N_CONTENT_REVIEW.md` | Danh sách bản dịch tiếng Anh đang chờ duyệt |
-| `docs/acceptance-checklist.md` | Checklist nghiệm thu + cách kiểm chứng |
-| `docs/CONTENT-TODO.md` | Thông tin còn thiếu cần chủ website cung cấp |
+| File                           | Nội dung                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `docs/PLAN.md`                 | Kế hoạch triển khai: phạm vi, sitemap, art direction, lộ trình                                    |
+| `docs/verification.md`         | **Báo cáo kiểm chứng**: email thật, rate limit, mobile, animation, và những gì còn chưa kiểm được |
+| `docs/architecture.md`         | Kiến trúc, cây thư mục, quy tắc phụ thuộc, luồng dữ liệu                                          |
+| `docs/design-tokens.md`        | Token màu/chữ/khoảng cách + lý do đạt WCAG AA                                                     |
+| `docs/lead-flow.md`            | Luồng form → email, chống spam, xử lý lỗi, biến môi trường                                        |
+| `docs/admin-roadmap.md`        | Lộ trình bổ sung admin/CMS sau MVP                                                                |
+| `docs/I18N_GUIDE.md`           | Vận hành song ngữ vi/en: thêm chuỗi, thêm tour/bài viết, bật index EN                             |
+| `docs/I18N_CONTENT_REVIEW.md`  | Danh sách bản dịch tiếng Anh đang chờ duyệt                                                       |
+| `docs/acceptance-checklist.md` | Checklist nghiệm thu + cách kiểm chứng                                                            |
+| `docs/CONTENT-TODO.md`         | Thông tin còn thiếu cần chủ website cung cấp                                                      |
 
 ## Ghi chú kỹ thuật
 
@@ -130,3 +129,11 @@ Danh sách việc cần chủ website cung cấp: **`docs/CONTENT-TODO.md`**.
 - **Animation cuộn** dùng CSS scroll-driven animation
   (`animation-timeline: view()`), không có IntersectionObserver và không có
   JavaScript. Trình duyệt không hỗ trợ sẽ hiển thị nội dung bình thường.
+
+# SEA TRIP Studio · CMS và triển khai VPS
+
+Nguồn chính là thư mục `sea-trip-travel`. Bản cập nhật 18/10/2026 bổ sung `/admin` cho một chủ quản trị, quản lý tour/bài viết/danh mục/điểm đến, nội dung VI/EN, footer, media và lead. SQLite và uploads phải nằm trên ổ đĩa bền vững. Bản public đọc snapshot đã xuất bản ngay ở runtime.
+
+Xem [hướng dẫn CMS, Docker, CI/CD, backup và VPS](docs/VPS-DEPLOY.md) cùng [kế hoạch triển khai](docs/IMPLEMENTATION-2026-10.md). Không có mật khẩu mặc định. Tạo tài khoản bằng `npm run admin -- bootstrap` sau khi cấu hình môi trường theo hướng dẫn.
+
+Kiểm tra thêm: `npm run test:cms` và `npm run verify:cms`. Browser test dùng tài khoản, database và khóa mã hóa tạm riêng. Workflow deploy main chỉ bật khi đã có cấu hình VPS và `DEPLOY_ENABLED=true`.

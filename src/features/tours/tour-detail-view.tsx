@@ -19,7 +19,7 @@ import { TranslationNotice } from "@/components/layout/translation-notice";
 import { isIndexable } from "@/domain/localization";
 import { tourTranslationStatus } from "@/lib/data/localize";
 import type { Locale } from "@/i18n/config";
-import { format, getMessages } from "@/i18n/messages";
+import { format, getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { ItineraryTimeline } from "./itinerary-timeline";
 import { TourGallery } from "./tour-gallery";
@@ -39,13 +39,20 @@ import { MobileConsultBar } from "./mobile-consult-bar";
 function crumbsFor(slug: string, tourTitle: string, locale: Locale): Crumb[] {
   const m = getMessages(locale);
   const tour = getTourBySlug(slug, locale);
-  const crumbs: Crumb[] = [{ label: m.common.home, href: localizePath(locale, ROUTES.home) }];
+  const crumbs: Crumb[] = [
+    { label: m.common.home, href: localizePath(locale, ROUTES.home) },
+  ];
 
   if (tour) {
     const category = getCategoryById(tour.categoryIds[0], locale);
     if (category) {
       const trail = getCategoryTrail(category.id, locale);
-      trail.forEach((item) => crumbs.push({ label: item.name, href: localizePath(locale, item.path) }));
+      trail.forEach((item) =>
+        crumbs.push({
+          label: item.name,
+          href: localizePath(locale, item.path),
+        }),
+      );
     }
   }
 
@@ -81,13 +88,21 @@ export function buildTourMetadata(slug: string, locale: Locale): Metadata {
   });
 }
 
-export function TourDetailView({ slug, locale }: { slug: string; locale: Locale }) {
+export function TourDetailView({
+  slug,
+  locale,
+}: {
+  slug: string;
+  locale: Locale;
+}) {
   const m = getMessages(locale);
   const tour = getTourBySlug(slug, locale);
   if (!tour) notFound();
 
   const destinations = getDestinationsByIds(tour.destinationIds, locale);
-  const related = getRelatedTours(tour.slug, 3, locale).map((item) => toTourCard(item, locale));
+  const related = getRelatedTours(tour.slug, 3, locale).map((item) =>
+    toTourCard(item, locale),
+  );
   const crumbs = crumbsFor(tour.slug, tour.title, locale);
   const primaryCategory = getCategoryById(tour.categoryIds[0], locale);
   const cover = tour.images[0]?.src ?? "/opengraph-image.png";
@@ -95,11 +110,19 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
 
   const sections = [
     { id: "tong-quan", label: m.tour.sections.overview },
-    ...(tour.pricingOptions.length > 0 ? [{ id: "bang-gia", label: m.tour.packages.title }] : []),
-    ...(tour.highlights.length > 0 ? [{ id: "diem-noi-bat", label: m.tour.sections.highlights }] : []),
+    ...(tour.pricingOptions.length > 0
+      ? [{ id: "bang-gia", label: m.tour.packages.title }]
+      : []),
+    ...(tour.highlights.length > 0
+      ? [{ id: "diem-noi-bat", label: m.tour.sections.highlights }]
+      : []),
     { id: "lich-trinh", label: m.tour.sections.itinerary },
-    ...(tour.included.length > 0 || tour.excluded.length > 0 ? [{ id: "dich-vu", label: m.tour.sections.services }] : []),
-    ...(tour.notes.length > 0 || tour.policies.length > 0 ? [{ id: "luu-y", label: m.tour.sections.notes }] : []),
+    ...(tour.included.length > 0 || tour.excluded.length > 0
+      ? [{ id: "dich-vu", label: m.tour.sections.services }]
+      : []),
+    ...(tour.notes.length > 0 || tour.policies.length > 0
+      ? [{ id: "luu-y", label: m.tour.sections.notes }]
+      : []),
     { id: "tu-van", label: m.tour.sections.consult },
   ];
 
@@ -112,7 +135,10 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
           summary: tour.summary,
           url: absoluteUrl(localizePath(locale, `/tour/${tour.slug}`)),
           destinations,
-          itinerary: tour.itinerary.map((day) => ({ title: day.title, summary: day.summary })),
+          itinerary: tour.itinerary.map((day) => ({
+            title: day.title,
+            summary: day.summary,
+          })),
           price: tour.priceFrom,
           image: cover,
           locale,
@@ -154,7 +180,11 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
                 <p className="text-[1.0625rem] leading-relaxed text-foreground-muted">
                   {tour.summary}
                 </p>
-                {tour.tourCode ? <span className="w-fit rounded-full border border-border bg-surface-muted px-3 py-1 text-xs font-bold tracking-widest text-primary-strong">{tour.tourCode}</span> : null}
+                {tour.tourCode ? (
+                  <span className="w-fit rounded-full border border-border bg-surface-muted px-3 py-1 text-xs font-bold tracking-widest text-primary-strong">
+                    {tour.tourCode}
+                  </span>
+                ) : null}
 
                 {destinations.length > 0 ? (
                   <ul className="flex flex-wrap gap-1.5">
@@ -210,7 +240,8 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
                         {m.common.departure}
                       </dt>
                       <dd className="text-sm font-bold text-foreground">
-                        {tour.departurePoints.join(", ") || m.common.contactForPricing}
+                        {tour.departurePoints.join(", ") ||
+                          m.common.contactForPricing}
                       </dd>
                     </div>
                     <div className="flex items-center justify-between gap-4">
@@ -218,7 +249,9 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
                         <MapPinIcon className="h-4 w-4 text-primary-strong" />
                         {m.common.destinationsCount}
                       </dt>
-                      <dd className="text-sm font-bold text-foreground">{destinations.length}</dd>
+                      <dd className="text-sm font-bold text-foreground">
+                        {destinations.length}
+                      </dd>
                     </div>
                   </dl>
                 </div>
@@ -226,13 +259,33 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
                 <TourPriceBlock tour={tour} locale={locale} />
                 {tour.returnPoints.length > 0 || tour.transport.length > 0 ? (
                   <dl className="grid gap-4 rounded-2xl border border-border p-5 text-sm">
-                    {tour.returnPoints.length > 0 ? <div><dt className="text-xs text-foreground-subtle">{m.tour.packages.returnPoint}</dt><dd className="mt-1 font-semibold">{tour.returnPoints.join(", ")}</dd></div> : null}
-                    {tour.transport.length > 0 ? <div><dt className="text-xs text-foreground-subtle">{m.tour.packages.transport}</dt><dd className="mt-1 leading-relaxed">{tour.transport.join(" · ")}</dd></div> : null}
+                    {tour.returnPoints.length > 0 ? (
+                      <div>
+                        <dt className="text-xs text-foreground-subtle">
+                          {m.tour.packages.returnPoint}
+                        </dt>
+                        <dd className="mt-1 font-semibold">
+                          {tour.returnPoints.join(", ")}
+                        </dd>
+                      </div>
+                    ) : null}
+                    {tour.transport.length > 0 ? (
+                      <div>
+                        <dt className="text-xs text-foreground-subtle">
+                          {m.tour.packages.transport}
+                        </dt>
+                        <dd className="mt-1 leading-relaxed">
+                          {tour.transport.join(" · ")}
+                        </dd>
+                      </div>
+                    ) : null}
                   </dl>
                 ) : null}
 
                 <div className="hidden rounded-2xl border border-border bg-surface p-5 shadow-soft lg:block">
-                  <p className="text-sm font-semibold text-foreground">{m.tour.asideWant}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {m.tour.asideWant}
+                  </p>
                   <p className="mt-1 text-sm leading-relaxed text-foreground-muted">
                     {m.tour.asideDescription}
                   </p>
@@ -248,7 +301,10 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
           </div>
 
           {/* --- In-page anchors --------------------------------------------- */}
-          <nav aria-label={m.common.pageNavAria} className="mt-10 border-y border-border sm:mt-12">
+          <nav
+            aria-label={m.common.pageNavAria}
+            className="mt-10 border-y border-border sm:mt-12"
+          >
             <ul className="no-scrollbar flex flex-wrap gap-1 py-2 sm:-mx-7 sm:flex-nowrap sm:overflow-x-auto sm:px-7 lg:mx-0 lg:px-0">
               {sections.map((section) => (
                 <li key={section.id}>
@@ -265,7 +321,11 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
         </Container>
 
         {tour.pricingOptions.length > 0 ? (
-          <Section tone="muted" spacing="default"><Container><TourPackages tour={tour} locale={locale} /></Container></Section>
+          <Section tone="muted" spacing="default">
+            <Container>
+              <TourPackages tour={tour} locale={locale} />
+            </Container>
+          </Section>
         ) : null}
 
         {/* --- Overview ---------------------------------------------------- */}
@@ -300,13 +360,15 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
         </Section>
 
         {/* --- Highlights -------------------------------------------------- */}
-        {tour.highlights.length > 0 ? <Section id="diem-noi-bat" tone="muted" spacing="default">
-          <Container>
-            <Reveal>
-              <TourHighlights tour={tour} locale={locale} />
-            </Reveal>
-          </Container>
-        </Section> : null}
+        {tour.highlights.length > 0 ? (
+          <Section id="diem-noi-bat" tone="muted" spacing="default">
+            <Container>
+              <Reveal>
+                <TourHighlights tour={tour} locale={locale} />
+              </Reveal>
+            </Container>
+          </Section>
+        ) : null}
 
         {/* --- Itinerary --------------------------------------------------- */}
         <Section id="lich-trinh" tone="default" spacing="default">
@@ -330,18 +392,20 @@ export function TourDetailView({ slug, locale }: { slug: string; locale: Locale 
         </Section>
 
         {/* --- Services ---------------------------------------------------- */}
-        {tour.included.length > 0 || tour.excluded.length > 0 ? <Section id="dich-vu" tone="muted" spacing="default">
-          <Container>
-            <SectionHeading
-              eyebrow={m.tour.servicesEyebrow}
-              title={m.tour.servicesTitle}
-              as="h2"
-            />
-            <div className="mt-8">
-              <TourServices tour={tour} locale={locale} />
-            </div>
-          </Container>
-        </Section> : null}
+        {tour.included.length > 0 || tour.excluded.length > 0 ? (
+          <Section id="dich-vu" tone="muted" spacing="default">
+            <Container>
+              <SectionHeading
+                eyebrow={m.tour.servicesEyebrow}
+                title={m.tour.servicesTitle}
+                as="h2"
+              />
+              <div className="mt-8">
+                <TourServices tour={tour} locale={locale} />
+              </div>
+            </Container>
+          </Section>
+        ) : null}
 
         {/* --- Notes + policies -------------------------------------------- */}
         {tour.notes.length > 0 || tour.policies.length > 0 ? (

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRightIcon, ClockIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/i18n/config";
-import { getMessages, plural } from "@/i18n/messages";
+import { getMessages, plural } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
 /** Compact row used by the side list next to a featured article. */
@@ -38,7 +38,9 @@ export function CompactArticleRow({
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[0.6875rem] text-foreground-subtle">
-          <time dateTime={article.publishedAt}>{formatDateLong(article.publishedAt, locale)}</time>
+          <time dateTime={article.publishedAt}>
+            {formatDateLong(article.publishedAt, locale)}
+          </time>
           {article.readingMinutes ? (
             <span className="inline-flex items-center gap-1">
               <ClockIcon className="h-3 w-3" />
@@ -118,7 +120,11 @@ export function ArticleCard({
         <AssetImage
           image={article.cover}
           altFallback={article.title}
-          sizes={isFeature ? "(max-width: 640px) 100vw, 50vw" : "(max-width: 768px) 100vw, 33vw"}
+          sizes={
+            isFeature
+              ? "(max-width: 640px) 100vw, 50vw"
+              : "(max-width: 768px) 100vw, 33vw"
+          }
           className="absolute inset-0 h-full w-full transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />
         {/* Brand gradient hairline on hover. */}
@@ -133,9 +139,16 @@ export function ArticleCard({
         ) : null}
       </div>
 
-      <div className={cn("flex flex-1 flex-col gap-3 p-5", isFeature && "sm:justify-center sm:p-7")}>
+      <div
+        className={cn(
+          "flex flex-1 flex-col gap-3 p-5",
+          isFeature && "sm:justify-center sm:p-7",
+        )}
+      >
         <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-subtle">
-          <time dateTime={article.publishedAt}>{formatDateLong(article.publishedAt, locale)}</time>
+          <time dateTime={article.publishedAt}>
+            {formatDateLong(article.publishedAt, locale)}
+          </time>
           {article.readingMinutes ? (
             <span className="inline-flex items-center gap-1">
               <ClockIcon className="h-3.5 w-3.5" />
@@ -150,13 +163,18 @@ export function ArticleCard({
             isFeature ? "text-xl sm:text-2xl" : "text-lg",
           )}
         >
-          <Link href={href} className="transition-colors hover:text-primary-strong">
+          <Link
+            href={href}
+            className="transition-colors hover:text-primary-strong"
+          >
             <span className="absolute inset-0 z-10" aria-hidden="true" />
             {article.title}
           </Link>
         </h3>
 
-        <p className="text-sm leading-relaxed text-foreground-muted">{article.excerpt}</p>
+        <p className="text-sm leading-relaxed text-foreground-muted">
+          {article.excerpt}
+        </p>
 
         {article.tags.length > 0 ? (
           <ul className="mt-1 flex flex-wrap gap-1.5">

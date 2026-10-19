@@ -1,12 +1,15 @@
 import { ROUTES } from "@/config/navigation";
-import { getFeaturedArticle, getNonFeaturedArticles } from "@/lib/data/articles";
+import {
+  getFeaturedArticle,
+  getNonFeaturedArticles,
+} from "@/lib/data/articles";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { ArticleCard, CompactArticleRow } from "@/features/guides/article-card";
 import type { Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
 /**
@@ -64,7 +67,11 @@ export function GuidesSection({ locale }: { locale: Locale }) {
               </p>
               <ul className="mt-2 flex flex-1 flex-col divide-y divide-border border-t border-border">
                 {rest.map((article) => (
-                  <Reveal as="li" key={article.slug} className="flex flex-1 items-center">
+                  <Reveal
+                    as="li"
+                    key={article.slug}
+                    className="flex flex-1 items-center"
+                  >
                     <CompactArticleRow
                       article={article}
                       locale={locale}

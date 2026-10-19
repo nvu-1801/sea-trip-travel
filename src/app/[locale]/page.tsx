@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { siteConfig } from "@/config/site";
+import { siteConfig } from "@/config/runtime-site";
 import { buildMetadata } from "@/lib/seo";
 import { Hero } from "@/features/home/hero";
+import { QuickFinder } from "@/features/home/quick-finder";
 import { ExploreSection } from "@/features/home/explore-section";
 import { FeaturedToursSection } from "@/features/home/featured-tours-section";
 import { RegionsSection } from "@/features/home/regions-section";
@@ -13,7 +14,7 @@ import { getFeaturedTours } from "@/lib/data/tours";
 import { tourTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 
 /**
  * Home page.
@@ -25,7 +26,9 @@ import { getMessages } from "@/i18n/messages";
  * so it is kept out of the index until they are reviewed.
  */
 
-async function resolveLocale(params: Promise<{ locale: string }>): Promise<Locale> {
+async function resolveLocale(
+  params: Promise<{ locale: string }>,
+): Promise<Locale> {
   const { locale } = await params;
   return isLocale(locale) ? locale : defaultLocale;
 }
@@ -53,7 +56,12 @@ export async function generateMetadata({
     hreflang: indexable,
     keywords:
       locale === "vi"
-        ? ["tour Quy Nhơn Phú Yên", "du lịch Quy Nhơn", "tour trong nước", "cẩm nang du lịch"]
+        ? [
+            "tour Quy Nhơn Phú Yên",
+            "du lịch Quy Nhơn",
+            "tour trong nước",
+            "cẩm nang du lịch",
+          ]
         : ["Quy Nhon Phu Yen tours", "Vietnam tours", "travel guides"],
   });
 }
@@ -67,6 +75,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     <>
       {indexable ? null : <TranslationNotice locale={locale} />}
       <Hero locale={locale} />
+      <QuickFinder locale={locale} />
       <ExploreSection locale={locale} />
       <FeaturedToursSection locale={locale} />
       <RegionsSection locale={locale} />

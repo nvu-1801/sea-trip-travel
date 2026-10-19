@@ -2,7 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ROUTES } from "@/config/navigation";
-import { getArticleBySlug, getArticleSlugs, getRelatedArticles } from "@/lib/data/articles";
+import {
+  getArticleBySlug,
+  getArticleSlugs,
+  getRelatedArticles,
+} from "@/lib/data/articles";
 import { getTourBySlug } from "@/lib/data/tours";
 import { formatDateLong } from "@/lib/format";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
@@ -23,7 +27,7 @@ import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { articleTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
-import { getMessages, plural } from "@/i18n/messages";
+import { getMessages, plural } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { resolveLocaleFromParams } from "@/i18n/params";
 
@@ -36,7 +40,6 @@ export function generateStaticParams() {
  * prerendered, and the page's content depends entirely on the slug, so blocking
  * is the intended behaviour rather than a Suspense skeleton.
  */
-export const instant = false;
 
 export async function generateMetadata({
   params,
@@ -49,7 +52,10 @@ export async function generateMetadata({
   // reached while streaming degrades to a soft 404 (HTTP 200 + noindex).
   if (!article) notFound();
 
-  const indexable = isIndexable(articleTranslationStatus(article.id, locale), locale);
+  const indexable = isIndexable(
+    articleTranslationStatus(article.id, locale),
+    locale,
+  );
 
   return buildMetadata({
     title: article.seo?.title ?? article.title,
@@ -74,7 +80,10 @@ export default async function ArticlePage({
   const article = getArticleBySlug(slug, locale);
   if (!article) notFound();
 
-  const indexable = isIndexable(articleTranslationStatus(article.id, locale), locale);
+  const indexable = isIndexable(
+    articleTranslationStatus(article.id, locale),
+    locale,
+  );
 
   const relatedTours = article.relatedTourSlugs
     .map((tourSlug) => getTourBySlug(tourSlug, locale))
@@ -195,7 +204,10 @@ export default async function ArticlePage({
               title={m.guides.relatedArticlesTitle}
               as="h2"
               action={
-                <ButtonLink href={localizePath(locale, ROUTES.guides)} variant="secondary">
+                <ButtonLink
+                  href={localizePath(locale, ROUTES.guides)}
+                  variant="secondary"
+                >
                   {m.guides.allGuides}
                 </ButtonLink>
               }
@@ -203,7 +215,11 @@ export default async function ArticlePage({
             <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {relatedArticles.map((related) => (
                 <Reveal as="li" key={related.slug} className="flex">
-                  <ArticleCard article={related} locale={locale} className="w-full" />
+                  <ArticleCard
+                    article={related}
+                    locale={locale}
+                    className="w-full"
+                  />
                 </Reveal>
               ))}
             </ul>

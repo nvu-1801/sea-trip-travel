@@ -1,7 +1,7 @@
 import type { Duration, Money, PriceFrom } from "@/domain/common";
 import type { Locale } from "@/i18n/config";
 import { intlTag } from "@/i18n/config";
-import { format, getMessages, plural } from "@/i18n/messages";
+import { format, getMessages, plural } from "@/i18n/server";
 
 /**
  * Locale-aware presentation of money, dates and durations.

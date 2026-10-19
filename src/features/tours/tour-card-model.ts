@@ -1,8 +1,12 @@
 import type { Tour } from "@/domain/tour";
 import { formatDestinationNames } from "@/lib/data/destinations";
-import { formatDuration, formatPriceFrom, hasPublishedPrice } from "@/lib/format";
+import {
+  formatDuration,
+  formatPriceFrom,
+  hasPublishedPrice,
+} from "@/lib/format";
 import type { Locale } from "@/i18n/config";
-import { format, getMessages } from "@/i18n/messages";
+import { format, getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import type { AssetImageInput } from "@/components/ui/asset-image";
 

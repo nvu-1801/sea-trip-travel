@@ -1,30 +1,35 @@
-import { tours } from "@/content";
+import { published } from "@/server/cms/store";
+import { tours as seed_tours } from "@/content";
+const current_tours = () => published("tours", seed_tours);
 import type { Tour } from "@/domain/tour";
 import type { Locale } from "@/i18n/config";
 import { getAllDescendantCategoryIds } from "./internal";
 import { resolveTour } from "./localize";
 
 /**
- * Read-only access to tours, resolved for the requested locale.
+ * Read-only access to current_tours(), resolved for the requested locale.
  *
- * Every page reads tours through these functions and nothing else, so moving the
+ * Every page reads current_tours() through these functions and nothing else, so moving the
  * source from TypeScript files to an API/CMS later means rewriting this file —
  * not the UI.
  */
 
 export function getTourBySlug(slug: string, locale: Locale): Tour | undefined {
-  const tour = tours.find((candidate) => candidate.slug === slug);
+  const tour = current_tours().find((candidate) => candidate.slug === slug);
   return tour ? resolveTour(tour, locale) : undefined;
 }
 
 export function getTourSlugs(): readonly string[] {
-  return tours.map((tour) => tour.slug);
+  return current_tours().map((tour) => tour.slug);
 }
 
 /** Tours filed under `categoryId` or any of its child categories. */
-export function getToursByCategoryId(categoryId: string, locale: Locale): readonly Tour[] {
+export function getToursByCategoryId(
+  categoryId: string,
+  locale: Locale,
+): readonly Tour[] {
   const ids = new Set(getAllDescendantCategoryIds(categoryId));
-  return tours
+  return current_tours()
     .filter((tour) => tour.categoryIds.some((id) => ids.has(id)))
     .map((tour) => resolveTour(tour, locale));
 }
@@ -35,36 +40,48 @@ export function getToursByCategoryId(categoryId: string, locale: Locale): readon
  */
 export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
   const focus = new Set(getAllDescendantCategoryIds("cat_quy_nhon_phu_yen"));
-  const inFocus = tours.filter((tour) => tour.categoryIds.some((id) => focus.has(id)));
+  const inFocus = current_tours().filter((tour) =>
+    tour.categoryIds.some((id) => focus.has(id)),
+  );
   // Show both day trips and overnight programmes as the catalogue grows.
   const dayLimit = Math.ceil(limit / 2);
   const diverse = [
     ...inFocus.filter((tour) => tour.duration.days === 1).slice(0, dayLimit),
-    ...inFocus.filter((tour) => tour.duration.days > 1).slice(0, limit - dayLimit),
+    ...inFocus
+      .filter((tour) => tour.duration.days > 1)
+      .slice(0, limit - dayLimit),
     ...inFocus,
-    ...tours.filter((tour) => !inFocus.includes(tour)),
+    ...current_tours().filter((tour) => !inFocus.includes(tour)),
   ];
-  const chosen = [...new Map(diverse.map((tour) => [tour.id, tour])).values()].slice(0, limit);
+  const chosen = [
+    ...new Map(diverse.map((tour) => [tour.id, tour])).values(),
+  ].slice(0, limit);
   return chosen.map((tour) => resolveTour(tour, locale));
 }
 
 /**
- * Related tours: same category first, then anything sharing a destination.
+ * Related current_tours(): same category first, then anything sharing a destination.
  * Returns `limit` items and never includes the tour itself.
  */
-export function getRelatedTours(slug: string, limit = 3, locale: Locale): readonly Tour[] {
-  const tour = tours.find((candidate) => candidate.slug === slug);
+export function getRelatedTours(
+  slug: string,
+  limit = 3,
+  locale: Locale,
+): readonly Tour[] {
+  const tour = current_tours().find((candidate) => candidate.slug === slug);
   if (!tour) return [];
 
   const categoryIds = new Set(tour.categoryIds);
   const destinationIds = new Set(tour.destinationIds);
 
-  const scored = tours
+  const scored = current_tours()
     .filter((candidate) => candidate.slug !== tour.slug)
     .map((candidate) => {
       let score = 0;
-      for (const id of candidate.categoryIds) if (categoryIds.has(id)) score += 3;
-      for (const id of candidate.destinationIds) if (destinationIds.has(id)) score += 2;
+      for (const id of candidate.categoryIds)
+        if (categoryIds.has(id)) score += 3;
+      for (const id of candidate.destinationIds)
+        if (destinationIds.has(id)) score += 2;
       return { candidate, score };
     })
     .filter((entry) => entry.score > 0)
@@ -75,7 +92,7 @@ export function getRelatedTours(slug: string, limit = 3, locale: Locale): readon
       ? scored.slice(0, limit).map((entry) => entry.candidate)
       : [
           ...scored.map((entry) => entry.candidate),
-          ...tours.filter(
+          ...current_tours().filter(
             (candidate) =>
               candidate.slug !== tour.slug &&
               !scored.some((entry) => entry.candidate.slug === candidate.slug),
@@ -88,6 +105,9 @@ export function getRelatedTours(slug: string, limit = 3, locale: Locale): readon
 /** Distinct tags across the catalogue — drives the listing filter chips. */
 export function getTourTags(locale: Locale): readonly string[] {
   const tags = new Set<string>();
-  for (const tour of tours) for (const tag of resolveTour(tour, locale).tags) tags.add(tag);
-  return [...tags].sort((a, b) => a.localeCompare(b, locale === "vi" ? "vi" : "en"));
+  for (const tour of current_tours())
+    for (const tag of resolveTour(tour, locale).tags) tags.add(tag);
+  return [...tags].sort((a, b) =>
+    a.localeCompare(b, locale === "vi" ? "vi" : "en"),
+  );
 }

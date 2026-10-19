@@ -1,9 +1,9 @@
 import { ROUTES } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
+import { siteConfig } from "@/config/runtime-site";
 import { ButtonLink } from "@/components/ui/button";
 import { PhoneIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import type { Locale } from "@/i18n/config";
 import { DesktopNav } from "./desktop-nav";
@@ -26,7 +26,12 @@ export function HeaderContainer({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("mx-auto w-full max-w-[88rem] px-5 sm:px-7 lg:px-10", className)}>
+    <div
+      className={cn(
+        "mx-auto w-full max-w-[88rem] px-5 sm:px-7 lg:px-10",
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -93,7 +98,10 @@ export function SiteHeader({ locale }: { locale: Locale }) {
             {/* Phones get a direct call action instead of the text CTA. */}
             <a
               href={siteConfig.contact.hotlineHref}
-              aria-label={m.common.callHotlineAria.replace("{phone}", siteConfig.contact.hotline)}
+              aria-label={m.common.callHotlineAria.replace(
+                "{phone}",
+                siteConfig.contact.hotline,
+              )}
               className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-primary-strong transition-colors hover:border-primary sm:hidden"
             >
               <PhoneIcon className="h-5 w-5" />

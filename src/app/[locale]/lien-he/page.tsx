@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
 import { ROUTES } from "@/config/navigation";
-import { siteConfig } from "@/config/site";
+import { siteConfig } from "@/config/runtime-site";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/json-ld";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Reveal } from "@/components/ui/reveal";
-import { ClockIcon, MailIcon, MapPinIcon, PhoneIcon, SendIcon } from "@/components/ui/icons";
+import {
+  ClockIcon,
+  MailIcon,
+  MapPinIcon,
+  PhoneIcon,
+  SendIcon,
+} from "@/components/ui/icons";
 import { LeadForm } from "@/features/leads/lead-form";
 import { leadFormLabels } from "@/features/leads/lead-form-labels";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { resolveLocaleFromParams } from "@/i18n/params";
 
@@ -119,9 +125,13 @@ export default async function ContactPage({ params }: PageProps<"/[locale]">) {
                           {channel.value}
                         </a>
                       ) : (
-                        <p className="text-base font-bold text-foreground">{channel.value}</p>
+                        <p className="text-base font-bold text-foreground">
+                          {channel.value}
+                        </p>
                       )}
-                      <p className="mt-1 text-sm text-foreground-muted">{channel.note}</p>
+                      <p className="mt-1 text-sm text-foreground-muted">
+                        {channel.note}
+                      </p>
                     </div>
                   </li>
                 ))}
@@ -135,7 +145,9 @@ export default async function ContactPage({ params }: PageProps<"/[locale]">) {
                 <ol className="mt-4 flex flex-col gap-4">
                   {m.contact.steps.map((step) => (
                     <li key={step.title}>
-                      <p className="text-sm font-semibold text-foreground">{step.title}</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {step.title}
+                      </p>
                       <p className="mt-1 text-sm leading-relaxed text-foreground-muted">
                         {step.body}
                       </p>

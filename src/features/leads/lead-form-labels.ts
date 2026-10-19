@@ -1,6 +1,6 @@
 import { ROUTES } from "@/config/navigation";
 import type { Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import type { LeadFormLabels } from "./lead-form";
 

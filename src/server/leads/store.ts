@@ -1,4 +1,5 @@
 import "server-only";
+import { db, transaction } from "@/server/cms/db";
 
 /**
  * Shared state for lead intake.
@@ -27,7 +28,7 @@ import "server-only";
 export type CounterResult = { count: number; resetInMs: number };
 
 export interface LeadStore {
-  readonly kind: "memory" | "rest";
+  readonly kind: "memory" | "rest" | "sqlite";
   /**
    * Atomically `INCR` a counter and apply the window TTL on first write.
    * Returns null when the store is unreachable — callers must decide whether to
@@ -46,11 +47,20 @@ export interface LeadStore {
 class MemoryStore implements LeadStore {
   readonly kind = "memory" as const;
 
-  private readonly counters = new Map<string, { count: number; resetAt: number }>();
-  private readonly values = new Map<string, { value: string; expiresAt: number }>();
+  private readonly counters = new Map<
+    string,
+    { count: number; resetAt: number }
+  >();
+  private readonly values = new Map<
+    string,
+    { value: string; expiresAt: number }
+  >();
   private lastSweep = 0;
 
-  async increment(key: string, windowMs: number): Promise<CounterResult | null> {
+  async increment(
+    key: string,
+    windowMs: number,
+  ): Promise<CounterResult | null> {
     const now = Date.now();
     this.sweep(now);
 
@@ -76,7 +86,11 @@ class MemoryStore implements LeadStore {
     return entry.value;
   }
 
-  async setIfAbsent(key: string, value: string, ttlMs: number): Promise<boolean> {
+  async setIfAbsent(
+    key: string,
+    value: string,
+    ttlMs: number,
+  ): Promise<boolean> {
     const now = Date.now();
     const entry = this.values.get(key);
     if (entry && entry.expiresAt > now) return false;
@@ -122,20 +136,28 @@ class RestStore implements LeadStore {
   }
 
   /** Run a command pipeline. Returns null on any transport/parse failure. */
-  private async pipeline(commands: (string | number)[][]): Promise<unknown[] | null> {
+  private async pipeline(
+    commands: (string | number)[][],
+  ): Promise<unknown[] | null> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      const response = await this.fetchImpl(`${this.url.replace(/\/+$/, "")}/pipeline`, {
-        method: "POST",
-        headers: this.headers(),
-        body: JSON.stringify(commands),
-        signal: controller.signal,
-      });
+      const response = await this.fetchImpl(
+        `${this.url.replace(/\/+$/, "")}/pipeline`,
+        {
+          method: "POST",
+          headers: this.headers(),
+          body: JSON.stringify(commands),
+          signal: controller.signal,
+        },
+      );
       if (!response.ok) return null;
 
-      const payload = (await response.json()) as { result?: unknown; error?: string }[];
+      const payload = (await response.json()) as {
+        result?: unknown;
+        error?: string;
+      }[];
       if (!Array.isArray(payload)) return null;
       if (payload.some((entry) => entry?.error)) return null;
 
@@ -152,7 +174,10 @@ class RestStore implements LeadStore {
     return results ? results[0] : null;
   }
 
-  async increment(key: string, windowMs: number): Promise<CounterResult | null> {
+  async increment(
+    key: string,
+    windowMs: number,
+  ): Promise<CounterResult | null> {
     // PEXPIRE … NX only sets the TTL on the first write, so the window is fixed
     // from the first request rather than sliding with every hit.
     const results = await this.pipeline([
@@ -174,7 +199,11 @@ class RestStore implements LeadStore {
     return typeof result === "string" ? result : null;
   }
 
-  async setIfAbsent(key: string, value: string, ttlMs: number): Promise<boolean> {
+  async setIfAbsent(
+    key: string,
+    value: string,
+    ttlMs: number,
+  ): Promise<boolean> {
     // SET key value PX ttl NX → "OK" when it created the key, null otherwise.
     const result = await this.command(["SET", key, value, "PX", ttlMs, "NX"]);
     return result === "OK";
@@ -188,8 +217,50 @@ class RestStore implements LeadStore {
 let cached: LeadStore | null = null;
 let cachedKey = "";
 let warnedAboutMemory = false;
+class SqliteStore implements LeadStore {
+  readonly kind = "sqlite" as const;
+  async increment(key: string, windowMs: number) {
+    return transaction(() => {
+      const now = Date.now();
+      db().prepare("DELETE FROM attempts WHERE expires<?").run(now);
+      db()
+        .prepare(
+          "INSERT INTO attempts(key,count,expires) VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1",
+        )
+        .run(`lead:${key}`, now + windowMs);
+      const row = db()
+        .prepare("SELECT count,expires FROM attempts WHERE key=?")
+        .get(`lead:${key}`) as { count: number; expires: number };
+      return { count: row.count, resetInMs: row.expires - now };
+    });
+  }
+  async get(key: string) {
+    const row = db()
+      .prepare("SELECT value FROM lead_kv WHERE key=? AND expires>?")
+      .get(key, Date.now()) as { value: string } | undefined;
+    return row?.value ?? null;
+  }
+  async setIfAbsent(key: string, value: string, ttlMs: number) {
+    return transaction(() => {
+      db().prepare("DELETE FROM lead_kv WHERE expires<?").run(Date.now());
+      return (
+        db()
+          .prepare(
+            "INSERT OR IGNORE INTO lead_kv(key,value,expires) VALUES(?,?,?)",
+          )
+          .run(key, value, Date.now() + ttlMs).changes > 0
+      );
+    });
+  }
+}
+const sqliteStore = new SqliteStore();
 
 export function getLeadStore(): LeadStore {
+  if (
+    process.env.CMS_ENABLED === "1" &&
+    process.env.LEAD_RATE_LIMIT_STORE !== "rest"
+  )
+    return sqliteStore;
   const kind = (process.env.LEAD_RATE_LIMIT_STORE ?? "memory").toLowerCase();
   const url = process.env.LEAD_RATE_LIMIT_URL ?? "";
   const token = process.env.LEAD_RATE_LIMIT_TOKEN ?? "";
@@ -218,7 +289,11 @@ export function getLeadStore(): LeadStore {
 }
 
 /** Exposed for tests: build a store from explicit values, bypassing env. */
-export function createRestStore(url: string, token: string, fetchImpl?: FetchLike): LeadStore {
+export function createRestStore(
+  url: string,
+  token: string,
+  fetchImpl?: FetchLike,
+): LeadStore {
   return new RestStore(url, token, fetchImpl);
 }
 

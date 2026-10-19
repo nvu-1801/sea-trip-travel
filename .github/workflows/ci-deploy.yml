@@ -1,0 +1,100 @@
+name: Check and deploy SEA TRIP
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: seatrip-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test && npm run test:cms
+      - run: npm run build
+      - name: Install browser for verification
+        run: |
+          npx playwright install --with-deps chromium
+          node -e 'console.log("CHROMIUM_EXECUTABLE_PATH="+require("playwright").chromium.executablePath())' >> "$GITHUB_ENV"
+      - run: npm run verify:ui
+      - run: npm run verify:tour-import
+      - run: npm run verify:cms
+      - name: Build production container
+        run: docker build --build-arg APP_SHA="$GITHUB_SHA" -t sea-trip:check .
+      - name: Smoke test container with persistent data and read-only filesystem
+        run: |
+          set -euo pipefail
+          key=$(openssl rand -hex 32)
+          docker run -d --name seatrip-smoke --read-only --tmpfs /tmp:rw,size=64m --tmpfs /app/.next/cache:rw,uid=1001,gid=1001,size=128m --mount source=seatrip-check-data,target=/app/data -p 127.0.0.1:3080:3000 -e LEAD_ENCRYPTION_KEY="$key" -e NEXT_PUBLIC_SITE_URL=http://127.0.0.1:3080 sea-trip:check
+          trap 'docker logs seatrip-smoke; docker rm -f seatrip-smoke; docker volume rm seatrip-check-data' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS --max-time 5 http://127.0.0.1:3080/api/health > health.json; then break; fi
+            sleep 2
+          done
+          node -e 'const b=require("./health.json");if(b.sha!==process.env.GITHUB_SHA||b.database!=="connected"||b.status!=="ok")process.exit(1)'
+          curl -fsS http://127.0.0.1:3080/ > /dev/null
+          curl -fsS http://127.0.0.1:3080/admin > /dev/null
+          docker restart seatrip-smoke
+          for attempt in $(seq 1 20); do
+            if curl -fsS --max-time 5 http://127.0.0.1:3080/api/health > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+  deploy:
+    needs: check
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      APP_DIR: ${{ vars.VPS_APP_DIR }}
+      HEALTH_URL: ${{ vars.PROD_HEALTH_URL }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prepare verified SSH transport
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          [[ "$VPS_HOST" =~ ^[a-zA-Z0-9.-]+$ && "$VPS_USER" =~ ^[a-zA-Z0-9_-]+$ && "$VPS_PORT" =~ ^[0-9]+$ ]]
+          [[ "$APP_DIR" =~ ^/[a-zA-Z0-9_/-]+$ && "$HEALTH_URL" == https://* ]]
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy ~/.ssh/known_hosts
+          git fetch origin main
+          test "$GITHUB_SHA" = "$(git rev-parse origin/main)" || { echo 'Newer main exists; skip stale deploy'; exit 1; }
+      - name: Transfer and deploy exact checked commit
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz -o release.tar.gz "$GITHUB_SHA"
+          ssh -i ~/.ssh/deploy -p "$VPS_PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes "$VPS_USER@$VPS_HOST" "mkdir -p '$APP_DIR'"
+          scp -i ~/.ssh/deploy -P "$VPS_PORT" -o StrictHostKeyChecking=yes release.tar.gz "$VPS_USER@$VPS_HOST:$APP_DIR/incoming-$GITHUB_SHA.tar.gz"
+          ssh -i ~/.ssh/deploy -p "$VPS_PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes -o ServerAliveInterval=30 "$VPS_USER@$VPS_HOST" "bash -s -- '$GITHUB_SHA' '$APP_DIR'" < scripts/deploy/deploy.sh
+      - name: Verify public release
+        run: |
+          set -euo pipefail
+          curl -fsS --retry 5 --retry-all-errors --max-time 20 "$HEALTH_URL" > health.json
+          node -e 'const b=require("./health.json");if(b.status!=="ok"||b.sha!==process.env.GITHUB_SHA||b.database!=="connected")process.exit(1)'
+      - name: Remove temporary private key
+        if: always()
+        run: rm -f ~/.ssh/deploy

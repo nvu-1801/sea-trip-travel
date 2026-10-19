@@ -7,7 +7,7 @@ import { ArrowRightIcon } from "@/components/ui/icons";
 import { TourGrid } from "@/features/tours/tour-grid";
 import { toTourCard } from "@/features/tours/tour-card-model";
 import type { Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
 /**
@@ -16,7 +16,9 @@ import { localizePath } from "@/i18n/routing";
  */
 export function FeaturedToursSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const tours = getFeaturedTours(6, locale).map((tour) => toTourCard(tour, locale));
+  const tours = getFeaturedTours(6, locale).map((tour) =>
+    toTourCard(tour, locale),
+  );
 
   return (
     <Section tone="muted" spacing="loose">
@@ -27,7 +29,10 @@ export function FeaturedToursSection({ locale }: { locale: Locale }) {
             title={m.home.featured.title}
             description={m.home.featured.description}
             action={
-              <ButtonLink href={localizePath(locale, ROUTES.quyNhonPhuYen)} variant="secondary">
+              <ButtonLink
+                href={localizePath(locale, ROUTES.quyNhonPhuYen)}
+                variant="secondary"
+              >
                 {m.home.featured.cta}
                 <ArrowRightIcon className="h-4 w-4" />
               </ButtonLink>

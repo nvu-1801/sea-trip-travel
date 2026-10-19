@@ -4,7 +4,7 @@ import { AssetImage } from "@/components/ui/asset-image";
 import { MapPinIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/i18n/config";
-import { format, getMessages } from "@/i18n/messages";
+import { format, getMessages } from "@/i18n/server";
 
 /**
  * Destination tile used by the "khám phá nhanh" grids.
@@ -44,7 +44,9 @@ export function DestinationCard({
       <div className="relative overflow-hidden">
         <AssetImage
           image={destination.image}
-          altFallback={format(m.common.destinationAlt, { name: destination.name })}
+          altFallback={format(m.common.destinationAlt, {
+            name: destination.name,
+          })}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="aspect-[16/10] w-full transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />

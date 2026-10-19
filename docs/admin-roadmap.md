@@ -1,6 +1,6 @@
 # Kế hoạch landing page tour và admin
 
-Cập nhật 16/10/2026 theo yêu cầu khách. Trạng thái: kế hoạch triển khai; admin/database chưa được xây dựng. Website hiện đọc nội dung TypeScript qua repository. Nhánh chuẩn bị: `feat/tour-admin-preparation`.
+Cập nhật 18/10/2026: đã triển khai CMS SQLite, admin một chủ, nội dung runtime, media, footer và lead; nguồn chính `sea-trip-travel`, nhánh làm việc hiện tại `main`. Xem [kế hoạch đợt này](IMPLEMENTATION-2026-10.md) và [Docker/VPS/CI/CD](VPS-DEPLOY.md). Các phần dưới giữ làm tiêu chí và hướng dẫn dữ liệu. VPS thực tế và GitHub Secrets sẽ cấu hình sau khi chủ website cung cấp thông tin.
 
 ## Phạm vi đã chốt
 
@@ -22,12 +22,12 @@ Nguồn: https://www.sqlite.org/whentouse.html ; https://sqlite.org/wal.html ; h
 
 ## Tiêu chuẩn ảnh cho khách và admin
 
-| Vị trí | Kích thước khuyến nghị | Mục tiêu dung lượng sau tối ưu |
-| --- | --- | --- |
-| Banner desktop | 1920 × 1080 px | 700 KB–1 MB |
-| Ảnh bìa tour/bài viết | 1200 × 800 px (3:2) | 300–500 KB |
-| Gallery/nội dung | Rộng 1600 px, cao theo ảnh | 500–800 KB |
-| Banner mobile riêng (tùy chọn) | 1080 × 1440 px | 500–800 KB |
+| Vị trí                         | Kích thước khuyến nghị     | Mục tiêu dung lượng sau tối ưu |
+| ------------------------------ | -------------------------- | ------------------------------ |
+| Banner desktop                 | 1920 × 1080 px             | 700 KB–1 MB                    |
+| Ảnh bìa tour/bài viết          | 1200 × 800 px (3:2)        | 300–500 KB                     |
+| Gallery/nội dung               | Rộng 1600 px, cao theo ảnh | 500–800 KB                     |
+| Banner mobile riêng (tùy chọn) | 1080 × 1440 px             | 500–800 KB                     |
 
 Đầu vào JPG/JPEG, PNG, WebP; đề xuất tối đa 10 MB/ảnh. Server xác minh chữ ký/MIME, giới hạn số pixel, tạo tên an toàn và biến thể WebP; không chỉ kiểm tra đuôi. Các mức KB trong bảng là mục tiêu ảnh phục vụ web, khác giới hạn file gốc tải lên. Không phóng lớn giả 28 ảnh Word vốn chủ yếu 400–600 px. Tên file không dấu, có mã tour và thứ tự; alt mô tả địa điểm.
 

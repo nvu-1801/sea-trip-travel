@@ -1,9 +1,21 @@
 import type { Tour } from "@/domain/tour";
-import { format, getMessages } from "@/i18n/messages";
+import { format, getMessages } from "@/i18n/server";
 import type { Locale } from "@/i18n/config";
-import { formatDuration, formatPriceFrom, formatMoney, hasPublishedPrice } from "@/lib/format";
+import {
+  formatDuration,
+  formatPriceFrom,
+  formatMoney,
+  hasPublishedPrice,
+} from "@/lib/format";
 import { SectionHeading } from "@/components/ui/layout";
-import { CheckIcon, CloseIcon, ClockIcon, InfoIcon, MapPinIcon, UsersIcon } from "@/components/ui/icons";
+import {
+  CheckIcon,
+  CloseIcon,
+  ClockIcon,
+  InfoIcon,
+  MapPinIcon,
+  UsersIcon,
+} from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 /**
@@ -25,7 +37,9 @@ export function TourKeyFacts({ tour, locale }: { tour: Tour; locale: Locale }) {
       label: m.common.destinationsCount,
       value:
         tour.destinationIds.length > 0
-          ? format(m.tour.destinationsCountValue, { count: tour.destinationIds.length })
+          ? format(m.tour.destinationsCountValue, {
+              count: tour.destinationIds.length,
+            })
           : m.common.updating,
     },
     {
@@ -47,7 +61,9 @@ export function TourKeyFacts({ tour, locale }: { tour: Tour; locale: Locale }) {
             <dt className="text-[0.6875rem] font-bold uppercase tracking-wider text-foreground-subtle">
               {fact.label}
             </dt>
-            <dd className="text-sm font-semibold text-foreground">{fact.value}</dd>
+            <dd className="text-sm font-semibold text-foreground">
+              {fact.value}
+            </dd>
           </div>
         </div>
       ))}
@@ -56,7 +72,13 @@ export function TourKeyFacts({ tour, locale }: { tour: Tour; locale: Locale }) {
 }
 
 /** Price + booking-condition block. */
-export function TourPriceBlock({ tour, locale }: { tour: Tour; locale: Locale }) {
+export function TourPriceBlock({
+  tour,
+  locale,
+}: {
+  tour: Tour;
+  locale: Locale;
+}) {
   const m = getMessages(locale);
   const hasPrice = hasPublishedPrice(tour.priceFrom);
 
@@ -74,14 +96,18 @@ export function TourPriceBlock({ tour, locale }: { tour: Tour; locale: Locale })
         {formatPriceFrom(tour.priceFrom, locale)}
       </p>
       <p className="mt-2 text-xs leading-relaxed text-foreground-muted">
-        {tour.priceNote ?? (hasPrice ? m.common.priceNoteKnown : m.common.priceNoteUnknown)}
+        {tour.priceNote ??
+          (hasPrice ? m.common.priceNoteKnown : m.common.priceNoteUnknown)}
       </p>
       <p className="mt-3 flex items-start gap-1.5 text-xs text-foreground-subtle">
         <InfoIcon className="mt-px h-3.5 w-3.5 shrink-0" />
         {m.common.noOnlineBooking}
       </p>
       {tour.pricingOptions.length > 0 ? (
-        <a href="#bang-gia" className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-primary-strong underline underline-offset-4">
+        <a
+          href="#bang-gia"
+          className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-primary-strong underline underline-offset-4"
+        >
           {m.tour.packages.title}
         </a>
       ) : null}
@@ -93,31 +119,54 @@ export function TourPriceBlock({ tour, locale }: { tour: Tour; locale: Locale })
 export function TourPackages({ tour, locale }: { tour: Tour; locale: Locale }) {
   if (tour.pricingOptions.length === 0) return null;
   const m = getMessages(locale).tour.packages;
-  const money = (amount: number) => formatMoney({ amount, currency: "VND" }, locale);
+  const money = (amount: number) =>
+    formatMoney({ amount, currency: "VND" }, locale);
   return (
-    <section id="bang-gia" aria-labelledby="packages-title" className="scroll-mt-28 rounded-3xl border border-border bg-surface p-5 shadow-soft sm:p-8">
-      <SectionHeading title={<span id="packages-title">{m.title}</span>} description={m.description} as="h2" />
+    <section
+      id="bang-gia"
+      aria-labelledby="packages-title"
+      className="scroll-mt-28 rounded-3xl border border-border bg-surface p-5 shadow-soft sm:p-8"
+    >
+      <SectionHeading
+        title={<span id="packages-title">{m.title}</span>}
+        description={m.description}
+        as="h2"
+      />
       <div className="mt-6 overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-left text-xs sm:text-sm">
           <thead className="bg-surface-muted text-foreground-muted">
             <tr>
-              <th scope="col" className="p-3 sm:p-4">{m.accommodation}</th>
-              <th scope="col" className="p-3 sm:p-4">{m.adult}</th>
-              <th scope="col" className="p-3 sm:p-4">{m.child}</th>
+              <th scope="col" className="p-3 sm:p-4">
+                {m.accommodation}
+              </th>
+              <th scope="col" className="p-3 sm:p-4">
+                {m.adult}
+              </th>
+              <th scope="col" className="p-3 sm:p-4">
+                {m.child}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {tour.pricingOptions.map((option) => (
               <tr key={option.id} className="even:bg-surface-muted/40">
-                <th scope="row" className="p-3 font-semibold sm:p-4">{option.label}</th>
-                <td className="whitespace-nowrap p-3 font-bold tabular-nums text-primary-strong sm:p-4">{money(option.adultPrice)}</td>
-                <td className="whitespace-nowrap p-3 tabular-nums sm:p-4">{money(option.childPrice)}</td>
+                <th scope="row" className="p-3 font-semibold sm:p-4">
+                  {option.label}
+                </th>
+                <td className="whitespace-nowrap p-3 font-bold tabular-nums text-primary-strong sm:p-4">
+                  {money(option.adultPrice)}
+                </td>
+                <td className="whitespace-nowrap p-3 tabular-nums sm:p-4">
+                  {money(option.childPrice)}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="mt-4 text-sm leading-relaxed text-foreground-muted">{tour.priceNote}</p>
+      <p className="mt-4 text-sm leading-relaxed text-foreground-muted">
+        {tour.priceNote}
+      </p>
     </section>
   );
 }
@@ -139,7 +188,10 @@ export function TourServices({ tour, locale }: { tour: Tour; locale: Locale }) {
           </h3>
           <ul className="mt-4 flex flex-col gap-2.5">
             {tour.included.map((item) => (
-              <li key={item} className="flex gap-2.5 text-[0.9375rem] leading-relaxed text-foreground-muted">
+              <li
+                key={item}
+                className="flex gap-2.5 text-[0.9375rem] leading-relaxed text-foreground-muted"
+              >
                 <CheckIcon className="mt-1 h-4 w-4 shrink-0 text-success" />
                 {item}
               </li>
@@ -158,7 +210,10 @@ export function TourServices({ tour, locale }: { tour: Tour; locale: Locale }) {
           </h3>
           <ul className="mt-4 flex flex-col gap-2.5">
             {tour.excluded.map((item) => (
-              <li key={item} className="flex gap-2.5 text-[0.9375rem] leading-relaxed text-foreground-muted">
+              <li
+                key={item}
+                className="flex gap-2.5 text-[0.9375rem] leading-relaxed text-foreground-muted"
+              >
                 <CloseIcon className="mt-1 h-4 w-4 shrink-0 text-foreground-subtle" />
                 {item}
               </li>
@@ -168,9 +223,16 @@ export function TourServices({ tour, locale }: { tour: Tour; locale: Locale }) {
       ) : null}
       {tour.gifts.length > 0 ? (
         <div className="rounded-2xl border border-border bg-primary-soft p-5 md:col-span-2">
-          <h3 className="text-base font-bold text-foreground">{m.tour.packages.gift}</h3>
+          <h3 className="text-base font-bold text-foreground">
+            {m.tour.packages.gift}
+          </h3>
           <ul className="mt-3 grid gap-3 text-sm leading-relaxed sm:grid-cols-2">
-            {tour.gifts.map((gift) => <li key={gift} className="flex gap-2"><CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" />{gift}</li>)}
+            {tour.gifts.map((gift) => (
+              <li key={gift} className="flex gap-2">
+                <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-primary-strong" />
+                {gift}
+              </li>
+            ))}
           </ul>
         </div>
       ) : null}
@@ -185,11 +247,19 @@ export function TourNotes({ tour, locale }: { tour: Tour; locale: Locale }) {
 
   return (
     <div className="rounded-2xl border border-amber-200 bg-warning-soft p-5 sm:p-6">
-      <h3 className="text-base font-bold text-foreground">{m.tour.notesTitle}</h3>
+      <h3 className="text-base font-bold text-foreground">
+        {m.tour.notesTitle}
+      </h3>
       <ul className="mt-4 flex flex-col gap-2.5">
         {tour.notes.map((note) => (
-          <li key={note} className="flex gap-2.5 text-[0.9375rem] leading-relaxed text-foreground">
-            <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+          <li
+            key={note}
+            className="flex gap-2.5 text-[0.9375rem] leading-relaxed text-foreground"
+          >
+            <span
+              aria-hidden="true"
+              className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+            />
             {note}
           </li>
         ))}
@@ -209,12 +279,18 @@ export function TourPolicies({ tour, locale }: { tour: Tour; locale: Locale }) {
 
   return (
     <section aria-labelledby="tour-policies" className="flex flex-col gap-4">
-      <h2 id="tour-policies" className="text-display-sm font-display font-semibold text-foreground">
+      <h2
+        id="tour-policies"
+        className="text-display-sm font-display font-semibold text-foreground"
+      >
         {m.tour.policiesTitle}
       </h2>
       <ul className="flex flex-col gap-2.5">
         {tour.policies.map((policy) => (
-          <li key={policy} className="text-[0.9375rem] leading-relaxed text-foreground-muted">
+          <li
+            key={policy}
+            className="text-[0.9375rem] leading-relaxed text-foreground-muted"
+          >
             {policy}
           </li>
         ))}
@@ -230,7 +306,13 @@ export function TourPolicies({ tour, locale }: { tour: Tour; locale: Locale }) {
  * looked sparse with only a handful of short lines; numbering gives the eye a
  * path and the hairline rules keep two columns from reading as one long list.
  */
-export function TourHighlights({ tour, locale }: { tour: Tour; locale: Locale }) {
+export function TourHighlights({
+  tour,
+  locale,
+}: {
+  tour: Tour;
+  locale: Locale;
+}) {
   const m = getMessages(locale);
   if (tour.highlights.length === 0) return null;
 
@@ -254,7 +336,9 @@ export function TourHighlights({ tour, locale }: { tour: Tour; locale: Locale })
             >
               {String(index + 1).padStart(2, "0")}
             </span>
-            <span className="text-[0.9375rem] leading-relaxed text-foreground">{highlight}</span>
+            <span className="text-[0.9375rem] leading-relaxed text-foreground">
+              {highlight}
+            </span>
           </li>
         ))}
       </ol>

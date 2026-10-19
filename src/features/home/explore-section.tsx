@@ -8,7 +8,7 @@ import { CategoryCard } from "@/features/tours/category-card";
 import { DestinationCard } from "@/features/destinations/destination-card";
 import { ROUTES } from "@/config/navigation";
 import type { Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
 /**
@@ -19,8 +19,13 @@ import { localizePath } from "@/i18n/routing";
  */
 export function ExploreSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const topLevel = getCategories(locale).filter((category) => category.parentId === null);
-  const focusDestinations = getDestinationsByRegion("quy-nhon-phu-yen", locale).slice(0, 4);
+  const topLevel = getCategories(locale).filter(
+    (category) => category.parentId === null,
+  );
+  const focusDestinations = getDestinationsByRegion(
+    "quy-nhon-phu-yen",
+    locale,
+  ).slice(0, 4);
 
   return (
     <Section tone="default" spacing="default">
@@ -31,7 +36,10 @@ export function ExploreSection({ locale }: { locale: Locale }) {
             title={m.home.explore.title}
             description={m.home.explore.description}
             action={
-              <ButtonLink href={localizePath(locale, ROUTES.domestic)} variant="secondary">
+              <ButtonLink
+                href={localizePath(locale, ROUTES.domestic)}
+                variant="secondary"
+              >
                 {m.home.explore.ctaAll}
                 <ArrowRightIcon className="h-4 w-4" />
               </ButtonLink>
@@ -66,7 +74,10 @@ export function ExploreSection({ locale }: { locale: Locale }) {
               </p>
             </div>
             <div className="shrink-0 [&>a]:max-sm:w-full">
-              <ButtonLink href={localizePath(locale, ROUTES.quyNhonPhuYen)} variant="secondary">
+              <ButtonLink
+                href={localizePath(locale, ROUTES.quyNhonPhuYen)}
+                variant="secondary"
+              >
                 {m.home.explore.ctaRoute}
                 <ArrowRightIcon className="h-4 w-4" />
               </ButtonLink>

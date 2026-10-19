@@ -67,13 +67,14 @@
   --color-warning-soft: #fffaeb;
 
   /* --- Typography --------------------------------------------------------- */
-  --font-sans: var(--font-be-vietnam-pro), ui-sans-serif, system-ui, -apple-system,
+  --font-sans:
+    var(--font-be-vietnam-pro), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   /* Display serif for headings only (H1/H2). Body, UI, buttons, cards and forms
      all stay on --font-sans, so the two families never compete in the same
      size range. */
-  --font-display: var(--font-fraunces), "Playfair Display", Georgia, "Times New Roman",
-    serif;
+  --font-display:
+    var(--font-fraunces), "Playfair Display", Georgia, "Times New Roman", serif;
 
   /*
      Heading scale.
@@ -108,9 +109,12 @@
   --radius-3xl: 2.25rem;
 
   /* --- Elevation (soft, pink-tinted, never harsh) -------------------------- */
-  --shadow-soft: 0 1px 2px rgb(122 0 49 / 0.04), 0 4px 12px rgb(122 0 49 / 0.05);
-  --shadow-card: 0 1px 2px rgb(122 0 49 / 0.05), 0 10px 24px -8px rgb(122 0 49 / 0.12);
-  --shadow-lifted: 0 2px 4px rgb(122 0 49 / 0.06), 0 20px 44px -14px rgb(122 0 49 / 0.2);
+  --shadow-soft:
+    0 1px 2px rgb(122 0 49 / 0.04), 0 4px 12px rgb(122 0 49 / 0.05);
+  --shadow-card:
+    0 1px 2px rgb(122 0 49 / 0.05), 0 10px 24px -8px rgb(122 0 49 / 0.12);
+  --shadow-lifted:
+    0 2px 4px rgb(122 0 49 / 0.06), 0 20px 44px -14px rgb(122 0 49 / 0.2);
   --shadow-focus: 0 0 0 3px rgb(255 3 102 / 0.32);
 
   /* --- Motion ------------------------------------------------------------- */
@@ -520,27 +524,52 @@ select option {
 /* Coastal atmosphere: one gentle arrival, then a quiet reading surface.
    Only transforms move; the blurred gradients themselves never repaint. */
 @keyframes stt-bloom-arrive {
-  from { transform: translate3d(1.5rem, -1rem, 0) scale(0.94); }
-  to { transform: none; }
+  from {
+    transform: translate3d(1.5rem, -1rem, 0) scale(0.94);
+  }
+  to {
+    transform: none;
+  }
 }
 
 @keyframes stt-coast-arrive {
-  from { transform: translate3d(-1.5rem, 0.5rem, 0); }
-  to { transform: none; }
+  from {
+    transform: translate3d(-1.5rem, 0.5rem, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes stt-mask-in {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
 }
 
 @keyframes stt-badge-arrive {
-  from { transform: translate3d(0, 0.5rem, 0); }
-  to { transform: none; }
+  from {
+    transform: translate3d(0, 0.5rem, 0);
+  }
+  to {
+    transform: none;
+  }
 }
 
 .stt-tour-card {
-  transition: border-color 280ms ease, box-shadow 360ms ease;
+  transition:
+    border-color 280ms ease,
+    box-shadow 360ms ease;
 }
 
 .stt-tour-card:focus-within {
   border-color: var(--color-brand-300);
-  box-shadow: 0 0 0 3px var(--color-brand-100), var(--shadow-lifted);
+  box-shadow:
+    0 0 0 3px var(--color-brand-100),
+    var(--shadow-lifted);
 }
 
 /* The entire card is one link. Show the keyboard ring around its full area,
@@ -600,7 +629,10 @@ select option {
 
 @media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
   .stt-tour-card {
-    transition: transform 420ms var(--ease-out-soft), border-color 280ms ease, box-shadow 360ms ease;
+    transition:
+      transform 420ms var(--ease-out-soft),
+      border-color 280ms ease,
+      box-shadow 360ms ease;
   }
 
   .stt-tour-card:hover {
@@ -689,6 +721,25 @@ select option {
       animation-timeline: view();
       animation-range: cover;
     }
+
+    /* Tour grid stagger: row-mates arrive as a short cascade, capped at 120ms
+       so nothing ever waits on motion. */
+    .stt-tour-grid > :nth-child(3n + 2) {
+      animation-delay: 60ms;
+    }
+    .stt-tour-grid > :nth-child(3n) {
+      animation-delay: 120ms;
+    }
+  }
+
+  /* Values spotlight: a one-way mask wipe on desktop only. Mobile keeps the
+     static image; reduced motion, manual pause and print ignore it. */
+  @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
+    .stt-mask-reveal {
+      animation: stt-mask-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
   }
 }
 
@@ -715,10 +766,12 @@ select option {
   [data-entrance],
   .stt-hero-bloom,
   .stt-coastal-lines,
-  .stt-hero-badge {
+  .stt-hero-badge,
+  .stt-mask-reveal {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;
+    clip-path: none !important;
   }
 
   header[data-hidden="true"] {
@@ -756,14 +809,381 @@ select option {
   .stt-card-arrow,
   .stt-hero-bloom,
   .stt-coastal-lines,
+  .stt-mask-reveal,
   .stt-hero-badge {
     animation: none !important;
     transform: none !important;
     transition: none !important;
+    clip-path: none !important;
   }
 
   /* The header may still condense, but it must not slide out of reach. */
   header[data-hidden="true"] {
+    transform: none !important;
+  }
+}
+/* Coastal Studio: quiet, controllable motion and a practical discovery path. */
+.stt-finder-section {
+  position: relative;
+  z-index: 3;
+  padding: 8px 0 28px;
+  background: var(--color-background);
+}
+.stt-finder-island {
+  position: relative;
+  padding: 28px 30px;
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  background:
+    radial-gradient(120% 100% at 6% 0%, #ffe4ef 0%, transparent 52%),
+    radial-gradient(90% 80% at 100% 100%, #fff6e8 0%, transparent 50%),
+    var(--color-surface);
+  box-shadow:
+    0 16px 60px #ad3d5512,
+    inset 0 1px 0 #ffffff;
+  overflow: hidden;
+}
+.stt-finder-island:before {
+  content: "";
+  position: absolute;
+  right: -50px;
+  top: -90px;
+  width: 270px;
+  height: 180px;
+  border: 1px solid var(--color-brand-100);
+  border-radius: 50%;
+  transform: rotate(-20deg);
+  pointer-events: none;
+}
+.stt-finder-intro {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+.stt-finder-symbol {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 17px;
+  background: linear-gradient(140deg, #ff0366, #ff7c2c);
+  color: #fff;
+  box-shadow:
+    0 8px 22px #e0005a30,
+    inset 0 1px 0 #ffffff55;
+}
+.stt-finder-intro p {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-primary-strong);
+  margin-bottom: 4px;
+}
+.stt-finder-intro h2 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 29px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  text-wrap: balance;
+}
+.stt-finder-fields {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr auto;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: 0 10px 34px #b72e5c0d;
+  align-items: stretch;
+  padding: 8px;
+  gap: 4px;
+}
+.stt-finder-fields label {
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  padding: 10px 20px;
+  min-width: 0;
+  border-radius: 14px;
+  transition: background-color 0.2s;
+}
+.stt-finder-fields label + label {
+  border-left: 1px solid var(--color-border);
+}
+.stt-finder-fields label:focus-within {
+  background: var(--color-primary-soft);
+}
+.stt-finder-caption {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--color-foreground-subtle);
+}
+.stt-finder-fields input {
+  font-size: 15px;
+  font-weight: 500;
+  min-height: 44px;
+  width: 100%;
+  background: transparent;
+  min-width: 0;
+  outline-offset: 5px;
+  color: var(--color-foreground);
+}
+.stt-finder-fields input::placeholder {
+  color: var(--color-foreground-subtle);
+  font-weight: 400;
+}
+.stt-finder-select {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.stt-finder-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 44px;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  padding-right: 28px;
+  outline-offset: 5px;
+  cursor: pointer;
+  color: var(--color-foreground);
+}
+.stt-finder-select > svg {
+  position: absolute;
+  right: 2px;
+  flex-shrink: 0;
+  color: var(--color-primary-strong);
+  pointer-events: none;
+  transition: transform 0.2s;
+}
+.stt-finder-select select:hover + svg,
+.stt-finder-select:focus-within > svg {
+  transform: translateY(2px);
+}
+.stt-finder-fields button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 14px;
+  padding: 18px 30px;
+  min-height: 54px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  box-shadow:
+    0 8px 22px #d6005030,
+    inset 0 1px 0 #ffffff33;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    filter 0.2s;
+}
+.stt-finder-fields button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 12px 28px #d6005040;
+}
+.stt-finder-fields button svg {
+  transition: transform 0.2s;
+}
+.stt-finder-fields button:hover svg {
+  transform: translateX(3px);
+}
+.stt-finder-suggestions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-foreground-subtle);
+}
+.stt-finder-suggestions a {
+  display: inline-flex;
+  gap: 6px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: var(--color-surface);
+  color: var(--color-foreground-muted);
+  font-weight: 600;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
+  min-height: 44px;
+  align-items: center;
+}
+.stt-finder-suggestions a:hover {
+  border-color: var(--color-primary-strong);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px #e0005a18;
+}
+@media (max-width: 640px) {
+  .stt-finder-island {
+    padding: 24px 18px;
+    border-radius: 23px;
+  }
+  .stt-finder-symbol {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+  }
+  .stt-finder-intro h2 {
+    font-size: 24px;
+  }
+  .stt-finder-fields {
+    grid-template-columns: 1fr;
+    padding: 8px;
+    gap: 4px;
+  }
+  .stt-finder-fields label {
+    padding: 10px 14px;
+  }
+  .stt-finder-fields label + label {
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+  }
+  .stt-finder-fields button {
+    margin-top: 6px;
+    width: 100%;
+    padding: 15px;
+  }
+  .stt-finder-suggestions {
+    gap: 8px;
+  }
+  .stt-finder-suggestions > span {
+    width: 100%;
+    margin-bottom: 2px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stt-finder-fields button,
+  .stt-finder-fields button svg,
+  .stt-finder-suggestions a,
+  .stt-finder-select > svg,
+  .stt-finder-fields label {
+    transition: none;
+  }
+  .stt-finder-fields button:hover,
+  .stt-finder-suggestions a:hover {
+    transform: none;
+  }
+}
+.stt-motion-control {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  padding: 9px 13px;
+  min-height: 44px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.stt-search-form {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: var(--color-surface);
+  box-shadow: 0 14px 45px #b72e5c06;
+}
+.stt-search-form label {
+  display: grid;
+  gap: 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.stt-search-form input,
+.stt-search-form select {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-background);
+  font-size: 13px;
+}
+.stt-search-form button {
+  min-height: 48px;
+  border-radius: 12px;
+  padding: 12px 20px;
+  background: var(--color-primary-strong);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+}
+@keyframes stt-ocean-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scaleX(1);
+  }
+  50% {
+    transform: translateY(-9px) scaleX(1.02);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .stt-idle-waves svg {
+    animation: stt-ocean-breathe 12s ease-in-out infinite;
+    transform-origin: center;
+  }
+}
+html[data-motion-paused="true"] .stt-idle-waves svg,
+html[data-motion-paused="true"] [data-entrance],
+html[data-motion-paused="true"] [data-reveal],
+html[data-motion-paused="true"] [data-parallax],
+html[data-motion-paused="true"] .stt-hero-bloom,
+html[data-motion-paused="true"] .stt-mask-reveal,
+html[data-motion-paused="true"] .stt-coastal-lines {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  clip-path: none !important;
+}
+@media (max-width: 768px) {
+  .stt-search-form {
+    grid-template-columns: 1fr 1fr;
+    padding: 16px;
+    gap: 12px;
+  }
+  .stt-search-form > label:first-child {
+    grid-column: 1/-1;
+  }
+  .stt-search-form button {
+    grid-column: 1/-1;
+  }
+  .stt-motion-control {
+    font-size: 10px;
+    padding: 9px 13px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stt-idle-waves svg {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+@media print {
+  .stt-idle-waves svg {
+    animation: none !important;
     transform: none !important;
   }
 }

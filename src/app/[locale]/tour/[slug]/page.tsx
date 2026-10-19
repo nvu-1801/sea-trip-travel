@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTourBySlug, getTourSlugs } from "@/lib/data/tours";
-import { TourDetailView, buildTourMetadata } from "@/features/tours/tour-detail-view";
+import {
+  TourDetailView,
+  buildTourMetadata,
+} from "@/features/tours/tour-detail-view";
 import { resolveLocaleFromParams } from "@/i18n/params";
 
 /**
@@ -13,7 +16,6 @@ import { resolveLocaleFromParams } from "@/i18n/params";
  * param resolves" — the alternative is a Suspense shell that would flash a
  * skeleton for the 404 case. See docs/architecture.md.
  */
-export const instant = false;
 
 export function generateStaticParams() {
   return getTourSlugs().map((slug) => ({ slug }));
@@ -34,5 +36,10 @@ export default async function TourDetailPage({
   params,
 }: PageProps<"/[locale]/tour/[slug]">) {
   const { slug } = await params;
-  return <TourDetailView slug={slug} locale={await resolveLocaleFromParams(params)} />;
+  return (
+    <TourDetailView
+      slug={slug}
+      locale={await resolveLocaleFromParams(params)}
+    />
+  );
 }

@@ -19,7 +19,13 @@ export function TourGrid({
   }[columns];
 
   return (
-    <ul className={cn("grid grid-cols-1 gap-6", columnClass, className)}>
+    <ul
+      className={cn(
+        "stt-tour-grid grid grid-cols-1 gap-6",
+        columnClass,
+        className,
+      )}
+    >
       {tours.map((tour, index) => (
         <li key={tour.slug} data-reveal="" className="flex">
           <TourCard tour={tour} priority={index < priorityCount} />

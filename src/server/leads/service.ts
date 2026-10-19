@@ -1,3 +1,4 @@
+import { persistLead, markMail } from "@/server/cms/leads";
 import "server-only";
 
 import { createHash, randomUUID } from "node:crypto";
@@ -10,7 +11,7 @@ import {
   type LeadInput,
   type LeadResponse,
 } from "@/domain/lead";
-import { siteConfig } from "@/config/site";
+import { siteConfig } from "@/config/runtime-site";
 import { getTourBySlug } from "@/lib/data/tours";
 import { getMailer } from "@/server/email/mailer";
 import {
@@ -72,7 +73,10 @@ async function recallSubmission(key: string): Promise<SubmitLeadResult | null> {
   }
 }
 
-async function rememberSubmission(key: string, result: SubmitLeadResult): Promise<void> {
+async function rememberSubmission(
+  key: string,
+  result: SubmitLeadResult,
+): Promise<void> {
   await getLeadStore().setIfAbsent(
     idempotencyKeyFor(key),
     JSON.stringify(result),
@@ -81,7 +85,10 @@ async function rememberSubmission(key: string, result: SubmitLeadResult): Promis
 }
 
 /** Salted, non-reversible client fingerprint used only as a rate-limit key. */
-function clientKey(ip: string | undefined, userAgent: string | undefined): string {
+function clientKey(
+  ip: string | undefined,
+  userAgent: string | undefined,
+): string {
   const salt = process.env.LEAD_HASH_SALT ?? "sea-trip-travel-local-salt";
   return createHash("sha256")
     .update(`${salt}|${ip ?? "unknown"}|${userAgent ?? "unknown"}`)
@@ -107,13 +114,22 @@ function fail(
   status: number,
   code: LeadErrorCode,
   message: string,
-  extra?: { fieldErrors?: Record<string, string[]>; requestId?: string; retryAfterSeconds?: number },
+  extra?: {
+    fieldErrors?: Record<string, string[]>;
+    requestId?: string;
+    retryAfterSeconds?: number;
+  },
 ): SubmitLeadResult {
-  return { status, response: { ok: false, error: { code, message, ...extra } } };
+  return {
+    status,
+    response: { ok: false, error: { code, message, ...extra } },
+  };
 }
 
 /** Map Zod issues to `{ fieldName: [message] }`. */
-function fieldErrorsFrom(issues: readonly { path: PropertyKey[]; message: string }[]) {
+function fieldErrorsFrom(
+  issues: readonly { path: PropertyKey[]; message: string }[],
+) {
   const fieldErrors: Record<string, string[]> = {};
   for (const issue of issues) {
     const key = String(issue.path[0] ?? "form");
@@ -135,7 +151,8 @@ function salesRecipients(): string[] {
 
 function mailFrom(): string {
   const name = process.env.MAIL_FROM_NAME ?? siteConfig.name;
-  const address = process.env.MAIL_FROM_EMAIL ?? `no-reply@${hostnameOf(siteConfig.url)}`;
+  const address =
+    process.env.MAIL_FROM_EMAIL ?? `no-reply@${hostnameOf(siteConfig.url)}`;
   return `${name} <${address}>`;
 }
 
@@ -147,7 +164,9 @@ function hostnameOf(url: string): string {
   }
 }
 
-export async function submitLead(context: SubmitLeadContext): Promise<SubmitLeadResult> {
+export async function submitLead(
+  context: SubmitLeadContext,
+): Promise<SubmitLeadResult> {
   // --- 1. Validate ---------------------------------------------------------
   const parsed = leadInputSchema.safeParse(context.body);
 
@@ -157,7 +176,9 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
     // Honeypot tripped. Respond exactly like a success so automated clients get
     // no signal, but send nothing and record the event.
     if (Object.keys(fieldErrors).includes("company")) {
-      console.warn("[lead] honeypot triggered — request dropped, no email sent");
+      console.warn(
+        "[lead] honeypot triggered — request dropped, no email sent",
+      );
       return {
         status: 200,
         response: {
@@ -169,9 +190,14 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
       };
     }
 
-    return fail(400, "VALIDATION_ERROR", "Vui lòng kiểm tra lại các thông tin đã nhập.", {
-      fieldErrors,
-    });
+    return fail(
+      400,
+      "VALIDATION_ERROR",
+      "Vui lòng kiểm tra lại các thông tin đã nhập.",
+      {
+        fieldErrors,
+      },
+    );
   }
 
   const input: LeadInput = parsed.data;
@@ -184,15 +210,22 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
   if (idempotencyKey) {
     const previous = await recallSubmission(idempotencyKey);
     if (previous) {
-      console.info("[lead] duplicate submission ignored (idempotency key reuse)");
+      console.info(
+        "[lead] duplicate submission ignored (idempotency key reuse)",
+      );
       return previous;
     }
   }
 
   // --- 3. Anti-abuse -------------------------------------------------------
   // Honeypot already cleared above. Layer: rate limit + payload cap (route).
-  const limiter = getRateLimiter(LEAD_LIMITS.rateLimit, LEAD_LIMITS.rateLimitWindowMs);
-  const decision = await limiter.check(clientKey(context.ip, context.userAgent));
+  const limiter = getRateLimiter(
+    LEAD_LIMITS.rateLimit,
+    LEAD_LIMITS.rateLimitWindowMs,
+  );
+  const decision = await limiter.check(
+    clientKey(context.ip, context.userAgent),
+  );
   if (!decision.allowed) {
     return fail(
       429,
@@ -206,7 +239,9 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
   const now = new Date();
   const requestId = buildRequestId(now);
 
-  const tour = input.tourSlug ? getTourBySlug(input.tourSlug, input.locale) : undefined;
+  const tour = input.tourSlug
+    ? getTourBySlug(input.tourSlug, input.locale)
+    : undefined;
   const lead: ContactLead = {
     requestId,
     receivedAt: now.toISOString(),
@@ -224,10 +259,31 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
   };
 
   // --- 5. Build + send -----------------------------------------------------
+  const stored = process.env.CMS_ENABLED === "1";
+  if (stored) persistLead(requestId, lead);
+  const accepted = async (): Promise<SubmitLeadResult> => {
+    const response: SubmitLeadResult = {
+      status: 200,
+      response: {
+        ok: true,
+        requestId,
+        status: "accepted",
+        receivedAt: lead.receivedAt,
+      },
+    };
+    if (idempotencyKey) await rememberSubmission(idempotencyKey, response);
+    return response;
+  };
   const mailer = getMailer();
 
   if (!mailer.isConfigured()) {
-    console.error("[lead] mail transport not configured — refusing to report success");
+    if (stored) {
+      markMail(requestId, "pending");
+      return accepted();
+    }
+    console.error(
+      "[lead] mail transport not configured — refusing to report success",
+    );
     return fail(
       503,
       "MAIL_NOT_CONFIGURED",
@@ -237,7 +293,9 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
   }
 
   const sourceUrl = safeSiteUrl(input.sourcePage) ?? undefined;
-  const tourUrl = tour ? safeSiteUrl(`/tour/${tour.slug}`) ?? undefined : undefined;
+  const tourUrl = tour
+    ? (safeSiteUrl(`/tour/${tour.slug}`) ?? undefined)
+    : undefined;
 
   const emailContext = {
     lead,
@@ -261,14 +319,25 @@ export async function submitLead(context: SubmitLeadContext): Promise<SubmitLead
     // Never log the payload — it contains customer PII.
     const detail = error instanceof Error ? error.message : "unknown error";
     console.error(`[lead] unexpected mailer error: ${detail}`);
-    return fail(500, "INTERNAL_ERROR", "Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại.", {
-      requestId,
-    });
+    return fail(
+      500,
+      "INTERNAL_ERROR",
+      "Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại.",
+      {
+        requestId,
+      },
+    );
   }
 
   if (!result.ok) {
+    if (stored) {
+      markMail(requestId, "failed");
+      return accepted();
+    }
     const code: LeadErrorCode =
-      result.reason === "NOT_CONFIGURED" ? "MAIL_NOT_CONFIGURED" : "MAIL_DELIVERY_FAILED";
+      result.reason === "NOT_CONFIGURED"
+        ? "MAIL_NOT_CONFIGURED"
+        : "MAIL_DELIVERY_FAILED";
     return fail(
       code === "MAIL_NOT_CONFIGURED" ? 503 : 502,
       code,

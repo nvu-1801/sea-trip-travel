@@ -4,7 +4,7 @@ import { AssetImage } from "@/components/ui/asset-image";
 import { cn } from "@/lib/utils";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import type { Locale } from "@/i18n/config";
-import { format, getMessages, plural } from "@/i18n/messages";
+import { format, getMessages, plural } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
 /**
@@ -57,7 +57,9 @@ export function CategoryCard({
           {category.name}
         </span>
         {category.tagline ? (
-          <span className="text-sm leading-snug text-white/85">{category.tagline}</span>
+          <span className="text-sm leading-snug text-white/85">
+            {category.tagline}
+          </span>
         ) : null}
         <span className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold">
           {m.common.explore}

@@ -1,4 +1,10 @@
 import { notFound } from "next/navigation";
+import { getCategoryByPath } from "@/lib/data/categories";
+import {
+  CategoryPageView,
+  buildCategoryMetadata,
+} from "@/features/tours/category-page-view";
+import { resolveLocaleFromParams } from "@/i18n/params";
 
 /**
  * Catch-all for unmatched paths inside the `[locale]` tree.
@@ -11,6 +17,22 @@ import { notFound } from "next/navigation";
  * Real routes always win: a catch-all is the lowest-priority match, so this only
  * fires for genuinely unknown paths.
  */
-export default function LocaleCatchAll() {
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/[...rest]">) {
+  const p = await params;
+  return buildCategoryMetadata(
+    "/" + p.rest.join("/"),
+    await resolveLocaleFromParams(params),
+  );
+}
+export default async function LocaleCatchAll({
+  params,
+}: PageProps<"/[locale]/[...rest]">) {
+  const p = await params,
+    locale = await resolveLocaleFromParams(params),
+    path = "/" + p.rest.join("/");
+  if (getCategoryByPath(path, locale))
+    return <CategoryPageView categoryPath={path} locale={locale} />;
   notFound();
 }

@@ -1,6 +1,6 @@
-import { siteConfig } from "@/config/site";
+import { siteConfig } from "@/config/runtime-site";
 import { localeMeta, type Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/messages";
+import { getMessages } from "@/i18n/server";
 import { absoluteUrl } from "./seo";
 
 /**
@@ -38,9 +38,14 @@ export function travelAgencyJsonLd(locale: Locale): Json {
       addressRegion: siteConfig.contact.addressParts.region,
       addressCountry: "VN",
     },
-    areaServed: { "@type": "Country", name: locale === "vi" ? "Việt Nam" : "Vietnam" },
+    areaServed: {
+      "@type": "Country",
+      name: locale === "vi" ? "Việt Nam" : "Vietnam",
+    },
     // Only channels the owner has actually set — never a fallback platform URL.
-    sameAs: [siteConfig.social.facebook, siteConfig.social.zalo].filter((link) => link.length > 0),
+    sameAs: [siteConfig.social.facebook, siteConfig.social.zalo].filter(
+      (link) => link.length > 0,
+    ),
   };
 }
 
@@ -54,7 +59,9 @@ export function websiteJsonLd(locale: Locale): Json {
   };
 }
 
-export function breadcrumbJsonLd(items: readonly { label: string; path: string }[]): Json {
+export function breadcrumbJsonLd(
+  items: readonly { label: string; path: string }[],
+): Json {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -199,7 +206,10 @@ export function articleJsonLd({
     publisher: {
       "@type": "Organization",
       name: siteConfig.name,
-      logo: { "@type": "ImageObject", url: absoluteUrl("/brand/logo-lockup.png") },
+      logo: {
+        "@type": "ImageObject",
+        url: absoluteUrl("/brand/logo-lockup.png"),
+      },
     },
   };
 }

@@ -1,5 +1,9 @@
+export const dynamic = "force-dynamic";
+import { published } from "@/server/cms/store";
+import { articles as seed_articles, tours as seed_tours } from "@/content";
+const current_tours = () => published("tours", seed_tours);
+const current_articles = () => published("articles", seed_articles);
 import type { MetadataRoute } from "next";
-import { articles, tours } from "@/content";
 import { getCategories } from "@/lib/data/categories";
 import { ROUTES } from "@/config/navigation";
 import { absoluteUrl } from "@/lib/seo";
@@ -72,8 +76,10 @@ function entry(
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const contentDate = newestDate(
-    ...tours.map((tour) => tour.updatedAt),
-    ...articles.map((article) => article.updatedAt ?? article.publishedAt),
+    ...current_tours().map((tour) => tour.updatedAt),
+    ...current_articles().map(
+      (article) => article.updatedAt ?? article.publishedAt,
+    ),
   );
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -85,17 +91,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...entry(ROUTES.privacy, contentDate, 0.2, "yearly", false),
   ];
 
-  const categoryRoutes: MetadataRoute.Sitemap = getCategories("vi").flatMap((category) =>
-    entry(
-      category.path,
-      contentDate,
-      category.parentId === null ? 0.9 : 0.8,
-      "monthly",
-      isIndexable(categoryTranslationStatus(category.id, "en"), "en"),
-    ),
+  const categoryRoutes: MetadataRoute.Sitemap = getCategories("vi").flatMap(
+    (category) =>
+      entry(
+        category.path,
+        contentDate,
+        category.parentId === null ? 0.9 : 0.8,
+        "monthly",
+        isIndexable(categoryTranslationStatus(category.id, "en"), "en"),
+      ),
   );
 
-  const tourRoutes: MetadataRoute.Sitemap = tours.flatMap((tour) =>
+  const tourRoutes: MetadataRoute.Sitemap = current_tours().flatMap((tour) =>
     entry(
       `/tour/${tour.slug}`,
       new Date(tour.updatedAt),
@@ -105,14 +112,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ),
   );
 
-  const articleRoutes: MetadataRoute.Sitemap = articles.flatMap((article) =>
-    entry(
-      `/cam-nang-du-lich/${article.slug}`,
-      new Date(article.updatedAt ?? article.publishedAt),
-      0.6,
-      "monthly",
-      isIndexable(articleTranslationStatus(article.id, "en"), "en"),
-    ),
+  const articleRoutes: MetadataRoute.Sitemap = current_articles().flatMap(
+    (article) =>
+      entry(
+        `/cam-nang-du-lich/${article.slug}`,
+        new Date(article.updatedAt ?? article.publishedAt),
+        0.6,
+        "monthly",
+        isIndexable(articleTranslationStatus(article.id, "en"), "en"),
+      ),
   );
 
   return [...staticRoutes, ...categoryRoutes, ...tourRoutes, ...articleRoutes];

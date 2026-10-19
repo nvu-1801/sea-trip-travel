@@ -4,9 +4,14 @@ import { getDestinationsByRegion } from "@/lib/data/destinations";
 import { AssetImage } from "@/components/ui/asset-image";
 import { Container } from "@/components/ui/layout";
 import { ButtonLink } from "@/components/ui/button";
-import { ArrowRightIcon, CheckIcon, CompassIcon, SparkleIcon } from "@/components/ui/icons";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  CompassIcon,
+  SparkleIcon,
+} from "@/components/ui/icons";
 import type { Locale } from "@/i18n/config";
-import { format, getMessages } from "@/i18n/messages";
+import { format, getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
 /**
@@ -24,19 +29,28 @@ export function Hero({ locale }: { locale: Locale }) {
   );
   const focusDestinations = getDestinationsByRegion("quy-nhon-phu-yen", locale);
   const highlights = focusDestinations.slice(0, 3);
-  const mainImage = focusDestinations.find((destination) => destination.id === "dest_ky_co_eo_gio")?.image;
-  const secondaryImage = focusDestinations.find((destination) => destination.id === "dest_cu_lao_xanh")?.image;
+  const mainImage = focusDestinations.find(
+    (destination) => destination.id === "dest_ky_co_eo_gio",
+  )?.image;
+  const secondaryImage = focusDestinations.find(
+    (destination) => destination.id === "dest_cu_lao_xanh",
+  )?.image;
 
   const assurances = [
     quyNhon
-      ? format(m.home.hero.assuranceTours, { count: getCategoryTourCount(quyNhon.id) })
+      ? format(m.home.hero.assuranceTours, {
+          count: getCategoryTourCount(quyNhon.id),
+        })
       : null,
     m.home.hero.assuranceAdvice,
     m.home.hero.assuranceNoBooking,
   ].filter((item): item is string => Boolean(item));
 
   return (
-    <section className="stt-travel-hero relative isolate overflow-x-clip bg-background">
+    <section
+      data-idle-scope
+      className="stt-travel-hero relative isolate overflow-x-clip bg-background"
+    >
       {/* Brand field: two soft blooms plus a faint dot grid, no heavy wash. */}
       <span
         aria-hidden="true"
@@ -48,11 +62,31 @@ export function Hero({ locale }: { locale: Locale }) {
       />
 
       {/* A quiet coastal contour, kept behind the content and out of hit areas. */}
-      <div aria-hidden="true" className="stt-coastal-lines pointer-events-none absolute inset-x-0 bottom-0 h-36 overflow-hidden text-brand-300/35 sm:h-52">
-        <svg className="h-full w-full" viewBox="0 0 1440 200" fill="none" preserveAspectRatio="none">
-          <path d="M-80 115C180 0 360 200 650 100S1120 20 1520 100" stroke="currentColor" strokeWidth="1" />
-          <path d="M-80 140C180 25 360 225 650 125S1120 45 1520 125" stroke="currentColor" strokeWidth="1" />
-          <path d="M-80 165C180 50 360 250 650 150S1120 70 1520 150" stroke="currentColor" strokeWidth="1" />
+      <div
+        aria-hidden="true"
+        className="stt-coastal-lines stt-idle-waves pointer-events-none absolute inset-x-0 bottom-0 h-36 overflow-hidden text-brand-300/35 sm:h-52"
+      >
+        <svg
+          className="h-full w-full"
+          viewBox="0 0 1440 200"
+          fill="none"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M-80 115C180 0 360 200 650 100S1120 20 1520 100"
+            stroke="currentColor"
+            strokeWidth="1"
+          />
+          <path
+            d="M-80 140C180 25 360 225 650 125S1120 45 1520 125"
+            stroke="currentColor"
+            strokeWidth="1"
+          />
+          <path
+            d="M-80 165C180 50 360 250 650 150S1120 70 1520 150"
+            stroke="currentColor"
+            strokeWidth="1"
+          />
         </svg>
       </div>
       <span
@@ -184,7 +218,9 @@ export function Hero({ locale }: { locale: Locale }) {
               <div className="absolute -bottom-6 -left-3 w-28 sm:-bottom-8 sm:-left-8 sm:w-44 lg:w-48">
                 <div className="overflow-hidden rounded-2xl border-4 border-background shadow-card">
                   <AssetImage
-                    image={secondaryImage ?? { alt: m.home.hero.collageAltSecondary }}
+                    image={
+                      secondaryImage ?? { alt: m.home.hero.collageAltSecondary }
+                    }
                     sizes="200px"
                     parallax
                     className="aspect-square w-full"
@@ -197,7 +233,10 @@ export function Hero({ locale }: { locale: Locale }) {
       </Container>
 
       {/* Thin brand rule closing the hero — the logo gradient, used sparingly. */}
-      <div className="brand-gradient h-px w-full opacity-40" aria-hidden="true" />
+      <div
+        className="brand-gradient h-px w-full opacity-40"
+        aria-hidden="true"
+      />
 
       <p className="sr-only">{m.site.tagline}</p>
     </section>
