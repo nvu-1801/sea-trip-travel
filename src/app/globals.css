@@ -326,6 +326,130 @@ html:not([lang="en"]) .nf-lang-en {
 }
 
 /**
+ * Shared centered section intro (finder, featured tours, values, guides,
+ * consult): pill eyebrow, serif title with a gradient rule, supporting copy.
+ *
+ * Lives in globals (not home-editorial.css) because ConsultSection also
+ * renders on tour, category and contact pages. `--journal-*` tokens only
+ * exist under `.home-editorial`, so they fall back to global tokens
+ * elsewhere.
+ */
+.intro-centered {
+  max-width: 680px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--color-primary-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+.eyebrow-pill > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-strong),
+    var(--color-sun-400)
+  );
+}
+
+.intro-centered h2 {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 3.4vw, 44px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--journal-ink, var(--color-foreground));
+  margin-top: 18px;
+  text-wrap: balance;
+}
+
+.intro-centered h2::after {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 4px;
+  margin: 16px auto 0;
+  border-radius: 999px;
+  background-image: linear-gradient(
+    100deg,
+    var(--color-brand-500) 0%,
+    var(--color-sun-600) 58%,
+    var(--color-sun-400) 100%
+  );
+}
+
+.intro-centered > p {
+  max-width: 580px;
+  margin: 14px auto 0;
+  color: var(--journal-muted, var(--color-foreground-muted));
+  line-height: 1.85;
+  font-size: 15px;
+  text-wrap: pretty;
+}
+
+.intro-centered .intro-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 22px;
+}
+
+@media (max-width: 700px) {
+  .intro-centered {
+    margin-bottom: 30px;
+  }
+}
+
+.footer-glow {
+  pointer-events: none;
+  position: absolute;
+  top: -140px;
+  left: 50%;
+  width: min(760px, 94vw);
+  height: 320px;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    closest-side,
+    rgb(255 3 102 / 0.09),
+    transparent
+  );
+}
+
+.footer-watermark {
+  user-select: none;
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(72px, 17vw, 210px);
+  line-height: 0.78;
+  letter-spacing: -0.02em;
+  color: var(--color-brand-100);
+  margin-bottom: -0.12em;
+}
+
+@media print {
+  .footer-glow,
+  .footer-watermark {
+    display: none;
+  }
+}
+
+/**
  * Horizontally scrolling strips (thumbnail rail, in-page anchors).
  * A visible scrollbar under a row of chips is noise on mobile — the row itself
  * already signals that it scrolls, and it stays keyboard/wheel scrollable.
@@ -595,6 +719,14 @@ select option {
 .stt-card-media {
   border-bottom: 1px solid var(--color-border);
 }
+/* Horizontal spotlight: photo column gets a right rule instead of a bottom
+   one on sm and up. */
+@media (min-width: 640px) {
+  .stt-tour-card-horizontal .stt-card-media {
+    border-bottom: 0;
+    border-right: 1px solid var(--color-border);
+  }
+}
 .stt-card-scrim {
   pointer-events: none;
   position: absolute;
@@ -613,6 +745,20 @@ select option {
   color: var(--color-ink);
   box-shadow: 0 8px 20px rgb(33 61 59 / 0.16);
   backdrop-filter: blur(8px);
+}
+/* Editorial pick (Bestseller/Honeymoon-style badge). Rendered only when the
+   owner sets `badge` on the tour — never auto-derived. */
+.stt-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 8px 20px rgb(209 0 83 / 0.4);
 }
 .stt-card-price-float {
   position: absolute;
@@ -654,26 +800,23 @@ select option {
 }
 .stt-card-highlights {
   display: grid;
-  gap: 7px;
-  margin-top: 4px;
-  padding: 12px;
-  border-radius: 14px;
-  background: var(--color-surface-sunken);
-  font-size: 13px;
+  margin-top: 6px;
+  font-size: 13.5px;
   color: var(--color-muted);
 }
 .stt-card-highlights li {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   min-width: 0;
+  padding: 8px 2px;
 }
-.stt-card-dot {
-  width: 6px;
-  height: 6px;
+.stt-card-highlights li + li {
+  border-top: 1px dashed var(--color-border);
+}
+.stt-card-tick {
   flex: none;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  color: var(--color-primary-strong);
 }
 .stt-card-depart {
   font-size: 12px;

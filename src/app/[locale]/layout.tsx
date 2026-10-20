@@ -91,6 +91,8 @@ export const viewport: Viewport = {
   themeColor: "#ff0366",
   width: "device-width",
   initialScale: 1,
+  /* Light-only design: tells browsers not to force-darken the page. */
+  colorScheme: "light",
 };
 
 export default async function LocaleLayout({

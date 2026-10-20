@@ -1,5 +1,5 @@
 import { ROUTES } from "@/config/navigation";
-import { Container, Section, SectionHeading } from "@/components/ui/layout";
+import { Container, Section } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { AssetImage } from "@/components/ui/asset-image";
@@ -37,6 +37,14 @@ export function ValuesSection({ locale }: { locale: Locale }) {
   return (
     <Section tone="sunken" spacing="loose" className="journal-values values-premium">
       <Container>
+        <Reveal className="intro-centered">
+          <p className="eyebrow-pill">
+            <span aria-hidden="true" />
+            {m.home.values.eyebrow}
+          </p>
+          <h2>{m.home.values.title}</h2>
+          <p>{m.home.values.description}</p>
+        </Reveal>
         <div className="values-grid">
           <div className="values-visual">
             <Reveal>
@@ -60,14 +68,6 @@ export function ValuesSection({ locale }: { locale: Locale }) {
           </div>
 
           <div className="values-copy">
-            <Reveal>
-              <SectionHeading
-                eyebrow={m.home.values.eyebrow}
-                title={m.home.values.title}
-                description={m.home.values.description}
-              />
-            </Reveal>
-
             <ol className="values-timeline">
               {m.home.values.principles.map((principle, index) => (
                 <Reveal as="li" key={principle.title} className="values-item">

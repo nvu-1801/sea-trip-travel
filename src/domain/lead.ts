@@ -56,13 +56,40 @@ const optionalPartySize = z.preprocess(
     .optional(),
 );
 
+/** Strip visual separators so the structure underneath can be checked. */
+function cleanPhone(input: string): string {
+  return input.replace(/[\s.\-()]/g, "");
+}
+
+/**
+ * Vietnamese phone structure, checked after normalising the country code:
+ * mobile `0[3|5|7|8|9]` + 8 digits, or landline `02` + 8–9 digits.
+ *
+ * Length alone is not enough — "12345678" and "0000000000" are the right
+ * length but have no valid prefix, so they are junk. This is what stops them.
+ */
+export function isVietnamPhone(input: string): boolean {
+  const cleaned = cleanPhone(input);
+  const national = cleaned.startsWith("+84")
+    ? `0${cleaned.slice(3)}`
+    : cleaned.startsWith("84") &&
+        (cleaned.length === 11 || cleaned.length === 12)
+      ? `0${cleaned.slice(2)}`
+      : cleaned;
+  return /^(0[35789]\d{8}|02\d{8,9})$/.test(national);
+}
+
 /** Accepts `0987 654 321`, `+84 987 654 321`, `0987.654.321`… */
 export const phoneSchema = z
   .string({ error: "Vui lòng nhập số điện thoại" })
   .trim()
   .min(8, "Vui lòng nhập số điện thoại")
   .max(LEAD_LIMITS.phone, "Số điện thoại quá dài")
-  .regex(/^[+0-9][0-9\s.\-()]{7,19}$/, "Số điện thoại chưa hợp lệ");
+  .regex(/^[+0-9][0-9\s.\-()]{7,19}$/, "Số điện thoại chưa hợp lệ")
+  .refine(
+    isVietnamPhone,
+    "Số điện thoại chưa đúng — vui lòng nhập số di động 10 số (ví dụ 0987 654 321)",
+  );
 
 /** Canonicalise a valid phone number to `0xxxxxxxxx`. */
 export function normalizePhone(input: string): string {

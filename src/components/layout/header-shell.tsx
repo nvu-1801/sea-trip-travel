@@ -16,16 +16,18 @@ import {
 /**
  * Sticky header shell with scroll-driven motion.
  *
- * Three effects, all tied to the wheel/touch scroll:
+ * Two effects, both tied to the scroll position:
  *  1. a gradient **scroll progress bar** pinned to the header's bottom edge;
  *  2. the bar **condenses** (row shrinks, background solidifies, shadow grows)
- *     once the page has moved;
- *  3. the header **slides away** when the visitor scrolls down past the intro,
- *     and returns immediately on any upward scroll.
+ *     once the page has moved.
+ *
+ * The header never slides away: it stays visible on every page, like the
+ * previous UI. (`scroll.hidden` is still tracked by `header-state` but
+ * deliberately not consumed here.)
  *
  * The home hero sits behind a fixed, transparent header. Scrolling reveals its
- * background and keeps navigation visible. Other pages retain auto-hide; opening
- * a nav panel always keeps the header visible and gives it a solid background.
+ * background and keeps navigation visible. Opening a nav panel always keeps
+ * the header visible and gives it a solid background.
  *
  * Everything is transform/opacity/height — no layout thrash — and the whole
  * block is disabled under `prefers-reduced-motion` (see globals.css).
@@ -40,7 +42,7 @@ export function HeaderShell({ children }: { children: ReactNode }) {
   );
   const navOpen = useSyncExternalStore(subscribeToNav, getNavOpenSnapshot, getServerNavSnapshot);
 
-  const hidden = !home && scroll.hidden && !navOpen;
+  const hidden = false;
   const solid = scroll.condensed || navOpen;
 
   return (

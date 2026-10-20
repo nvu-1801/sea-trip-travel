@@ -78,6 +78,7 @@ export const legacyQuyNhonPhuYenTours: readonly TourInput[] = [
     title: "Quy Nhơn – Phú Yên 5 ngày 4 đêm",
     summary:
       "Hành trình đầy đủ nhất cho hai tỉnh: thêm thời gian nghỉ dưỡng, lặn biển và khám phá Phú Yên ở nhịp chậm.",
+    badge: "Đề xuất",
     categoryIds: ["cat_quy_nhon_dai_ngay"],
     destinationIds: [
       "dest_quy_nhon",

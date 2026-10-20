@@ -4,7 +4,7 @@ import {
   getFeaturedArticle,
   getNonFeaturedArticles,
 } from "@/lib/data/articles";
-import { Container, Section, SectionHeading } from "@/components/ui/layout";
+import { Container, Section } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon, ClockIcon } from "@/components/ui/icons";
@@ -37,22 +37,23 @@ export function GuidesSection({ locale }: { locale: Locale }) {
   return (
     <Section tone="muted" spacing="loose">
       <Container>
-        <Reveal>
-          <SectionHeading
-            eyebrow={m.home.guides.eyebrow}
-            title={m.home.guides.title}
-            description={m.home.guides.description}
-            action={
-              <ButtonLink
-                href={localizePath(locale, ROUTES.guides)}
-                variant="secondary"
-                className="group"
-              >
-                {m.home.guides.cta}
-                <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-              </ButtonLink>
-            }
-          />
+        <Reveal className="intro-centered">
+          <p className="eyebrow-pill">
+            <span aria-hidden="true" />
+            {m.home.guides.eyebrow}
+          </p>
+          <h2>{m.home.guides.title}</h2>
+          <p>{m.home.guides.description}</p>
+          <div className="intro-cta">
+            <ButtonLink
+              href={localizePath(locale, ROUTES.guides)}
+              variant="secondary"
+              className="group"
+            >
+              {m.home.guides.cta}
+              <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+            </ButtonLink>
+          </div>
         </Reveal>
 
         <Reveal className="mt-10" variant="zoom">

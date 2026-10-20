@@ -34,6 +34,8 @@ export type TourCardModel = {
   departureText: string | null;
   highlights: readonly string[];
   tags: readonly string[];
+  /** Editorial pick pill; null hides it. */
+  badge: string | null;
   image?: AssetImageInput;
   /** Small captions, resolved for the locale. */
   referencePriceText: string;
@@ -59,6 +61,7 @@ export function toTourCard(tour: Tour, locale: Locale): TourCardModel {
       : null,
     highlights: tour.highlights.slice(0, 3),
     tags: tour.tags,
+    badge: tour.badge || null,
     image: tour.images[0],
     referencePriceText: m.common.priceReference,
     viewDetailsText: m.common.viewDetails,

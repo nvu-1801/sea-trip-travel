@@ -1,6 +1,6 @@
 import { ROUTES } from "@/config/navigation";
 import { siteConfig } from "@/config/runtime-site";
-import { Container, Section, SectionHeading } from "@/components/ui/layout";
+import { Container, Section } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
 import {
   PhoneIcon,
@@ -39,55 +39,126 @@ export function ConsultSection({
   description?: string;
 }) {
   const m = getMessages(locale);
+  const en = locale === "en";
   const assurances = [
     { icon: ClockIcon, ...m.consult.assurances[0] },
     { icon: SparkleIcon, ...m.consult.assurances[1] },
     { icon: ShieldIcon, ...m.consult.assurances[2] },
   ];
+  const steps = en
+    ? {
+        label: "Simple 3-step process",
+        items: [
+          {
+            title: "Send a request",
+            body: "Fill in the short form — no deposit needed.",
+          },
+          {
+            title: "Get advice",
+            body: "An advisor contacts you within working hours.",
+          },
+          {
+            title: "Confirm the plan",
+            body: "Price and services clear before you decide.",
+          },
+        ],
+      }
+    : {
+        label: "Quy trình 3 bước",
+        items: [
+          {
+            title: "Gửi yêu cầu",
+            body: "Điền form ngắn bên cạnh, không cần đặt cọc.",
+          },
+          {
+            title: "Nhận tư vấn",
+            body: "Tư vấn viên liên hệ lại trong giờ làm việc.",
+          },
+          {
+            title: "Chốt lịch trình",
+            body: "Rõ giá và dịch vụ rồi mới quyết định.",
+          },
+        ],
+      };
 
   return (
     <Section id={id} tone={tone} spacing={spacing}>
       <Container>
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14">
+        <Reveal className="intro-centered">
+          <p className="eyebrow-pill">
+            <span aria-hidden="true" />
+            {m.consult.eyebrow}
+          </p>
+          <h2>{title ?? m.consult.defaultTitle}</h2>
+          <p>{description ?? m.consult.defaultDescription}</p>
+        </Reveal>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
           <Reveal className="lg:col-span-5" variant="left">
-            <SectionHeading
-              eyebrow={m.consult.eyebrow}
-              title={title ?? m.consult.defaultTitle}
-              description={description ?? m.consult.defaultDescription}
-            />
+            <div className="flex h-full flex-col rounded-3xl border border-border bg-surface p-6 shadow-card sm:p-8">
+              <ul className="flex flex-col divide-y divide-border">
+                {assurances.map((item) => (
+                  <li
+                    key={item.title}
+                    className="flex gap-3.5 py-4 first:pt-0 last:pb-0"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft">
+                      <item.icon className="h-5 w-5 text-primary-strong" />
+                    </span>
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {item.title}
+                      </p>
+                      <p className="mt-0.5 text-sm leading-relaxed text-foreground-muted">
+                        {item.body}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
 
-            <ul className="mt-8 flex flex-col gap-5">
-              {assurances.map((item) => (
-                <li key={item.title} className="flex gap-3.5">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft">
-                    <item.icon className="h-5 w-5 text-primary-strong" />
-                  </span>
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {item.title}
-                    </p>
-                    <p className="mt-0.5 text-sm leading-relaxed text-foreground-muted">
-                      {item.body}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+              <div className="mt-6 border-t border-border pt-6">
+                <p className="text-xs font-bold uppercase tracking-wider text-foreground-subtle">
+                  {steps.label}
+                </p>
+                <ol className="mt-3 flex flex-col">
+                  {steps.items.map((step, i) => (
+                    <li key={step.title} className="flex gap-3.5 py-3">
+                      <span
+                        aria-hidden="true"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-strong text-sm font-extrabold text-white"
+                      >
+                        {i + 1}
+                      </span>
+                      <div>
+                        <p className="text-sm font-bold text-foreground">
+                          {step.title}
+                        </p>
+                        <p className="mt-0.5 text-sm leading-relaxed text-foreground-muted">
+                          {step.body}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
 
-            <div className="mt-8 rounded-2xl border border-border bg-surface p-5">
-              <p className="text-xs font-bold uppercase tracking-wider text-foreground-subtle">
-                {m.consult.directLabel}
-              </p>
-              <a
-                href={siteConfig.contact.hotlineHref}
-                className="mt-2 inline-flex min-h-11 items-center gap-2 text-xl font-extrabold text-primary-strong transition-colors hover:text-primary-strong-hover"
-              >
-                <PhoneIcon className="h-5 w-5" />
-                {siteConfig.contact.hotline}
-              </a>
-              <p className="mt-1 text-sm text-foreground-muted">
-                {m.site.workingHours}
-              </p>
+              <div className="mt-auto pt-6">
+                <div className="rounded-2xl bg-surface-muted p-5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-foreground-subtle">
+                    {m.consult.directLabel}
+                  </p>
+                  <a
+                    href={siteConfig.contact.hotlineHref}
+                    className="mt-2 inline-flex min-h-11 items-center gap-2 text-xl font-extrabold text-primary-strong transition-colors hover:text-primary-strong-hover"
+                  >
+                    <PhoneIcon className="h-5 w-5" />
+                    {siteConfig.contact.hotline}
+                  </a>
+                  <p className="mt-1 text-sm text-foreground-muted">
+                    {m.site.workingHours}
+                  </p>
+                </div>
+              </div>
             </div>
           </Reveal>
 

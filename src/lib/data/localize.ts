@@ -144,6 +144,7 @@ export function resolveTour(tour: Tour, locale: Locale): Tour {
     notes: tr.notes ?? tour.notes,
     policies: tr.policies ?? tour.policies,
     tags: tr.tags ?? tour.tags,
+    badge: tr.badge ?? tour.badge,
     departurePoints: tr.departurePoints ?? tour.departurePoints,
     priceNote: tr.priceNote ?? tour.priceNote,
     images: tr.imageAlts

@@ -42,6 +42,7 @@ export const tourTranslationSchema = z.object({
   tags: z.array(translatedText).optional(),
   departurePoints: z.array(translatedText).optional(),
   priceNote: translatedText.optional(),
+  badge: translatedText.optional(),
   /** Alt text for `images`, matched by position. */
   imageAlts: z.array(translatedText).optional(),
   seo: seoSchema.optional(),

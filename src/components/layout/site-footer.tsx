@@ -4,6 +4,8 @@ import Link from "next/link";
 import { getCategories } from "@/lib/data/categories";
 import { Container } from "@/components/ui/layout";
 import {
+  ChatIcon,
+  FacebookIcon,
   MailIcon,
   MapPinIcon,
   PhoneIcon,
@@ -13,7 +15,6 @@ import type { Locale } from "@/i18n/config";
 import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { Logo } from "./logo";
-import { MotionControl } from "@/features/home/motion-control";
 
 /**
  * Copyright year.
@@ -51,6 +52,39 @@ function FooterHeading({ children }: { children: React.ReactNode }) {
 const linkClass =
   "font-medium text-foreground-muted transition-colors hover:text-primary-strong";
 
+/** Round icon button for a known social network; text pill otherwise. */
+function SocialButton({ label, url }: { label: string; url: string }) {
+  const KnownIcon = /face/i.test(label)
+    ? FacebookIcon
+    : /zalo|chat|message/i.test(label)
+      ? ChatIcon
+      : null;
+  if (!KnownIcon) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex min-h-11 items-center rounded-full border border-border-strong bg-surface/60 px-4 text-xs font-semibold text-foreground-muted transition-[color,border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-primary-soft hover:text-primary-strong"
+      >
+        {label}
+      </a>
+    );
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      title={label}
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border-strong bg-surface/60 text-foreground-muted transition-[color,border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-primary-strong hover:bg-primary-strong hover:text-white"
+    >
+      <KnownIcon className="h-5 w-5" />
+    </a>
+  );
+}
+
 export function SiteFooter({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
   const config = settings();
@@ -64,9 +98,10 @@ export function SiteFooter({ locale }: { locale: Locale }) {
   }));
 
   return (
-    <footer className="bg-surface-sunken">
+    <footer className="relative overflow-hidden bg-surface-sunken">
       {/* Mirrors the identity rule at the top of the header. */}
       <div className="brand-gradient h-px w-full" aria-hidden="true" />
+      <span aria-hidden="true" className="footer-glow" />
 
       <Container>
         <div className="grid grid-cols-1 gap-10 py-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-12 lg:py-16">
@@ -155,19 +190,20 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             </ul>
 
             {socials.length > 0 ? (
-              <ul className="mt-6 flex flex-wrap gap-2">
+              <ul className="mt-6 flex flex-wrap items-center gap-2.5">
                 {socials.map((social) => (
                   <li key={social.key}>
-                    <a
-                      href={social.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-11 items-center rounded-full border border-border-strong bg-surface/60 px-4 text-xs font-semibold text-foreground-muted transition-[color,border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-primary-soft hover:text-primary-strong"
-                    >
-                      {social.label}
-                    </a>
+                    <SocialButton label={social.label} url={social.url} />
                   </li>
                 ))}
+                <li
+                  aria-hidden="true"
+                  className="ml-1 hidden text-xs text-foreground-subtle sm:block"
+                >
+                  {locale === "en"
+                    ? "Follow our journeys"
+                    : "Theo dõi hành trình"}
+                </li>
               </ul>
             ) : null}
           </div>
@@ -175,18 +211,27 @@ export function SiteFooter({ locale }: { locale: Locale }) {
 
         <div className="flex flex-col gap-3 border-t border-border py-6 text-xs text-foreground-subtle sm:flex-row sm:items-center sm:justify-between">
           <p>{renderCopyright(m.footer.copyright, config.name)}</p>
-          <div className="flex flex-col gap-3 sm:items-end">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <a
-              href="/image-credits.html"
-              className="inline-flex min-h-11 items-center underline underline-offset-4"
+              href={config.contact.hotlineHref}
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary-strong"
             >
-              {locale === "en" ? "Photo credits" : "Nguồn ảnh"}
+              <PhoneIcon className="h-4 w-4 text-primary-strong" />
+              {config.contact.hotline}
             </a>
-            <MotionControl english={locale === "en"} enabled={config.motion} />
-            <p className="sm:max-w-xl sm:text-right">{m.footer.disclaimer}</p>
+            <a
+              href={`mailto:${config.contact.email}`}
+              className="inline-flex min-h-11 items-center gap-1.5 font-medium transition-colors hover:text-primary-strong"
+            >
+              <MailIcon className="h-4 w-4 text-primary-strong" />
+              {config.contact.email}
+            </a>
           </div>
         </div>
       </Container>
+      <div aria-hidden="true" className="footer-watermark">
+        SEA TRIP
+      </div>
     </footer>
   );
 }

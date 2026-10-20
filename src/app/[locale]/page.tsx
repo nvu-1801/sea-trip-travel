@@ -7,6 +7,7 @@ import { Hero } from "@/features/home/hero";
 import { QuickFinder } from "@/features/home/quick-finder";
 import { ExploreSection } from "@/features/home/explore-section";
 import { FeaturedToursSection } from "@/features/home/featured-tours-section";
+import { TrustStrip } from "@/features/home/trust-strip";
 import { RegionsSection } from "@/features/home/regions-section";
 import { ValuesSection } from "@/features/home/values-section";
 import { GuidesSection } from "@/features/home/guides-section";
@@ -80,6 +81,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <QuickFinder locale={locale} />
       <ExploreSection locale={locale} />
       <FeaturedToursSection locale={locale} />
+      <TrustStrip locale={locale} />
       <JourneyStory locale={locale} />
       <RegionsSection locale={locale} />
       <ValuesSection locale={locale} />

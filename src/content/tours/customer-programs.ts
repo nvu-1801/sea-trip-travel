@@ -56,6 +56,7 @@ export const customerTours: readonly TourInput[] = [
     "contentStatus": "verified",
     "updatedAt": "2026-10-16T10:21:05+07:00",
     "tourCode": "ST01",
+    "badge": "Đề xuất",
     "included": [
       "Xe du lịch vận chuyển theo chương trình",
       "Xe trung chuyển đi Kỳ Co khứ hồi",

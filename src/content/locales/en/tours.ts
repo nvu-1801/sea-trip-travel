@@ -11,6 +11,7 @@ export const tourTranslations: Readonly<Record<string, TourTranslationInput>> =
   {
     tour_qn_ky_co_eo_gio_1n: {
       translationStatus: "draft",
+      badge: "Recommended",
       title: "Quy Nhon – Ky Co – Eo Gio 1 Day",
       summary:
         "A full day at Quy Nhon's most famous cluster: speedboat to Ky Co, swimming, and sunset at Eo Gio.",
@@ -380,6 +381,7 @@ export const tourTranslations: Readonly<Record<string, TourTranslationInput>> =
 
     tour_qn_py_5n4d: {
       translationStatus: "draft",
+      badge: "Recommended",
       title: "Quy Nhon – Phu Yen 5 Days 4 Nights",
       summary:
         "The most complete journey through both provinces, adding leisure time, snorkelling, and a slow-paced look at Phu Yen.",

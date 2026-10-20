@@ -82,6 +82,12 @@ export const tourSchema = z.object({
   policies: z.array(z.string().min(1)).default([]),
   /** Free-form labels used for client-side filtering, e.g. ["1 ngày"]. */
   tags: z.array(z.string().min(1)).default([]),
+  /**
+   * Editorial pick label shown as a pill on the tour card, e.g. "Đề xuất".
+   * Empty (default) hides the pill. The owner sets real bestsellers here —
+   * never derive marketing claims from data.
+   */
+  badge: z.string().max(40).default(""),
   seo: seoSchema.optional(),
   contentStatus: contentStatusSchema.default("demo"),
   /** ISO timestamp of the last editorial change. Accepts a UTC or offset form. */

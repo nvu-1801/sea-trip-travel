@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { leadInputSchema, normalizePhone } from "@/domain/lead";
+import { isVietnamPhone, leadInputSchema, normalizePhone } from "@/domain/lead";
 
 const base = {
   fullName: "Nguyễn Văn A",
@@ -31,6 +31,27 @@ describe("leadInputSchema", () => {
     assert.equal(result.success, false);
     if (result.success) return;
     assert.ok(result.error.issues.some((issue) => issue.path[0] === "phone"));
+  });
+
+  it("rejects junk numbers with no valid Vietnamese prefix", () => {
+    for (const phone of ["233123", "12345678", "0000000000", "1111111111", "0123456789"]) {
+      const result = leadInputSchema.safeParse({ ...base, phone });
+      assert.equal(result.success, false, `expected ${phone} to fail`);
+    }
+  });
+
+  it("accepts real mobile, +84 and landline shapes", () => {
+    for (const phone of [
+      "0987 654 321",
+      "0901234567",
+      "+84 987 654 321",
+      "84987654321",
+      "024 123 4567",
+    ]) {
+      assert.equal(isVietnamPhone(phone), true, `expected ${phone} to pass`);
+      const result = leadInputSchema.safeParse({ ...base, phone });
+      assert.equal(result.success, true, `expected ${phone} to validate`);
+    }
   });
 
   it("requires explicit consent and returns a Vietnamese message", () => {
