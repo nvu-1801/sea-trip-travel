@@ -33,7 +33,7 @@ export const destinationTranslations: Readonly<
     province: "Gia Lai",
     summary:
       "A small island close to shore, ideal for a day of coral snorkelling.",
-    imageAlt: "Shallow coral reef at Hon Kho",
+    imageAlt: "Nhon Hai fishing village on the Hon Kho route",
   },
 
   dest_cu_lao_xanh: {
@@ -60,7 +60,7 @@ export const destinationTranslations: Readonly<
     province: "Phu Yen",
     summary:
       "A small beach with two rocky slabs jutting into the sea, made famous by a well-known film.",
-    imageAlt: "Bai Xep seen from above",
+    imageAlt: "Bai Xep beach in An Chan, Phu Yen",
   },
 
   dest_mui_dien: {
@@ -69,7 +69,7 @@ export const destinationTranslations: Readonly<
     province: "Phu Yen",
     summary:
       "The spot that greets the earliest sunrise on the Vietnamese mainland.",
-    imageAlt: "The path up to the Mui Dien lighthouse",
+    imageAlt: "Dai Lanh lighthouse, Phu Yen",
   },
 
   dest_dam_o_loan: {
@@ -78,7 +78,7 @@ export const destinationTranslations: Readonly<
     province: "Phu Yen",
     summary:
       "A wide brackish lagoon, known for its blood cockles and tranquil scenery.",
-    imageAlt: "A small boat on O Loan Lagoon",
+    imageAlt: "O Loan Lagoon, Phu Yen",
   },
 
   dest_ha_noi: {
@@ -87,7 +87,7 @@ export const destinationTranslations: Readonly<
     province: "Hanoi",
     summary:
       "The capital, with its Old Quarter, lakes, and deep layers of culture.",
-    imageAlt: "Hanoi's Old Quarter in the early morning",
+    imageAlt: "Hoan Kiem Lake, Hanoi",
   },
 
   dest_vinh_ha_long: {
@@ -96,7 +96,7 @@ export const destinationTranslations: Readonly<
     province: "Quang Ninh",
     summary:
       "A World Natural Heritage site with thousands of limestone islands rising from the water.",
-    imageAlt: "Tour boats among the limestone islands of Ha Long Bay",
+    imageAlt: "Ha Long Bay seen from Ti Top Island",
   },
 
   dest_sapa: {
@@ -105,7 +105,7 @@ export const destinationTranslations: Readonly<
     province: "Lao Cai",
     summary:
       "A highland town with rice terraces and a cool climate year-round.",
-    imageAlt: "Sa Pa rice terraces in the mist",
+    imageAlt: "Rice terraces and mountains in Sa Pa",
   },
 
   dest_ninh_binh: {
@@ -114,16 +114,15 @@ export const destinationTranslations: Readonly<
     province: "Ninh Binh",
     summary:
       "Limestone mountains, small rivers, and rice fields typical of the northern delta.",
-    imageAlt: "A rowboat passing between the limestone cliffs of Ninh Binh",
+    imageAlt: "Trang An landscape, Ninh Binh",
   },
 
   dest_da_nang: {
     translationStatus: "draft",
     name: "Da Nang",
     province: "Da Nang",
-    summary:
-      "A modern coastal city, the gateway to Hoi An and Ba Na Hills.",
-    imageAlt: "The Dragon Bridge and Da Nang's coastline",
+    summary: "A modern coastal city, the gateway to Hoi An and Ba Na Hills.",
+    imageAlt: "Dragon Bridge over the Han River, Da Nang",
   },
 
   dest_hoi_an: {
@@ -132,7 +131,7 @@ export const destinationTranslations: Readonly<
     province: "Quang Nam",
     summary:
       "A lantern-lit old town and World Cultural Heritage site on the banks of the Hoai River.",
-    imageAlt: "Lanterns in Hoi An's Old Town at night",
+    imageAlt: "Hoi An Ancient Town beside the river",
   },
 
   dest_hue: {
@@ -141,7 +140,7 @@ export const destinationTranslations: Readonly<
     province: "Hue",
     summary:
       "The former imperial capital, with its citadel, royal tombs, and royal cuisine.",
-    imageAlt: "Imperial architecture at the Hue Citadel",
+    imageAlt: "Meridian Gate at the Hue Citadel",
   },
 
   dest_phu_quoc: {
@@ -150,7 +149,7 @@ export const destinationTranslations: Readonly<
     province: "Kien Giang",
     summary:
       "Vietnam's largest island, with white-sand beaches and a national park.",
-    imageAlt: "White-sand beach in Phu Quoc",
+    imageAlt: "Phu Quoc beach",
   },
 
   dest_mien_tay: {
@@ -159,7 +158,7 @@ export const destinationTranslations: Readonly<
     province: "Can Tho",
     summary:
       "Floating markets, fruit orchards, and the waterways of the Mekong.",
-    imageAlt: "Cargo boats at Cai Rang floating market",
+    imageAlt: "Boats at Cai Rang floating market, Can Tho",
   },
 
   dest_da_lat: {
@@ -167,7 +166,7 @@ export const destinationTranslations: Readonly<
     name: "Da Lat",
     province: "Lam Dong",
     summary: "A highland city with pine hills, lakes, and a cool climate.",
-    imageAlt: "Pine hills and a lake in Da Lat",
+    imageAlt: "Xuan Huong Lake seen from Dalat Palace",
   },
 
   dest_buon_ma_thuot: {
@@ -175,6 +174,6 @@ export const destinationTranslations: Readonly<
     name: "Buon Ma Thuot",
     province: "Dak Lak",
     summary: "The coffee capital, with waterfalls and gong culture.",
-    imageAlt: "A waterfall in Buon Ma Thuot",
+    imageAlt: "Dray Nur waterfall, Dak Lak",
   },
 };

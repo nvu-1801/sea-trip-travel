@@ -5,8 +5,8 @@ import type { DestinationInput } from "@/domain/destination";
  *
  * All entries are `contentStatus: "demo"`: the place names and regions are
  * real, but the one-line summaries are placeholder editorial copy that the
- * owner must review. `image.src` is intentionally omitted so the UI renders the
- * branded placeholder until real photography is supplied.
+ * owner must review. Destination photographs and their open licences are listed
+ * in public/image-credits.html. Existing supplied photos are retained.
  */
 export const destinations: readonly DestinationInput[] = [
   // --- Quy Nhơn – Phú Yên (tuyến trọng tâm) --------------------------------
@@ -18,7 +18,12 @@ export const destinations: readonly DestinationInput[] = [
     region: "quy-nhon-phu-yen",
     summary:
       "Thành phố biển miền Trung với bãi cát dài, hải sản tươi và nhịp sống chậm rãi.",
-    image: {"src": "/images/tours/be29f9c7f7008249.jpeg", "alt": "Bãi đá Hoàng Hậu", "width": 443, "height": 296},
+    image: {
+      src: "/images/tours/be29f9c7f7008249.jpeg",
+      alt: "Bãi đá Hoàng Hậu",
+      width: 443,
+      height: 296,
+    },
     order: 1,
     contentStatus: "demo",
   },
@@ -30,7 +35,12 @@ export const destinations: readonly DestinationInput[] = [
     region: "quy-nhon-phu-yen",
     summary:
       "Cặp điểm đến nổi tiếng nhất Quy Nhơn: nước xanh trong và cung đường ven biển đá.",
-    image: {"src": "/images/tours/d7233006cc4fd0f9.jpeg", "alt": "Bãi biển Kỳ Co", "width": 596, "height": 336},
+    image: {
+      src: "/images/tours/d7233006cc4fd0f9.jpeg",
+      alt: "Bãi biển Kỳ Co",
+      width: 596,
+      height: 336,
+    },
     order: 2,
     contentStatus: "demo",
   },
@@ -40,8 +50,12 @@ export const destinations: readonly DestinationInput[] = [
     name: "Hòn Khô",
     province: "Gia Lai",
     region: "quy-nhon-phu-yen",
-    summary: "Đảo nhỏ gần bờ, thích hợp cho hoạt động lặn ngắm san hô trong ngày.",
-    image: { alt: "Rạn san hô nông tại Hòn Khô" },
+    summary:
+      "Đảo nhỏ gần bờ, thích hợp cho hoạt động lặn ngắm san hô trong ngày.",
+    image: {
+      src: "/images/destinations/hon-kho.jpg",
+      alt: "Bờ biển làng chài Nhơn Hải trên tuyến tham quan Hòn Khô",
+    },
     order: 3,
     contentStatus: "demo",
   },
@@ -51,8 +65,14 @@ export const destinations: readonly DestinationInput[] = [
     name: "Cù Lao Xanh",
     province: "Gia Lai",
     region: "quy-nhon-phu-yen",
-    summary: "Hòn đảo yên bình ngoài khơi, nổi bật với ngọn hải đăng và làng chài.",
-    image: {"src": "/images/tours/afdf37ef08e566b9.png", "alt": "Đảo Cù Lao Xanh", "width": 582, "height": 327},
+    summary:
+      "Hòn đảo yên bình ngoài khơi, nổi bật với ngọn hải đăng và làng chài.",
+    image: {
+      src: "/images/tours/afdf37ef08e566b9.png",
+      alt: "Đảo Cù Lao Xanh",
+      width: 582,
+      height: 327,
+    },
     order: 4,
     contentStatus: "demo",
   },
@@ -62,8 +82,14 @@ export const destinations: readonly DestinationInput[] = [
     name: "Ghềnh Đá Đĩa",
     province: "Phú Yên",
     region: "quy-nhon-phu-yen",
-    summary: "Khối đá bazan hình cột xếp lớp độc đáo, biểu tượng địa chất của Phú Yên.",
-    image: {"src": "/images/tours/e58a823508e08a30.jpeg", "alt": "Ghềnh Đá Đĩa", "width": 470, "height": 327},
+    summary:
+      "Khối đá bazan hình cột xếp lớp độc đáo, biểu tượng địa chất của Phú Yên.",
+    image: {
+      src: "/images/tours/e58a823508e08a30.jpeg",
+      alt: "Ghềnh Đá Đĩa",
+      width: 470,
+      height: 327,
+    },
     order: 5,
     contentStatus: "demo",
   },
@@ -73,8 +99,12 @@ export const destinations: readonly DestinationInput[] = [
     name: "Bãi Xép",
     province: "Phú Yên",
     region: "quy-nhon-phu-yen",
-    summary: "Bãi biển nhỏ với hai phiến đá nhô ra biển, gắn với một bộ phim nổi tiếng.",
-    image: { alt: "Bãi Xép nhìn từ trên cao" },
+    summary:
+      "Bãi biển nhỏ với hai phiến đá nhô ra biển, gắn với một bộ phim nổi tiếng.",
+    image: {
+      src: "/images/destinations/bai-xep.jpg",
+      alt: "Bãi Xép, An Chấn, Phú Yên",
+    },
     order: 6,
     contentStatus: "demo",
   },
@@ -85,7 +115,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Phú Yên",
     region: "quy-nhon-phu-yen",
     summary: "Điểm đón ánh bình minh sớm nhất trên đất liền Việt Nam.",
-    image: { alt: "Đường lên ngọn hải đăng Mũi Điện" },
+    image: {
+      src: "/images/destinations/mui-dien.jpg",
+      alt: "Hải đăng Mũi Đại Lãnh, Phú Yên",
+    },
     order: 7,
     contentStatus: "demo",
   },
@@ -96,7 +129,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Phú Yên",
     region: "quy-nhon-phu-yen",
     summary: "Đầm nước lợ rộng, nổi tiếng với sò huyết và cảnh quan bình yên.",
-    image: { alt: "Thuyền nhỏ trên Đầm Ô Loan" },
+    image: {
+      src: "/images/destinations/dam-o-loan.jpg",
+      alt: "Đầm Ô Loan, Phú Yên",
+    },
     order: 8,
     contentStatus: "demo",
   },
@@ -109,7 +145,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Hà Nội",
     region: "mien-bac",
     summary: "Thủ đô với phố cổ, hồ và lớp trầm tích văn hóa dày.",
-    image: { alt: "Phố cổ Hà Nội buổi sớm" },
+    image: {
+      src: "/images/destinations/ha-noi.jpg",
+      alt: "Hồ Hoàn Kiếm, Hà Nội",
+    },
     order: 1,
     contentStatus: "demo",
   },
@@ -119,8 +158,12 @@ export const destinations: readonly DestinationInput[] = [
     name: "Vịnh Hạ Long",
     province: "Quảng Ninh",
     region: "mien-bac",
-    summary: "Di sản thiên nhiên thế giới với hàng nghìn đảo đá vôi trên mặt nước.",
-    image: { alt: "Thuyền du lịch giữa các đảo đá vôi Vịnh Hạ Long" },
+    summary:
+      "Di sản thiên nhiên thế giới với hàng nghìn đảo đá vôi trên mặt nước.",
+    image: {
+      src: "/images/destinations/ha-long.jpg",
+      alt: "Vịnh Hạ Long nhìn từ đảo Ti Tốp",
+    },
     order: 2,
     contentStatus: "demo",
   },
@@ -131,7 +174,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Lào Cai",
     region: "mien-bac",
     summary: "Thị trấn vùng cao với ruộng bậc thang và khí hậu mát quanh năm.",
-    image: { alt: "Ruộng bậc thang Sa Pa trong sương" },
+    image: {
+      src: "/images/destinations/sa-pa.jpg",
+      alt: "Ruộng bậc thang và núi ở Sa Pa",
+    },
     order: 3,
     contentStatus: "demo",
   },
@@ -141,8 +187,12 @@ export const destinations: readonly DestinationInput[] = [
     name: "Ninh Bình",
     province: "Ninh Bình",
     region: "mien-bac",
-    summary: "Núi đá vôi, sông nhỏ và những cánh đồng lúa đặc trưng đồng bằng Bắc Bộ.",
-    image: { alt: "Thuyền nan đi giữa vách núi đá Ninh Bình" },
+    summary:
+      "Núi đá vôi, sông nhỏ và những cánh đồng lúa đặc trưng đồng bằng Bắc Bộ.",
+    image: {
+      src: "/images/destinations/ninh-binh.jpg",
+      alt: "Cảnh quan Tràng An, Ninh Bình",
+    },
     order: 4,
     contentStatus: "demo",
   },
@@ -155,7 +205,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Đà Nẵng",
     region: "mien-trung",
     summary: "Thành phố biển hiện đại, cửa ngõ tới Hội An và Bà Nà Hills.",
-    image: { alt: "Cầu Rồng và đường bờ biển Đà Nẵng" },
+    image: {
+      src: "/images/destinations/da-nang.jpg",
+      alt: "Cầu Rồng bắc qua sông Hàn, Đà Nẵng",
+    },
     order: 1,
     contentStatus: "demo",
   },
@@ -166,7 +219,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Quảng Nam",
     region: "mien-trung",
     summary: "Phố cổ đèn lồng, di sản văn hóa thế giới bên bờ sông Hoài.",
-    image: { alt: "Đèn lồng phố cổ Hội An buổi tối" },
+    image: {
+      src: "/images/destinations/hoi-an.jpg",
+      alt: "Phố cổ Hội An bên sông Hoài",
+    },
     order: 2,
     contentStatus: "demo",
   },
@@ -177,7 +233,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Huế",
     region: "mien-trung",
     summary: "Cố đô với đại nội, lăng tẩm và ẩm thực cung đình.",
-    image: { alt: "Kiến trúc cung đình tại Đại Nội Huế" },
+    image: {
+      src: "/images/destinations/hue.jpg",
+      alt: "Ngọ Môn, Hoàng thành Huế",
+    },
     order: 3,
     contentStatus: "demo",
   },
@@ -190,7 +249,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Kiên Giang",
     region: "mien-nam",
     summary: "Đảo lớn nhất Việt Nam với bãi cát trắng và rừng quốc gia.",
-    image: { alt: "Bãi biển cát trắng tại Phú Quốc" },
+    image: {
+      src: "/images/destinations/phu-quoc.jpg",
+      alt: "Bãi biển Phú Quốc",
+    },
     order: 1,
     contentStatus: "demo",
   },
@@ -201,7 +263,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Cần Thơ",
     region: "mien-nam",
     summary: "Chợ nổi, vườn trái cây và hệ thống sông nước Cửu Long.",
-    image: { alt: "Thuyền hàng tại chợ nổi Cái Răng" },
+    image: {
+      src: "/images/destinations/mien-tay.jpg",
+      alt: "Thuyền hàng trên chợ nổi Cái Răng, Cần Thơ",
+    },
     order: 2,
     contentStatus: "demo",
   },
@@ -214,7 +279,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Lâm Đồng",
     region: "tay-nguyen",
     summary: "Thành phố cao nguyên với đồi thông, hồ và khí hậu se lạnh.",
-    image: { alt: "Đồi thông và hồ nước ở Đà Lạt" },
+    image: {
+      src: "/images/destinations/da-lat.jpg",
+      alt: "Hồ Xuân Hương nhìn từ Dalat Palace",
+    },
     order: 1,
     contentStatus: "demo",
   },
@@ -225,7 +293,10 @@ export const destinations: readonly DestinationInput[] = [
     province: "Đắk Lắk",
     region: "tay-nguyen",
     summary: "Thủ phủ cà phê với thác nước và văn hóa cồng chiêng.",
-    image: { alt: "Thác nước tại Buôn Ma Thuột" },
+    image: {
+      src: "/images/destinations/buon-ma-thuot.jpg",
+      alt: "Thác Đray Nur, Đắk Lắk",
+    },
     order: 2,
     contentStatus: "demo",
   },

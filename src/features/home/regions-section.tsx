@@ -5,114 +5,98 @@ import {
   getChildCategories,
   getCategoryTourCount,
 } from "@/lib/data/categories";
-import { getToursByCategoryId } from "@/lib/data/tours";
-import { Container, Section, SectionHeading } from "@/components/ui/layout";
-import { Reveal } from "@/components/ui/reveal";
-import { ButtonLink } from "@/components/ui/button";
-import { ArrowRightIcon, MapPinIcon } from "@/components/ui/icons";
+import { Container, Section } from "@/components/ui/layout";
 import { AssetImage } from "@/components/ui/asset-image";
+import { Reveal } from "@/components/ui/reveal";
 import type { Locale } from "@/i18n/config";
-import { format, getMessages, plural } from "@/i18n/server";
+import { landingSections } from "@/server/cms/store";
 import { localizePath } from "@/i18n/routing";
 
-/**
- * Domestic tours by region.
- *
- * Deliberately a list rather than another grid: alternating a narrow image with
- * a text column breaks up the rhythm of the page and reads faster than a fourth
- * row of identical cards.
- */
 export function RegionsSection({ locale }: { locale: Locale }) {
-  const m = getMessages(locale);
+  const en = locale === "en";
+  let copy = {
+    eyebrow: en ? "03 / A LITTLE FURTHER" : "03 / ĐI XA HƠN MỘT CHÚT",
+    titleA: en ? "One country." : "Một Việt Nam.",
+    titleB: en ? "Endless discoveries." : "Muôn điều để nhớ.",
+    intro: en
+      ? "From mountain mornings to coastal afternoons, find a different rhythm in every region."
+      : "Từ sớm mai nơi núi cao đến chiều lộng gió bên bờ biển. Mỗi miền đất là một cách khác để yêu những chuyến đi.",
+  };
+  let moods = en
+    ? ["Mountains & heritage", "Coast & ancient towns", "Islands & waterways", "Pines & highland mornings"]
+    : ["Non nước & di sản", "Biển xanh & phố cổ", "Đảo ngọc & sông nước", "Rừng thông & sớm cao nguyên"];
+  try {
+    const s = landingSections().regions;
+    copy = {
+      eyebrow: (en ? s.eyebrowEn || s.eyebrow : s.eyebrow) || copy.eyebrow,
+      titleA: (en ? s.titleAEn || s.titleA : s.titleA) || copy.titleA,
+      titleB: (en ? s.titleBEn || s.titleB : s.titleB) || copy.titleB,
+      intro: (en ? s.introEn || s.intro : s.intro) || copy.intro,
+    };
+    const m = en && s.moodsEn.length ? s.moodsEn : s.moods;
+    if (m.length) moods = m;
+  } catch {
+    // fallback
+  }
   const domestic = getCategories(locale).find(
-    (category) => category.path === ROUTES.domestic,
+    (c) => c.path === ROUTES.domestic,
   );
   if (!domestic) return null;
-
-  const regions = getChildCategories(domestic.id, locale);
-
   return (
-    <Section tone="default" spacing="loose">
+    <Section id="kham-pha-vung-mien" className="journal-regions">
       <Container>
-        <Reveal>
-          <SectionHeading
-            eyebrow={m.home.regions.eyebrow}
-            title={m.home.regions.title}
-            description={m.home.regions.description}
-            action={
-              <ButtonLink
-                href={localizePath(locale, ROUTES.domestic)}
-                variant="secondary"
-              >
-                {m.home.regions.cta}
-                <ArrowRightIcon className="h-4 w-4" />
-              </ButtonLink>
-            }
-          />
-        </Reveal>
-
-        <ul className="mt-10 flex flex-col gap-5">
-          {regions.map((region) => {
-            const regionTours = getToursByCategoryId(region.id, locale).slice(
-              0,
-              3,
-            );
-            return (
+        <div className="regions-editorial">
+          <Reveal className="regions-heading">
+            <p className="journal-eyebrow">{copy.eyebrow}</p>
+            <h2>
+              {copy.titleA}
+              <br />
+              <em>{copy.titleB}</em>
+            </h2>
+            <p className="regions-intro">{copy.intro}</p>
+            <Link
+              className="journal-text-link"
+              href={localizePath(locale, ROUTES.domestic)}
+            >
+              {en ? "All domestic journeys" : "Xem hành trình trong nước"} ↗
+            </Link>
+          </Reveal>
+          <ol className="region-postcards">
+            {getChildCategories(domestic.id, locale).map((region, i) => (
               <Reveal as="li" key={region.id}>
                 <Link
+                  className="region-postcard"
                   href={localizePath(locale, region.path)}
-                  className="group grid grid-cols-1 gap-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-soft transition-[box-shadow,transform,border-color] duration-300 ease-out hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card sm:grid-cols-[minmax(0,15rem)_1fr]"
                 >
                   <AssetImage
                     image={region.image}
-                    altFallback={format(m.home.regions.regionAlt, {
-                      name: region.name,
-                    })}
-                    sizes="(max-width: 640px) 100vw, 240px"
-                    className="aspect-[16/9] w-full sm:aspect-auto sm:h-full sm:min-h-44"
+                    altFallback={region.name}
+                    className="region-postcard-photo"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 25vw"
                   />
-
-                  <div className="flex flex-col gap-2 p-5 sm:p-6">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <h3 className="text-xl font-extrabold text-foreground transition-colors group-hover:text-primary-strong">
-                        {region.name}
-                      </h3>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary-strong">
-                        <MapPinIcon className="h-3.5 w-3.5" />
-                        {plural(
-                          m.common.tourCount,
-                          getCategoryTourCount(region.id),
-                        )}
-                      </span>
-                    </div>
-
-                    <p className="text-sm leading-relaxed text-foreground-muted">
-                      {region.tagline ?? region.description}
-                    </p>
-
-                    {regionTours.length > 0 ? (
-                      <ul className="mt-1 flex flex-wrap gap-1.5">
-                        {regionTours.map((tour) => (
-                          <li
-                            key={tour.slug}
-                            className="rounded-full border border-border px-2.5 py-1 text-xs font-medium text-foreground-muted"
-                          >
-                            {tour.title}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-
-                    <span className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-strong">
-                      {format(m.home.regions.viewRegion, { name: region.name })}
-                      <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                  <span className="region-postcard-top">
+                    <span>
+                      0{i + 1} / {en ? "VIETNAM" : "VIỆT NAM"}
+                    </span>
+                    <span>
+                      {getCategoryTourCount(region.id)}{" "}
+                      {en ? "journeys" : "hành trình"}
+                    </span>
+                  </span>
+                  <div className="region-postcard-copy">
+                    <p className="region-postcard-mood">{moods[i] ?? moods[0]}</p>
+                    <h3>{region.name.replace(/^Tour /, "")}</h3>
+                    <p>{region.tagline ?? region.description}</p>
+                    <span className="region-postcard-cta">
+                      {en ? "Explore this region" : "Khám phá miền đất này"}
+                      <span aria-hidden="true">↗</span>
                     </span>
                   </div>
                 </Link>
               </Reveal>
-            );
-          })}
-        </ul>
+            ))}
+          </ol>
+        </div>
       </Container>
     </Section>
   );

@@ -23,9 +23,15 @@ export const mienTrungTours: readonly TourInput[] = [
       "Có thể đảo thứ tự ba điểm để phù hợp điểm bay về",
     ],
     images: [
-      { alt: "Cầu Rồng Đà Nẵng về đêm" },
-      { alt: "Phố cổ Hội An với đèn lồng" },
-      { alt: "Đại Nội Huế" },
+      {
+        src: "/images/destinations/da-nang.jpg",
+        alt: "Cầu Rồng bắc qua sông Hàn, Đà Nẵng",
+      },
+      {
+        src: "/images/destinations/hoi-an.jpg",
+        alt: "Phố cổ Hội An bên sông Hoài",
+      },
+      { src: "/images/destinations/hue.jpg", alt: "Ngọ Môn, Hoàng thành Huế" },
     ],
     overview: [
       "Miền Trung có lợi thế là các điểm chính nằm gần nhau, thuận tiện cho hành trình ngắn. Chương trình bốn ngày chia đều cho Đà Nẵng, Hội An và Huế.",
@@ -133,9 +139,15 @@ export const mienTrungTours: readonly TourInput[] = [
       "Phù hợp nhóm gia đình và khách lớn tuổi",
     ],
     images: [
-      { alt: "Sông Hương và Chùa Thiên Mụ" },
-      { alt: "Bãi biển Đà Nẵng" },
-      { alt: "Đèn lồng Hội An" },
+      { src: "/images/destinations/hue.jpg", alt: "Ngọ Môn, Hoàng thành Huế" },
+      {
+        src: "/images/destinations/da-nang.jpg",
+        alt: "Cầu Rồng bắc qua sông Hàn, Đà Nẵng",
+      },
+      {
+        src: "/images/destinations/hoi-an.jpg",
+        alt: "Phố cổ Hội An bên sông Hoài",
+      },
     ],
     overview: [
       "Bản năm ngày bổ sung thời gian nghỉ và một buổi trải nghiệm ẩm thực địa phương, giữ nguyên các điểm chính của tuyến bốn ngày.",
@@ -146,7 +158,11 @@ export const mienTrungTours: readonly TourInput[] = [
         index: 1,
         title: "Đón khách – Đà Nẵng",
         summary: "Nhận phòng và dạo biển.",
-        activities: ["Đón khách tại sân bay.", "Nhận phòng.", "Dạo biển Mỹ Khê buổi chiều."],
+        activities: [
+          "Đón khách tại sân bay.",
+          "Nhận phòng.",
+          "Dạo biển Mỹ Khê buổi chiều.",
+        ],
         meals: ["Tối"],
         accommodation: "Nghỉ đêm tại Đà Nẵng",
         places: ["Đà Nẵng"],
@@ -198,7 +214,11 @@ export const mienTrungTours: readonly TourInput[] = [
         index: 5,
         title: "Huế – Kết thúc",
         summary: "Buổi sáng tự do và tiễn khách.",
-        activities: ["Tự do hoặc ghé chợ Đông Ba.", "Trả phòng.", "Tiễn khách tại sân bay Phú Bài."],
+        activities: [
+          "Tự do hoặc ghé chợ Đông Ba.",
+          "Trả phòng.",
+          "Tiễn khách tại sân bay Phú Bài.",
+        ],
         meals: ["Sáng"],
         places: ["Huế"],
       },

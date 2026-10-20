@@ -1,101 +1,86 @@
-import { getCategories, getCategoryTourCount } from "@/lib/data/categories";
+import Link from "next/link";
 import { getDestinationsByRegion } from "@/lib/data/destinations";
-import { Container, Section, SectionHeading } from "@/components/ui/layout";
+import { Container, Section } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
-import { ButtonLink } from "@/components/ui/button";
-import { ArrowRightIcon } from "@/components/ui/icons";
-import { CategoryCard } from "@/features/tours/category-card";
-import { DestinationCard } from "@/features/destinations/destination-card";
-import { ROUTES } from "@/config/navigation";
+import { AssetImage } from "@/components/ui/asset-image";
 import type { Locale } from "@/i18n/config";
-import { getMessages } from "@/i18n/server";
+import { landingSections } from "@/server/cms/store";
 import { localizePath } from "@/i18n/routing";
 
-/**
- * "Khám phá nhanh" — the bridge between the brand promise and the catalogue.
- *
- * Every tile is real navigation: top-level categories first, then the
- * destinations inside the focus region. No decorative filters.
- */
 export function ExploreSection({ locale }: { locale: Locale }) {
-  const m = getMessages(locale);
-  const topLevel = getCategories(locale).filter(
-    (category) => category.parentId === null,
-  );
-  const focusDestinations = getDestinationsByRegion(
-    "quy-nhon-phu-yen",
-    locale,
-  ).slice(0, 4);
-
+  const en = locale === "en";
+  let copy = {
+    eyebrow: en ? "01 / THE COAST IS CALLING" : "01 / CÓ HẸN VỚI BIỂN",
+    titleA: en ? "A little closer to" : "Chạm vào một miền",
+    titleB: en ? "somewhere beautiful." : "bình yên rất khác.",
+    body: en
+      ? "Rocky headlands, quiet fishing villages and turquoise bays. Start with a place that makes you want to slow down."
+      : "Qua những cung đường ôm biển, ghé làng chài nhỏ, để một ngày trôi theo nhịp sóng. Chọn nơi khiến bạn muốn dừng chân lâu hơn một chút.",
+    footnote: en ? "Your pace. Your kind of journey." : "Đi chậm một chút. Nhớ lâu một chút.",
+  };
+  try {
+    const s = landingSections().explore;
+    copy = {
+      eyebrow: (en ? s.eyebrowEn || s.eyebrow : s.eyebrow) || copy.eyebrow,
+      titleA: (en ? s.titleAEn || s.titleA : s.titleA) || copy.titleA,
+      titleB: (en ? s.titleBEn || s.titleB : s.titleB) || copy.titleB,
+      body: (en ? s.bodyEn || s.body : s.body) || copy.body,
+      footnote: (en ? s.footnoteEn || s.footnote : s.footnote) || copy.footnote,
+    };
+  } catch {
+    // fallback
+  }
+  const destinations = getDestinationsByRegion("quy-nhon-phu-yen", locale)
+    .filter((d) => d.image?.src)
+    .slice(0, 3);
   return (
-    <Section tone="default" spacing="default">
+    <Section className="journal-explore">
       <Container>
-        <Reveal>
-          <SectionHeading
-            eyebrow={m.home.explore.eyebrow}
-            title={m.home.explore.title}
-            description={m.home.explore.description}
-            action={
-              <ButtonLink
-                href={localizePath(locale, ROUTES.domestic)}
-                variant="secondary"
-              >
-                {m.home.explore.ctaAll}
-                <ArrowRightIcon className="h-4 w-4" />
-              </ButtonLink>
-            }
-          />
+        <Reveal className="journal-heading">
+          <div>
+            <p className="journal-eyebrow">{copy.eyebrow}</p>
+            <h2>
+              {copy.titleA}
+              <br />
+              <em>{copy.titleB}</em>
+            </h2>
+          </div>
+          <p>{copy.body}</p>
         </Reveal>
-
-        <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {topLevel.map((category) => (
-            <Reveal as="li" key={category.id} className="flex">
-              <CategoryCard
-                category={category}
-                locale={locale}
-                tourCount={getCategoryTourCount(category.id)}
-                className="w-full"
-              />
+        <div className="destination-editorial">
+          {destinations.map((destination, index) => (
+            <Reveal key={destination.id} className="destination-editorial-item">
+              <Link
+                href={`${localizePath(locale, "/tim-tour")}?q=${encodeURIComponent(destination.name.split(" – ")[0])}`}
+                className="destination-editorial-card"
+              >
+                <AssetImage
+                  image={destination.image}
+                  className="destination-editorial-photo"
+                  sizes="(max-width: 700px) 100vw, 55vw"
+                />
+                <div className="destination-editorial-copy">
+                  <span className="destination-number">
+                    0{index + 1} / {en ? "DISCOVER" : "KHÁM PHÁ"}
+                  </span>
+                  <h3>{destination.name}</h3>
+                  <p>{destination.summary}</p>
+                  <span className="destination-arrow" aria-hidden="true">
+                    ↗
+                  </span>
+                </div>
+              </Link>
             </Reveal>
           ))}
-        </ul>
-
-        <div className="mt-16">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary-strong">
-                {m.home.explore.destinationsEyebrow}
-              </p>
-              <h3 className="mt-3 text-display-sm font-display font-semibold text-foreground">
-                {m.regions["quy-nhon-phu-yen"]}
-              </h3>
-              <p className="mt-3 text-[0.9375rem] leading-relaxed text-foreground-muted">
-                {m.home.explore.destinationsBlurb}
-              </p>
-            </div>
-            <div className="shrink-0 [&>a]:max-sm:w-full">
-              <ButtonLink
-                href={localizePath(locale, ROUTES.quyNhonPhuYen)}
-                variant="secondary"
-              >
-                {m.home.explore.ctaRoute}
-                <ArrowRightIcon className="h-4 w-4" />
-              </ButtonLink>
-            </div>
-          </div>
-
-          <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {focusDestinations.map((destination) => (
-              <Reveal as="li" key={destination.id} className="flex">
-                <DestinationCard
-                  destination={destination}
-                  locale={locale}
-                  href={localizePath(locale, ROUTES.quyNhonPhuYen)}
-                  className="w-full"
-                />
-              </Reveal>
-            ))}
-          </ul>
+        </div>
+        <div className="journal-footnote">
+          <span>{copy.footnote}</span>
+          <Link href={localizePath(locale, "/tour-quy-nhon-phu-yen")}>
+            {en
+              ? "Explore Quy Nhon – Phu Yen"
+              : "Khám phá tuyến Quy Nhơn – Phú Yên"}{" "}
+            <span aria-hidden="true">↗</span>
+          </Link>
         </div>
       </Container>
     </Section>

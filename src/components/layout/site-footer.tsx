@@ -176,6 +176,12 @@ export function SiteFooter({ locale }: { locale: Locale }) {
         <div className="flex flex-col gap-3 border-t border-border py-6 text-xs text-foreground-subtle sm:flex-row sm:items-center sm:justify-between">
           <p>{renderCopyright(m.footer.copyright, config.name)}</p>
           <div className="flex flex-col gap-3 sm:items-end">
+            <a
+              href="/image-credits.html"
+              className="inline-flex min-h-11 items-center underline underline-offset-4"
+            >
+              {locale === "en" ? "Photo credits" : "Nguồn ảnh"}
+            </a>
             <MotionControl english={locale === "en"} enabled={config.motion} />
             <p className="sm:max-w-xl sm:text-right">{m.footer.disclaimer}</p>
           </div>

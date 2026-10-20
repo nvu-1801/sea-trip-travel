@@ -21,7 +21,7 @@ export function FeaturedToursSection({ locale }: { locale: Locale }) {
   );
 
   return (
-    <Section tone="muted" spacing="loose">
+    <Section tone="muted" spacing="loose" className="journal-featured">
       <Container>
         <Reveal>
           <SectionHeading

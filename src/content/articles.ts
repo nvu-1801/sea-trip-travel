@@ -21,7 +21,10 @@ export const articles: readonly TravelArticleInput[] = [
     ],
     tags: ["Quy Nhơn", "Phú Yên", "Kinh nghiệm"],
     readingMinutes: 6,
-    cover: { alt: "Đường bờ biển Quy Nhơn nhìn từ trên cao" },
+    cover: {
+      src: "/images/tours/be29f9c7f7008249.jpeg",
+      alt: "Bờ biển Ghềnh Ráng, Quy Nhơn",
+    },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-10",
     featured: true,
@@ -65,6 +68,7 @@ export const articles: readonly TravelArticleInput[] = [
       {
         type: "image",
         alt: "Các cột đá bazan xếp lớp tại Ghềnh Đá Đĩa",
+        src: "/images/tours/e58a823508e08a30.jpeg",
         caption: "Ghềnh Đá Đĩa — điểm nhấn địa chất của Phú Yên.",
       },
       { type: "heading", level: 2, text: "Gợi ý lịch trình ba ngày" },
@@ -96,13 +100,16 @@ export const articles: readonly TravelArticleInput[] = [
     relatedTourSlugs: ["quy-nhon-ky-co-eo-gio-1-ngay"],
     tags: ["Quy Nhơn", "Thời điểm", "Kinh nghiệm"],
     readingMinutes: 4,
-    cover: { alt: "Bãi biển Quy Nhơn buổi sáng" },
+    cover: {
+      src: "/images/tours/be29f9c7f7008249.jpeg",
+      alt: "Bờ biển Ghềnh Ráng, Quy Nhơn",
+    },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-08",
     body: [
       {
         type: "paragraph",
-        text: "Không có một câu trả lời duy nhất cho câu hỏi \"đi Quy Nhơn tháng nào đẹp nhất\", vì nó phụ thuộc vào việc bạn muốn tắm biển, ra đảo hay chỉ dạo thành phố.",
+        text: 'Không có một câu trả lời duy nhất cho câu hỏi "đi Quy Nhơn tháng nào đẹp nhất", vì nó phụ thuộc vào việc bạn muốn tắm biển, ra đảo hay chỉ dạo thành phố.',
       },
       { type: "heading", level: 2, text: "Nếu bạn muốn ra đảo và lặn biển" },
       {
@@ -143,7 +150,10 @@ export const articles: readonly TravelArticleInput[] = [
     relatedTourSlugs: ["quy-nhon-ky-co-eo-gio-1-ngay"],
     tags: ["Quy Nhơn", "Ẩm thực"],
     readingMinutes: 4,
-    cover: { alt: "Mâm hải sản miền Trung" },
+    cover: {
+      src: "/images/tours/be29f9c7f7008249.jpeg",
+      alt: "Bờ biển Ghềnh Ráng, Quy Nhơn",
+    },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-06",
     body: [
@@ -189,7 +199,10 @@ export const articles: readonly TravelArticleInput[] = [
     relatedTourSlugs: ["quy-nhon-phu-yen-3-ngay-2-dem"],
     tags: ["Quy Nhơn", "Di chuyển"],
     readingMinutes: 5,
-    cover: { alt: "Sân bay và đường bờ biển Quy Nhơn" },
+    cover: {
+      src: "/images/tours/be29f9c7f7008249.jpeg",
+      alt: "Bờ biển Ghềnh Ráng, Quy Nhơn",
+    },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-04",
     body: [
@@ -234,7 +247,10 @@ export const articles: readonly TravelArticleInput[] = [
     ],
     tags: ["Phú Yên", "Lịch trình"],
     readingMinutes: 4,
-    cover: { alt: "Bãi Xép nhìn từ trên cao" },
+    cover: {
+      src: "/images/destinations/bai-xep.jpg",
+      alt: "Bãi Xép, An Chấn, Phú Yên",
+    },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-02",
     body: [

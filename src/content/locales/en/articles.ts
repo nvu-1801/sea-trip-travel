@@ -63,7 +63,7 @@ export const articleTranslations: Readonly<
         text: "If you have four days, add a morning on the island instead of cramming in more mainland stops. A slower pace is more enjoyable.",
       },
     ],
-    coverAlt: "Quy Nhon's coastline seen from above",
+    coverAlt: "Ghenh Rang coastline, Quy Nhon",
   },
 
   art_thoi_diem_qn: {
@@ -97,7 +97,7 @@ export const articleTranslations: Readonly<
         ],
       },
     ],
-    coverAlt: "Quy Nhon beach in the morning",
+    coverAlt: "Ghenh Rang coastline, Quy Nhon",
   },
 
   art_an_gi_o_qn: {
@@ -130,7 +130,7 @@ export const articleTranslations: Readonly<
         text: "For seafood sold by weight, ask about the price and weight before it is cooked to avoid unexpected charges.",
       },
     ],
-    coverAlt: "A platter of Central Vietnam seafood",
+    coverAlt: "Ghenh Rang coastline, Quy Nhon",
   },
 
   art_di_chuyen_qn: {
@@ -160,7 +160,7 @@ export const articleTranslations: Readonly<
         text: "If you visit both provinces, decide in advance where you will fly in and out so you do not have to return to your starting point.",
       },
     ],
-    coverAlt: "The airport and Quy Nhon's coastline",
+    coverAlt: "Ghenh Rang coastline, Quy Nhon",
   },
 
   art_ghenh_da_dia_bai_xep: {
@@ -193,6 +193,6 @@ export const articleTranslations: Readonly<
         text: "Do not stand too close to the water's edge when the waves are high. The basalt area can be slippery after rain.",
       },
     ],
-    coverAlt: "Bai Xep seen from above",
+    coverAlt: "Bai Xep beach, Phu Yen",
   },
 };

@@ -23,9 +23,10 @@ export const tayNguyenTours: readonly TourInput[] = [
       "Ghé chợ đêm Đà Lạt và mua đặc sản mang về",
     ],
     images: [
-      { alt: "Đồi thông Đà Lạt" },
-      { alt: "Hồ nước giữa rừng thông" },
-      { alt: "Vườn hoa Đà Lạt" },
+      {
+        src: "/images/destinations/da-lat.jpg",
+        alt: "Hồ Xuân Hương nhìn từ Dalat Palace",
+      },
     ],
     overview: [
       "Đà Lạt có nhiều điểm tham quan trong bán kính ngắn. Chương trình bốn ngày chia đều giữa các cụm điểm và để buổi chiều tự do.",
@@ -80,7 +81,11 @@ export const tayNguyenTours: readonly TourInput[] = [
         index: 4,
         title: "Đà Lạt – Kết thúc",
         summary: "Mua đặc sản và tiễn khách.",
-        activities: ["Mua đặc sản tại chợ.", "Trả phòng.", "Tiễn khách tại sân bay/bến xe."],
+        activities: [
+          "Mua đặc sản tại chợ.",
+          "Trả phòng.",
+          "Tiễn khách tại sân bay/bến xe.",
+        ],
         meals: ["Sáng"],
         places: ["Đà Lạt"],
       },
@@ -92,7 +97,11 @@ export const tayNguyenTours: readonly TourInput[] = [
       "Vé tham quan theo chương trình",
       "Hướng dẫn viên đồng hành",
     ],
-    excluded: ["Vé máy bay / xe tới Đà Lạt", "Chi phí cá nhân", "Phụ thu phòng đơn"],
+    excluded: [
+      "Vé máy bay / xe tới Đà Lạt",
+      "Chi phí cá nhân",
+      "Phụ thu phòng đơn",
+    ],
     notes: ["Đà Lạt se lạnh về đêm, nên mang áo khoác mỏng."],
     tags: ["4 ngày", "Tây Nguyên", "Nghỉ dưỡng", "Khí hậu mát"],
     contentStatus: "demo",
@@ -119,9 +128,10 @@ export const tayNguyenTours: readonly TourInput[] = [
       "Mua cà phê và đặc sản trực tiếp tại cơ sở rang xay",
     ],
     images: [
-      { alt: "Thác nước ở Đắk Lắk" },
-      { alt: "Buôn làng Tây Nguyên" },
-      { alt: "Cà phê rang xay Buôn Ma Thuột" },
+      {
+        src: "/images/destinations/buon-ma-thuot.jpg",
+        alt: "Thác Đray Nur, Đắk Lắk",
+      },
     ],
     overview: [
       "Buôn Ma Thuột là trung tâm của Đắk Lắk, thuận tiện kết hợp tham quan thác nước và tìm hiểu văn hoá bản địa.",

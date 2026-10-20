@@ -5,6 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { AssetImage } from "@/components/ui/asset-image";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import type { Locale } from "@/i18n/config";
+import { landingSections } from "@/server/cms/store";
 import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
@@ -17,32 +18,48 @@ import { localizePath } from "@/i18n/routing";
  */
 export function ValuesSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
+  let visual = {
+    src: "/images/hero/sea-kayaking.webp" as string,
+    alt: locale === "en" ? "Illustration of kayaking on the sea" : "Ảnh minh hoạ chèo thuyền trên biển",
+    badge: locale === "en" ? "Handpicked, unhurried journeys" : "Đi chậm, chọn kỹ, nhớ lâu",
+  };
+  try {
+    const v = landingSections().values;
+    visual = {
+      src: v.photoSrc || visual.src,
+      alt: (locale === "en" ? v.photoAltEn || v.photoAlt : v.photoAlt) || visual.alt,
+      badge: (locale === "en" ? v.badgeEn || v.badge : v.badge) || visual.badge,
+    };
+  } catch {
+    // fallback seed
+  }
 
   return (
-    <Section tone="sunken" spacing="loose">
+    <Section tone="sunken" spacing="loose" className="journal-values values-premium">
       <Container>
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
-          <div className="lg:col-span-5">
+        <div className="values-grid">
+          <div className="values-visual">
             <Reveal>
-              <div className="stt-mask-reveal relative">
+              <div className="values-photo-wrap">
                 <AssetImage
-                  image={{ alt: m.home.values.imageAlt }}
-                  sizes="(max-width: 1024px) 90vw, 30vw"
-                  className="aspect-[4/5] w-full rounded-3xl border border-border shadow-card"
+                  image={{ src: visual.src, alt: visual.alt }}
+                  sizes="(max-width: 1024px) 90vw, 32vw"
+                  className="values-photo"
                 />
-                <div className="absolute -bottom-5 right-4 max-w-52 rounded-2xl border border-border bg-surface p-4 shadow-card">
-                  <p className="text-xs font-bold uppercase tracking-wider text-primary-strong">
-                    {m.home.values.cardLabel}
-                  </p>
-                  <p className="mt-1.5 text-sm font-semibold leading-snug text-foreground">
-                    {m.site.tagline}
-                  </p>
+                <div className="values-photo-glow" aria-hidden="true" />
+                <div className="values-float values-float-top">
+                  <span className="values-float-badge">SEA TRIP</span>
+                  <strong>{visual.badge}</strong>
+                </div>
+                <div className="values-float values-float-bottom">
+                  <p className="values-float-label">{m.home.values.cardLabel}</p>
+                  <p className="values-float-tagline">{m.site.tagline}</p>
                 </div>
               </div>
             </Reveal>
           </div>
 
-          <div className="lg:col-span-7">
+          <div className="values-copy">
             <Reveal>
               <SectionHeading
                 eyebrow={m.home.values.eyebrow}
@@ -51,24 +68,18 @@ export function ValuesSection({ locale }: { locale: Locale }) {
               />
             </Reveal>
 
-            <ol className="mt-9 flex flex-col gap-6">
+            <ol className="values-timeline">
               {m.home.values.principles.map((principle, index) => (
-                <Reveal as="li" key={principle.title}>
-                  <div className="flex gap-4">
-                    <span
-                      aria-hidden="true"
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-brand-200 bg-surface text-sm font-extrabold text-primary-strong"
-                    >
-                      {index + 1}
-                    </span>
-                    <div>
-                      <h3 className="text-base font-bold text-foreground">
-                        {principle.title}
-                      </h3>
-                      <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-foreground-muted">
-                        {principle.body}
-                      </p>
-                    </div>
+                <Reveal as="li" key={principle.title} className="values-item">
+                  <span
+                    aria-hidden="true"
+                    className="values-num"
+                  >
+                    {index + 1}
+                  </span>
+                  <div className="values-item-card">
+                    <h3>{principle.title}</h3>
+                    <p>{principle.body}</p>
                   </div>
                 </Reveal>
               ))}
@@ -77,10 +88,10 @@ export function ValuesSection({ locale }: { locale: Locale }) {
             <Reveal>
               <ButtonLink
                 href={localizePath(locale, ROUTES.contact)}
-                className="mt-9"
+                className="values-cta group"
               >
                 {m.home.values.cta}
-                <ArrowRightIcon className="h-4 w-4" />
+                <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </ButtonLink>
             </Reveal>
           </div>

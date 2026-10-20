@@ -14,38 +14,42 @@ export type { TourCardModel } from "./tour-card-model";
  */
 export function TourCard({ tour, priority = false }: { tour: TourCardModel; priority?: boolean }) {
   return (
-    <article className="stt-tour-card group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-soft">
+    <article className="stt-tour-card group relative flex h-full w-full flex-col overflow-hidden rounded-3xl border border-border bg-surface shadow-soft">
       {/* Brand gradient hairline that draws in on hover. */}
       <span
         aria-hidden="true"
-        className="stt-card-rule brand-gradient pointer-events-none absolute inset-x-0 top-0 z-20 h-0.5 origin-left scale-x-0"
+        className="stt-card-rule brand-gradient pointer-events-none absolute inset-x-0 top-0 z-20 h-1 origin-left scale-x-0"
       />
 
-      <div className="relative overflow-hidden">
+      <div className="stt-card-media relative overflow-hidden">
         <AssetImage
           image={tour.image}
           altFallback={tour.title}
           priority={priority}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="stt-card-photo aspect-[4/3] w-full"
+          className="stt-card-photo aspect-[16/10] w-full"
         />
+        <span aria-hidden="true" className="stt-card-scrim" />
         <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/92 px-2.5 py-1 text-xs font-semibold text-foreground shadow-soft backdrop-blur-sm">
+          <span className="stt-card-pill">
             <ClockIcon className="h-3.5 w-3.5 text-primary-strong" />
             {tour.durationLabel}
           </span>
         </div>
+        {!tour.priceIsContact ? (
+          <span className="stt-card-price-float">{tour.priceLabel}</span>
+        ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-5">
+      <div className="flex flex-1 flex-col gap-2.5 p-5 sm:p-6">
         {tour.destinationsLabel ? (
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary-strong">
+          <p className="stt-card-dest">
             <MapPinIcon className="h-3.5 w-3.5" />
-            {tour.destinationsLabel}
+            <span className="truncate">{tour.destinationsLabel}</span>
           </p>
         ) : null}
 
-        <h3 className="text-lg font-bold leading-snug text-foreground">
+        <h3 className="stt-card-title">
           <Link href={tour.href} className="transition-colors hover:text-primary-strong">
             {/* Single stretched hit area for the whole card. */}
             <span className="absolute inset-0 z-10" aria-hidden="true" />
@@ -53,42 +57,37 @@ export function TourCard({ tour, priority = false }: { tour: TourCardModel; prio
           </Link>
         </h3>
 
-        <p className="text-sm leading-relaxed text-foreground-muted">{tour.summary}</p>
+        <p className="stt-card-summary">{tour.summary}</p>
 
         {tour.highlights.length > 0 ? (
-          <ul className="mt-1 space-y-1.5 text-sm text-foreground-muted">
-            {tour.highlights.map((highlight) => (
-              <li key={highlight} className="flex gap-2">
-                <span
-                  aria-hidden="true"
-                  className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-300"
-                />
-                <span className="leading-snug">{highlight}</span>
+          <ul className="stt-card-highlights">
+            {tour.highlights.slice(0, 3).map((highlight) => (
+              <li key={highlight}>
+                <span aria-hidden="true" className="stt-card-dot" />
+                <span className="truncate">{highlight}</span>
               </li>
             ))}
           </ul>
         ) : null}
 
         {tour.departureText ? (
-          <p className="text-xs text-foreground-subtle">{tour.departureText}</p>
+          <p className="stt-card-depart">{tour.departureText}</p>
         ) : null}
 
-        <div className="mt-auto flex items-end justify-between gap-3 border-t border-border pt-4">
+        <div className="stt-card-foot">
           <div>
-            <p className="text-[0.6875rem] font-medium uppercase tracking-wider text-foreground-subtle">
-              {tour.referencePriceText}
-            </p>
+            <p className="stt-card-price-label">{tour.referencePriceText}</p>
             <p
               className={
                 tour.priceIsContact
-                  ? "text-[0.9375rem] font-bold text-primary-strong"
-                  : "text-lg font-extrabold text-foreground"
+                  ? "stt-card-price-contact"
+                  : "stt-card-price"
               }
             >
               {tour.priceLabel}
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-strong">
+          <span className="stt-card-cta">
             {tour.viewDetailsText}
             <ArrowRightIcon className="stt-card-arrow h-4 w-4" />
           </span>

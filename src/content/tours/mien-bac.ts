@@ -23,9 +23,11 @@ export const mienBacTours: readonly TourInput[] = [
       "Phù hợp lần đầu ra Bắc: kết hợp văn hoá phố cổ và biển đảo",
     ],
     images: [
-      { alt: "Phố cổ Hà Nội" },
-      { alt: "Du thuyền trên Vịnh Hạ Long" },
-      { alt: "Đảo đá vôi Vịnh Hạ Long" },
+      { src: "/images/destinations/ha-noi.jpg", alt: "Hồ Hoàn Kiếm, Hà Nội" },
+      {
+        src: "/images/destinations/ha-long.jpg",
+        alt: "Vịnh Hạ Long nhìn từ đảo Ti Tốp",
+      },
     ],
     overview: [
       "Hành trình bốn ngày cân bằng giữa văn hoá đô thị Hà Nội và cảnh quan biển đảo Hạ Long.",
@@ -122,7 +124,8 @@ export const mienBacTours: readonly TourInput[] = [
     duration: { days: 3, nights: 2 },
     departurePoints: ["Hà Nội"],
     priceFrom: null,
-    priceNote: "Giá phụ thuộc phương tiện di chuyển Hà Nội – Sa Pa và hạng khách sạn.",
+    priceNote:
+      "Giá phụ thuộc phương tiện di chuyển Hà Nội – Sa Pa và hạng khách sạn.",
     highlights: [
       "Chinh phục đỉnh Fansipan bằng cáp treo, không cần trekking đường dài",
       "Trekking nhẹ qua bản Cát Cát và ruộng bậc thang",
@@ -132,9 +135,10 @@ export const mienBacTours: readonly TourInput[] = [
       "Có hướng dẫn viên địa phương dẫn đường ở các đoạn bản làng",
     ],
     images: [
-      { alt: "Ruộng bậc thang Sa Pa" },
-      { alt: "Đỉnh Fansipan trong mây" },
-      { alt: "Bản làng vùng cao Lào Cai" },
+      {
+        src: "/images/destinations/sa-pa.jpg",
+        alt: "Ruộng bậc thang và núi ở Sa Pa",
+      },
     ],
     overview: [
       "Sa Pa có khí hậu mát quanh năm và thay đổi nhanh trong ngày. Chương trình ba ngày phù hợp khách muốn trải nghiệm vùng cao nhưng không trekking quá nặng.",
@@ -190,7 +194,11 @@ export const mienBacTours: readonly TourInput[] = [
       "Vé cáp treo Fansipan và vé tham quan bản",
       "Hướng dẫn viên đồng hành",
     ],
-    excluded: ["Chi phí cá nhân", "Đồ uống ngoài chương trình", "Bảo hiểm du lịch"],
+    excluded: [
+      "Chi phí cá nhân",
+      "Đồ uống ngoài chương trình",
+      "Bảo hiểm du lịch",
+    ],
     notes: [
       "Thời tiết Sa Pa thay đổi nhanh, có thể mưa hoặc nhiều sương; nên mang áo mưa và giày bám tốt.",
       "Giờ cáp treo có thể thay đổi theo mùa và tình trạng vận hành.",
@@ -220,9 +228,10 @@ export const mienBacTours: readonly TourInput[] = [
       "Ăn đặc sản địa phương: cơm cháy, thịt dê núi",
     ],
     images: [
-      { alt: "Thuyền nan ở Tràng An" },
-      { alt: "Toàn cảnh Tam Cốc từ Hang Múa" },
-      { alt: "Chùa Bái Đính" },
+      {
+        src: "/images/destinations/ninh-binh.jpg",
+        alt: "Cảnh quan Tràng An, Ninh Bình",
+      },
     ],
     overview: [
       "Ninh Bình nằm cách Hà Nội khoảng hai giờ lái xe, phù hợp cho chuyến ngắn cuối tuần với cảnh quan núi đá vôi và sông nhỏ.",
@@ -265,8 +274,14 @@ export const mienBacTours: readonly TourInput[] = [
       "Vé thuyền Tràng An và vé tham quan",
       "Hướng dẫn viên đồng hành",
     ],
-    excluded: ["Chi phí cá nhân", "Đồ uống ngoài chương trình", "Bảo hiểm du lịch"],
-    notes: ["Hang Múa có nhiều bậc thang, không phù hợp khách vận động hạn chế."],
+    excluded: [
+      "Chi phí cá nhân",
+      "Đồ uống ngoài chương trình",
+      "Bảo hiểm du lịch",
+    ],
+    notes: [
+      "Hang Múa có nhiều bậc thang, không phù hợp khách vận động hạn chế.",
+    ],
     tags: ["2 ngày", "Miền Bắc", "Cuối tuần"],
     contentStatus: "demo",
     updatedAt: "2026-01-15T09:00:00+07:00",

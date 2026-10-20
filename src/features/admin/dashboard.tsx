@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
 import { useContentUpdates } from "@/lib/use-content-updates";
 import { HeroEditor } from "./hero-editor";
+import { Overview } from "./overview";
 import type { HeroConfig } from "@/domain/home-hero";
 type RecordRow = {
   id: string;
@@ -22,11 +23,13 @@ type Lead = {
   data: Record<string, string>;
 };
 const tabs = [
+  ["overview", "Tổng quan", "◉"],
   ["tours", "Tour du lịch", "◈"],
   ["articles", "Cẩm nang", "▤"],
   ["categories", "Danh mục", "▦"],
   ["destinations", "Điểm đến", "◎"],
   ["hero", "Giao diện trang chủ", "◫"],
+  ["landing", "Trang chủ sections", "▦"],
   ["media", "Thư viện ảnh", "▧"],
   ["messages", "Nội dung VI / EN", "Aa"],
   ["settings", "Website & footer", "⚙"],
@@ -196,6 +199,30 @@ const GUIDES: Record<string, Guide> = {
     pitfalls:
       "Không tự gửi lại email đã báo thành công; SMTP lỗi vẫn giữ được dữ liệu khách.",
   },
+  overview: {
+    purpose: "Xem nhanh hiệu quả website: lượt xem hôm nay, khách, leads và pipeline kinh doanh.",
+    steps: [
+      "Chọn khoảng 7/14/30 ngày để so sánh xu hướng.",
+      "Bấm Làm mới để tải số liệu mới nhất từ /api/admin/stats.",
+      "Xem Top trang để biết tour/bài nào đang hút khách.",
+      "Theo dõi phễu Mới → Đã chốt và pipeline VND ước tính.",
+    ],
+    required: "Cần có lượt truy cập (tracker /api/track) thì biểu đồ mới có số liệu.",
+    result: "Số liệu tổng hợp theo giờ Việt Nam, không cần build lại.",
+    pitfalls: "Adblock/chặn beacon có thể làm thiếu số; sai múi giờ trình duyệt không ảnh hưởng vì server chuẩn hoá.",
+  },
+  landing: {
+    purpose: "Sửa các khối trang chủ mà tab khác không bao phủ: gợi ý tìm kiếm, câu chuyện, FAQ, tiêu đề Explore/Regions, ảnh Values.",
+    steps: [
+      "Mở bản ghi home-sections rồi bấm Chỉnh sửa.",
+      "Sửa gợi ý QuickFinder (label + query), mốc story, câu hỏi FAQ (VI + EN).",
+      "Đổi tiêu đề Explore/Regions, tâm trạng vùng miền, ảnh + huy hiệu Values (chọn từ thư viện media).",
+      "Lưu nháp rồi Xuất bản thay đổi để lên web ngay, không cần build lại.",
+    ],
+    required: "Giữ ít nhất 1 gợi ý, 1 mốc story, 1 FAQ; ảnh Values phải là đường dẫn /... trong thư viện.",
+    result: "Trang chủ cập nhật ngay sau xuất bản; bản nháp không ảnh hưởng web.",
+    pitfalls: "Xoá hết mảng sẽ bị schema từ chối — để trống 1 mục thay vì xoá sạch.",
+  },
   account: {
     purpose: "Đổi mật khẩu quản trị và quản lý phiên đăng nhập.",
     steps: [
@@ -219,7 +246,7 @@ export function Dashboard({
 }) {
   const [hasUpdates, setHasUpdates] = useState(false);
   const [csrf, setCsrf] = useState(initialCsrf),
-    [tab, setTab] = useState("tours"),
+    [tab, setTab] = useState("overview"),
     [rows, setRows] = useState<RecordRow[]>([]),
     [selected, setSelected] = useState<RecordRow | null>(null),
     [search, setSearch] = useState(""),
@@ -291,6 +318,13 @@ export function Dashboard({
         api("options"),
         api("media"),
       ]);
+      if (next === "overview") {
+        setSelected(null);
+        setDirty(false);
+        dirtyFields.current.clear();
+        setHasUpdates(false);
+        return true;
+      }
       const result =
         next === "leads"
           ? await api("leads")
@@ -336,7 +370,7 @@ export function Dashboard({
     initialVersion,
     onChange: async () => {
       if (busy || loading) return false;
-      if (tab === "account") return true;
+      if (tab === "account" || tab === "overview") return true;
       if (dirty || selected) {
         setHasUpdates(true);
         return false;
@@ -674,7 +708,7 @@ export function Dashboard({
                   <p>{guide.result}</p>
                   <h3>Lỗi thường gặp</h3>
                   <p>{guide.pitfalls}</p>
-                  {tab !== "account" && tab !== "leads" && tab !== "media" && (
+                  {["tours", "articles", "categories", "destinations"].includes(tab) && (
                     <details>
                       <summary>
                         Phân biệt Lưu nháp · Xuất bản · Ẩn · Thùng rác · Khôi
@@ -720,7 +754,9 @@ export function Dashboard({
             </button>
           </div>
         )}
-        {tab === "account" ? (
+        {tab === "overview" ? (
+          <>{csrf ? <Overview csrf={csrf} /> : <p className="adm-empty">Đang tải…</p>}</>
+        ) : tab === "account" ? (
           <section className="adm-panel">
             <h2>Đổi mật khẩu</h2>
             <p>
@@ -1214,7 +1250,7 @@ export function Dashboard({
               >
                 {busy ? "Đang lưu…" : "Xuất bản thay đổi ↗"}
               </button>
-              {!["settings", "messages", "hero"].includes(tab) && (
+              {!["settings", "messages", "hero", "landing"].includes(tab) && (
                 <button
                   disabled={busy}
                   onClick={() => {
@@ -1270,7 +1306,7 @@ export function Dashboard({
                     {rows.filter((r) => r.state === "deleted").length})
                   </option>
                 </select>
-                {!["messages", "settings", "hero"].includes(tab) && (
+                {!["messages", "settings", "hero", "landing"].includes(tab) && (
                   <button
                     className="adm-primary"
                     disabled={busy}
@@ -1297,7 +1333,9 @@ export function Dashboard({
                       <h2>
                         {tab === "hero"
                           ? "Section đầu trang chủ"
-                          : String(row.data.title ?? row.data.name ?? row.id)}
+                          : tab === "landing"
+                            ? "Các khối trang chủ (finder/story/FAQ/explore/regions/values)"
+                            : String(row.data.title ?? row.data.name ?? row.id)}
                       </h2>
                       <p>
                         {String(
@@ -1322,7 +1360,7 @@ export function Dashboard({
                       >
                         Chỉnh sửa ↗
                       </button>
-                      {!["settings", "messages", "hero"].includes(tab) && (
+                      {!["settings", "messages", "hero", "landing"].includes(tab) && (
                         <button
                           onClick={() => {
                             const action =

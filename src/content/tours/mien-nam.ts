@@ -13,7 +13,8 @@ export const mienNamTours: readonly TourInput[] = [
     duration: { days: 4, nights: 3 },
     departurePoints: ["Phú Quốc"],
     priceFrom: null,
-    priceNote: "Giá phụ thuộc hạng resort và thời điểm (mùa cao điểm chênh lệch đáng kể).",
+    priceNote:
+      "Giá phụ thuộc hạng resort và thời điểm (mùa cao điểm chênh lệch đáng kể).",
     highlights: [
       "Ba đêm tại một resort, không phải đổi chỗ ở giữa chuyến",
       "Đi cáp treo vượt biển tới Hòn Thơm",
@@ -23,9 +24,7 @@ export const mienNamTours: readonly TourInput[] = [
       "Phù hợp kỳ nghỉ ngắn với nhịp chậm",
     ],
     images: [
-      { alt: "Bãi biển cát trắng Phú Quốc" },
-      { alt: "Cáp treo Hòn Thơm vượt biển" },
-      { alt: "Chợ đêm Phú Quốc" },
+      { src: "/images/destinations/phu-quoc.jpg", alt: "Bãi biển Phú Quốc" },
     ],
     overview: [
       "Phú Quốc phù hợp cho kỳ nghỉ ngắn với nhịp chậm. Chương trình giữ khoảng trống buổi chiều để khách tự do nghỉ dưỡng.",
@@ -36,7 +35,11 @@ export const mienNamTours: readonly TourInput[] = [
         index: 1,
         title: "Đón khách – Bãi biển",
         summary: "Nhận phòng và nghỉ ngơi.",
-        activities: ["Đón khách tại sân bay Phú Quốc.", "Nhận phòng resort.", "Tự do tắm biển."],
+        activities: [
+          "Đón khách tại sân bay Phú Quốc.",
+          "Nhận phòng resort.",
+          "Tự do tắm biển.",
+        ],
         meals: ["Tối"],
         accommodation: "Nghỉ đêm tại Phú Quốc",
         places: ["Phú Quốc"],
@@ -75,7 +78,11 @@ export const mienNamTours: readonly TourInput[] = [
         index: 4,
         title: "Phú Quốc – Kết thúc",
         summary: "Buổi sáng tự do và tiễn khách.",
-        activities: ["Tự do buổi sáng.", "Trả phòng.", "Tiễn khách tại sân bay."],
+        activities: [
+          "Tự do buổi sáng.",
+          "Trả phòng.",
+          "Tiễn khách tại sân bay.",
+        ],
         meals: ["Sáng"],
         places: ["Phú Quốc"],
       },
@@ -111,7 +118,8 @@ export const mienNamTours: readonly TourInput[] = [
     duration: { days: 3, nights: 2 },
     departurePoints: ["TP. Hồ Chí Minh"],
     priceFrom: null,
-    priceNote: "Giá phụ thuộc số khách và loại phương tiện di chuyển từ TP.HCM.",
+    priceNote:
+      "Giá phụ thuộc số khách và loại phương tiện di chuyển từ TP.HCM.",
     highlights: [
       "Đi thuyền tham quan chợ nổi Cái Răng lúc sáng sớm",
       "Đi thuyền quanh cù lao ở Mỹ Tho trên đường tới Cần Thơ",
@@ -121,9 +129,10 @@ export const mienNamTours: readonly TourInput[] = [
       "Hai đêm tại Cần Thơ, thuận tiện cho buổi chợ nổi sớm",
     ],
     images: [
-      { alt: "Chợ nổi Cái Răng buổi sớm" },
-      { alt: "Vườn trái cây miền Tây" },
-      { alt: "Thuyền nhỏ trên sông Cửu Long" },
+      {
+        src: "/images/destinations/mien-tay.jpg",
+        alt: "Thuyền hàng trên chợ nổi Cái Răng, Cần Thơ",
+      },
     ],
     overview: [
       "Miền Tây là tuyến trải nghiệm văn hoá sông nước. Hoạt động chính diễn ra vào buổi sáng sớm, khi chợ nổi đông nhất.",
@@ -180,8 +189,14 @@ export const mienNamTours: readonly TourInput[] = [
       "Thuyền tham quan và vé vào điểm",
       "Hướng dẫn viên đồng hành",
     ],
-    excluded: ["Chi phí cá nhân", "Đồ uống ngoài chương trình", "Bảo hiểm du lịch"],
-    notes: ["Nên dậy sớm để kịp đi chợ nổi; hoạt động kết thúc trước khi trời nắng gắt."],
+    excluded: [
+      "Chi phí cá nhân",
+      "Đồ uống ngoài chương trình",
+      "Bảo hiểm du lịch",
+    ],
+    notes: [
+      "Nên dậy sớm để kịp đi chợ nổi; hoạt động kết thúc trước khi trời nắng gắt.",
+    ],
     tags: ["3 ngày", "Miền Nam", "Sông nước", "Văn hoá"],
     contentStatus: "demo",
     updatedAt: "2026-01-15T09:00:00+07:00",

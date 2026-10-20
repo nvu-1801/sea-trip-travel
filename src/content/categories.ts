@@ -7,7 +7,10 @@ import type { TourCategoryInput } from "@/domain/category";
 export const tourCategories: readonly TourCategoryInput[] = [
   {
     id: "cat_quy_nhon_phu_yen",
-    image: {"src": "/images/tours/d7233006cc4fd0f9.jpeg", "alt": "Bãi biển Kỳ Co"},
+    image: {
+      src: "/images/tours/d7233006cc4fd0f9.jpeg",
+      alt: "Bãi biển Kỳ Co",
+    },
     slug: "tour-quy-nhon-phu-yen",
     path: "/tour-quy-nhon-phu-yen",
     name: "Tour Quy Nhơn - Phú Yên",
@@ -21,7 +24,10 @@ export const tourCategories: readonly TourCategoryInput[] = [
   },
   {
     id: "cat_quy_nhon_1_ngay",
-    image: {"src": "/images/tours/e16bd7abd194bb4a.jpeg", "alt": "Bãi biển Kỳ Co"},
+    image: {
+      src: "/images/tours/e16bd7abd194bb4a.jpeg",
+      alt: "Bãi biển Kỳ Co",
+    },
     slug: "tour-quy-nhon-1-ngay",
     path: "/tour-quy-nhon-phu-yen/tour-quy-nhon-1-ngay",
     name: "Tour Quy Nhơn 1 Ngày",
@@ -35,7 +41,10 @@ export const tourCategories: readonly TourCategoryInput[] = [
   },
   {
     id: "cat_quy_nhon_dai_ngay",
-    image: {"src": "/images/tours/afdf37ef08e566b9.png", "alt": "Đảo Cù Lao Xanh"},
+    image: {
+      src: "/images/tours/afdf37ef08e566b9.png",
+      alt: "Đảo Cù Lao Xanh",
+    },
     slug: "tour-quy-nhon-dai-ngay",
     path: "/tour-quy-nhon-phu-yen/tour-quy-nhon-dai-ngay",
     name: "Tour Quy Nhơn dài Ngày",
@@ -49,6 +58,10 @@ export const tourCategories: readonly TourCategoryInput[] = [
   },
   {
     id: "cat_tour_trong_nuoc",
+    image: {
+      src: "/images/destinations/ha-long.jpg",
+      alt: "Vịnh Hạ Long nhìn từ đảo Ti Tốp",
+    },
     slug: "tour-trong-nuoc",
     path: "/tour-trong-nuoc",
     name: "Tour Trong Nước",
@@ -62,6 +75,10 @@ export const tourCategories: readonly TourCategoryInput[] = [
   },
   {
     id: "cat_mien_bac",
+    image: {
+      src: "/images/destinations/ha-long.jpg",
+      alt: "Vịnh Hạ Long nhìn từ đảo Ti Tốp",
+    },
     slug: "tour-mien-bac",
     path: "/tour-trong-nuoc/tour-mien-bac",
     name: "Tour Miền Bắc",
@@ -75,6 +92,10 @@ export const tourCategories: readonly TourCategoryInput[] = [
   },
   {
     id: "cat_mien_trung",
+    image: {
+      src: "/images/destinations/hoi-an.jpg",
+      alt: "Phố cổ Hội An bên sông Hoài",
+    },
     slug: "tour-mien-trung",
     path: "/tour-trong-nuoc/tour-mien-trung",
     name: "Tour Miền Trung",
@@ -88,6 +109,10 @@ export const tourCategories: readonly TourCategoryInput[] = [
   },
   {
     id: "cat_mien_nam",
+    image: {
+      src: "/images/destinations/phu-quoc.jpg",
+      alt: "Bãi biển Phú Quốc",
+    },
     slug: "tour-mien-nam",
     path: "/tour-trong-nuoc/tour-mien-nam",
     name: "Tour Miền Nam",
@@ -101,6 +126,10 @@ export const tourCategories: readonly TourCategoryInput[] = [
   },
   {
     id: "cat_tay_nguyen",
+    image: {
+      src: "/images/destinations/da-lat.jpg",
+      alt: "Hồ Xuân Hương nhìn từ Dalat Palace",
+    },
     slug: "tour-tay-nguyen",
     path: "/tour-trong-nuoc/tour-tay-nguyen",
     name: "Tour Tây Nguyên",

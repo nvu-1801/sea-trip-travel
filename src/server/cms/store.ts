@@ -7,12 +7,28 @@ import { destinationSchema } from "@/domain/destination";
 import { tourCategorySchema } from "@/domain/category";
 import { db, audit, transaction } from "./db";
 import { defaultHero, heroSchema } from "@/domain/home-hero";
+import { defaultLanding, landingSchema } from "@/domain/landing";
 import {
   defaultSettings,
   messageSeeds,
   messagesSchema,
   settingsSchema,
 } from "./settings";
+
+/** Chuẩn hoá SĐT Việt Nam về dạng tel:+84... để nút gọi/Zalo luôn đúng. */
+export function normalizeHotlineHref(hotline: string): string {
+  const digits = hotline.replace(/\D/g, "");
+  let normalized = digits;
+  if (normalized.startsWith("84") && normalized.length >= 11) {
+    normalized = normalized;
+  } else if (normalized.startsWith("0") && normalized.length >= 9) {
+    normalized = `84${normalized.slice(1)}`;
+  } else if (normalized.length >= 9 && !normalized.startsWith("84")) {
+    normalized = `84${normalized.replace(/^0+/, "")}`;
+  }
+  if (!/^\d{9,12}$/.test(normalized)) return "tel:+84969297064";
+  return `tel:+${normalized}`;
+}
 
 // Strip defaults from overlays: a missing translated itinerary must retain VI.
 const translatedTour = z.object({
@@ -61,6 +77,7 @@ export const schemas = {
   }),
   settings: settingsSchema,
   hero: heroSchema,
+  landing: landingSchema,
   messages: messagesSchema,
 };
 export type Collection = keyof typeof schemas;
@@ -71,6 +88,7 @@ const seeds = {
   destinations,
   settings: [defaultSettings],
   hero: [defaultHero],
+  landing: [defaultLanding],
   messages: messageSeeds,
 };
 export type CmsRecord = {
@@ -136,7 +154,27 @@ export function save(
   action: "save" | "publish" | "unpublish" | "delete" | "restore",
 ) {
   seed();
-  const data = schemas[collection].parse(input) as {
+  let normalized = input;
+  if (
+    collection === "settings" &&
+    normalized &&
+    typeof normalized === "object" &&
+    "contact" in (normalized as Record<string, unknown>)
+  ) {
+    const contact = (normalized as Record<string, Record<string, unknown>>)
+      .contact;
+    // Admin chỉ cần sửa SĐT hiển thị — link tel: tự chuẩn hoá để nút gọi/Zalo luôn đúng.
+    if (contact && typeof contact.hotline === "string") {
+      normalized = {
+        ...(normalized as Record<string, unknown>),
+        contact: {
+          ...contact,
+          hotlineHref: normalizeHotlineHref(contact.hotline),
+        },
+      };
+    }
+  }
+  const data = schemas[collection].parse(normalized) as {
     id: string;
     slug?: string;
     path?: string;
@@ -180,7 +218,7 @@ export function save(
         );
     }
     if (
-      ["settings", "messages", "hero"].includes(collection) &&
+      ["settings", "messages", "hero", "landing"].includes(collection) &&
       action !== "publish" &&
       action !== "save"
     )
@@ -361,6 +399,11 @@ export function settings() {
 }
 export function homeHero() {
   return heroSchema.parse(published("hero", [defaultHero])[0] ?? defaultHero);
+}
+export function landingSections() {
+  return landingSchema.parse(
+    published("landing", [defaultLanding])[0] ?? defaultLanding,
+  );
 }
 export function consumeLimit(key: string, max: number, windowMs: number) {
   return transaction(() => {

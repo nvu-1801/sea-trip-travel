@@ -1,3 +1,5 @@
+import "@/features/home/home-editorial.css";
+import { JourneyStory, PlanningSection } from "@/features/home/journey-story";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/runtime-site";
 import { buildMetadata } from "@/lib/seo";
@@ -72,15 +74,17 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const indexable = homeIndexable(locale);
 
   return (
-    <>
+    <div className="home-editorial">
       {indexable ? null : <TranslationNotice locale={locale} />}
       <Hero locale={locale} />
       <QuickFinder locale={locale} />
       <ExploreSection locale={locale} />
       <FeaturedToursSection locale={locale} />
+      <JourneyStory locale={locale} />
       <RegionsSection locale={locale} />
       <ValuesSection locale={locale} />
       <GuidesSection locale={locale} />
+      <PlanningSection locale={locale} />
       <ConsultSection
         locale={locale}
         tone="muted"
@@ -88,6 +92,6 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         title={m.home.consult.title}
         description={m.home.consult.description}
       />
-    </>
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useId } from "react";
+import { AdmMultiSelect, AdmSelect } from "./ui-select";
 type Value =
   string | number | boolean | null | Value[] | { [key: string]: Value };
 export type EditorValue = Value;
@@ -116,8 +117,8 @@ const labels: Record<string, string> = {
   region: "Vùng miền",
   order: "Thứ tự",
   contact: "Thông tin liên hệ",
-  hotline: "Hotline",
-  hotlineHref: "Liên kết gọi điện",
+  hotline: "Hotline (SĐT hiển thị + nút gọi)",
+  hotlineHref: "Liên kết gọi điện (tự động từ SĐT)",
   email: "Email",
   address: "Địa chỉ",
   workingHours: "Giờ làm việc",
@@ -130,6 +131,37 @@ const labels: Record<string, string> = {
   relatedTourSlugs: "Tour liên quan",
   province: "Tỉnh / thành",
   tagline: "Thông điệp",
+  landing: "Trang chủ sections",
+  finder: "Bộ tìm nhanh",
+  suggestions: "Gợi ý tìm kiếm",
+  query: "Từ khoá tìm",
+  story: "Câu chuyện hành trình",
+  trips: "Các mốc thời gian",
+  planning: "Trước khi lên đường (FAQ)",
+  questions: "Câu hỏi thường gặp",
+  q: "Câu hỏi",
+  qEn: "Câu hỏi tiếng Anh",
+  a: "Trả lời",
+  aEn: "Trả lời tiếng Anh",
+  tag: "Nhãn nhóm",
+  tagEn: "Nhãn nhóm tiếng Anh",
+  eyebrow: "Dòng mở đầu",
+  eyebrowEn: "Dòng mở đầu tiếng Anh",
+  titleA: "Tiêu đề phần 1",
+  titleAEn: "Tiêu đề phần 1 tiếng Anh",
+  titleB: "Tiêu đề phần 2",
+  titleBEn: "Tiêu đề phần 2 tiếng Anh",
+  bodyEn: "Nội dung tiếng Anh",
+  footnote: "Dòng kết",
+  footnoteEn: "Dòng kết tiếng Anh",
+  intro: "Giới thiệu",
+  introEn: "Giới thiệu tiếng Anh",
+  moods: "Tâm trạng vùng miền",
+  moodsEn: "Tâm trạng vùng miền tiếng Anh",
+  photoSrc: "Ảnh giá trị",
+  photoAlt: "Mô tả ảnh giá trị",
+  photoAltEn: "Mô tả ảnh giá trị tiếng Anh",
+  badgeEn: "Huy hiệu tiếng Anh",
 };
 const arrayDefaults: Record<string, Value> = {
   images: { src: "", alt: "Ảnh tour" },
@@ -166,49 +198,58 @@ export function Editor({
 }) {
   const id = useId();
   const title = labels[name] ?? name;
-  const referenceKind: keyof ReferenceOptions | undefined = [
-    "categoryIds",
-    "parentId",
-  ].includes(name)
+  const singleKind: keyof ReferenceOptions | undefined = ["parentId"].includes(name)
     ? "categories"
-    : name === "destinationIds"
-      ? "destinations"
-      : name === "relatedTourSlugs"
-        ? "tours"
-        : ["src", "ogImage"].includes(name)
-          ? "media"
+    : ["src", "ogImage", "photoSrc"].includes(name)
+      ? "media"
+      : undefined;
+  const multiKind: keyof ReferenceOptions | undefined =
+    name === "categoryIds"
+      ? "categories"
+      : name === "destinationIds"
+        ? "destinations"
+        : name === "relatedTourSlugs"
+          ? "tours"
           : undefined;
+  if (multiKind && Array.isArray(value) && references[multiKind]) {
+    const strings = value.filter((v): v is string => typeof v === "string");
+    // Multi-select đẹp dạng chip cho các liên kết nhiều-một.
+    return (
+      <AdmMultiSelect
+        label={title}
+        values={strings}
+        options={references[multiKind]!}
+        placeholder={`Tìm để thêm vào ${title.toLowerCase()}…`}
+        onChange={(next) => onChange(next)}
+      />
+    );
+  }
   if (
     (typeof value === "string" || value === null) &&
-    referenceKind &&
-    references[referenceKind]
-  )
+    singleKind &&
+    references[singleKind]
+  ) {
+    const opts = references[singleKind]!;
     return (
-      <label className="adm-field" htmlFor={id}>
-        {title}
-        <select
-          id={id}
-          value={value ?? ""}
-          onChange={(e) =>
-            onChange(e.target.value || (name === "parentId" ? null : ""))
+      <div className="adm-field">
+        <AdmSelect
+          label={title}
+          value={typeof value === "string" ? value : ""}
+          options={
+            typeof value === "string" && value && !opts.some((o) => o.value === value)
+              ? [...opts, { value, label: `${value} (đang dùng)` }]
+              : opts
           }
-        >
-          <option value="">
-            {name === "parentId" ? "Danh mục gốc" : "Chọn một mục…"}
-          </option>
-          {typeof value === "string" &&
-            value &&
-            !references[referenceKind]!.some(
-              (option) => option.value === value,
-            ) && <option value={value}>{value}</option>}
-          {references[referenceKind]!.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
+          placeholder={name === "parentId" ? "Danh mục gốc" : "Chọn một mục…"}
+          preview={singleKind === "media" ? (v) => (v.startsWith("/") ? v : null) : undefined}
+          onChange={(next) => onChange(next || (name === "parentId" ? null : ""))}
+        />
+        {name === "hotlineHref" && (
+          <small>Tự động chuẩn hoá từ SĐT — bạn chỉ cần sửa mục Hotline.</small>
+        )}
+      </div>
     );
+  }
   const reindex = (items: Value[]) =>
     name === "itinerary"
       ? items.map((item, i) =>
