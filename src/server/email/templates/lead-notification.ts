@@ -36,7 +36,38 @@ export function buildLeadSubject(context: LeadNotificationContext): string {
   const { lead, tourTitle } = context;
   const parts = ["[SEA TRIP] Yêu cầu tư vấn mới", `#${lead.requestId}`];
   if (tourTitle) parts.push(tourTitle.length > 48 ? `${tourTitle.slice(0, 47)}…` : tourTitle);
+  // Ngày khởi hành giúp sales quét inbox nhanh hơn; ngày tháng không phải PII.
+  const day = dayLabel(lead.travelDate);
+  if (day) parts.push(`KH ${day}`);
   return parts.join(" · ");
+}
+
+/** Số ngày từ lúc tiếp nhận đến ngày dự kiến (null khi không xác định được). */
+function daysUntilTravel(receivedAt: string, travelDate?: string): number | null {
+  if (!travelDate || !/^\d{4}-\d{2}-\d{2}$/.test(travelDate)) return null;
+  const received = Date.parse(receivedAt);
+  const travel = Date.parse(`${travelDate}T00:00:00Z`);
+  if (Number.isNaN(received) || Number.isNaN(travel)) return null;
+  return Math.round((travel - received) / 86400000);
+}
+
+/** "15/02" rút gọn từ YYYY-MM-DD để hiển thị trong subject/banner. */
+function dayLabel(travelDate?: string): string | null {
+  if (!travelDate || !/^\d{4}-\d{2}-\d{2}$/.test(travelDate)) return null;
+  return `${travelDate.slice(8, 10)}/${travelDate.slice(5, 7)}`;
+}
+
+/** Ô fact nhỏ trong dải 3 cột dưới tiêu đề (Outlook-safe: table lồng nhau). */
+function factCell(label: string, valueHtml: string): string {
+  return `
+    <td width="33%" style="background:#fff4f8;border:1px solid #f2dde7;border-radius:12px;padding:12px 14px;vertical-align:top;">
+      <p style="margin:0;font:700 10px/1.4 Arial,Helvetica,sans-serif;letter-spacing:1px;text-transform:uppercase;color:#8b7684;">
+        ${escapeHtml(label)}
+      </p>
+      <p style="margin:6px 0 0 0;font:700 15px/1.4 Arial,Helvetica,sans-serif;color:#211621;">
+        ${valueHtml}
+      </p>
+    </td>`;
 }
 
 function row(label: string, valueHtml: string, options?: { last?: boolean }): string {
@@ -68,6 +99,19 @@ export function buildLeadNotificationHtml(context: LeadNotificationContext): str
   // Re-validate before emitting an href (defence in depth — see lib/sanitize.ts).
   const tourHref = tourUrl && isSafeSiteHref(tourUrl) ? tourUrl : null;
   const sourceHref = sourceUrl && isSafeSiteHref(sourceUrl) ? sourceUrl : null;
+  const studioUrl = safeSiteUrl("/admin");
+
+  const daysLeft = daysUntilTravel(lead.receivedAt, lead.travelDate);
+  const urgent = daysLeft !== null && daysLeft >= 0 && daysLeft <= 14;
+  const isEnglish = lead.locale === "en";
+
+  const factDate = lead.travelDate
+    ? escapeHtml(formatDate(lead.travelDate, "vi"))
+    : `<span style="color:#8b7684;font-weight:400;">Chưa xác định</span>`;
+  const factParty = lead.partySize
+    ? `${lead.partySize} khách`
+    : `<span style="color:#8b7684;font-weight:400;">Chưa xác định</span>`;
+  const factLang = isEnglish ? "🇬🇧 English" : "Tiếng Việt";
 
   const interestValue = tourTitle
     ? `${escapeHtml(tourTitle)}${
@@ -119,6 +163,51 @@ export function buildLeadNotificationHtml(context: LeadNotificationContext): str
                 Mã yêu cầu <strong style="color:#211621;">#${escapeHtml(lead.requestId)}</strong><br />
                 Tiếp nhận lúc ${escapeHtml(formatDateTimeVietnam(lead.receivedAt))}
               </p>
+            </td>
+          </tr>
+
+          ${
+            urgent || isEnglish
+              ? `<tr>
+                  <td style="padding:16px 28px 0 28px;">
+                    ${
+                      urgent
+                        ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td bgcolor="#fef3f2" style="background-color:#fef3f2;border:1px solid #fecdca;border-left:4px solid #d92d20;border-radius:10px;padding:12px 16px;font:400 13px/1.6 Arial,Helvetica,sans-serif;color:#912018;">
+                                <strong>⏰ Khởi hành sắp tới${daysLeft === 0 ? " (hôm nay / ngày mai)" : ` — còn khoảng ${daysLeft} ngày`}.</strong>
+                                Ưu tiên liên hệ khách trước ${escapeHtml(dayLabel(lead.travelDate) ?? "")}.
+                              </td>
+                            </tr>
+                          </table>`
+                        : ""
+                    }
+                    ${
+                      isEnglish
+                        ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="${urgent ? "margin-top:10px;" : ""}">
+                            <tr>
+                              <td bgcolor="#eff6ff" style="background-color:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;border-radius:10px;padding:12px 16px;font:400 13px/1.6 Arial,Helvetica,sans-serif;color:#1e40af;">
+                                <strong>🇬🇧 English request</strong> — khách điền form tiếng Anh, vui lòng phản hồi bằng English.
+                              </td>
+                            </tr>
+                          </table>`
+                        : ""
+                    }
+                  </td>
+                </tr>`
+              : ""
+          }
+
+          <!-- Quick facts: sales quét 3 giây là đủ ngữ cảnh -->
+          <tr>
+            <td style="padding:20px 28px 0 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="8" border="0" style="margin:-8px;">
+                <tr>
+                  ${factCell("Ngày dự kiến", factDate)}
+                  ${factCell("Số người", factParty)}
+                  ${factCell("Ngôn ngữ", factLang)}
+                </tr>
+              </table>
             </td>
           </tr>
 
@@ -232,6 +321,15 @@ export function buildLeadNotificationHtml(context: LeadNotificationContext): str
 
           <tr>
             <td style="padding:26px 28px 28px 28px;">
+              ${
+                studioUrl
+                  ? `<p style="margin:0 0 14px 0;">
+                      <a href="${escapeHtml(studioUrl)}" style="display:inline-block;background:#211621;color:#ffffff;font:700 13px/1 Arial,Helvetica,sans-serif;padding:12px 20px;border-radius:999px;text-decoration:none;">
+                        Mở trong SEA TRIP Studio →
+                      </a>
+                    </p>`
+                  : ""
+              }
               <p style="margin:0;font:400 12px/1.7 Arial,Helvetica,sans-serif;color:#8b7684;border-top:1px solid #f2dde7;padding-top:16px;">
                 Đây là thông báo tự động nội bộ từ website ${escapeHtml(siteConfig.name)}.
                 Vui lòng không chuyển tiếp ra ngoài. Thông tin khách hàng chỉ dùng để liên hệ tư vấn.
@@ -256,6 +354,8 @@ export function buildLeadNotificationText(context: LeadNotificationContext): str
 
   const tourHref = tourUrl && isSafeSiteHref(tourUrl) ? tourUrl : null;
   const sourceHref = sourceUrl && isSafeSiteHref(sourceUrl) ? sourceUrl : null;
+  const daysLeft = daysUntilTravel(lead.receivedAt, lead.travelDate);
+  const urgent = daysLeft !== null && daysLeft >= 0 && daysLeft <= 14;
 
   const lines = [
     "SEA TRIP TRAVEL",
@@ -264,6 +364,19 @@ export function buildLeadNotificationText(context: LeadNotificationContext): str
     "YÊU CẦU TƯ VẤN MỚI",
     `Mã yêu cầu: #${lead.requestId}`,
     `Tiếp nhận lúc: ${formatDateTimeVietnam(lead.receivedAt)}`,
+  ];
+
+  if (urgent) {
+    lines.push(
+      "",
+      `*** ƯU TIÊN: khởi hành sắp tới (${dayLabel(lead.travelDate)}) — liên hệ khách trước. ***`,
+    );
+  }
+  if (lead.locale === "en") {
+    lines.push("", "*** English request — phản hồi bằng English. ***");
+  }
+
+  lines.push(
     "",
     "-- THÔNG TIN KHÁCH --",
     `Họ tên: ${lead.fullName}`,
@@ -273,7 +386,7 @@ export function buildLeadNotificationText(context: LeadNotificationContext): str
     `Ngày dự kiến: ${lead.travelDate ? formatDate(lead.travelDate, "vi") : "(chưa xác định)"}`,
     `Số người: ${lead.partySize ?? "(chưa xác định)"}`,
     `Ngôn ngữ khách sử dụng: ${lead.locale === "en" ? "English" : "Tiếng Việt"}`,
-  ];
+  );
 
   if (tourHref) lines.push(`Trang tour: ${tourHref}`);
 

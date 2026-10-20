@@ -207,4 +207,48 @@ describe("lead notification email", () => {
     const html = buildLeadNotificationHtml({ lead: makeLead({ locale: "en" }) });
     assert.ok(html.includes("Ngôn ngữ khách sử dụng"));
   });
+
+  it("flags an upcoming travel date as urgent, and stays quiet otherwise", () => {
+    const soon = buildLeadNotificationHtml({
+      lead: makeLead({ travelDate: "2026-01-20", partySize: 4 }),
+    });
+    assert.ok(soon.includes("Khởi hành sắp tới"));
+    assert.ok(soon.includes("Ngày dự kiến"));
+    assert.ok(soon.includes("Số người"));
+
+    const far = buildLeadNotificationHtml({
+      lead: makeLead({ travelDate: "2026-06-01" }),
+    });
+    assert.ok(!far.includes("Khởi hành sắp tới"));
+
+    const none = buildLeadNotificationHtml({ lead: makeLead() });
+    assert.ok(!none.includes("Khởi hành sắp tới"));
+
+    const text = buildLeadNotificationText({
+      lead: makeLead({ travelDate: "2026-01-20" }),
+    });
+    assert.ok(text.includes("ƯU TIÊN"));
+  });
+
+  it("highlights English requests so sales replies in English", () => {
+    const english = buildLeadNotificationHtml({ lead: makeLead({ locale: "en" }) });
+    assert.ok(english.includes("English request"));
+
+    const vietnamese = buildLeadNotificationHtml({ lead: makeLead({ locale: "vi" }) });
+    assert.ok(!vietnamese.includes("English request"));
+  });
+
+  it("adds the travel day to the subject and links to the Studio", () => {
+    const withDate = buildLeadSubject({
+      lead: makeLead({ travelDate: "2026-01-20" }),
+    });
+    assert.ok(withDate.startsWith("[SEA TRIP] Yêu cầu tư vấn mới"));
+    assert.ok(withDate.includes("KH 20/01"));
+
+    const withoutDate = buildLeadSubject({ lead: makeLead() });
+    assert.ok(!withoutDate.includes("KH "));
+
+    const html = buildLeadNotificationHtml({ lead: makeLead() });
+    assert.ok(html.includes("/admin"));
+  });
 });
