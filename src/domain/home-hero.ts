@@ -48,7 +48,7 @@ export const heroSchema = z.object({
   id: z.literal("home"),
   mode: z.enum(["carousel", "collage"]),
   autoplay: z.boolean(),
-  intervalSeconds: z.number().int().min(6).max(20),
+  intervalSeconds: z.number().int().min(5).max(20),
   primaryHref: localLink,
   secondaryHref: localLink,
   vi: copy,
@@ -75,10 +75,10 @@ export const heroPhotos = [
     captionEn: "Into the blue",
   },
   {
-    src: "/images/hero/basalt-sunset.webp",
-    alt: "Ghềnh đá bazan bên sóng biển, phía xa là thuyền và bầu trời vàng lúc hoàng hôn",
-    caption: "Nơi sóng chạm ghềnh đá",
-    captionEn: "Where waves meet basalt",
+    src: "/images/hero/ky-co-user.png",
+    alt: "Bãi biển Kỳ Co với nước xanh trong, cầu gỗ và dãy núi ven biển",
+    caption: "Hẹn nhau ở Kỳ Co",
+    captionEn: "Meet me at Ky Co",
   },
   {
     src: "/images/hero/blue-bay.webp",
@@ -93,10 +93,10 @@ export const heroPhotos = [
     captionEn: "Along the coastal roads",
   },
   {
-    src: "/images/hero/emerald-bay.webp",
-    alt: "Vịnh biển xanh ngọc ôm bãi cát trắng, những chiếc thuyền và đồi xanh có tua-bin gió",
-    caption: "Hẹn nhau giữa vịnh xanh",
-    captionEn: "Meet by the emerald bay",
+    src: "/images/hero/ghenh-da-dia-user.png",
+    alt: "Du khách bên ghềnh đá bazan và làn nước xanh tại Ghềnh Đá Đĩa",
+    caption: "Nơi sóng chạm ghềnh đá",
+    captionEn: "Where waves meet basalt",
   },
 ];
 export const defaultHero: HeroConfig = heroSchema.parse({

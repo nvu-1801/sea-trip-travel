@@ -1,86 +1,102 @@
 import { Container } from "@/components/ui/layout";
-import { CompassIcon, ArrowRightIcon } from "@/components/ui/icons";
-import { TimeSelect, type TimeOption } from "./time-select";
+import { Reveal } from "@/components/ui/reveal";
+import {
+  ArrowRightIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  MapPinIcon,
+} from "@/components/ui/icons";
 import type { Locale } from "@/i18n/config";
+import { landingSections } from "@/server/cms/store";
 import { localizePath } from "@/i18n/routing";
+
 export function QuickFinder({ locale }: { locale: Locale }) {
-  const en = locale === "en",
-    action = localizePath(locale, "/tim-tour");
-  const timeOptions: readonly TimeOption[] = en
-    ? [
-        { value: "", label: "I am flexible", hint: "Any duration" },
-        { value: "1", label: "A day away", hint: "1 day" },
-        { value: "2", label: "A weekend escape", hint: "2 days" },
-        { value: "3", label: "Three days to explore", hint: "3 days" },
-        { value: "4+", label: "A longer journey", hint: "4+ days" },
-      ]
-    : [
-        { value: "", label: "Mình linh hoạt", hint: "Mọi thời lượng" },
-        { value: "1", label: "Một ngày đổi gió", hint: "1 ngày" },
-        { value: "2", label: "Hai ngày thư thả", hint: "2 ngày" },
-        { value: "3", label: "Ba ngày khám phá", hint: "3 ngày" },
-        { value: "4+", label: "Bốn ngày trở lên", hint: "Từ 4 ngày" },
-      ];
+  let suggestions = [
+    { label: "Quy Nhơn", query: "quy nhon" },
+    { label: "Phú Yên", query: "phu yen" },
+    { label: "Kỳ Co", query: "ky co" },
+  ];
+  try {
+    const saved = landingSections().finder.suggestions;
+    if (saved.length) suggestions = saved;
+  } catch {
+    // fallback seed khi CMS chưa bật
+  }
+  const en = locale === "en";
+  const action = localizePath(locale, "/tim-tour");
   return (
-    <section id="tim-hanh-trinh" className="stt-finder-section">
+    <section
+      id="tim-hanh-trinh"
+      className="journey-finder"
+      aria-labelledby="finder-title"
+    >
       <Container>
-        <div className="stt-finder-island">
-          <div className="stt-finder-glow" aria-hidden="true" />
-          <div className="stt-finder-intro">
-            <span className="stt-finder-symbol" aria-hidden="true">
-              <CompassIcon className="h-6 w-6" />
+        <Reveal className="journey-finder-bar" variant="zoom">
+          <div className="journey-finder-intro">
+            <span className="journal-eyebrow">
+              {en ? "YOUR NEXT CHAPTER" : "CHUYẾN ĐI TIẾP THEO"}
             </span>
-            <div>
-              <h2>
-                {en
-                  ? "Find your next journey"
-                  : "Tìm hành trình phù hợp với bạn"}
-              </h2>
-            </div>
+            <h2 id="finder-title">
+              {en ? "Where shall we go?" : "Mình đi đâu nhé?"}
+            </h2>
           </div>
-          <form action={action} className="stt-finder-fields">
-            <label>
-              <span className="stt-finder-caption">
-                {en ? "Your destination" : "Điểm đến của bạn"}
+          <form action={action} className="journey-finder-form">
+            <label className="finder-field">
+              <span>
+                <MapPinIcon className="finder-field-icon" />
+                {en ? "Destination" : "Điểm đến"}
               </span>
-              <input
-                name="q"
-                placeholder={
-                  en
-                    ? "Sea, mountains, or a city…"
-                    : "Biển xanh, miền núi hay phố cổ…"
-                }
-                maxLength={100}
-              />
+              <span className="finder-control">
+                <input
+                  name="q"
+                  maxLength={100}
+                  placeholder={
+                    en ? "Where would you like to go?" : "Quy Nhơn, Phú Yên…"
+                  }
+                />
+              </span>
             </label>
-            <label>
-              <span className="stt-finder-caption">
-                {en ? "Your time" : "Thời gian của bạn"}
+            <label className="finder-field">
+              <span>
+                <ClockIcon className="finder-field-icon" />
+                {en ? "Duration" : "Thời gian"}
               </span>
-              <TimeSelect
-                name="days"
-                label={en ? "Your time" : "Thời gian của bạn"}
-                options={timeOptions}
-              />
+              <span className="finder-control finder-select">
+                <select name="days" defaultValue="">
+                  <option value="">
+                    {en ? "I am flexible" : "Mình linh hoạt"}
+                  </option>
+                  {[1, 2, 3].map((day) => (
+                    <option key={day} value={day}>
+                      {en
+                        ? `${day} ${day === 1 ? "day" : "days"}`
+                        : `${day} ngày`}
+                    </option>
+                  ))}
+                  <option value="4+">
+                    {en ? "4 days or more" : "Từ 4 ngày"}
+                  </option>
+                </select>
+                <ChevronDownIcon className="finder-select-icon" />
+              </span>
             </label>
             <button type="submit">
-              {en ? "Explore" : "Khám phá"}
+              {en ? "Find a trip" : "Tìm chuyến đi"}
               <ArrowRightIcon className="h-4 w-4" />
             </button>
           </form>
-          <div className="stt-finder-suggestions">
-            <span>{en ? "A few ideas:" : "Gợi ý cho bạn:"}</span>
-            {[
-              ["Quy Nhơn", "quy nhon"],
-              ["Phú Yên", "phu yen"],
-              ["Đà Nẵng", "da nang"],
-            ].map(([label, q]) => (
-              <a key={q} href={`${action}?q=${encodeURIComponent(q)}`}>
-                {label}
-                <span aria-hidden="true">↗</span>
-              </a>
-            ))}
-          </div>
+        </Reveal>
+        <div className="journey-finder-links">
+          <span>{en ? "Start with an idea" : "Bắt đầu từ một gợi ý"}</span>
+          {suggestions.map(({ label, query }) => (
+            <a
+              key={query}
+              href={`${action}?q=${encodeURIComponent(query)}`}
+            >
+              {label}
+              <span aria-hidden="true">↗</span>
+            </a>
+          ))}
         </div>
       </Container>
     </section>

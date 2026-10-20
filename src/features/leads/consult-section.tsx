@@ -1,6 +1,7 @@
 import { ROUTES } from "@/config/navigation";
 import { siteConfig } from "@/config/runtime-site";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
+import { Reveal } from "@/components/ui/reveal";
 import {
   PhoneIcon,
   ClockIcon,
@@ -48,7 +49,7 @@ export function ConsultSection({
     <Section id={id} tone={tone} spacing={spacing}>
       <Container>
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14">
-          <div className="lg:col-span-5">
+          <Reveal className="lg:col-span-5" variant="left">
             <SectionHeading
               eyebrow={m.consult.eyebrow}
               title={title ?? m.consult.defaultTitle}
@@ -88,9 +89,9 @@ export function ConsultSection({
                 {m.site.workingHours}
               </p>
             </div>
-          </div>
+          </Reveal>
 
-          <div className="lg:col-span-7">
+          <Reveal className="lg:col-span-7" variant="right" delay={1}>
             <div className="rounded-3xl border border-border bg-surface p-6 shadow-card sm:p-8">
               <LeadForm
                 locale={locale}
@@ -110,7 +111,7 @@ export function ConsultSection({
               </a>
               {m.consult.privacyPost}
             </p>
-          </div>
+          </Reveal>
         </div>
       </Container>
     </Section>
