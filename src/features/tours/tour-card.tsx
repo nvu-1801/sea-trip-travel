@@ -55,12 +55,12 @@ export function TourCard({
               : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           }
           className={cn(
-            "stt-card-photo aspect-[16/10] w-full",
+            "stt-card-photo aspect-[4/3] w-full",
             horizontal && "sm:aspect-auto sm:h-full sm:min-h-[320px]",
           )}
         />
         <span aria-hidden="true" className="stt-card-scrim" />
-        <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
+        <div className="pointer-events-none absolute left-3 top-3 flex max-w-[calc(100%-5.5rem)] flex-wrap gap-1.5">
           {tour.badge ? (
             <span className="stt-card-badge">
               <SparkleIcon className="h-3.5 w-3.5" />

@@ -112,6 +112,9 @@ export default async function LocaleLayout({
       className={`${beVietnamPro.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
+        <noscript>
+          <style>{`.stt-reveal-3d{opacity:1!important;transform:none!important;transition:none!important}`}</style>
+        </noscript>
         <SiteContactProvider
           value={{
             ...siteConfig.contact,

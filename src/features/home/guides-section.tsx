@@ -3,6 +3,7 @@ import { HeadingAccent } from "@/components/ui/heading-accent";
 import { ROUTES } from "@/config/navigation";
 import {
   getFeaturedArticle,
+  getArticleBySlug,
   getNonFeaturedArticles,
 } from "@/lib/data/articles";
 import { Container, Section } from "@/components/ui/layout";
@@ -11,6 +12,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon, ClockIcon } from "@/components/ui/icons";
 import { AssetImage } from "@/components/ui/asset-image";
 import { formatDateLong } from "@/lib/format";
+import { landingSections } from "@/server/cms/store";
 import type { Locale } from "@/i18n/config";
 import { getMessages, plural } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
@@ -25,8 +27,33 @@ import { localizePath } from "@/i18n/routing";
  */
 export function GuidesSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const featured = getFeaturedArticle(locale);
-  const rest = getNonFeaturedArticles(locale).slice(0, 3);
+  // Admin picks (`landing.guides`) override the automatic selection when the
+  // referenced slugs still exist; otherwise fall back to the newest articles.
+  let featured = getFeaturedArticle(locale);
+  let rest = getNonFeaturedArticles(locale).slice(0, 3);
+  try {
+    const picks = landingSections().guides;
+    if (picks.featuredSlug) {
+      const pinned = getArticleBySlug(picks.featuredSlug, locale);
+      if (pinned) featured = pinned;
+    }
+    if (picks.picks.length > 0) {
+      const pinnedRest = picks.picks.flatMap((slug) => {
+        const article = getArticleBySlug(slug, locale);
+        return article && article.slug !== featured?.slug ? [article] : [];
+      });
+      if (pinnedRest.length > 0) {
+        const seen = new Set(pinnedRest.map((a) => a.slug));
+        if (featured) seen.add(featured.slug);
+        rest = [
+          ...pinnedRest,
+          ...getNonFeaturedArticles(locale).filter((a) => !seen.has(a.slug)),
+        ].slice(0, 3);
+      }
+    }
+  } catch {
+    // giữ lựa chọn tự động
+  }
 
   if (!featured) return null;
 

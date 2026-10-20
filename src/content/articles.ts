@@ -22,8 +22,8 @@ export const articles: readonly TravelArticleInput[] = [
     tags: ["Quy Nhơn", "Phú Yên", "Kinh nghiệm"],
     readingMinutes: 6,
     cover: {
-      src: "/images/tours/be29f9c7f7008249.jpeg",
-      alt: "Bờ biển Ghềnh Ráng, Quy Nhơn",
+      src: "/images/hero/island-panorama.webp",
+      alt: "Toàn cảnh đảo và vịnh biển Quy Nhơn – Phú Yên",
     },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-10",
@@ -92,8 +92,7 @@ export const articles: readonly TravelArticleInput[] = [
   },
   {
     id: "art_thoi_diem_qn",
-    slug: "thoi-diem-dep-nhat-de-di-quy-nhon",
-    title: "Thời điểm nào đi Quy Nhơn đẹp nhất?",
+    slug: "thoi-diem-dep-nhat-de-di-quy-nhon",    title: "Thời điểm nào đi Quy Nhơn đẹp nhất?",
     excerpt:
       "Phân tích ưu và nhược điểm từng giai đoạn trong năm để bạn chọn thời điểm phù hợp với kiểu chuyến đi của mình.",
     destinationIds: ["dest_quy_nhon", "dest_ky_co_eo_gio"],
@@ -101,8 +100,8 @@ export const articles: readonly TravelArticleInput[] = [
     tags: ["Quy Nhơn", "Thời điểm", "Kinh nghiệm"],
     readingMinutes: 4,
     cover: {
-      src: "/images/tours/be29f9c7f7008249.jpeg",
-      alt: "Bờ biển Ghềnh Ráng, Quy Nhơn",
+      src: "/images/hero/emerald-bay.webp",
+      alt: "Vịnh biển xanh ngọc Quy Nhơn",
     },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-08",
@@ -151,8 +150,8 @@ export const articles: readonly TravelArticleInput[] = [
     tags: ["Quy Nhơn", "Ẩm thực"],
     readingMinutes: 4,
     cover: {
-      src: "/images/tours/be29f9c7f7008249.jpeg",
-      alt: "Bờ biển Ghềnh Ráng, Quy Nhơn",
+      src: "/images/hero/coastal-sunset.webp",
+      alt: "Hoàng hôn trên bờ biển Quy Nhơn",
     },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-06",
@@ -200,8 +199,8 @@ export const articles: readonly TravelArticleInput[] = [
     tags: ["Quy Nhơn", "Di chuyển"],
     readingMinutes: 5,
     cover: {
-      src: "/images/tours/be29f9c7f7008249.jpeg",
-      alt: "Bờ biển Ghềnh Ráng, Quy Nhơn",
+      src: "/images/hero/lighthouse-coast.webp",
+      alt: "Hải đăng trên bờ biển Quy Nhơn – Phú Yên",
     },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-04",

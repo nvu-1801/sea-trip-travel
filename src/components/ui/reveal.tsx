@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ElementType, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** One-time viewport entrance. Content stays visible without JavaScript; respects motion preferences. */
+/** 3D Editorial viewport entrance without flickering. Respects motion preferences. */
 export type RevealVariant = "rise" | "left" | "right" | "zoom";
 
 export function Reveal({
@@ -17,51 +17,63 @@ export function Reveal({
   className?: string;
   as?: ElementType;
   variant?: RevealVariant;
-  delay?: 0 | 1 | 2;
+  delay?: number;
 }) {
   const element = useRef<HTMLElement>(null);
+
   useEffect(() => {
     const node = element.current;
-    if (!node || !("IntersectionObserver" in window)) return;
+    if (!node) return;
+
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let animation: Animation | undefined;
-    const stop = () => {
-      if (media.matches || document.documentElement.dataset.motionPaused === "true")
-        animation?.cancel();
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      observer.disconnect();
-      if (media.matches || document.documentElement.dataset.motionPaused === "true") return;
-      const mobile = window.matchMedia("(max-width: 767px)").matches;
-      const transform = mobile ? "translateY(14px)" : {
-        rise: "translateY(24px)",
-        left: "translateX(-24px)",
-        right: "translateX(24px)",
-        zoom: "translateY(16px) scale(0.97)",
-      }[variant];
-      animation = node.animate(
-        [{ opacity: 0.25, transform }, { opacity: 1, transform: "none" }],
-        { duration: 650, delay: delay * 80, easing: "cubic-bezier(0.16,1,0.3,1)", fill: "backwards" },
-      );
-    }, { threshold: 0, rootMargin: "0px 0px -48px 0px" });
+    const isPaused = () =>
+      media.matches || document.documentElement.dataset.motionPaused === "true";
+
+    if (isPaused() || !("IntersectionObserver" in window)) {
+      node.setAttribute("data-revealed", "true");
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          node.setAttribute("data-revealed", "true");
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0,
+        rootMargin: "0px 0px 100px 0px", // Trigger 100px in advance so there is no popping!
+      },
+    );
+
     observer.observe(node);
-    const preferences = new MutationObserver(stop);
-    preferences.observe(document.documentElement, { attributes: true, attributeFilter: ["data-motion-paused"] });
-    media.addEventListener("change", stop);
+
+    const preferences = new MutationObserver(() => {
+      if (isPaused()) {
+        node.setAttribute("data-revealed", "true");
+      }
+    });
+    preferences.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-motion-paused"],
+    });
+
     return () => {
       observer.disconnect();
       preferences.disconnect();
-      media.removeEventListener("change", stop);
-      animation?.cancel();
     };
-  }, [variant, delay]);
+  }, []);
+
   return (
     <Tag
       ref={element}
-      data-reveal-once={variant}
-      data-reveal-delay={delay > 0 ? String(delay) : undefined}
-      className={cn(className)}
+      data-reveal-3d={variant}
+      data-revealed="false"
+      style={{
+        transitionDelay: delay > 0 ? `${Math.min(delay, 5) * 85}ms` : undefined,
+      }}
+      className={cn("stt-reveal-3d", className)}
     >
       {children}
     </Tag>

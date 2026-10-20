@@ -152,7 +152,7 @@ export function ConsultSection({
                     href={siteConfig.contact.hotlineHref}
                     className="mt-2 inline-flex min-h-11 items-center gap-2 text-xl font-extrabold text-primary-strong transition-colors hover:text-primary-strong-hover"
                   >
-                    <PhoneIcon className="h-5 w-5" />
+                    <PhoneIcon className="stt-phone-buzz h-5 w-5" />
                     {siteConfig.contact.hotline}
                   </a>
                   <p className="mt-1 text-sm text-foreground-muted">

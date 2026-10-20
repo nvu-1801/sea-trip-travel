@@ -49,7 +49,11 @@ export function ExploreSection({ locale }: { locale: Locale }) {
         </Reveal>
         <div className="destination-editorial">
           {destinations.map((destination, index) => (
-            <Reveal key={destination.id} className="destination-editorial-item">
+            <Reveal
+              key={destination.id}
+              delay={index}
+              className="destination-editorial-item"
+            >
               <Link
                 href={`${localizePath(locale, "/tim-tour")}?q=${encodeURIComponent(destination.name.split(" – ")[0])}`}
                 className="destination-editorial-card"

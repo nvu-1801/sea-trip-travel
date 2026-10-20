@@ -19,12 +19,13 @@ import { localizePath } from "@/i18n/routing";
  */
 export function ValuesSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
+  const en = locale === "en";
   let visual = {
-    src: "/images/hero/sea-kayaking.webp" as string,
+    src: "/images/hero/island-panorama.webp" as string,
     alt:
       locale === "en"
-        ? "Illustration of kayaking on the sea"
-        : "Ảnh minh hoạ chèo thuyền trên biển",
+        ? "Panoramic view of Quy Nhon bay islands"
+        : "Toàn cảnh vịnh biển và đảo Quy Nhơn",
     badge:
       locale === "en"
         ? "Handpicked, unhurried journeys"
@@ -41,6 +42,19 @@ export function ValuesSection({ locale }: { locale: Locale }) {
     };
   } catch {
     // fallback seed
+  }
+
+  let principles = m.home.values.principles;
+  try {
+    const saved = landingSections().values.principles;
+    if (saved.length > 0) {
+      principles = saved.map((p) => ({
+        title: en ? p.titleEn || p.title : p.title,
+        body: en ? p.bodyEn || p.body : p.body,
+      }));
+    }
+  } catch {
+    // giữ nguyên nội dung messages khi CMS chưa có
   }
 
   return (
@@ -89,8 +103,13 @@ export function ValuesSection({ locale }: { locale: Locale }) {
 
           <div className="values-copy">
             <ol className="values-timeline">
-              {m.home.values.principles.map((principle, index) => (
-                <Reveal as="li" key={principle.title} className="values-item">
+              {principles.map((principle, index) => (
+                <Reveal
+                  as="li"
+                  key={principle.title}
+                  delay={index}
+                  className="values-item"
+                >
                   <span aria-hidden="true" className="values-num">
                     {index + 1}
                   </span>

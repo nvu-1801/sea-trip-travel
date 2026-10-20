@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 import { contentVersion, transaction } from "../src/server/cms/db";
 import { versionResponse } from "../src/server/cms/version-response";
 import { defaultHero, heroSchema } from "../src/domain/home-hero";
+import { defaultLanding, landingSchema } from "../src/domain/landing";
 import { homeHero } from "../src/server/cms/store";
 import { searchKey } from "../src/lib/search";
 import {
@@ -447,6 +448,34 @@ test("hero validation rejects empty/duplicate slides, unsafe links and excessive
     heroSchema.safeParse({
       ...defaultHero,
       collageMain: { ...defaultHero.collageMain, positionX: 101 },
+    }).success,
+    false,
+  );
+});
+test("landing sections carry admin-editable trust, principles, featured and guide picks", () => {
+  assert.equal(defaultLanding.trust.items.length, 4);
+  assert.equal(defaultLanding.values.principles.length, 4);
+  assert.deepEqual(defaultLanding.featured.tourIds, []);
+  assert.equal(defaultLanding.guides.featuredSlug, "");
+  // Old database rows saved before these fields existed still parse:
+  // zod defaults backfill them, so no explicit migration is required.
+  const legacy = { ...defaultLanding } as Record<string, unknown>;
+  delete legacy.trust;
+  delete legacy.featured;
+  delete legacy.guides;
+  const migrated = landingSchema.parse({
+    ...legacy,
+    values: { photoSrc: "/x.webp" },
+  });
+  assert.deepEqual(migrated.trust.items, []);
+  assert.deepEqual(migrated.featured.tourIds, []);
+  assert.equal(migrated.guides.featuredSlug, "");
+  assert.ok(migrated.values.photoSrc.startsWith("/"));
+  // Invalid icon keys and unknown tour id shapes are rejected.
+  assert.equal(
+    landingSchema.safeParse({
+      ...defaultLanding,
+      trust: { items: [{ icon: "rocket", title: "x", body: "y" }] },
     }).success,
     false,
   );

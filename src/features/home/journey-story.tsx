@@ -182,7 +182,7 @@ export function PlanningSection({ locale }: { locale: Locale }) {
             {questions.map(([q, a], i) => {
               const Icon = icons[i % icons.length];
               return (
-                <Reveal key={q}>
+                <Reveal key={q} delay={i}>
                   <details open={i === 0}>
                     <summary>
                       <span className="planning-q-icon" aria-hidden="true">

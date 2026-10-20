@@ -63,7 +63,7 @@ export function RegionsSection({ locale }: { locale: Locale }) {
           </Reveal>
           <ol className="region-postcards">
             {getChildCategories(domestic.id, locale).map((region, i) => (
-              <Reveal as="li" key={region.id}>
+              <Reveal as="li" key={region.id} delay={i}>
                 <Link
                   className="region-postcard"
                   href={localizePath(locale, region.path)}

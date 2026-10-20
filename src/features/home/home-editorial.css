@@ -217,8 +217,9 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 22px;
-  box-shadow: var(--shadow-lifted);
+  box-shadow: 0 18px 48px -10px rgba(209, 0, 83, 0.12), 0 4px 14px rgba(33, 61, 59, 0.06);
   padding: 14px;
+  transform-style: preserve-3d;
 }
 .finder-panels {
   display: grid;
@@ -492,6 +493,10 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   overflow: hidden;
   border-radius: 14px;
   background: #244846;
+  transform-style: preserve-3d;
+  transition:
+    transform 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 500ms ease;
 }
 .destination-editorial-photo {
   position: absolute;
@@ -509,6 +514,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   inset: auto 28px 26px;
   z-index: 1;
   color: white;
+  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .destination-number {
   font-size: 10px;
@@ -543,12 +549,21 @@ html[data-motion-paused="true"] .home-brand-wordmark {
     background 0.3s,
     transform 0.3s;
 }
-.destination-editorial-card:hover .destination-editorial-photo {
-  transform: scale(1.055);
-}
-.destination-editorial-card:hover .destination-arrow {
-  background: #ffffff22;
-  transform: rotate(45deg);
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .destination-editorial-card:hover {
+    transform: translateY(-4px) perspective(1000px) rotateX(1.5deg);
+    box-shadow: 0 24px 50px rgba(8, 40, 38, 0.28);
+  }
+  .destination-editorial-card:hover .destination-editorial-copy {
+    transform: translateZ(14px);
+  }
+  .destination-editorial-card:hover .destination-editorial-photo {
+    transform: scale(1.055);
+  }
+  .destination-editorial-card:hover .destination-arrow {
+    background: #ffffff22;
+    transform: rotate(45deg);
+  }
 }
 .journal-footnote {
   display: flex;
@@ -629,20 +644,38 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   margin-top: 44px;
 }
 .journey-duration-grid a {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: clamp(20px, 2.5vw, 32px);
+  padding: clamp(22px, 2.5vw, 32px);
   border: 1px solid #ffffff35;
   border-radius: 20px;
-  background: #ffffff08;
+  background: linear-gradient(160deg, #ffffff14 0%, #ffffff06 100%);
+  overflow: hidden;
   transition:
     background 0.3s,
-    border-color 0.3s;
+    border-color 0.3s,
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s ease;
+}
+.journey-duration-grid a::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff0366, #ffd166);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 .journey-duration-grid a:hover {
-  background: #ffffff16;
+  background: #ffffff18;
   border-color: #ffffff70;
+  transform: translateY(-4px);
+  box-shadow: 0 20px 44px rgb(0 0 0 / 0.28);
+}
+.journey-duration-grid a:hover::before {
+  opacity: 1;
 }
 .journey-duration-grid a:focus-visible {
   outline: 2px solid #fff8e9;
@@ -653,7 +686,10 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   align-items: baseline;
   gap: 12px;
   font-family: Georgia, serif;
-  font-size: 48px;
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 18px rgb(0 0 0 / 0.3);
 }
 .journey-duration small {
   font-family: var(--font-sans), sans-serif;
@@ -671,9 +707,18 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   max-width: 270px;
 }
 .journey-duration-cta {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 24px;
+  padding: 10px 18px;
+  width: fit-content;
+  border-radius: 999px;
+  border: 1px solid #ffffff45;
+  background: #ffffff10;
   font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 /* Four image-led postcards, each a direct route into its region. */
 .regions-editorial {
@@ -734,6 +779,8 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   color: #fff;
   background: #234844;
   box-shadow: 0 12px 30px #163b3410;
+  transform-style: preserve-3d;
+  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 500ms ease;
 }
 .region-postcard-photo {
   position: absolute;
@@ -885,6 +932,8 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
 }
 .values-photo-wrap {
   position: relative;
+  perspective: 1200px;
+  transform-style: preserve-3d;
 }
 .values-photo {
   aspect-ratio: 4 / 5;
@@ -912,6 +961,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   backdrop-filter: blur(12px);
   box-shadow: 0 18px 44px #213d3b26;
   padding: 14px 16px;
+  transform-style: preserve-3d;
 }
 .values-float-top {
   left: 16px;
@@ -1423,4 +1473,210 @@ a:focus-visible .guide-zoom img {
   color: var(--color-surface);
   -webkit-text-stroke: 1.5px var(--color-brand-300);
   text-shadow: 0 2px 12px rgb(122 0 49 / 0.18);
+  animation: stt-num-glow 6s ease-in-out infinite;
+}
+
+/* =============================================================================
+   SEA TRIP Editorial Idle & Ambient Motions (Mềm mại, Tự nhiên, 60fps)
+   ============================================================================= */
+
+@keyframes stt-dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 3px rgba(230, 0, 96, 0.14);
+  }
+  50% {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 6px rgba(230, 0, 96, 0.26);
+  }
+}
+
+.home-editorial .journal-eyebrow::before,
+.home-editorial .intro-centered .eyebrow-pill::before,
+.planning-eyebrow-dot {
+  animation: stt-dot-pulse 3.5s ease-in-out infinite;
+}
+
+/* QuickFinder Idle Motion */
+@keyframes stt-beacon-glow {
+  0%, 100% {
+    box-shadow: 0 10px 30px #4d0a2622, inset 0 0 0 1px rgba(255, 209, 102, 0.15);
+  }
+  50% {
+    box-shadow: 0 16px 42px #ff03662d, inset 0 0 0 1px rgba(255, 209, 102, 0.45);
+  }
+}
+@keyframes stt-glow-breathe {
+  0%, 100% {
+    box-shadow: 0 10px 24px #d1005330;
+  }
+  50% {
+    box-shadow: 0 14px 34px #d1005355;
+  }
+}
+.finder-panel-help {
+  animation: stt-beacon-glow 6s ease-in-out infinite;
+}
+.journey-finder-form button {
+  animation: stt-glow-breathe 4.5s ease-in-out infinite;
+}
+
+/* Explore Destination Arrow Micro-float */
+@keyframes stt-arrow-gentle {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(2px, -2px, 0);
+  }
+}
+.destination-arrow {
+  animation: stt-arrow-gentle 3.8s ease-in-out infinite;
+}
+
+/* Journey Story Ambient Night Atmosphere */
+@keyframes stt-gold-shimmer {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(255, 230, 180, 0.08);
+  }
+  50% {
+    text-shadow: 0 0 22px rgba(255, 200, 120, 0.4);
+  }
+}
+@keyframes stt-card-border-breathe {
+  0%, 100% {
+    border-color: #ffffff30;
+    background: #ffffff08;
+  }
+  50% {
+    border-color: #ffffff55;
+    background: #ffffff14;
+  }
+}
+.journey-duration {
+  animation: stt-gold-shimmer 5s ease-in-out infinite;
+}
+.journey-duration-grid a {
+  animation: stt-card-border-breathe 7s ease-in-out infinite;
+}
+.journey-duration-grid > div:nth-child(2) a {
+  animation-delay: 2.3s;
+}
+.journey-duration-grid > div:nth-child(3) a {
+  animation-delay: 4.6s;
+}
+
+/* Region Postcards "Floating Boats" Rhythm */
+@keyframes stt-boat-float-odd {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -5px, 0);
+  }
+}
+@keyframes stt-boat-float-even {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, 5px, 0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .region-postcards > li:nth-child(odd) .region-postcard {
+    animation: stt-boat-float-odd 7s ease-in-out infinite;
+  }
+  .region-postcards > li:nth-child(even) .region-postcard {
+    animation: stt-boat-float-even 7s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+}
+
+/* Values Section Editorial Float & Glow */
+@keyframes stt-float-diagonal-a {
+  0%, 100% {
+    transform: translate3d(0, 0, 24px);
+  }
+  50% {
+    transform: translate3d(3px, -5px, 28px);
+  }
+}
+@keyframes stt-float-diagonal-b {
+  0%, 100% {
+    transform: translate3d(0, 0, 32px);
+  }
+  50% {
+    transform: translate3d(-3px, 4px, 36px);
+  }
+}
+@keyframes stt-glow-morph {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.55;
+    filter: blur(46px);
+  }
+  50% {
+    transform: scale(1.08) rotate(3deg);
+    opacity: 0.8;
+    filter: blur(52px);
+  }
+}
+.values-float-top {
+  animation: stt-float-diagonal-a 6s ease-in-out infinite;
+}
+.values-float-bottom {
+  animation: stt-float-diagonal-b 7s ease-in-out infinite;
+}
+.values-photo-glow {
+  animation: stt-glow-morph 8s ease-in-out infinite;
+}
+
+/* Planning FAQ Assist Nudge */
+@keyframes stt-arrow-nudge {
+  0%, 82%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  86% {
+    transform: translate3d(4px, 0, 0);
+  }
+  90% {
+    transform: translate3d(1px, 0, 0);
+  }
+  94% {
+    transform: translate3d(3px, 0, 0);
+  }
+}
+.planning-assist-arrow {
+  animation: stt-arrow-nudge 6.5s ease-in-out infinite;
+}
+
+/* Guide Magazine Number Shimmer */
+@keyframes stt-num-glow {
+  0%, 100% {
+    opacity: 0.88;
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(0, -3px, 0);
+  }
+}
+
+/* Paused State for Editorial Motions */
+html[data-motion-paused="true"] .values-float,
+html[data-motion-paused="true"] .values-photo-glow,
+html[data-motion-paused="true"] .destination-arrow,
+html[data-motion-paused="true"] .region-postcard,
+html[data-motion-paused="true"] .planning-assist-arrow,
+html[data-motion-paused="true"] .finder-panel-help,
+html[data-motion-paused="true"] .journey-duration,
+html[data-motion-paused="true"] .journey-duration-grid a,
+html[data-motion-paused="true"] .journey-finder-form button,
+html[data-motion-paused="true"] .home-editorial .journal-eyebrow::before,
+html[data-motion-paused="true"] .home-editorial .intro-centered .eyebrow-pill::before,
+html[data-motion-paused="true"] .planning-eyebrow-dot,
+html[data-motion-paused="true"] .guide-index-num {
+  animation: none !important;
+  transform: none !important;
 }

@@ -19,10 +19,10 @@ export const destinations: readonly DestinationInput[] = [
     summary:
       "Thành phố biển miền Trung với bãi cát dài, hải sản tươi và nhịp sống chậm rãi.",
     image: {
-      src: "/images/tours/be29f9c7f7008249.jpeg",
-      alt: "Bãi đá Hoàng Hậu",
-      width: 443,
-      height: 296,
+      src: "/images/hero/blue-bay.webp",
+      alt: "Vịnh biển xanh Quy Nhơn nhìn từ trên cao",
+      width: 1800,
+      height: 1199,
     },
     order: 1,
     contentStatus: "demo",

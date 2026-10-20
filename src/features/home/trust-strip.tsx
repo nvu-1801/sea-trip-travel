@@ -7,6 +7,14 @@ import {
   UsersIcon,
 } from "@/components/ui/icons";
 import type { Locale } from "@/i18n/config";
+import { landingSections } from "@/server/cms/store";
+
+const iconByKey = {
+  calendar: CalendarIcon,
+  compass: CompassIcon,
+  shield: ShieldIcon,
+  users: UsersIcon,
+} as const;
 
 /**
  * Commitment strip.
@@ -14,10 +22,28 @@ import type { Locale } from "@/i18n/config";
  * Sits where reference sites put a stats band — but every item here is a
  * checkable service promise, never an invented customer count, rating or
  * award (see the same rule in `ValuesSection`).
+ *
+ * Content prefers the CMS `landing.trust.items` list so the admin can edit
+ * it; the hardcoded list below is only the fallback when nothing is saved.
  */
 export function TrustStrip({ locale }: { locale: Locale }) {
   const en = locale === "en";
-  const items = en
+  let saved: { icon: keyof typeof iconByKey; title: string; body: string }[] = [];
+  try {
+    const items = landingSections().trust.items;
+    if (items.length > 0) {
+      saved = items.map((item) => ({
+        icon: item.icon,
+        title: en ? item.titleEn || item.title : item.title,
+        body: en ? item.bodyEn || item.body : item.body,
+      }));
+    }
+  } catch {
+    // fallback below
+  }
+  const items = saved.length > 0
+    ? saved.map((item) => ({ icon: iconByKey[item.icon], title: item.title, body: item.body }))
+    : en
     ? [
         {
           icon: CalendarIcon,
@@ -73,12 +99,13 @@ export function TrustStrip({ locale }: { locale: Locale }) {
             <Reveal
               as="li"
               key={item.title}
-              delay={(index % 3) as 0 | 1 | 2}
+              delay={index}
               className="flex items-start gap-3.5"
             >
               <span
                 aria-hidden="true"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft"
+                className="stt-trust-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft transition-transform duration-300"
+                style={{ animationDelay: `${index * 1.4}s` }}
               >
                 <item.icon className="h-5 w-5 text-primary-strong" />
               </span>

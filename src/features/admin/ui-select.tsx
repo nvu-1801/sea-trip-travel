@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 export type SelectOption = { value: string; label: string };
 
@@ -85,6 +85,112 @@ export function AdmSelect({
             {!filtered.length && <span className="adm-select-empty">Không tìm thấy</span>}
           </div>
           <button type="button" className="adm-select-close" onClick={() => setOpen(false)}>Đóng</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Pretty status filter — thay <select> native (xấu, highlight xanh) bằng dropdown custom. */
+export function AdmFilterSelect({
+  value,
+  options,
+  label = "Trạng thái nội dung",
+  onChange,
+}: {
+  value: string;
+  options: { value: string; label: string; count?: number }[];
+  label?: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const current =
+    options.find((o) => o.value === value) ?? options[0] ?? null;
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open ]);
+
+  return (
+    <div className="adm-filter" ref={wrapRef}>
+      <button
+        type="button"
+        className="adm-filter-btn"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={label}
+        data-open={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span
+          className={`adm-filter-dot adm-filter-dot--${current?.value ?? "all"}`}
+          aria-hidden="true"
+        />
+        <span className="adm-filter-current">{current?.label ?? "Tất cả"}</span>
+        {typeof current?.count === "number" && (
+          <span className="adm-filter-count">{current.count}</span>
+        )}
+        <svg
+          className="adm-filter-caret"
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M4 6l4 4 4-4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {open && (
+        <div className="adm-filter-pop" role="listbox" aria-label={label}>
+          {options.map((o) => {
+            const active = o.value === value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                role="option"
+                aria-selected={active}
+                data-active={active}
+                className="adm-filter-opt"
+                onClick={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                }}
+              >
+                <span
+                  className={`adm-filter-dot adm-filter-dot--${o.value}`}
+                  aria-hidden="true"
+                />
+                <span className="adm-filter-opt-label">{o.label}</span>
+                {typeof o.count === "number" && (
+                  <span className="adm-filter-pill">{o.count}</span>
+                )}
+                <span className="adm-filter-check" aria-hidden="true">
+                  {active ? "✓" : ""}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

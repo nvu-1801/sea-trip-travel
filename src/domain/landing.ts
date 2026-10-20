@@ -22,6 +22,21 @@ const faqSchema = z.object({
   tagEn: z.string().max(40).default(""),
 });
 
+const trustItemSchema = z.object({
+  icon: z.enum(["calendar", "shield", "compass", "users"]),
+  title: z.string().min(1).max(120),
+  titleEn: z.string().max(120).default(""),
+  body: z.string().min(1).max(300),
+  bodyEn: z.string().max(300).default(""),
+});
+
+const principleSchema = z.object({
+  title: z.string().min(1).max(120),
+  titleEn: z.string().max(120).default(""),
+  body: z.string().min(1).max(600),
+  bodyEn: z.string().max(600).default(""),
+});
+
 export const landingSchema = z.object({
   id: z.literal("home-sections"),
   finder: z.object({
@@ -58,12 +73,29 @@ export const landingSchema = z.object({
     moodsEn: z.array(z.string().max(60)).max(8).default([]),
   }),
   values: z.object({
-    photoSrc: z.string().startsWith("/").max(300).default("/images/hero/sea-kayaking.webp"),
-    photoAlt: z.string().max(300).default("Ảnh minh hoạ chèo thuyền trên biển"),
-    photoAltEn: z.string().max(300).default("Illustration of kayaking on the sea"),
+    photoSrc: z.string().startsWith("/").max(300).default("/images/hero/island-panorama.webp"),
+    photoAlt: z.string().max(300).default("Toàn cảnh vịnh biển và đảo Quy Nhơn"),
+    photoAltEn: z.string().max(300).default("Panoramic view of Quy Nhon bay islands"),
     badge: z.string().max(120).default("Đi chậm, chọn kỹ, nhớ lâu"),
     badgeEn: z.string().max(120).default("Handpicked, unhurried journeys"),
+    principles: z.array(principleSchema).max(6).default([]),
   }),
+  trust: z
+    .object({
+      items: z.array(trustItemSchema).max(6).default([]),
+    })
+    .default({ items: [] }),
+  featured: z
+    .object({
+      tourIds: z.array(z.string().min(1).max(80)).max(8).default([]),
+    })
+    .default({ tourIds: [] }),
+  guides: z
+    .object({
+      featuredSlug: z.string().max(120).default(""),
+      picks: z.array(z.string().min(1).max(120)).max(3).default([]),
+    })
+    .default({ featuredSlug: "", picks: [] }),
 });
 
 export type LandingSections = z.infer<typeof landingSchema>;
@@ -117,10 +149,31 @@ export const defaultLanding: LandingSections = landingSchema.parse({
     moodsEn: ["Mountains & heritage", "Coast & ancient towns", "Islands & waterways", "Pines & highland mornings"],
   },
   values: {
-    photoSrc: "/images/hero/sea-kayaking.webp",
-    photoAlt: "Ảnh minh hoạ chèo thuyền trên biển",
-    photoAltEn: "Illustration of kayaking on the sea",
+    photoSrc: "/images/hero/island-panorama.webp",
+    photoAlt: "Toàn cảnh vịnh biển và đảo Quy Nhơn",
+    photoAltEn: "Panoramic view of Quy Nhon bay islands",
     badge: "Đi chậm, chọn kỹ, nhớ lâu",
     badgeEn: "Handpicked, unhurried journeys",
+    principles: [
+      { title: "Chọn ít điểm, đi sâu hơn", titleEn: "Fewer places, deeper stays", body: "Mỗi hành trình tập trung vào một cụm điểm thay vì chạy qua nhiều nơi. Thời gian di chuyển được tính trước để bạn có thời gian thật ở mỗi điểm.", bodyEn: "Each journey focuses on one cluster of places instead of rushing through many. Travel time is planned up front so you get real time at each stop." },
+      { title: "Lịch trình nói rõ bao gồm gì", titleEn: "Itineraries that say what is included", body: "Mỗi tour đều liệt kê dịch vụ bao gồm và không bao gồm. Giá chưa xác nhận sẽ hiển thị “Liên hệ tư vấn”, không hiển thị số 0.", bodyEn: "Every tour lists what is and is not included. A price that is not confirmed shows “Contact us for pricing”, never a zero." },
+      { title: "Tư vấn trực tiếp, không ép", titleEn: "Direct advice, no pressure", body: "Website chỉ tiếp nhận yêu cầu. Bạn trao đổi với tư vấn viên, xem giá và điều kiện, rồi mới quyết định.", bodyEn: "This website only takes requests. You talk to an advisor, see the price and the conditions, then decide." },
+      { title: "Nói thật khi chưa chắc", titleEn: "Honest when we are unsure", body: "Những nội dung cần xác nhận như giá, chính sách huỷ hay thời điểm tàu chạy sẽ được kiểm tra lại trước khi gửi cho bạn.", bodyEn: "Anything that needs confirming — prices, cancellation terms, boat schedules — is checked again before we send it to you." },
+    ],
+  },
+  trust: {
+    items: [
+      { icon: "calendar", title: "Lịch trình rõ từng ngày", titleEn: "Day-by-day itinerary", body: "Mỗi trang tour ghi rõ ngày nào đi đâu.", bodyEn: "Every tour page lists what happens each day." },
+      { icon: "shield", title: "Giá công khai", titleEn: "Upfront pricing", body: "Niêm yết giá trước khi tư vấn.", bodyEn: "Published prices before you ask for advice." },
+      { icon: "compass", title: "Tư vấn miễn phí", titleEn: "Free consultation", body: "Gợi ý tuyến và thời điểm, không mất phí.", bodyEn: "Route and timing advice costs nothing." },
+      { icon: "users", title: "Đồng hành suốt chuyến", titleEn: "Support on the road", body: "Đội ngũ thật theo sát hành trình của bạn.", bodyEn: "A real team follows your trip with you." },
+    ],
+  },
+  featured: {
+    tourIds: [],
+  },
+  guides: {
+    featuredSlug: "",
+    picks: [],
   },
 });

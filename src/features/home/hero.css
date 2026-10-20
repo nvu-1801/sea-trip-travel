@@ -247,6 +247,41 @@
 }
 .stt-hero-editorial .stt-hero-badge {
   border-radius: 4px 20px 20px 20px;
+  animation: stt-hero-badge-float 5.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .stt-hero-bloom {
+    animation: stt-bloom-breathe 9s ease-in-out infinite alternate;
+  }
+  .stt-hero-editorial p[data-entrance] svg {
+    animation: stt-sparkle-spin 7s ease-in-out infinite;
+  }
+}
+@keyframes stt-hero-badge-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+@keyframes stt-bloom-breathe {
+  0%, 100% {
+    transform: scale(1) translate3d(0, 0, 0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.08) translate3d(10px, -14px, 0);
+    opacity: 0.65;
+  }
+}
+@keyframes stt-sparkle-spin {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.15);
+  }
 }
 .stt-hero-editorial [data-parallax] img {
   object-position: var(--hero-position, 50% 50%);

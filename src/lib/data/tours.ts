@@ -1,6 +1,7 @@
 import { published } from "@/server/cms/store";
 import { tours as seed_tours } from "@/content";
 const current_tours = () => published("tours", seed_tours);
+import { landingSections } from "@/server/cms/store";
 import type { Tour } from "@/domain/tour";
 import type { Locale } from "@/i18n/config";
 import { getAllDescendantCategoryIds } from "./internal";
@@ -37,8 +38,23 @@ export function getToursByCategoryId(
 /**
  * Home-page feature set. Prefers the Quy Nhơn – Phú Yên line-up (the site's
  * focus) and tops up with other regions so the section never looks empty.
+ *
+ * When the admin pins tour IDs in `landing.featured.tourIds`, those tours
+ * come first (unknown IDs are ignored); the automatic line-up only tops up
+ * the remainder so the section never looks empty.
  */
 export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
+  const all = current_tours();
+  let pinned: typeof all = [];
+  try {
+    const ids = landingSections().featured.tourIds;
+    if (ids.length > 0) {
+      const byId = new Map(all.map((tour) => [tour.id, tour]));
+      pinned = ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+    }
+  } catch {
+    // fall through to the automatic line-up
+  }
   const focus = new Set(getAllDescendantCategoryIds("cat_quy_nhon_phu_yen"));
   const inFocus = current_tours().filter((tour) =>
     tour.categoryIds.some((id) => focus.has(id)),
@@ -54,7 +70,9 @@ export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
     ...current_tours().filter((tour) => !inFocus.includes(tour)),
   ];
   const chosen = [
-    ...new Map(diverse.map((tour) => [tour.id, tour])).values(),
+    ...new Map(
+      [...pinned, ...diverse].map((tour) => [tour.id, tour]),
+    ).values(),
   ].slice(0, limit);
   return chosen.map((tour) => resolveTour(tour, locale));
 }

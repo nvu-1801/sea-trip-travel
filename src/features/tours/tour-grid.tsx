@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Reveal } from "@/components/ui/reveal";
 import { TourCard, type TourCardModel } from "./tour-card";
 
 export function TourGrid({
@@ -27,9 +28,14 @@ export function TourGrid({
       )}
     >
       {tours.map((tour, index) => (
-        <li key={tour.slug} data-reveal="" className="flex">
+        <Reveal
+          as="li"
+          key={tour.slug}
+          delay={index % 3}
+          className="flex"
+        >
           <TourCard tour={tour} priority={index < priorityCount} />
-        </li>
+        </Reveal>
       ))}
     </ul>
   );

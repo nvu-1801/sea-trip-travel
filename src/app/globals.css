@@ -355,6 +355,17 @@ html:not([lang="en"]) .nf-lang-en {
   box-shadow: var(--shadow-soft);
 }
 
+@keyframes stt-dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 3px rgba(209, 0, 83, 0.14);
+  }
+  50% {
+    transform: scale(1.18);
+    box-shadow: 0 0 0 6px rgba(209, 0, 83, 0.26);
+  }
+}
+
 .eyebrow-pill > span {
   width: 7px;
   height: 7px;
@@ -364,6 +375,7 @@ html:not([lang="en"]) .nf-lang-en {
     var(--color-primary-strong),
     var(--color-sun-400)
   );
+  animation: stt-dot-pulse 3.5s ease-in-out infinite;
 }
 
 .intro-centered h2 {
@@ -652,6 +664,108 @@ select option {
   }
 }
 
+/* =============================================================================
+   SEA TRIP 3D Luxury Editorial Reveal (Zero Flicker & Organic 3D Depth)
+   ============================================================================= */
+
+.stt-reveal-3d {
+  backface-visibility: hidden;
+  -webkit-font-smoothing: subpixel-antialiased;
+  transform-origin: center bottom;
+  will-change: opacity, transform;
+}
+
+/* Base transitions */
+.stt-reveal-3d[data-revealed="false"],
+.stt-reveal-3d[data-revealed="true"] {
+  transition:
+    opacity 820ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 820ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 3D Rise (Default) */
+.stt-reveal-3d[data-reveal-3d="rise"][data-revealed="false"] {
+  opacity: 0;
+  transform: perspective(1200px) translateY(38px) rotateX(6deg) scale(0.975);
+}
+.stt-reveal-3d[data-reveal-3d="rise"][data-revealed="true"] {
+  opacity: 1;
+  transform: perspective(1200px) translateY(0) rotateX(0deg) scale(1);
+}
+
+/* 3D Left */
+.stt-reveal-3d[data-reveal-3d="left"][data-revealed="false"] {
+  opacity: 0;
+  transform: perspective(1200px) translateX(-38px) rotateY(-6deg) scale(0.975);
+}
+.stt-reveal-3d[data-reveal-3d="left"][data-revealed="true"] {
+  opacity: 1;
+  transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1);
+}
+
+/* 3D Right */
+.stt-reveal-3d[data-reveal-3d="right"][data-revealed="false"] {
+  opacity: 0;
+  transform: perspective(1200px) translateX(38px) rotateY(6deg) scale(0.975);
+}
+.stt-reveal-3d[data-reveal-3d="right"][data-revealed="true"] {
+  opacity: 1;
+  transform: perspective(1200px) translateX(0) rotateY(0deg) scale(1);
+}
+
+/* 3D Zoom Emergence */
+.stt-reveal-3d[data-reveal-3d="zoom"][data-revealed="false"] {
+  opacity: 0;
+  transform: perspective(1200px) translateY(24px) translateZ(-50px) rotateX(4deg) scale(0.95);
+}
+.stt-reveal-3d[data-reveal-3d="zoom"][data-revealed="true"] {
+  opacity: 1;
+  transform: perspective(1200px) translateY(0) translateZ(0) rotateX(0deg) scale(1);
+}
+
+/* Mobile: softer angles for optimal text sharpness */
+@media (max-width: 767px) {
+  .stt-reveal-3d[data-reveal-3d="rise"][data-revealed="false"] {
+    transform: perspective(800px) translateY(20px) rotateX(3.5deg) scale(0.985);
+  }
+  .stt-reveal-3d[data-reveal-3d="left"][data-revealed="false"] {
+    transform: perspective(800px) translateX(-20px) rotateY(-3.5deg) scale(0.985);
+  }
+  .stt-reveal-3d[data-reveal-3d="right"][data-revealed="false"] {
+    transform: perspective(800px) translateX(20px) rotateY(3.5deg) scale(0.985);
+  }
+  .stt-reveal-3d[data-reveal-3d="zoom"][data-revealed="false"] {
+    transform: perspective(800px) translateY(16px) translateZ(-30px) scale(0.97);
+  }
+}
+
+/* Reduced motion, paused & print overrides */
+@media (prefers-reduced-motion: reduce) {
+  .stt-reveal-3d,
+  .stt-reveal-3d[data-revealed="false"],
+  .stt-reveal-3d[data-revealed="true"] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+html[data-motion-paused="true"] .stt-reveal-3d,
+html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="false"],
+html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+@media print {
+  .stt-reveal-3d,
+  .stt-reveal-3d[data-revealed="false"],
+  .stt-reveal-3d[data-revealed="true"] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 @keyframes stt-entrance {
   from {
     opacity: 0;
@@ -712,12 +826,15 @@ select option {
 
 .stt-tour-card {
   border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #fffbfd 100%);
   transition:
     border-color 280ms ease,
-    box-shadow 360ms ease;
+    box-shadow 360ms ease,
+    transform 420ms var(--ease-out-soft);
 }
 .stt-card-media {
   border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(135deg, #234844 0%, #0e5a56 100%);
 }
 /* Horizontal spotlight: photo column gets a right rule instead of a bottom
    one on sm and up. */
@@ -731,7 +848,7 @@ select option {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 55%, rgb(9 46 48 / 0.38) 100%);
+  background: linear-gradient(180deg, rgb(9 46 48 / 0.06) 0%, transparent 40%, rgb(9 46 48 / 0.42) 100%);
 }
 .stt-card-pill {
   display: inline-flex;
@@ -746,6 +863,25 @@ select option {
   box-shadow: 0 8px 20px rgb(33 61 59 / 0.16);
   backdrop-filter: blur(8px);
 }
+@keyframes stt-badge-pulse {
+  0%, 100% {
+    box-shadow: 0 8px 20px rgb(209 0 83 / 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 10px 24px rgb(209 0 83 / 0.6), 0 0 0 3px rgb(255 3 102 / 0.18);
+    transform: scale(1.02);
+  }
+}
+@keyframes stt-price-bob {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -3px, 0);
+  }
+}
+
 /* Editorial pick (Bestseller/Honeymoon-style badge). Rendered only when the
    owner sets `badge` on the tour — never auto-derived. */
 .stt-card-badge {
@@ -759,6 +895,7 @@ select option {
   font-weight: 800;
   color: #fff;
   box-shadow: 0 8px 20px rgb(209 0 83 / 0.4);
+  animation: stt-badge-pulse 4s ease-in-out infinite;
 }
 .stt-card-price-float {
   position: absolute;
@@ -771,6 +908,7 @@ select option {
   font-weight: 800;
   padding: 7px 14px;
   box-shadow: 0 12px 26px rgb(209 0 83 / 0.4);
+  animation: stt-price-bob 4.5s ease-in-out infinite;
 }
 .stt-card-dest {
   display: flex;
@@ -783,11 +921,16 @@ select option {
   color: var(--color-primary-strong);
 }
 .stt-card-title {
-  font-size: 19px;
-  font-weight: 800;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 20px;
+  font-weight: 600;
   line-height: 1.35;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   color: var(--color-ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .stt-card-summary {
   font-size: 14px;
@@ -936,13 +1079,17 @@ select option {
 @media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
   .stt-tour-card {
     transition:
-      transform 420ms var(--ease-out-soft),
+      transform 450ms var(--ease-out-soft),
       border-color 280ms ease,
-      box-shadow 360ms ease;
+      box-shadow 400ms ease;
+    transform-style: preserve-3d;
   }
 
   .stt-tour-card:hover {
-    transform: translateY(-0.3rem);
+    transform: translateY(-0.35rem) perspective(1000px) rotateX(1.5deg);
+    box-shadow:
+      0 20px 44px -10px rgb(122 0 49 / 0.16),
+      0 6px 16px -4px rgb(33 61 59 / 0.08);
   }
 
   .stt-tour-card:hover .stt-card-photo {
@@ -984,6 +1131,45 @@ select option {
   100% {
     box-shadow: 0 0 0 0.85rem rgb(255 3 102 / 0);
   }
+}
+
+@keyframes stt-wave-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgb(209 0 83 / 0);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 6px rgb(209 0 83 / 0.14);
+  }
+}
+
+.stt-trust-icon {
+  animation: stt-wave-pulse 6s ease-in-out infinite;
+}
+
+@keyframes stt-phone-buzz {
+  0%, 84%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  87% {
+    transform: scale(1.15) rotate(-10deg);
+  }
+  90% {
+    transform: scale(1.15) rotate(10deg);
+  }
+  93% {
+    transform: scale(1.15) rotate(-6deg);
+  }
+  96% {
+    transform: scale(1.08) rotate(0deg);
+  }
+}
+
+.stt-phone-buzz {
+  animation: stt-phone-buzz 7s ease-in-out infinite;
+  transform-origin: center;
+  display: inline-block;
 }
 
 /* Subtle one-shot entrance for hero elements (not scroll-linked). */
@@ -1667,7 +1853,12 @@ html[data-motion-paused="true"] [data-reveal],
 html[data-motion-paused="true"] [data-parallax],
 html[data-motion-paused="true"] .stt-hero-bloom,
 html[data-motion-paused="true"] .stt-mask-reveal,
-html[data-motion-paused="true"] .stt-coastal-lines {
+html[data-motion-paused="true"] .stt-coastal-lines,
+html[data-motion-paused="true"] .stt-trust-icon,
+html[data-motion-paused="true"] .stt-phone-buzz,
+html[data-motion-paused="true"] .stt-card-badge,
+html[data-motion-paused="true"] .stt-card-price-float,
+html[data-motion-paused="true"] .eyebrow-pill > span {
   animation: none !important;
   transform: none !important;
   opacity: 1 !important;
