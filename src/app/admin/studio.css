@@ -645,32 +645,6 @@ form {
   line-height: 1.6;
   margin: 0 0 16px;
 }
-.adm-login-help {
-  font-size: 12px;
-  color: #6e5c68;
-  max-width: 520px;
-}
-.adm-login-help summary {
-  cursor: pointer;
-  font-weight: 700;
-  color: #e0005a;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-}
-.adm-login-help pre {
-  background: #fdf0f5;
-  border: 1px solid #f2dde7;
-  border-radius: 11px;
-  padding: 12px 14px;
-  overflow-x: auto;
-  font-size: 11px;
-  line-height: 1.7;
-  color: #211621;
-}
-.adm-login-help code {
-  font-size: 11px;
-}
 .adm-login-art {
   position: relative;
   overflow: hidden;

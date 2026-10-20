@@ -118,9 +118,9 @@ export function DesktopNav({
   const itemClass = (active: boolean, expanded = false) =>
     cn(
       "group/item relative inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2",
-      "text-[0.8125rem] font-semibold transition-colors duration-200 hover:bg-primary-soft/70",
+      "text-[0.8125rem] font-semibold transition-all duration-200 hover:bg-primary-soft/70",
       active || expanded
-        ? "text-primary-strong"
+        ? "bg-white/70 text-primary-strong shadow-[0_4px_16px_rgba(224,0,90,0.12)] backdrop-blur-xl"
         : "text-foreground hover:text-primary-strong",
     );
 
@@ -218,12 +218,12 @@ export function DesktopNav({
 
                 <div
                   className={cn(
-                    "absolute left-0 top-[calc(100%+0.65rem)] z-50 w-[19rem] origin-top",
-                    "rounded-2xl border border-border bg-surface p-2 shadow-lifted",
-                    "transition-[opacity,transform,visibility] duration-200 ease-out",
+                    "absolute left-0 top-[calc(100%+0.65rem)] z-50 w-[19rem] origin-top overflow-hidden",
+                    "rounded-[1.5rem] border border-white/60 bg-white/70 p-3 shadow-[0_24px_70px_-12px_rgba(120,10,50,0.35)] backdrop-blur-2xl backdrop-saturate-150",
+                    "transition-[opacity,transform,filter,visibility] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
                     expanded
-                      ? "visible translate-y-0 scale-100 opacity-100"
-                      : "invisible -translate-y-2 scale-[0.98] opacity-0",
+                      ? "visible translate-y-0 scale-100 opacity-100 blur-0"
+                      : "invisible -translate-y-2 scale-[0.97] opacity-0 blur-[3px]",
                   )}
                   onKeyDown={(event) => {
                     if (event.key === "Escape") {
@@ -236,18 +236,26 @@ export function DesktopNav({
                     }
                   }}
                 >
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#ff7ab8]/30 blur-2xl"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="brand-gradient pointer-events-none absolute inset-x-6 top-0 h-px opacity-70"
+                  />
                   <Link
                     href={localizePath(locale, item.href)}
                     data-nav-panel-link=""
                     tabIndex={expanded ? 0 : -1}
                     onClick={() => applyOpen(null)}
-                    className="group/overview relative block overflow-hidden rounded-xl bg-primary-soft px-3.5 py-3 text-sm font-bold whitespace-nowrap text-primary-strong transition-colors hover:bg-brand-100"
+                    className="group/overview relative block overflow-hidden rounded-2xl border border-white/60 bg-gradient-to-r from-[#e0005a]/[0.08] via-[#ff5c99]/[0.10] to-[#ffd166]/[0.18] px-3.5 py-3 text-sm font-bold whitespace-nowrap text-primary-strong shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl transition-all duration-200 hover:shadow-[0_10px_28px_rgba(224,0,90,0.20)]"
                   >
                     <span className="flex items-center justify-between gap-2">
                       {allOf}
                       <span
                         aria-hidden="true"
-                        className="h-1.5 w-1.5 rounded-full bg-brand-400 transition-transform duration-300 group-hover/overview:scale-150"
+                        className="h-1.5 w-1.5 rounded-full bg-brand-400 shadow-[0_0_10px_2px_rgba(255,3,102,0.45)] transition-transform duration-300 group-hover/overview:scale-150"
                       />
                     </span>
                   </Link>
@@ -270,10 +278,10 @@ export function DesktopNav({
                             currentPath === child.href ? "page" : undefined
                           }
                           className={cn(
-                            "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-semibold whitespace-nowrap transition-all duration-200 hover:-translate-y-px",
+                            "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-semibold whitespace-nowrap backdrop-blur-xl transition-all duration-200 hover:-translate-y-px",
                             currentPath === child.href
-                              ? "border-primary-strong bg-primary-soft text-primary-strong shadow-[0_6px_16px_#e0005a18]"
-                              : "border-border-strong bg-surface text-foreground-muted hover:border-primary-strong hover:bg-primary-soft hover:text-primary-strong hover:shadow-[0_6px_16px_#e0005a18]",
+                              ? "border-primary-strong/40 bg-white/80 text-primary-strong shadow-[0_8px_20px_rgba(224,0,90,0.22)]"
+                              : "border-white/70 bg-white/55 text-foreground-muted shadow-[0_2px_10px_rgba(120,10,50,0.08)] hover:border-primary-strong/40 hover:bg-white/90 hover:text-primary-strong hover:shadow-[0_10px_24px_rgba(224,0,90,0.22)]",
                           )}
                         >
                           {labels.nav[child.labelKey]}

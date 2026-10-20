@@ -234,7 +234,7 @@ const GUIDES: Record<string, Guide> = {
     result:
       "Đổi xong phải đăng nhập lại; phiên cũ trên mọi thiết bị hết hiệu lực.",
     pitfalls:
-      "Quên mật khẩu thì chỉ đặt lại bằng lệnh reset trên máy chủ — xem mục Quên mật khẩu ở trang đăng nhập.",
+      "Quên mật khẩu thì chỉ chủ hệ thống đặt lại được bằng lệnh reset trên máy chủ.",
   },
 };
 export function Dashboard({
@@ -560,30 +560,6 @@ export function Dashboard({
               {notice}
             </p>
           )}
-          <details className="adm-login-help">
-            <summary>Quên mật khẩu?</summary>
-            <p>
-              Chỉ chủ hệ thống đặt lại được, bằng lệnh trên máy chủ (mọi phiên
-              đăng nhập cũ sẽ bị thu hồi):
-            </p>
-            <ol>
-              <li>
-                Mở terminal trên máy chủ, đặt biến môi trường (không gõ mật khẩu
-                trực tiếp vào lệnh):
-              </li>
-            </ol>
-            <pre>
-              ADMIN_USERNAME=&lt;tên-đăng-nhập&gt;{"\n"}
-              ADMIN_PASSWORD=&lt;mật-khẩu-14+-ký-tự&gt;{"\n"}
-              npm run admin -- reset
-            </pre>
-            <p>
-              Trên Docker xem <code>docs/VPS-DEPLOY.md</code> mục bootstrap
-              (dùng <code>read -s</code>, xóa biến sau khi xong). Tài khoản được
-              tạo bằng lệnh quản trị, không có đăng ký công khai hay gửi email
-              đặt lại.
-            </p>
-          </details>
         </section>
         <div className="adm-login-art" aria-hidden="true">
           <div className="adm-login-art-photo" />
