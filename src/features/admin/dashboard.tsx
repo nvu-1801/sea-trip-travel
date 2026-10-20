@@ -586,11 +586,25 @@ export function Dashboard({
           </details>
         </section>
         <div className="adm-login-art" aria-hidden="true">
-          <span>
-            Những chuyến đi
-            <br />
-            bắt đầu từ đây.
-          </span>
+          <div className="adm-login-art-photo" />
+          <div className="adm-login-art-shade" />
+          <div className="adm-login-art-orb adm-login-art-orb-a" />
+          <div className="adm-login-art-orb adm-login-art-orb-b" />
+          <div className="adm-login-art-card">
+            <p className="adm-login-art-eyebrow">SEA TRIP · Studio</p>
+            <span className="adm-login-art-quote">
+              Những chuyến đi
+              <br />
+              <em>bắt đầu từ đây.</em>
+            </span>
+            <p className="adm-login-art-caption">
+              Chăm chút từng hành trình, từ Kỳ Co đến Phú Yên.
+            </p>
+            <p className="adm-login-art-chips">
+              <span>Quy Nhơn – Phú Yên</span>
+              <span>Tour trong nước</span>
+            </p>
+          </div>
         </div>
       </main>
     );
