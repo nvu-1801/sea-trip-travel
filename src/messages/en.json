@@ -396,9 +396,13 @@
     "genericError": "We could not send your request. Please check your connection and try again, or call our hotline for help.",
     "networkError": "We could not reach the system. Please check your connection and try again.",
     "success": {
-      "title": "We received your request",
+      "eyebrow": "Request received",
+      "title": "Thank you for choosing SEA TRIP!",
+      "description": "We have received your details and look forward to helping you plan your next getaway.",
+      "nextStep": "We'll be in touch",
+      "referenceHint": "Keep this reference handy when speaking with our team.",
       "requestId": "Request ID:",
-      "body": "The SEA TRIP advisory team will contact you during working hours. If you need to talk sooner, you can call the hotline for a faster reply.",
+      "body": "An advisor will call the phone number you provided during working hours to help you find the right itinerary. For immediate assistance, call our hotline below.",
       "callHotline": "Call hotline",
       "sendAnother": "Send another request"
     },

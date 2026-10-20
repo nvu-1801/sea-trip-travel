@@ -81,12 +81,12 @@ export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
-  const { progress } = useSyncExternalStore(
+  const { condensed } = useSyncExternalStore(
     subscribeToScroll,
     getScrollSnapshot,
     getServerScrollSnapshot,
   );
-  const showBackToTop = progress > 0.06;
+  const showBackToTop = condensed;
 
   const items: readonly ContactItem[] = [
     {
@@ -173,10 +173,11 @@ export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
         type="button"
         onClick={scrollToTop}
         aria-label={labels.backToTop}
+        title={labels.backToTop}
         tabIndex={showBackToTop ? 0 : -1}
         aria-hidden={!showBackToTop}
         className={cn(
-          "pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface/95 text-foreground shadow-card backdrop-blur-sm",
+          "pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-foreground shadow-card",
           "transition-[opacity,transform,visibility] duration-300 ease-out hover:border-primary hover:text-primary-strong",
           showBackToTop
             ? "visible translate-y-0 scale-100 opacity-100"
@@ -189,7 +190,8 @@ export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
       {/* Contact channels. The id is the target of the toggle's aria-controls. */}
       <ul
         id="floating-contact-list"
-        className="flex flex-col items-end gap-2.5"
+        aria-hidden={!open}
+        className={cn("flex flex-col items-end gap-2.5", !open && "hidden")}
       >
         {items
           .filter((item) => item.href)

@@ -1,4 +1,5 @@
 import "@/features/home/home-editorial.css";
+import { HeadingAccent } from "@/components/ui/heading-accent";
 import { JourneyStory, PlanningSection } from "@/features/home/journey-story";
 import type { Metadata } from "next";
 import { siteConfig } from "@/config/runtime-site";
@@ -75,7 +76,10 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const indexable = homeIndexable(locale);
 
   return (
-    <div className="home-editorial">
+    <div className="home-editorial" data-idle-scope>
+      <div className="home-brand-background" aria-hidden="true">
+        <span className="home-brand-wordmark">SEA TRIP</span>
+      </div>
       {indexable ? null : <TranslationNotice locale={locale} />}
       <Hero locale={locale} />
       <QuickFinder locale={locale} />
@@ -91,7 +95,12 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         locale={locale}
         tone="muted"
         spacing="loose"
-        title={m.home.consult.title}
+        title={
+          <HeadingAccent
+            text={m.home.consult.title}
+            phrase={locale === "en" ? "Which trip" : "chuyến đi nào"}
+          />
+        }
         description={m.home.consult.description}
       />
     </div>

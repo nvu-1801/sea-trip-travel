@@ -102,8 +102,8 @@ export const heroPhotos = [
 export const defaultHero: HeroConfig = heroSchema.parse({
   id: "home",
   mode: "carousel",
-  autoplay: false,
-  intervalSeconds: 8,
+  autoplay: true,
+  intervalSeconds: 5,
   primaryHref: "/tour-quy-nhon-phu-yen",
   secondaryHref: "/lien-he",
   vi: {},

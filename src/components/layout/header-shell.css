@@ -1,3 +1,11 @@
+/* Explicit state styles keep the sticky navigation opaque over page content. */
+.stt-site-header[data-overlay="false"] {
+  background-color: var(--color-surface, #fff);
+  color: var(--color-foreground, #211621);
+  border-bottom-color: var(--color-border, #f2dde7);
+  box-shadow: 0 8px 28px -18px rgb(122 0 49 / 0.4);
+}
+
 /* Only the home carousel places navigation directly over photography. */
 body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] {
   color: white;

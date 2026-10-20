@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeadingAccent } from "@/components/ui/heading-accent";
 import { ROUTES } from "@/config/navigation";
 import {
   getFeaturedArticle,
@@ -42,7 +43,12 @@ export function GuidesSection({ locale }: { locale: Locale }) {
             <span aria-hidden="true" />
             {m.home.guides.eyebrow}
           </p>
-          <h2>{m.home.guides.title}</h2>
+          <h2>
+            <HeadingAccent
+              text={m.home.guides.title}
+              phrase={locale === "en" ? "you set off" : "khi lên đường"}
+            />
+          </h2>
           <p>{m.home.guides.description}</p>
           <div className="intro-cta">
             <ButtonLink

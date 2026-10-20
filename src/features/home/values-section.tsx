@@ -1,4 +1,5 @@
 import { ROUTES } from "@/config/navigation";
+import { HeadingAccent } from "@/components/ui/heading-accent";
 import { Container, Section } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
@@ -20,14 +21,22 @@ export function ValuesSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
   let visual = {
     src: "/images/hero/sea-kayaking.webp" as string,
-    alt: locale === "en" ? "Illustration of kayaking on the sea" : "Ảnh minh hoạ chèo thuyền trên biển",
-    badge: locale === "en" ? "Handpicked, unhurried journeys" : "Đi chậm, chọn kỹ, nhớ lâu",
+    alt:
+      locale === "en"
+        ? "Illustration of kayaking on the sea"
+        : "Ảnh minh hoạ chèo thuyền trên biển",
+    badge:
+      locale === "en"
+        ? "Handpicked, unhurried journeys"
+        : "Đi chậm, chọn kỹ, nhớ lâu",
   };
   try {
     const v = landingSections().values;
     visual = {
       src: v.photoSrc || visual.src,
-      alt: (locale === "en" ? v.photoAltEn || v.photoAlt : v.photoAlt) || visual.alt,
+      alt:
+        (locale === "en" ? v.photoAltEn || v.photoAlt : v.photoAlt) ||
+        visual.alt,
       badge: (locale === "en" ? v.badgeEn || v.badge : v.badge) || visual.badge,
     };
   } catch {
@@ -35,14 +44,23 @@ export function ValuesSection({ locale }: { locale: Locale }) {
   }
 
   return (
-    <Section tone="sunken" spacing="loose" className="journal-values values-premium">
+    <Section
+      tone="sunken"
+      spacing="loose"
+      className="journal-values values-premium"
+    >
       <Container>
         <Reveal className="intro-centered">
           <p className="eyebrow-pill">
             <span aria-hidden="true" />
             {m.home.values.eyebrow}
           </p>
-          <h2>{m.home.values.title}</h2>
+          <h2>
+            <HeadingAccent
+              text={m.home.values.title}
+              phrase={locale === "en" ? "an experience" : "trải nghiệm"}
+            />
+          </h2>
           <p>{m.home.values.description}</p>
         </Reveal>
         <div className="values-grid">
@@ -60,7 +78,9 @@ export function ValuesSection({ locale }: { locale: Locale }) {
                   <strong>{visual.badge}</strong>
                 </div>
                 <div className="values-float values-float-bottom">
-                  <p className="values-float-label">{m.home.values.cardLabel}</p>
+                  <p className="values-float-label">
+                    {m.home.values.cardLabel}
+                  </p>
                   <p className="values-float-tagline">{m.site.tagline}</p>
                 </div>
               </div>
@@ -71,10 +91,7 @@ export function ValuesSection({ locale }: { locale: Locale }) {
             <ol className="values-timeline">
               {m.home.values.principles.map((principle, index) => (
                 <Reveal as="li" key={principle.title} className="values-item">
-                  <span
-                    aria-hidden="true"
-                    className="values-num"
-                  >
+                  <span aria-hidden="true" className="values-num">
                     {index + 1}
                   </span>
                   <div className="values-item-card">

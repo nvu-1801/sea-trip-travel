@@ -13,6 +13,8 @@ import {
   AlertIcon,
   SendIcon,
   SpinnerIcon,
+  PhoneIcon,
+  ClockIcon,
 } from "@/components/ui/icons";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { DatePicker, type DatePickerLabels } from "@/components/ui/date-picker";
@@ -72,7 +74,11 @@ export type LeadFormLabels = {
   genericError: string;
   networkError: string;
   success: {
+    eyebrow: string;
     title: string;
+    description: string;
+    nextStep: string;
+    referenceHint: string;
     requestId: string;
     body: string;
     callHotline: string;
@@ -308,42 +314,64 @@ export function LeadForm({
     return (
       <div
         className={cn(
-          "flex flex-col items-start gap-4 rounded-2xl border border-success/25 bg-success-soft p-6 sm:p-8",
+          "relative isolate overflow-hidden rounded-3xl border border-success/20 bg-surface p-6 shadow-card sm:p-8",
           className,
         )}
         role="status"
         aria-live="polite"
       >
-        <CheckCircleIcon className="h-10 w-10 text-success" />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-gradient-to-b from-success-soft to-transparent" />
+        <div aria-hidden="true" className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-success/15 bg-surface shadow-soft">
+          <CheckCircleIcon className="h-9 w-9 text-success" />
+        </div>
         <div>
-          <h3 className="text-xl font-bold text-foreground">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-success">
+            {labels.success.eyebrow}
+          </p>
+          <h3 className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
             {labels.success.title}
           </h3>
+          <p className="mt-3 text-[0.9375rem] leading-relaxed text-foreground-muted">
+            {labels.success.description}
+          </p>
+        </div>
+        <div className="my-6 rounded-2xl border border-border bg-surface-muted/40 p-4 sm:p-5">
           {requestId ? (
-            <p className="mt-1 text-sm text-foreground-muted">
-              {labels.success.requestId}{" "}
-              <strong className="font-semibold text-foreground">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm text-foreground-muted">{labels.success.requestId}</span>
+              <strong className="break-all font-mono text-sm font-semibold tracking-wide text-foreground">
                 {requestId}
               </strong>
-            </p>
+            </div>
           ) : null}
+          <p className="mt-2 text-xs leading-relaxed text-foreground-muted">
+            {labels.success.referenceHint}
+          </p>
         </div>
-        <p className="text-[0.9375rem] leading-relaxed text-foreground-muted">
-          {labels.success.body}
-        </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="mb-6 flex items-start gap-3">
+          <ClockIcon aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-primary-strong" />
+          <div>
+            <h4 className="text-sm font-semibold text-foreground">{labels.success.nextStep}</h4>
+            <p className="mt-1 text-sm leading-relaxed text-foreground-muted">{labels.success.body}</p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 border-t border-border pt-5 sm:flex-row sm:flex-wrap">
           <ButtonLink
             href={contact.hotlineHref}
-            variant="secondary"
+            variant="primary"
             size="md"
-            external
           >
+            <PhoneIcon aria-hidden="true" className="h-4 w-4" />
             {labels.success.callHotline}
           </ButtonLink>
           <Button
             variant="ghost"
             size="md"
             onClick={() => {
+              submissionIdRef.current =
+                typeof crypto !== "undefined" && "randomUUID" in crypto
+                  ? crypto.randomUUID()
+                  : `sub-${Date.now()}-${Math.random().toString(36).slice(2)}`;
               setStatus("idle");
               setRequestId(null);
               setSystemMessage(null);

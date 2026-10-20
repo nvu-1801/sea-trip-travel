@@ -43,7 +43,7 @@ export function HeaderShell({ children }: { children: ReactNode }) {
   const navOpen = useSyncExternalStore(subscribeToNav, getNavOpenSnapshot, getServerNavSnapshot);
 
   const hidden = false;
-  const solid = scroll.condensed || navOpen;
+  const solid = !home || scroll.condensed || navOpen;
 
   return (
     <header

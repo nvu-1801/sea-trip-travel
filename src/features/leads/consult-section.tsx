@@ -1,4 +1,5 @@
 import { ROUTES } from "@/config/navigation";
+import type { ReactNode } from "react";
 import { siteConfig } from "@/config/runtime-site";
 import { Container, Section } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
@@ -35,7 +36,7 @@ export function ConsultSection({
   defaultInterest?: string;
   tone?: "default" | "muted" | "sunken";
   spacing?: "tight" | "default" | "loose";
-  title?: string;
+  title?: ReactNode;
   description?: string;
 }) {
   const m = getMessages(locale);

@@ -7,7 +7,8 @@ import { useEffect } from "react";
  * nodes, so the manual pause toggle (`data-motion-paused`), reduced-motion
  * CSS and print rules keep working unchanged. No animation library involved.
  */
-const TARGETS = ".stt-idle-waves svg, .stt-hero-bloom, .stt-coastal-lines";
+const TARGETS =
+  ".stt-idle-waves svg, .stt-hero-bloom, .stt-coastal-lines, .home-brand-wordmark";
 
 export function IdleMotionManager() {
   useEffect(() => {

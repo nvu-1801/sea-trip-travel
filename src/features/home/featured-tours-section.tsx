@@ -1,4 +1,5 @@
 import { ROUTES } from "@/config/navigation";
+import { HeadingAccent } from "@/components/ui/heading-accent";
 import { getFeaturedTours } from "@/lib/data/tours";
 import { Container, Section } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
@@ -29,7 +30,14 @@ export function FeaturedToursSection({ locale }: { locale: Locale }) {
             <span aria-hidden="true" />
             {m.home.featured.eyebrow}
           </p>
-          <h2>{m.home.featured.title}</h2>
+          <h2>
+            <HeadingAccent
+              text={m.home.featured.title}
+              phrase={
+                locale === "en" ? "Quy Nhon – Phu Yen" : "Quy Nhơn – Phú Yên"
+              }
+            />
+          </h2>
           <p>{m.home.featured.description}</p>
           <div className="intro-cta">
             <ButtonLink

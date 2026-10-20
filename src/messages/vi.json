@@ -396,9 +396,13 @@
     "genericError": "Chưa gửi được yêu cầu. Vui lòng kiểm tra kết nối và thử lại, hoặc gọi hotline để được hỗ trợ.",
     "networkError": "Không kết nối được tới hệ thống. Vui lòng kiểm tra đường truyền và thử lại.",
     "success": {
-      "title": "Đã tiếp nhận yêu cầu của bạn",
+      "eyebrow": "Đã tiếp nhận yêu cầu",
+      "title": "Cảm ơn bạn đã chọn SEA TRIP!",
+      "description": "SEA TRIP đã nhận được thông tin của bạn. Chúng tôi rất mong được đồng hành cùng bạn trong chuyến đi sắp tới.",
+      "nextStep": "SEA TRIP sẽ liên hệ với bạn",
+      "referenceHint": "Bạn có thể lưu mã này để tiện trao đổi với tư vấn viên.",
       "requestId": "Mã yêu cầu:",
-      "body": "Bộ phận tư vấn của SEA TRIP sẽ liên hệ trong giờ làm việc. Nếu cần trao đổi ngay, bạn có thể gọi hotline để được hỗ trợ sớm hơn.",
+      "body": "Tư vấn viên sẽ liên hệ qua số điện thoại bạn đã cung cấp trong giờ làm việc để cùng bạn chọn lịch trình phù hợp. Nếu cần trao đổi ngay, hãy gọi hotline bên dưới.",
       "callHotline": "Gọi hotline",
       "sendAnother": "Gửi yêu cầu khác"
     },

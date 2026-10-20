@@ -23,7 +23,6 @@ export function HeroCarousel({
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(!config.autoplay);
   const [blocked, setBlocked] = useState(true);
-  const [hovered, setHovered] = useState(false);
   const [failed, setFailed] = useState<string[]>([]);
   const frame = useRef<HTMLElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -68,7 +67,7 @@ export function HeroCarousel({
     };
   }, [motionEnabled]);
   useEffect(() => {
-    if (!config.autoplay || paused || blocked || hovered || count < 2) return;
+    if (!config.autoplay || paused || blocked || count < 2) return;
     const timer = setTimeout(
       () => setIndex((current) => (current + 1) % count),
       config.intervalSeconds * 1000,
@@ -81,11 +80,9 @@ export function HeroCarousel({
     config.intervalSeconds,
     paused,
     blocked,
-    hovered,
   ]);
 
   const navigate = (direction: number) => {
-    setPaused(true);
     setIndex((current) => (current + direction + count) % count);
   };
   return (
@@ -106,9 +103,9 @@ export function HeroCarousel({
           navigate(event.key === "ArrowRight" ? 1 : -1);
         }
       }}
-      onFocusCapture={() => setPaused(true)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onFocusCapture={(event) => {
+        if ((event.target as HTMLElement).matches(":focus-visible")) setPaused(true);
+      }}
       onPointerDown={(event) => {
         if (
           (event.target as HTMLElement).closest("a,button") ||
@@ -144,7 +141,7 @@ export function HeroCarousel({
                 fill
                 sizes="100vw"
                 preload={position === 0}
-                loading={position === 0 ? undefined : "lazy"}
+                loading={position === 0 ? undefined : "eager"}
                 style={{
                   objectPosition: `${slide.image.positionX}% ${slide.image.positionY}%`,
                 }}
@@ -210,7 +207,6 @@ export function HeroCarousel({
                       position === index % count ? "true" : undefined
                     }
                     onClick={() => {
-                      setPaused(true);
                       setIndex(position);
                     }}
                   >

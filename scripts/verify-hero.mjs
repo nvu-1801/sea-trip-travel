@@ -122,7 +122,7 @@ try {
   check("carousel is the default hero", true);
   const photos = page.locator(".stt-cinema-image img");
   check("all five supplied photos are present", (await photos.count()) === 5);
-  check("slide 2 and 5 use the replacement photos", original.slides[1].image.src === "/images/hero/basalt-sunset.webp" && original.slides[4].image.src === "/images/hero/emerald-bay.webp");
+  check("slide 2 and 5 use the replacement photos", original.slides[1].image.src === "/images/hero/ky-co-user.png" && original.slides[4].image.src === "/images/hero/ghenh-da-dia-user.png");
   check("header consultation button and decorative tagline are removed", await page.locator("header").getByRole("link", { name: "Nhận tư vấn", exact: true }).count() === 0 && await page.getByText("Chọn một nhịp đi khác", { exact: true }).count() === 0);
   check("hero covers the viewport behind a transparent header", await page.evaluate(() => {
     const stage = document.querySelector(".stt-cinema-stage").getBoundingClientRect();
@@ -254,7 +254,7 @@ try {
   await page.screenshot({ path: "verify-screenshots/hero-collage-mobile.png" });
   await publish({ ...original, autoplay: true, intervalSeconds: 6 });
   await page.locator('[data-hero-mode="carousel"]').waitFor({ timeout: 20000 });
-  await page.mouse.move(0, 0);
+  await page.locator(".stt-cinema-stage").hover();
   await page
     .getByRole("button", { name: /^Ảnh 2:/ })
     .waitFor({ state: "attached" });
@@ -267,7 +267,18 @@ try {
     undefined,
     { timeout: 15000 },
   );
-  check("autoplay advances when enabled", true);
+  check("autoplay advances even while hovered", true);
+  await page.getByRole("button", { name: "Ảnh tiếp theo", exact: true }).click();
+  check(
+    "pointer navigation keeps autoplay running",
+    await page.getByRole("button", { name: "Dừng trình chiếu", exact: true }).getAttribute("aria-pressed") === "true",
+  );
+  check(
+    "manual slide changes retain the crossfade",
+    await page.locator(".stt-cinema-image").first().evaluate(
+      (node) => parseFloat(getComputedStyle(node).transitionDuration) > 0,
+    ),
+  );
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page
     .getByRole("button", { name: "Dừng trình chiếu", exact: true })

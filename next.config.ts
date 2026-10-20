@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const isDevelopment = process.env.NODE_ENV === "development";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["192.168.3.15", "127.0.0.1"],
   /* config options here */
   output: "standalone",
   poweredByHeader: false,
