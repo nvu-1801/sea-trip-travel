@@ -434,6 +434,13 @@ export function Dashboard({
           hero: (heroRows as RecordRow[] | null)?.[0] ?? null,
           landing: (landingRows as RecordRow[] | null)?.[0] ?? null,
         });
+        setReferences({
+          ...options,
+          media: library.map((item: { src: string; alt: string }) => ({
+            value: item.src,
+            label: item.alt,
+          })),
+        });
         setSelected(null);
         setDirty(false);
         dirtyFields.current.clear();

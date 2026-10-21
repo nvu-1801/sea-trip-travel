@@ -87,10 +87,12 @@ try {
   await page.getByLabel("Tên đăng nhập", { exact: true }).fill("qa-owner");
   await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Vào SEA TRIP Studio" }).click();
+  await page.getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Tour du lịch/ }).click();
   await page
     .getByRole("heading", { name: "Tour du lịch", exact: true })
     .waitFor();
-  await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().waitFor();
+  await page.getByRole("button", { name: /Chỉnh sửa/ }).first().waitFor();
   check("admin login works with no default password", true);
   const auth = await (
     await context.request.get(`${base}/api/admin/auth`)
@@ -137,7 +139,9 @@ try {
   };
   await livePage.goto(base);
   await observer.goto(`${base}/admin`);
-  await observer.getByRole("button", { name: "Chỉnh sửa ↗" }).first().waitFor();
+  await observer.getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Tour du lịch/ }).click();
+  await observer.getByRole("button", { name: /Chỉnh sửa/ }).first().waitFor();
   check(
     "live pages start visible",
     (await livePage.evaluate(() => !document.hidden)) &&
@@ -200,7 +204,7 @@ try {
     .getByText(liveTour.title, { exact: true })
     .waitFor({ timeout: 20000 });
   check("second admin sees newly created draft without reload", true);
-  await observer.getByRole("button", { name: "Chỉnh sửa ↗" }).first().click();
+  await observer.getByRole("button", { name: /Chỉnh sửa/ }).first().click();
   await observer
     .getByLabel("Tiêu đề", { exact: true })
     .first()
@@ -224,15 +228,17 @@ try {
       .first()
       .inputValue()) === "Nội dung chưa lưu phải được giữ",
   );
-  observer.once("dialog", (dialog) => dialog.accept());
   await observer
     .getByRole("button", { name: "Tải cập nhật", exact: true })
     .click();
+  await observer.getByRole("alertdialog")
+    .getByRole("button", { name: "Tải cập nhật", exact: true }).click();
   await observer
     .getByText("Tour được cập nhật ở phiên khác", { exact: true })
     .waitFor();
   check("explicit update loads the new snapshot after confirmation", true);
-  await observer.getByLabel("Trạng thái nội dung").selectOption("deleted");
+  await observer.getByLabel("Trạng thái nội dung").click();
+  await observer.getByRole("option", { name: /Thùng rác/ }).click();
   assert.equal(
     (await mutate("tours", { revision: 2 }, "delete", liveTour)).status(),
     200,
@@ -297,7 +303,7 @@ try {
     await (await context.request.get(`${base}/api/admin/leads`)).json()
   ).find((row) => row.data.phone === "0901234568");
   const liveNote = observer
-    .locator(".adm-lead")
+    .locator(".adm-lead-card")
     .filter({
       has: observer.getByRole("heading", {
         name: "Khách đồng bộ trực tiếp",
@@ -529,10 +535,17 @@ try {
   const library = await (
     await context.request.get(`${base}/api/admin/media`)
   ).json();
-  check(
-    "all 28 original photos retained in media library",
+  const expectedPhotos = new Set(
+    tours.flatMap((row) => row.data.images.map((photo) => photo.src)).filter(Boolean),
+  );
+  const originalPhotos = new Set(
     library.filter((item) => item.original && !item.id.startsWith("hero:"))
-      .length === 28,
+      .map((item) => item.src),
+  );
+  check(
+    "all supplied tour photos retained in media library",
+    expectedPhotos.size > 0 && originalPhotos.size === expectedPhotos.size &&
+      [...expectedPhotos].every((src) => originalPhotos.has(src)),
   );
   const linked = {
     ...source.data,
@@ -611,20 +624,23 @@ try {
     (await page.locator(".stt-tour-card").count()) > 0,
   );
   await page.goto(base);
-  const motion = page.getByRole("button", { name: /Tạm dừng chuyển động/ });
+  const motion = page.getByRole("button", { name: "Dừng trình chiếu", exact: true });
   await motion.click();
   check(
-    "idle motion can be paused",
-    (await page.locator("html").getAttribute("data-motion-paused")) === "true",
+    "carousel playback can be paused",
+    (await page.getByRole("button", { name: "Phát trình chiếu", exact: true })
+      .getAttribute("aria-pressed")) === "false",
   );
   mkdirSync("verify-screenshots", { recursive: true });
   await page.screenshot({ path: "verify-screenshots/studio-home-desktop.png" });
   await page.locator("#tim-hanh-trinh").scrollIntoViewIfNeeded();
   await page.screenshot({ path: "verify-screenshots/studio-discovery.png" });
   await page.goto(`${base}/admin`);
-  await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().waitFor();
+  await page.getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Tour du lịch/ }).click();
+  await page.getByRole("button", { name: /Chỉnh sửa/ }).first().waitFor();
   await page.screenshot({ path: "verify-screenshots/studio-desktop.png" });
-  await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().click();
+  await page.getByRole("button", { name: /Chỉnh sửa/ }).first().click();
   await page
     .getByLabel("Tiêu đề", { exact: true })
     .first()
@@ -636,7 +652,7 @@ try {
     .waitFor();
   check("structured editor saves draft via browser", true);
   await page.getByRole("button", { name: "Cẩm nang", exact: false }).click();
-  await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().click();
+  await page.getByRole("button", { name: /Chỉnh sửa/ }).first().click();
   await page
     .locator("summary")
     .filter({ hasText: /^Nội dung$/ })
@@ -655,7 +671,9 @@ try {
   for (const width of [360, 390, 768]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`${base}/admin`);
-    await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().waitFor();
+    await page.getByRole("navigation", { name: "Quản trị" })
+      .getByRole("button", { name: /Tour du lịch/ }).click();
+    await page.getByRole("button", { name: /Chỉnh sửa/ }).first().waitFor();
     check(
       `admin ${width}px no horizontal overflow`,
       await page.evaluate(

@@ -81,9 +81,10 @@ try {
   await admin.getByLabel("Mật khẩu", { exact: true }).fill(password);
   await admin.getByRole("button", { name: "Vào SEA TRIP Studio" }).click();
   await admin
-    .getByRole("button", { name: "Giao diện trang chủ", exact: false })
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Trang chủ/ })
     .click();
-  await admin.getByRole("button", { name: "Chỉnh sửa ↗" }).click();
+  await admin.getByRole("button", { name: /Sửa ảnh đầu trang/ }).click();
   await admin.getByLabel("Carousel ảnh lớn", { exact: false }).waitFor();
   const auth = await (
     await context.request.get(`${base}/api/admin/auth`)
@@ -113,7 +114,11 @@ try {
   });
   await firstSlideImage
     .getByLabel("Ảnh từ thư viện", { exact: true })
-    .selectOption("/images/hero/blue-bay.webp");
+    .click();
+  await firstSlideImage.getByLabel("Tìm trong Ảnh từ thư viện")
+    .fill("/images/hero/blue-bay.webp");
+  await firstSlideImage.getByRole("option", { name: /\/images\/hero\/blue-bay\.webp/ })
+    .click();
   await firstSlideImage.getByLabel(/Vị trí ngang/).focus();
   await firstSlideImage.getByLabel(/Vị trí ngang/).press("End");
   const page = await context.newPage();
@@ -221,7 +226,7 @@ try {
     "saving draft keeps the published carousel",
     (await snapshot.text()).includes('data-hero-mode="carousel"'),
   );
-  await admin.getByRole("button", { name: "Chỉnh sửa ↗" }).click();
+  await admin.getByRole("button", { name: /Sửa ảnh đầu trang/ }).click();
   await admin
     .getByRole("button", { name: "Xuất bản thay đổi", exact: false })
     .click();
