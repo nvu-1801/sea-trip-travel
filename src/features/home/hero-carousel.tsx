@@ -27,7 +27,6 @@ export function HeroCarousel({
   const frame = useRef<HTMLElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const english = locale === "en";
-  const stopped = paused || blocked;
   const count = config.slides.length;
   const active = config.slides[index % count];
   const label = english ? active.captionEn : active.caption;
@@ -228,25 +227,6 @@ export function HeroCarousel({
               >
                 <ChevronRightIcon className="h-5 w-5" />
               </button>
-              {config.autoplay && (
-                <button
-                  type="button"
-                  disabled={blocked}
-                  aria-label={
-                    english
-                      ? stopped
-                        ? "Play slideshow"
-                        : "Pause slideshow"
-                      : stopped
-                        ? "Phát trình chiếu"
-                        : "Dừng trình chiếu"
-                  }
-                  aria-pressed={!paused && !blocked}
-                  onClick={() => setPaused((value) => !value)}
-                >
-                  {paused || blocked ? "▶" : "Ⅱ"}
-                </button>
-              )}
             </div>
           )}
         </div>
