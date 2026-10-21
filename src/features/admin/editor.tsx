@@ -1,6 +1,7 @@
 "use client";
 import { useId } from "react";
 import { AdmMultiSelect, AdmSelect } from "./ui-select";
+import { ImageField, type UploadedImage } from "./image-picker";
 type Value =
   string | number | boolean | null | Value[] | { [key: string]: Value };
 export type EditorValue = Value;
@@ -189,12 +190,14 @@ export function Editor({
   name = "",
   locked = false,
   references = {},
+  onUploadImage,
 }: {
   value: Value;
   onChange: (value: Value) => void;
   name?: string;
   locked?: boolean;
   references?: ReferenceOptions;
+  onUploadImage?: (file: File) => Promise<UploadedImage>;
 }) {
   const id = useId();
   const title = labels[name] ?? name;
@@ -230,6 +233,19 @@ export function Editor({
     references[singleKind]
   ) {
     const opts = references[singleKind]!;
+    if (singleKind === "media" && onUploadImage) {
+      return (
+        <div className="adm-field">
+          <ImageField
+            label={title}
+            value={typeof value === "string" ? value : ""}
+            media={opts}
+            onUpload={onUploadImage}
+            onChange={(next) => onChange(next)}
+          />
+        </div>
+      );
+    }
     return (
       <div className="adm-field">
         <AdmSelect
@@ -313,6 +329,7 @@ export function Editor({
               value={item}
               name={typeof item === "object" ? "" : name}
               references={references}
+              onUploadImage={onUploadImage}
               onChange={(next) =>
                 onChange(value.map((old, i) => (i === index ? next : old)))
               }
@@ -401,6 +418,7 @@ export function Editor({
                   value={child}
                   name={key}
                   references={references}
+                  onUploadImage={onUploadImage}
                   onChange={(next) => onChange({ ...value, [key]: next })}
                 />
               </details>
@@ -410,6 +428,7 @@ export function Editor({
                 value={child}
                 name={key}
                 references={references}
+                onUploadImage={onUploadImage}
                 locked={
                   key === "id" ||
                   key === "updatedAt" ||

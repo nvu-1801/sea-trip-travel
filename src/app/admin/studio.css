@@ -566,18 +566,160 @@ form {
   font-weight: 700;
 }
 .adm-section-modal {
-  width: min(880px, 100%);
-  max-height: calc(100vh - 60px);
+  width: min(1060px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
   overflow-y: auto;
+  border-radius: 26px;
+  padding: clamp(22px, 3vw, 36px);
+  background:
+    radial-gradient(120% 60% at 100% 0%, #fff1f6 0%, transparent 55%),
+    #fff;
+  animation: adm-modal-in 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes adm-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 .adm-section-modal-head {
+  position: sticky;
+  top: calc(-1 * clamp(22px, 3vw, 36px));
+  z-index: 2;
+  margin: calc(-1 * clamp(22px, 3vw, 36px)) calc(-1 * clamp(22px, 3vw, 36px)) 18px;
+  padding: clamp(18px, 2.4vw, 26px) clamp(22px, 3vw, 36px) 16px;
+  background: rgb(255 255 255 / 0.88);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid #f7e3ec;
+  border-radius: 26px 26px 0 0;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 18px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f7e3ec;
+}
+/* ---- Image dropzone (shared ImageField) ---- */
+.adm-image-field {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.adm-dropzone {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 2px dashed #e5b9ca;
+  background: linear-gradient(140deg, #fff7fa, #fdf2f6);
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+.adm-dropzone:hover {
+  border-color: #e0005a;
+  box-shadow: 0 0 0 4px #e0005a14;
+}
+.adm-dropzone:focus-visible {
+  outline: 3px solid #e0005a55;
+  outline-offset: 2px;
+}
+.adm-dropzone[data-dragging] {
+  border-color: #e0005a;
+  border-style: solid;
+  background: linear-gradient(140deg, #ffe4ef, #fff1f6);
+  box-shadow: 0 0 0 6px #e0005a22;
+  transform: scale(1.01);
+}
+.adm-dropzone[data-uploading] {
+  pointer-events: none;
+}
+.adm-dropzone img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.adm-dropzone-empty {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 40px 20px 56px;
+  color: #b08fa0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adm-dropzone-empty span:first-child {
+  font-size: 34px;
+}
+.adm-dropzone-hint {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  text-align: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: rgb(33 10 22 / 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+.adm-dropzone-spin {
+  position: absolute;
+  inset: auto 50% 50% auto;
+  width: 38px;
+  height: 38px;
+  margin: 0 -19px -19px 0;
+  border-radius: 50%;
+  border: 4px solid #ffffff88;
+  border-top-color: #fff;
+  animation: adm-spin 0.8s linear infinite;
+}
+@keyframes adm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.adm-field-error {
+  margin: 0;
+  font-size: 12.5px;
+  color: #b42318;
+  background: #fceae8;
+  border: 1px solid #fecdca;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+@media (min-width: 900px) {
+  .adm-section-modal .adm-hero-image-picker {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 8px 20px;
+    align-items: start;
+  }
+  .adm-section-modal .adm-hero-image-picker > legend {
+    grid-column: 1 / -1;
+  }
+  .adm-section-modal .adm-hero-focal {
+    grid-column: 1 / -1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .adm-section-modal,
+  .adm-dropzone-spin {
+    animation: none;
+  }
 }
 .adm-section-modal-head h2 {
   margin: 4px 0 0;
@@ -715,6 +857,17 @@ form {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
+}
+.adm-section-modal > .adm-modal-actions {
+  position: sticky;
+  bottom: calc(-1 * clamp(22px, 3vw, 36px));
+  margin: 22px calc(-1 * clamp(22px, 3vw, 36px)) calc(-1 * clamp(22px, 3vw, 36px));
+  padding: 16px clamp(22px, 3vw, 36px);
+  background: rgb(255 255 255 / 0.9);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid #f7e3ec;
+  border-radius: 0 0 26px 26px;
 }
 /* ---- Status filter dropdown + trash button ---- */
 .adm-filter {

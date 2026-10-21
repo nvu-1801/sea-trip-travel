@@ -1,9 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { useId, useState } from "react";
 import type { HeroConfig } from "@/domain/home-hero";
 import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
+import {
+  ImageField,
+  type UploadedImage,
+} from "./image-picker";
 import "./hero-editor.css";
 
 type HeroImage = HeroConfig["collageMain"];
@@ -12,53 +15,34 @@ function ImagePicker({
   onChange,
   references,
   label,
+  onUploadImage,
 }: {
   value: HeroImage;
   onChange: (image: HeroImage) => void;
   references: ReferenceOptions;
   label: string;
+  onUploadImage?: (file: File) => Promise<UploadedImage>;
 }) {
   const id = useId();
   return (
     <fieldset className="adm-hero-image-picker">
       <legend>{label}</legend>
-      <div className="adm-hero-image-preview">
-        <Image
-          src={value.src}
-          alt={value.alt}
-          fill
-          sizes="(max-width: 768px) 90vw, 400px"
-          unoptimized
-          style={{
-            objectFit: "cover",
-            objectPosition: `${value.positionX}% ${value.positionY}%`,
-          }}
-        />
-      </div>
-      <label htmlFor={`${id}-source`}>Ảnh từ thư viện</label>
-      <select
-        id={`${id}-source`}
+      <ImageField
+        label={`Chọn ${label.toLowerCase()}`}
         value={value.src}
-        onChange={(event) => {
-          const item = references.media?.find(
-            (option) => option.value === event.target.value,
-          );
+        media={references.media ?? []}
+        onUpload={onUploadImage}
+        previewStyle={{
+          objectPosition: `${value.positionX}% ${value.positionY}%`,
+        }}
+        onChange={(src, alt) =>
           onChange({
             ...value,
-            src: event.target.value,
-            alt: item?.label || value.alt,
-          });
-        }}
-      >
-        {!references.media?.some((item) => item.value === value.src) && (
-          <option value={value.src}>{value.src}</option>
-        )}
-        {references.media?.map((item) => (
-          <option key={item.value} value={item.value}>
-            {item.label}
-          </option>
-        ))}
-      </select>
+            src,
+            alt: alt || value.alt,
+          })
+        }
+      />
       <label htmlFor={`${id}-alt`}>Mô tả ảnh</label>
       <input
         id={`${id}-alt`}
@@ -98,10 +82,12 @@ export function HeroEditor({
   value,
   onChange,
   references,
+  onUploadImage,
 }: {
   value: HeroConfig;
   onChange: (config: HeroConfig) => void;
   references: ReferenceOptions;
+  onUploadImage?: (file: File) => Promise<UploadedImage>;
 }) {
   const [language, setLanguage] = useState<"vi" | "en">("vi");
   const updateSlide = (
@@ -312,6 +298,7 @@ export function HeroEditor({
                 value={slide.image}
                 onChange={(image) => updateSlide(index, { image })}
                 references={references}
+                onUploadImage={onUploadImage}
               />
               <Editor
                 value={{
@@ -335,12 +322,14 @@ export function HeroEditor({
             label="Ảnh chính của bố cục ảnh ghép"
             value={value.collageMain}
             references={references}
+            onUploadImage={onUploadImage}
             onChange={(image) => onChange({ ...value, collageMain: image })}
           />
           <ImagePicker
             label="Ảnh phụ của bố cục ảnh ghép"
             value={value.collageSecondary}
             references={references}
+            onUploadImage={onUploadImage}
             onChange={(image) =>
               onChange({ ...value, collageSecondary: image })
             }
@@ -348,8 +337,8 @@ export function HeroEditor({
         </div>
       )}
       <p className="adm-hero-hint">
-        Muốn dùng ảnh khác? Tải ảnh ở Thư viện ảnh, rồi quay lại chọn trong danh
-        sách. Ảnh gốc không bị xoá khi bỏ slide.
+        Bấm vào ảnh hoặc kéo thả file từ máy tính để thay ảnh ngay tại đây —
+        ảnh tự nén WebP. Ảnh gốc không bị xoá khi bỏ slide.
       </p>
     </div>
   );

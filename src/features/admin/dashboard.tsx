@@ -500,6 +500,45 @@ export function Dashboard({
   function dismissToast(id: number) {
     setToasts((current) => current.filter((toast) => toast.id !== id));
   }
+  async function refreshMediaLibrary() {
+    try {
+      const library = (await api("media")) as {
+        id: string;
+        name: string;
+        alt: string;
+        src: string;
+        original: boolean;
+      }[];
+      setMedia(library);
+      setReferences((current) => ({
+        ...current,
+        media: library.map((item) => ({
+          value: item.src,
+          label: item.alt,
+        })),
+      }));
+    } catch {
+      // Thư viện sẽ đồng bộ ở lần tải trang sau; ảnh vừa tải vẫn dùng được ngay.
+    }
+  }
+  async function uploadImage(file: File): Promise<{ src: string; alt: string }> {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
+      throw new Error("Chỉ nhận file JPEG, PNG hoặc WebP.");
+    if (file.size > 10 * 1024 * 1024)
+      throw new Error("Ảnh vượt quá 10 MB.");
+    const uploaded = (await api("media", {
+      method: "POST",
+      headers: {
+        "content-type": file.type,
+        "x-image-alt": encodeURIComponent(file.name),
+      },
+      body: file,
+    })) as { src: string; alt: string };
+    if (!uploaded?.src) throw new Error("Máy chủ không trả về ảnh.");
+    await refreshMediaLibrary();
+    pushToast("success", "Đã tải ảnh lên thư viện.");
+    return { src: uploaded.src, alt: uploaded.alt ?? file.name };
+  }
   function requestConfirm(
     request: Exclude<ConfirmRequest, null>,
   ): Promise<boolean> {
@@ -1696,6 +1735,7 @@ export function Dashboard({
                     <HeroEditor
                       value={selected.data as unknown as HeroConfig}
                       references={references}
+                      onUploadImage={uploadImage}
                       onChange={(data) => {
                         setSelected({
                           ...selected,
@@ -1711,6 +1751,7 @@ export function Dashboard({
                       }}
                       locked={selected.revision > 0}
                       references={references}
+                      onUploadImage={uploadImage}
                       onChange={(value) => {
                         const next = value as Record<string, EditorValue>;
                         setSelected((current) =>
@@ -1918,6 +1959,7 @@ export function Dashboard({
               <HeroEditor
                 value={selected.data as unknown as HeroConfig}
                 references={references}
+                onUploadImage={uploadImage}
                 onChange={(data) => {
                   setSelected({
                     ...selected,
@@ -1931,6 +1973,7 @@ export function Dashboard({
                 references={references}
                 value={selected.data}
                 locked={selected.revision > 0}
+                onUploadImage={uploadImage}
                 onChange={(data) => {
                   setSelected({
                     ...selected,
