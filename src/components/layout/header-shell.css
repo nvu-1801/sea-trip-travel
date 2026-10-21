@@ -13,10 +13,19 @@ body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] {
   backdrop-filter: none;
 }
 body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] [data-logo-wordmark],
-body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-desktop-nav > ul > li > a,
-body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-desktop-nav > ul > li > div > button,
 body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-header-hotline > span:last-child > span {
   color: white;
+}
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-desktop-nav > ul > li > a,
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-desktop-nav > ul > li > div > button {
+  color: var(--stt-nav-color, white);
+}
+/* The highlighted pill is a hover/open affordance only; the idle active item
+   keeps just the gradient underline. Dark label keeps the pill readable. */
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-desktop-nav > ul > li > a:hover,
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-desktop-nav > ul > li > div > button:hover,
+body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-desktop-nav > ul > li > div > button[aria-expanded="true"] {
+  --stt-nav-color: var(--color-primary-strong, #d10053);
 }
 body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] .stt-header-brandline {
   opacity: 0;

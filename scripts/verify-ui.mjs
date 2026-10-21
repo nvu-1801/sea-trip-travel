@@ -557,6 +557,68 @@ async function checkDesktopKeyboardNav(browser) {
   await context.close();
 }
 
+async function checkDesktopNavHighlight(browser) {
+  section("4b. Header nav - highlight is hover-only (1280px)");
+
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
+  const page = await context.newPage();
+  await page.goto(BASE, { waitUntil: "load" });
+
+  const active = page.locator('.stt-desktop-nav a[aria-current="page"]');
+  await active.waitFor({ state: "visible" });
+
+  const backgroundAlpha = () =>
+    active.evaluate((el) => {
+      const color = getComputedStyle(el).backgroundColor;
+      if (!color || color === "transparent") return 0;
+      const slash = color.match(/\/\s*([\d.]+)\s*\)/);
+      if (slash) return Number.parseFloat(slash[1]);
+      const rgba = color.match(/rgba\(([^)]+)\)/);
+      if (rgba) {
+        const parts = rgba[1].split(",");
+        return parts.length > 3 ? Number.parseFloat(parts[3]) : 1;
+      }
+      return 1;
+    });
+
+  const idleAlpha = await backgroundAlpha();
+  check(
+    "active nav item is not highlighted while idle",
+    idleAlpha === 0,
+    `background alpha=${idleAlpha}`,
+  );
+
+  await active.hover();
+  await page.waitForTimeout(250);
+  const hoverAlpha = await backgroundAlpha();
+  const hoverColor = await active.evaluate(
+    (el) => getComputedStyle(el).color,
+  );
+  check(
+    "active nav item highlights on hover",
+    hoverAlpha > 0.5,
+    `background alpha=${hoverAlpha}`,
+  );
+  check(
+    "highlighted nav label switches to the dark brand colour",
+    hoverColor === "rgb(209, 0, 83)",
+    `color=${hoverColor}`,
+  );
+
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(250);
+  const restAlpha = await backgroundAlpha();
+  check(
+    "highlight clears when the pointer leaves",
+    restAlpha === 0,
+    `background alpha=${restAlpha}`,
+  );
+
+  await context.close();
+}
+
 async function checkMobileDrawer(browser) {
   section("5. Mobile drawer — keyboard + focus trap (390px)");
 
@@ -1774,6 +1836,7 @@ async function main() {
     await checkReducedMotion(browser);
     await checkAnimationGating(browser);
     await checkDesktopKeyboardNav(browser);
+    await checkDesktopNavHighlight(browser);
     await checkMobileDrawer(browser);
     await checkDatePicker(browser);
     await checkConsultationFlow(browser, sink);
