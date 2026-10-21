@@ -93,8 +93,8 @@ export function ConsultSection({
           <h2>{title ?? m.consult.defaultTitle}</h2>
           <p>{description ?? m.consult.defaultDescription}</p>
         </Reveal>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
-          <Reveal className="lg:col-span-5" variant="left">
+        <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12 lg:gap-8">
+          <Reveal className="h-full lg:col-span-5" variant="left">
             <div className="flex h-full flex-col rounded-3xl border border-border bg-surface p-6 shadow-card sm:p-8">
               <ul className="flex flex-col divide-y divide-border">
                 {assurances.map((item) => (
@@ -163,8 +163,12 @@ export function ConsultSection({
             </div>
           </Reveal>
 
-          <Reveal className="lg:col-span-7" variant="right" delay={1}>
-            <div className="rounded-3xl border border-border bg-surface p-6 shadow-card sm:p-8">
+          <Reveal
+            className="flex h-full flex-col lg:col-span-7"
+            variant="right"
+            delay={1}
+          >
+            <div className="flex flex-1 flex-col rounded-3xl border border-border bg-surface p-6 shadow-card sm:p-8">
               <LeadForm
                 locale={locale}
                 labels={leadFormLabels(locale)}
@@ -172,17 +176,17 @@ export function ConsultSection({
                 defaultInterest={defaultInterest}
                 compact={Boolean(tourSlug)}
               />
+              <p className="mt-6 border-t border-border pt-4 text-center text-xs text-foreground-subtle">
+                {m.consult.privacyPre}{" "}
+                <a
+                  href={localizePath(locale, ROUTES.privacy)}
+                  className="font-semibold text-primary-strong underline underline-offset-2"
+                >
+                  {m.consult.privacyLink}
+                </a>
+                {m.consult.privacyPost}
+              </p>
             </div>
-            <p className="mt-4 text-center text-xs text-foreground-subtle">
-              {m.consult.privacyPre}{" "}
-              <a
-                href={localizePath(locale, ROUTES.privacy)}
-                className="font-semibold text-primary-strong underline underline-offset-2"
-              >
-                {m.consult.privacyLink}
-              </a>
-              {m.consult.privacyPost}
-            </p>
           </Reveal>
         </div>
       </Container>
