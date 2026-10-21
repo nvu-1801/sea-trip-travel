@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { chromium } from "playwright";
+import { assertNoPlaybackToggle, freezeHeroClock } from "./lib/hero-contract.mjs";
 
 // Bổ sung cho verify-hero: entrance một lần, form, tab nền, reduced-motion.
 const folder = mkdtempSync(path.join(tmpdir(), "seatrip-motion-"));
@@ -48,14 +49,17 @@ const COUNT_ANIMATE = `(() => {
   if (window.__revealCalls) return;
   window.__revealCalls = [];
   window.__revealSeq = 0;
-  const original = Element.prototype.animate;
-  Element.prototype.animate = function (keyframes, options) {
-    if (this.hasAttribute && this.hasAttribute("data-reveal-once")) {
-      if (this.__revealIdx === undefined) this.__revealIdx = window.__revealSeq++;
-      window.__revealCalls.push(this.__revealIdx + ":" + this.getAttribute("data-reveal-once"));
+  // Reveal now uses CSS transitions + IntersectionObserver, not Element.animate.
+  new MutationObserver((changes) => {
+    for (const change of changes) {
+      const node = change.target;
+      if (!node.matches("[data-reveal-3d][data-revealed=true]") || change.oldValue === "true") continue;
+      const durations = getComputedStyle(node).transitionDuration.split(",");
+      if (!durations.some((duration) => parseFloat(duration) > 0)) continue;
+      if (node.__revealIdx === undefined) node.__revealIdx = window.__revealSeq++;
+      window.__revealCalls.push(node.__revealIdx + ":" + node.getAttribute("data-reveal-3d"));
     }
-    return original.call(this, keyframes, options);
-  };
+  }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-revealed"], attributeOldValue: true });
 })();`;
 const revealStats = (calls) => ({
   total: calls.length,
@@ -90,7 +94,7 @@ try {
     await page.goto(base);
     await page.locator('[data-hero-mode="carousel"]').waitFor();
     await page.waitForTimeout(1200);
-    const total = await page.locator("[data-reveal-once]").count();
+    const total = await page.locator("[data-reveal-3d]").count();
     assert.ok(total > 10, `expected many reveals, got ${total}`);
     // Cuộn từng chặng xuống cuối để mọi reveal vào viewport.
     for (let i = 0; i < 12; i++) {
@@ -147,8 +151,9 @@ try {
     const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
     const page = await context.newPage();
     page.on("pageerror", (e) => errors.push(e.message));
+    await page.clock.install();
     await page.goto(base);
-    await page.locator('[data-hero-mode="carousel"]').waitFor();
+    await freezeHeroClock(page);
     const first = await page
       .locator('.stt-cinema-dots button[aria-current="true"]')
       .getAttribute("aria-label");
@@ -156,19 +161,20 @@ try {
       Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
       document.dispatchEvent(new Event("visibilitychange"));
     });
-    await page.waitForTimeout(6500);
+    await page.locator('[data-motion-blocked="true"]').waitFor();
+    await page.clock.runFor(6500);
     const duringHidden = await page
       .locator('.stt-cinema-dots button[aria-current="true"]')
       .getAttribute("aria-label");
     check("tab nền không chuyển slide", duringHidden === first);
-    check(
-      "tab nền hiện nút phát",
-      (await page.getByRole("button", { name: "Phát trình chiếu", exact: true }).count()) === 1,
-    );
+    await assertNoPlaybackToggle(page);
+    check("tab nền không khôi phục nút phát", true);
     await page.evaluate(() => {
       Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
       document.dispatchEvent(new Event("visibilitychange"));
     });
+    await page.locator('[data-motion-blocked="false"]').waitFor();
+    await page.clock.runFor(6500);
     await page.waitForFunction(
       (started) =>
         document
@@ -198,7 +204,7 @@ try {
     }
     const counted = await page.evaluate(() => window.__revealCalls);
     check("reduced motion không chạy reveal", counted.length === 0);
-    const visible = await page.locator("[data-reveal-once]").evaluateAll((nodes) =>
+    const visible = await page.locator("[data-reveal-3d]").evaluateAll((nodes) =>
       nodes.every((node) => {
         const rect = node.getBoundingClientRect();
         return rect.width > 0 && rect.height > 0 && getComputedStyle(node).opacity === "1";

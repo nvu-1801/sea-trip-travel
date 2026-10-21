@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { chromium } from "playwright";
+import { activeSlide, assertNoPlaybackToggle, freezeHeroClock } from "./lib/hero-contract.mjs";
 
 const folder = mkdtempSync(path.join(tmpdir(), "seatrip-hero-"));
 const base = "http://127.0.0.1:3194";
@@ -103,6 +104,12 @@ try {
     assert.equal(response.status(), 200, await response.text());
   };
   const original = (await current()).data;
+  const library = await (await context.request.get(`${base}/api/admin/media`)).json();
+  const aliases = library.filter((item) => item.src === "/images/hero/blue-bay.webp");
+  check("media library preserves separate tour and hero metadata",
+    aliases.some((item) => item.id.startsWith("original:")) &&
+    aliases.some((item) => item.id.startsWith("hero:")) &&
+    new Set(aliases.map((item) => item.alt)).size > 1);
   mkdirSync("verify-screenshots", { recursive: true });
   await admin.screenshot({ path: "verify-screenshots/hero-admin-desktop.png" });
   await admin
@@ -117,13 +124,21 @@ try {
     .click();
   await firstSlideImage.getByLabel("Tìm trong Ảnh từ thư viện")
     .fill("/images/hero/blue-bay.webp");
-  await firstSlideImage.getByRole("option", { name: /\/images\/hero\/blue-bay\.webp/ })
-    .click();
+  const imageOption = firstSlideImage.locator('[role="option"][data-value="/images/hero/blue-bay.webp"]');
+  check("overlapping tour/hero records produce exactly one image option", await imageOption.count() === 1);
+  await imageOption.click();
+  await firstSlideImage.getByLabel("Ảnh từ thư viện", { exact: true }).click();
+  check("chosen image has one selected option", await imageOption.getAttribute("aria-selected") === "true");
+  await firstSlideImage.getByLabel("Ảnh từ thư viện", { exact: true }).click();
   await firstSlideImage.getByLabel(/Vị trí ngang/).focus();
   await firstSlideImage.getByLabel(/Vị trí ngang/).press("End");
-  const page = await context.newPage();
+  const visitor = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await visitor.newPage();
+  await page.clock.install();
   await page.goto(base);
-  await page.locator('[data-hero-mode="carousel"]').waitFor();
+  await freezeHeroClock(page);
+  await assertNoPlaybackToggle(page);
+  check("hero has no pause/play toggle", true);
   check("carousel is the default hero", true);
   const photos = page.locator(".stt-cinema-image img");
   check("all five supplied photos are present", (await photos.count()) === 5);
@@ -137,6 +152,7 @@ try {
       getComputedStyle(header.querySelector("[data-logo-wordmark]")).color === "rgb(255, 255, 255)";
   }));
   await page.evaluate(() => window.scrollTo({ top: 900, behavior: "instant" }));
+  await page.clock.runFor(400);
   await page.waitForFunction(() => document.querySelector(".stt-site-header").dataset.overlay === "false");
   await page.waitForTimeout(350);
   check("scroll reveals a solid header that remains visible", await page.evaluate(() => {
@@ -145,6 +161,7 @@ try {
       getComputedStyle(header).backgroundColor !== "rgba(0, 0, 0, 0)";
   }));
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.clock.runFor(400);
   await page.waitForFunction(() => document.querySelector(".stt-site-header").dataset.overlay === "true");
   await page
     .getByRole("button", { name: "Ảnh tiếp theo", exact: true })
@@ -215,7 +232,8 @@ try {
   check(
     "admin reorders slides and selects a supplied photo",
     edited.slides[0].id === original.slides[1].id &&
-      edited.slides[0].image.src === "/images/hero/blue-bay.webp",
+      edited.slides[0].image.src === "/images/hero/blue-bay.webp" &&
+      edited.slides[0].image.alt === aliases[0].alt,
   );
   check(
     "admin focal-point control saves its value",
@@ -226,7 +244,21 @@ try {
     "saving draft keeps the published carousel",
     (await snapshot.text()).includes('data-hero-mode="carousel"'),
   );
+  // Reload the saved draft, rather than relying on the in-memory editor state.
+  await admin.reload();
+  await admin.getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Trang chủ/ }).click();
   await admin.getByRole("button", { name: /Sửa ảnh đầu trang/ }).click();
+  await admin.getByLabel("Carousel ảnh lớn", { exact: false }).check();
+  const restoredImage = admin.getByRole("group", { name: "Ảnh slide 1", exact: true });
+  check("saved photo preview survives reload", await restoredImage.locator('.adm-dropzone img').getAttribute("src") === "/images/hero/blue-bay.webp");
+  await restoredImage.getByLabel("Ảnh từ thư viện", { exact: true }).click();
+  await restoredImage.getByLabel("Tìm trong Ảnh từ thư viện").fill("/images/hero/blue-bay.webp");
+  const restoredOption = restoredImage.locator('[role="option"][data-value="/images/hero/blue-bay.webp"]');
+  check("saved photo stays uniquely selected after reload", await restoredOption.count() === 1 && await restoredOption.getAttribute("aria-selected") === "true");
+  await restoredImage.getByLabel("Ảnh từ thư viện", { exact: true }).click();
+  await admin.getByLabel("Bố cục ảnh ghép", { exact: false }).check();
+  await page.clock.resume();
   await admin
     .getByRole("button", { name: "Xuất bản thay đổi", exact: false })
     .click();
@@ -257,27 +289,38 @@ try {
   });
   await page.setViewportSize({ width: 390, height: 1000 });
   await page.screenshot({ path: "verify-screenshots/hero-collage-mobile.png" });
-  await publish({ ...original, autoplay: true, intervalSeconds: 6 });
-  await page.locator('[data-hero-mode="carousel"]').waitFor({ timeout: 20000 });
+  const autoplayConfig = {
+    ...original, autoplay: true, intervalSeconds: 6,
+    slides: original.slides.map((slide) => ({ ...slide,
+      title: `Tiêu đề ${slide.id}`, description: `Mô tả ${slide.id}`,
+    })),
+  };
+  await publish(autoplayConfig);
+  await page.goto(base);
+  await freezeHeroClock(page);
   await page.locator(".stt-cinema-stage").hover();
-  await page
-    .getByRole("button", { name: /^Ảnh 2:/ })
-    .waitFor({ state: "attached" });
-  await page.waitForFunction(
-    () =>
-      document
-        .querySelector('.stt-cinema-dots button[aria-current="true"]')
-        ?.getAttribute("aria-label")
-        ?.startsWith("Ảnh 2:"),
-    undefined,
-    { timeout: 15000 },
-  );
+  await page.clock.runFor(6001);
+  await page.getByRole("button", { name: /^Ảnh 2:/ }).and(activeSlide(page)).waitFor();
   check("autoplay advances even while hovered", true);
   await page.getByRole("button", { name: "Ảnh tiếp theo", exact: true }).click();
+  check("pointer navigation switches to slide 3", (await activeSlide(page).getAttribute("aria-label")).startsWith("Ảnh 3:"));
+  await page.clock.runFor(6001);
+  await page.getByRole("button", { name: /^Ảnh 4:/ }).and(activeSlide(page)).waitFor();
   check(
     "pointer navigation keeps autoplay running",
-    await page.getByRole("button", { name: "Dừng trình chiếu", exact: true }).getAttribute("aria-pressed") === "true",
+    true,
   );
+  const activePhoto = page.locator('.stt-cinema-image[data-active="true"] img');
+  const expected = autoplayConfig.slides[3];
+  check("active slide keeps its CMS title, description and caption",
+    (await page.locator('.stt-cinema-copy h1').innerText()).includes(expected.title) &&
+    (await page.locator('.stt-cinema-description').innerText()) === expected.description &&
+    (await page.locator('.stt-cinema-caption p').innerText()) === expected.caption);
+  check("active slide keeps its image, alt and CTA links",
+    await activePhoto.evaluate((img) => new URL(img.src).searchParams.get("url") ?? new URL(img.src).pathname) === expected.image.src &&
+    await activePhoto.getAttribute("alt") === expected.image.alt &&
+    await page.locator('.stt-cinema-primary').getAttribute("href") === original.primaryHref &&
+    await page.locator('.stt-cinema-secondary').getAttribute("href") === original.secondaryHref);
   check(
     "manual slide changes retain the crossfade",
     await page.locator(".stt-cinema-image").first().evaluate(
@@ -285,20 +328,24 @@ try {
     ),
   );
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page
-    .getByRole("button", { name: "Dừng trình chiếu", exact: true })
-    .waitFor({ state: "hidden" });
+  await page.locator('[data-motion-blocked="true"]').waitFor();
+  const reducedSlide = await activeSlide(page).getAttribute("aria-label");
+  await page.clock.runFor(18001);
   check(
     "reduced motion disables automatic playback",
-    await page
-      .getByRole("button", { name: "Phát trình chiếu", exact: true })
-      .isDisabled(),
+    await activeSlide(page).getAttribute("aria-label") === reducedSlide,
   );
   await page
     .getByRole("button", { name: "Ảnh tiếp theo", exact: true })
     .click();
-  check("manual navigation still works with reduced motion", true);
+  check("manual navigation still works with reduced motion", await activeSlide(page).getAttribute("aria-label") !== reducedSlide);
+  await assertNoPlaybackToggle(page);
   await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.locator('[data-motion-blocked="false"]').waitFor();
+  const resumedSlide = await activeSlide(page).getAttribute("aria-label");
+  await page.clock.runFor(6001);
+  check("autoplay resumes when reduced motion is disabled", await activeSlide(page).getAttribute("aria-label") !== resumedSlide);
+  await page.clock.resume();
   await publish({ ...original, slides: [original.slides[0]] });
   await page
     .getByRole("button", { name: "Ảnh tiếp theo", exact: true })

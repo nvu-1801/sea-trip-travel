@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { chromium } from "playwright";
+import { activeSlide, assertNoPlaybackToggle } from "./lib/hero-contract.mjs";
 const folder = mkdtempSync(path.join(tmpdir(), "seatrip-browser-")),
   port = Number(process.env.CMS_VERIFY_PORT ?? 3193),
   base = `http://127.0.0.1:${port}`;
@@ -624,13 +625,15 @@ try {
     (await page.locator(".stt-tour-card").count()) > 0,
   );
   await page.goto(base);
-  const motion = page.getByRole("button", { name: "Dừng trình chiếu", exact: true });
-  await motion.click();
-  check(
-    "carousel playback can be paused",
-    (await page.getByRole("button", { name: "Phát trình chiếu", exact: true })
-      .getAttribute("aria-pressed")) === "false",
-  );
+  await page.locator('[data-hero-mode="carousel"][data-motion-blocked="false"]').waitFor();
+  await assertNoPlaybackToggle(page);
+  check("hero has no pause/play toggle", true);
+  const initialSlide = await activeSlide(page).getAttribute("aria-label");
+  await page.waitForFunction((initial) =>
+    document.querySelector('.stt-cinema-dots button[aria-current="true"]')
+      ?.getAttribute("aria-label") !== initial, initialSlide);
+  check("carousel autoplays with real browser timers", true);
+  await page.getByRole("button", { name: /^Ảnh 1:/ }).click();
   mkdirSync("verify-screenshots", { recursive: true });
   await page.screenshot({ path: "verify-screenshots/studio-home-desktop.png" });
   await page.locator("#tim-hanh-trinh").scrollIntoViewIfNeeded();

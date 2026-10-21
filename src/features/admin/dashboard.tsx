@@ -17,6 +17,7 @@ import {
   type ToastKind,
 } from "./notify";
 import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
+import { mediaSelectOptions } from "@/lib/admin-media-options";
 import {
   TRASH_RETENTION_DAYS,
   articleCoverSrcOf,
@@ -436,10 +437,7 @@ export function Dashboard({
         });
         setReferences({
           ...options,
-          media: library.map((item: { src: string; alt: string }) => ({
-            value: item.src,
-            label: item.alt,
-          })),
+          media: mediaSelectOptions(library),
         });
         setSelected(null);
         setDirty(false);
@@ -496,10 +494,7 @@ export function Dashboard({
         return false;
       setReferences({
         ...options,
-        media: library.map((item: { src: string; alt: string }) => ({
-          value: item.src,
-          label: item.alt,
-        })),
+        media: mediaSelectOptions(library),
       });
       setSelected(null);
       setDirty(false);
@@ -576,10 +571,7 @@ export function Dashboard({
       setMedia(library);
       setReferences((current) => ({
         ...current,
-        media: library.map((item) => ({
-          value: item.src,
-          label: item.alt,
-        })),
+        media: mediaSelectOptions(library),
       }));
     } catch {
       // Thư viện sẽ đồng bộ ở lần tải trang sau; ảnh vừa tải vẫn dùng được ngay.
