@@ -70,6 +70,7 @@ export async function login(
   username: string,
   password: string,
   request: Request,
+  remember = false,
 ) {
   sameOrigin(request);
   const ip =
@@ -94,9 +95,11 @@ export async function login(
     throw new HttpError(401, "Tên đăng nhập hoặc mật khẩu không đúng");
   const token = randomBytes(32).toString("hex"),
     csrf = randomBytes(24).toString("hex");
+  // Phiên thường 8 giờ; tick "nhớ đăng nhập" kéo dài 30 ngày.
+  const maxAge = remember ? 30 * 24 * 60 * 60 : age;
   db()
     .prepare("INSERT INTO sessions(hash,expires,csrf) VALUES(?,?,?)")
-    .run(digest(token), Date.now() + age * 1000, csrf);
+    .run(digest(token), Date.now() + maxAge * 1000, csrf);
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     secure:
@@ -104,7 +107,7 @@ export async function login(
       process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
-    maxAge: age,
+    maxAge,
   });
   audit("login", "admin");
   return { csrf };

@@ -730,6 +730,79 @@ form {
   flex: 1;
   min-width: 0;
 }
+.adm-remember {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px solid #f0dce6;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+.adm-remember:hover {
+  border-color: #f0a8c4;
+  background: #fff7fa;
+}
+.adm-remember:has(input:checked) {
+  border-color: #e0005a;
+  background: linear-gradient(135deg, #fff1f6, #fff);
+  box-shadow: 0 0 0 4px #e0005a14;
+}
+.adm-remember:has(input:focus-visible) {
+  outline: 2px solid #e0005a;
+  outline-offset: 2px;
+}
+.adm-remember input {
+  appearance: none;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  min-width: 0;
+  margin: 1px 0 0;
+  padding: 0;
+  border-radius: 8px;
+  border: 2px solid #e5b9ca;
+  background: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+.adm-remember input:checked {
+  border-color: #e0005a;
+  background: linear-gradient(135deg, #e0005a, #ff0366);
+}
+.adm-remember input:checked::after {
+  content: "";
+  width: 6px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) translate(-0.5px, -1px);
+}
+.adm-remember > span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #211621;
+  line-height: 1.5;
+}
+.adm-remember small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #8b7684;
+}
 .adm-password-toggle {
   flex-shrink: 0;
   white-space: nowrap;

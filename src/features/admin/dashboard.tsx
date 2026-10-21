@@ -273,6 +273,7 @@ export function Dashboard({
   const [username, setUsername] = useState(""),
     [password, setPassword] = useState(""),
     [showPassword, setShowPassword] = useState(false),
+    [remember, setRemember] = useState(false),
     [helpOpen, setHelpOpen] = useState(false),
     [current, setCurrent] = useState(""),
     [showCurrentPw, setShowCurrentPw] = useState(false),
@@ -483,7 +484,7 @@ export function Dashboard({
       try {
         const data = await api("auth", {
           method: "POST",
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ username, password, remember }),
         });
         setPassword("");
         setShowPassword(false);
@@ -549,6 +550,19 @@ export function Dashboard({
                 {showPassword ? "Ẩn" : "Hiện"}
               </button>
             </div>
+            <label className="adm-remember" htmlFor="adm-remember">
+              <input
+                id="adm-remember"
+                name="remember"
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+              />
+              <span>
+                Nhớ đăng nhập trong 30 ngày
+                <small>Chỉ dùng trên máy cá nhân, không dùng máy lạ.</small>
+              </span>
+            </label>
             <button
               className="adm-primary"
               type="submit"

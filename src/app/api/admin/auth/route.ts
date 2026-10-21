@@ -20,9 +20,12 @@ export async function POST(request: Request) {
       .object({
         username: z.string().min(1).max(80),
         password: z.string().min(1).max(200),
+        remember: z.boolean().optional(),
       })
       .parse(await jsonBody(request, 4096));
-    return reply(await login(data.username, data.password, request));
+    return reply(
+      await login(data.username, data.password, request, data.remember ?? false),
+    );
   });
 }
 export async function DELETE(request: Request) {
