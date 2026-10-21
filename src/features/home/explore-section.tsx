@@ -16,7 +16,9 @@ export function ExploreSection({ locale }: { locale: Locale }) {
     body: en
       ? "Rocky headlands, quiet fishing villages and turquoise bays. Start with a place that makes you want to slow down."
       : "Qua những cung đường ôm biển, ghé làng chài nhỏ, để một ngày trôi theo nhịp sóng. Chọn nơi khiến bạn muốn dừng chân lâu hơn một chút.",
-    footnote: en ? "Your pace. Your kind of journey." : "Đi chậm một chút. Nhớ lâu một chút.",
+    footnote: en
+      ? "Your pace. Your kind of journey."
+      : "Đi chậm một chút. Nhớ lâu một chút.",
   };
   try {
     const s = landingSections().explore;
@@ -79,7 +81,9 @@ export function ExploreSection({ locale }: { locale: Locale }) {
         </div>
         <div className="journal-footnote">
           <span>{copy.footnote}</span>
-          <Link href={localizePath(locale, "/tour-quy-nhon-phu-yen")}>
+          <Link
+            href={localizePath(locale, landingSections().links.explore.href)}
+          >
             {en
               ? "Explore Quy Nhon – Phu Yen"
               : "Khám phá tuyến Quy Nhơn – Phú Yên"}{" "}

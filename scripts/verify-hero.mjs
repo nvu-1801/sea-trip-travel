@@ -81,9 +81,14 @@ try {
   await admin.getByLabel("Mật khẩu", { exact: true }).fill(password);
   await admin.getByRole("button", { name: "Vào SEA TRIP Studio" }).click();
   await admin
-    .getByRole("button", { name: "Giao diện trang chủ", exact: false })
+    .getByRole("navigation", { name: "Quản trị", exact: true })
+    .getByRole("button", { name: "Trang chủ", exact: true })
     .click();
-  await admin.getByRole("button", { name: "Chỉnh sửa ↗" }).click();
+  await admin
+    .locator(".adm-section-grid article")
+    .first()
+    .getByRole("button", { name: "Chỉnh sửa phần này ↗" })
+    .click();
   await admin.getByLabel("Carousel ảnh lớn", { exact: false }).waitFor();
   const auth = await (
     await context.request.get(`${base}/api/admin/auth`)
@@ -112,8 +117,9 @@ try {
     exact: true,
   });
   await firstSlideImage
-    .getByLabel("Ảnh từ thư viện", { exact: true })
-    .selectOption("/images/hero/blue-bay.webp");
+    .getByRole("button", { name: "Hoặc chọn ảnh đã có", exact: true })
+    .click();
+  await firstSlideImage.getByRole("option", { name: /blue-bay/ }).click();
   await firstSlideImage.getByLabel(/Vị trí ngang/).focus();
   await firstSlideImage.getByLabel(/Vị trí ngang/).press("End");
   const page = await context.newPage();
@@ -122,25 +128,61 @@ try {
   check("carousel is the default hero", true);
   const photos = page.locator(".stt-cinema-image img");
   check("all five supplied photos are present", (await photos.count()) === 5);
-  check("slide 2 and 5 use the replacement photos", original.slides[1].image.src === "/images/hero/ky-co-user.png" && original.slides[4].image.src === "/images/hero/ghenh-da-dia-user.png");
-  check("header consultation button and decorative tagline are removed", await page.locator("header").getByRole("link", { name: "Nhận tư vấn", exact: true }).count() === 0 && await page.getByText("Chọn một nhịp đi khác", { exact: true }).count() === 0);
-  check("hero covers the viewport behind a transparent header", await page.evaluate(() => {
-    const stage = document.querySelector(".stt-cinema-stage").getBoundingClientRect();
-    const header = document.querySelector(".stt-site-header");
-    return stage.top === 0 && stage.left === 0 && stage.width === innerWidth && stage.height >= innerHeight &&
-      header.dataset.overlay === "true" && getComputedStyle(header).backgroundColor === "rgba(0, 0, 0, 0)" &&
-      getComputedStyle(header.querySelector("[data-logo-wordmark]")).color === "rgb(255, 255, 255)";
-  }));
+  check(
+    "slide 2 and 5 use the replacement photos",
+    original.slides[1].image.src === "/images/hero/ky-co-user.png" &&
+      original.slides[4].image.src === "/images/hero/ghenh-da-dia-user.png",
+  );
+  check(
+    "header consultation button and decorative tagline are removed",
+    (await page
+      .locator("header")
+      .getByRole("link", { name: "Nhận tư vấn", exact: true })
+      .count()) === 0 &&
+      (await page
+        .getByText("Chọn một nhịp đi khác", { exact: true })
+        .count()) === 0,
+  );
+  check(
+    "hero covers the viewport behind a transparent header",
+    await page.evaluate(() => {
+      const stage = document
+        .querySelector(".stt-cinema-stage")
+        .getBoundingClientRect();
+      const header = document.querySelector(".stt-site-header");
+      return (
+        stage.top === 0 &&
+        stage.left === 0 &&
+        stage.width === innerWidth &&
+        stage.height >= innerHeight &&
+        header.dataset.overlay === "true" &&
+        getComputedStyle(header).backgroundColor === "rgba(0, 0, 0, 0)" &&
+        getComputedStyle(header.querySelector("[data-logo-wordmark]")).color ===
+          "rgb(255, 255, 255)"
+      );
+    }),
+  );
   await page.evaluate(() => window.scrollTo({ top: 900, behavior: "instant" }));
-  await page.waitForFunction(() => document.querySelector(".stt-site-header").dataset.overlay === "false");
+  await page.waitForFunction(
+    () =>
+      document.querySelector(".stt-site-header").dataset.overlay === "false",
+  );
   await page.waitForTimeout(350);
-  check("scroll reveals a solid header that remains visible", await page.evaluate(() => {
-    const header = document.querySelector(".stt-site-header");
-    return header.dataset.hidden === "false" && header.getBoundingClientRect().top === 0 &&
-      getComputedStyle(header).backgroundColor !== "rgba(0, 0, 0, 0)";
-  }));
+  check(
+    "scroll reveals a solid header that remains visible",
+    await page.evaluate(() => {
+      const header = document.querySelector(".stt-site-header");
+      return (
+        header.dataset.hidden === "false" &&
+        header.getBoundingClientRect().top === 0 &&
+        getComputedStyle(header).backgroundColor !== "rgba(0, 0, 0, 0)"
+      );
+    }),
+  );
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await page.waitForFunction(() => document.querySelector(".stt-site-header").dataset.overlay === "true");
+  await page.waitForFunction(
+    () => document.querySelector(".stt-site-header").dataset.overlay === "true",
+  );
   await page
     .getByRole("button", { name: "Ảnh tiếp theo", exact: true })
     .click();
@@ -171,6 +213,28 @@ try {
   );
   for (const width of [360, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 950 });
+    await page.waitForTimeout(250);
+    if (
+      !(await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ))
+    )
+      console.log(
+        "Overflow diagnostics",
+        await page.evaluate(() =>
+          [...document.querySelectorAll("body *")]
+            .filter(
+              (node) => node.getBoundingClientRect().right > innerWidth + 1,
+            )
+            .slice(0, 12)
+            .map((node) => ({
+              tag: node.tagName,
+              class: node.className,
+              width: node.getBoundingClientRect().width,
+              right: node.getBoundingClientRect().right,
+            })),
+        ),
+      );
     check(
       `carousel ${width}px stays within viewport`,
       await page.evaluate(
@@ -190,9 +254,14 @@ try {
   });
   await page.setViewportSize({ width: 390, height: 1000 });
   await page.locator(".stt-menu-trigger").click();
-  check("mobile menu opens over the full-screen hero", await page.locator("dialog[open]").isVisible());
+  check(
+    "mobile menu opens over the full-screen hero",
+    await page.locator("dialog[open]").isVisible(),
+  );
   await page.keyboard.press("Escape");
-  await page.waitForFunction(() => document.querySelector(".stt-site-header").dataset.overlay === "true");
+  await page.waitForFunction(
+    () => document.querySelector(".stt-site-header").dataset.overlay === "true",
+  );
   await page.screenshot({
     path: "verify-screenshots/hero-carousel-mobile.png",
   });
@@ -204,7 +273,7 @@ try {
     .click();
   await admin
     .getByRole("status")
-    .filter({ hasText: "Đã lưu thay đổi" })
+    .filter({ hasText: "Đã lưu bản nháp" })
     .waitFor();
   const edited = (await current()).data;
   check(
@@ -221,10 +290,12 @@ try {
     "saving draft keeps the published carousel",
     (await snapshot.text()).includes('data-hero-mode="carousel"'),
   );
-  await admin.getByRole("button", { name: "Chỉnh sửa ↗" }).click();
   await admin
-    .getByRole("button", { name: "Xuất bản thay đổi", exact: false })
+    .locator(".adm-section-grid article")
+    .first()
+    .getByRole("button", { name: "Chỉnh sửa phần này ↗" })
     .click();
+  await admin.getByRole("button", { name: "Xuất bản", exact: true }).click();
   await page.locator('[data-hero-mode="collage"]').waitFor({ timeout: 20000 });
   await page
     .getByRole("heading", { name: /Một hành trình mang dấu ấn của bạn/ })
@@ -268,16 +339,23 @@ try {
     { timeout: 15000 },
   );
   check("autoplay advances even while hovered", true);
-  await page.getByRole("button", { name: "Ảnh tiếp theo", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Ảnh tiếp theo", exact: true })
+    .click();
   check(
     "pointer navigation keeps autoplay running",
-    await page.getByRole("button", { name: "Dừng trình chiếu", exact: true }).getAttribute("aria-pressed") === "true",
+    (await page
+      .getByRole("button", { name: "Dừng trình chiếu", exact: true })
+      .getAttribute("aria-pressed")) === "true",
   );
   check(
     "manual slide changes retain the crossfade",
-    await page.locator(".stt-cinema-image").first().evaluate(
-      (node) => parseFloat(getComputedStyle(node).transitionDuration) > 0,
-    ),
+    await page
+      .locator(".stt-cinema-image")
+      .first()
+      .evaluate(
+        (node) => parseFloat(getComputedStyle(node).transitionDuration) > 0,
+      ),
   );
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page

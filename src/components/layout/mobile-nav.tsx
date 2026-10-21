@@ -1,4 +1,5 @@
 "use client";
+import { useSiteContact } from "./site-context";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,7 +10,13 @@ import type { Locale } from "@/i18n/config";
 import { localizePath, stripLocaleFromPath } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { ButtonLink } from "@/components/ui/button";
-import { ChevronDownIcon, CloseIcon, MailIcon, MenuIcon, PhoneIcon } from "@/components/ui/icons";
+import {
+  ChevronDownIcon,
+  CloseIcon,
+  MailIcon,
+  MenuIcon,
+  PhoneIcon,
+} from "@/components/ui/icons";
 import { setNavOpen } from "./header-state";
 import { LocaleSwitcher } from "./locale-switcher";
 import { Logo } from "./logo";
@@ -48,6 +55,7 @@ export function MobileNav({
   labels: NavLabels;
   ui: MobileNavUi;
 }) {
+  const identity = useSiteContact();
   const pathname = usePathname();
   const currentPath = stripLocaleFromPath(pathname ?? "/").path;
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -135,14 +143,21 @@ export function MobileNav({
             </div>
           </div>
 
-          <nav aria-label={ui.primaryNavAria} className="flex-1 overflow-y-auto px-3 py-4">
+          <nav
+            aria-label={ui.primaryNavAria}
+            className="flex-1 overflow-y-auto px-3 py-4"
+          >
             <ul className="flex flex-col gap-1">
-              {primaryNav.map((item) => {
-                const label = labels.nav[item.labelKey];
+              {(identity.navigation ?? primaryNav).map((item) => {
+                const label =
+                  locale === "en"
+                    ? item.labelEn || item.label || labels.nav[item.labelKey]
+                    : item.label || labels.nav[item.labelKey];
                 const isActive =
                   item.href === "/"
                     ? currentPath === "/"
-                    : currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+                    : currentPath === item.href ||
+                      currentPath.startsWith(`${item.href}/`);
 
                 if (!item.children || item.children.length === 0) {
                   return (
@@ -164,8 +179,8 @@ export function MobileNav({
                   );
                 }
 
-                const isExpanded = expanded === item.labelKey;
-                const panelId = `mobile-panel-${item.labelKey}`;
+                const isExpanded = expanded === item.href;
+                const panelId = `mobile-panel-${item.labelKey}-${item.href.replaceAll("/", "-")}`;
 
                 return (
                   <li key={item.href}>
@@ -173,7 +188,7 @@ export function MobileNav({
                       type="button"
                       aria-expanded={isExpanded}
                       aria-controls={panelId}
-                      onClick={() => setExpanded(isExpanded ? null : item.labelKey)}
+                      onClick={() => setExpanded(isExpanded ? null : item.href)}
                       data-focus-ring=""
                       className={cn(
                         "flex w-full items-center justify-between gap-2 rounded-lg px-4 py-3.5 text-left text-base font-semibold whitespace-nowrap transition-colors",
@@ -196,7 +211,9 @@ export function MobileNav({
                       inert={!isExpanded}
                       className={cn(
                         "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
-                        isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+                        isExpanded
+                          ? "grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0",
                       )}
                     >
                       <div className="overflow-hidden">
@@ -214,7 +231,11 @@ export function MobileNav({
                                 <Link
                                   href={localizePath(locale, child.href)}
                                   onClick={close}
-                                  aria-current={currentPath === child.href ? "page" : undefined}
+                                  aria-current={
+                                    currentPath === child.href
+                                      ? "page"
+                                      : undefined
+                                  }
                                   className={cn(
                                     "block rounded-lg px-4 py-2.5 text-[0.9375rem] whitespace-nowrap transition-colors",
                                     currentPath === child.href
@@ -222,7 +243,11 @@ export function MobileNav({
                                       : "text-foreground-muted hover:bg-surface-muted hover:text-foreground",
                                   )}
                                 >
-                                  {labels.nav[child.labelKey]}
+                                  {locale === "en"
+                                    ? child.labelEn ||
+                                      child.label ||
+                                      labels.nav[child.labelKey]
+                                    : child.label || labels.nav[child.labelKey]}
                                 </Link>
                               </li>
                             ))}

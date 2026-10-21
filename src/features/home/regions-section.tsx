@@ -23,8 +23,18 @@ export function RegionsSection({ locale }: { locale: Locale }) {
       : "Từ sớm mai nơi núi cao đến chiều lộng gió bên bờ biển. Mỗi miền đất là một cách khác để yêu những chuyến đi.",
   };
   let moods = en
-    ? ["Mountains & heritage", "Coast & ancient towns", "Islands & waterways", "Pines & highland mornings"]
-    : ["Non nước & di sản", "Biển xanh & phố cổ", "Đảo ngọc & sông nước", "Rừng thông & sớm cao nguyên"];
+    ? [
+        "Mountains & heritage",
+        "Coast & ancient towns",
+        "Islands & waterways",
+        "Pines & highland mornings",
+      ]
+    : [
+        "Non nước & di sản",
+        "Biển xanh & phố cổ",
+        "Đảo ngọc & sông nước",
+        "Rừng thông & sớm cao nguyên",
+      ];
   try {
     const s = landingSections().regions;
     copy = {
@@ -56,7 +66,7 @@ export function RegionsSection({ locale }: { locale: Locale }) {
             <p className="regions-intro">{copy.intro}</p>
             <Link
               className="journal-text-link"
-              href={localizePath(locale, ROUTES.domestic)}
+              href={localizePath(locale, landingSections().links.regions.href)}
             >
               {en ? "All domestic journeys" : "Xem hành trình trong nước"} ↗
             </Link>
@@ -84,7 +94,9 @@ export function RegionsSection({ locale }: { locale: Locale }) {
                     </span>
                   </span>
                   <div className="region-postcard-copy">
-                    <p className="region-postcard-mood">{moods[i] ?? moods[0]}</p>
+                    <p className="region-postcard-mood">
+                      {moods[i] ?? moods[0]}
+                    </p>
                     <h3>{region.name.replace(/^Tour /, "")}</h3>
                     <p>{region.tagline ?? region.description}</p>
                     <span className="region-postcard-cta">

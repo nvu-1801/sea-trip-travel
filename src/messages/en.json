@@ -189,6 +189,45 @@
     "consult": {
       "title": "Which trip are you thinking about?",
       "description": "Leave a few details and SEA TRIP will suggest destinations, timing and options — completely free."
+    },
+    "finder": {
+      "title": "Where shall we go?",
+      "durations": [
+        {
+          "days": "1",
+          "label": "1 day",
+          "body": "Out in the morning, back by evening."
+        },
+        {
+          "days": "2",
+          "label": "2 days",
+          "body": "A weekend escape."
+        },
+        {
+          "days": "3",
+          "label": "3 days",
+          "body": "Roomier, with an extra night."
+        },
+        {
+          "days": "4+",
+          "label": "4+ days",
+          "body": "Link more stops, go deeper."
+        }
+      ],
+      "eyebrow": "PLAN YOUR TRIP",
+      "description": "Tell us where and how long. Or start from a suggestion — every path leads to a real itinerary.",
+      "destinationLabel": "Destination",
+      "placeholder": "Where would you like to go?",
+      "durationLabel": "Duration",
+      "flexibleLabel": "I am flexible",
+      "longDuration": "4 days or more",
+      "cta": "Find a trip",
+      "suggestionsTitle": "Suggested destinations",
+      "durationsTitle": "Browse by duration",
+      "helpTitle": "Not sure yet?",
+      "helpBody": "Tell us your days and group size — advice is free, and there is no deposit online.",
+      "helpCta": "Chat for free advice",
+      "guidesCta": "Read the travel guides"
     }
   },
   "consult": {
@@ -449,15 +488,7 @@
       "November",
       "December"
     ],
-    "weekdaysShort": [
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-      "Sat",
-      "Sun"
-    ],
+    "weekdaysShort": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     "weekdaysFull": [
       "Monday",
       "Tuesday",

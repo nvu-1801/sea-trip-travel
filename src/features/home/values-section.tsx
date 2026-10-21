@@ -1,4 +1,3 @@
-import { ROUTES } from "@/config/navigation";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { Container, Section } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
@@ -123,7 +122,7 @@ export function ValuesSection({ locale }: { locale: Locale }) {
 
             <Reveal>
               <ButtonLink
-                href={localizePath(locale, ROUTES.contact)}
+                href={localizePath(locale, landingSections().links.values.href)}
                 className="values-cta group"
               >
                 {m.home.values.cta}

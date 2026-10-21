@@ -480,3 +480,226 @@ test("landing sections carry admin-editable trust, principles, featured and guid
     false,
   );
 });
+
+test("section batch rolls back every document and version when a later revision conflicts", async () => {
+  const { saveBatch } = await import("../src/server/cms/store");
+  const home = list("landing")[0],
+    copy = list("messages").find((row) => row.id === "vi")!;
+  const beforePublic = contentVersion("public"),
+    beforeAdmin = contentVersion("admin");
+  assert.throws(
+    () =>
+      saveBatch([
+        {
+          collection: "landing",
+          data: {
+            ...home.data,
+            story: {
+              ...(home.data.story as object),
+              titleA: "Should roll back",
+            },
+          },
+          revision: home.revision,
+          action: "publish",
+        },
+        {
+          collection: "messages",
+          data: copy.data,
+          revision: copy.revision - 1,
+          action: "publish",
+        },
+      ]),
+    /Nội dung đã thay đổi/,
+  );
+  assert.equal(list("landing")[0].revision, home.revision);
+  assert.deepEqual(list("landing")[0].data, home.data);
+  assert.equal(contentVersion("public"), beforePublic);
+  assert.equal(contentVersion("admin"), beforeAdmin);
+  const result = saveBatch([
+    {
+      collection: "landing",
+      data: home.data,
+      revision: home.revision,
+      action: "save",
+    },
+    {
+      collection: "messages",
+      data: copy.data,
+      revision: copy.revision,
+      action: "save",
+    },
+  ]);
+  assert.equal(result.length, 2);
+  assert.equal(contentVersion("public"), beforePublic);
+});
+test("old landing and catalog records gain defaults without replacing edits or revisions", async () => {
+  const old = list("landing")[0];
+  const input = structuredClone(old.data);
+  delete input.display;
+  delete input.sectionOrder;
+  const story = input.story as Record<string, unknown>;
+  delete story.photoSrc;
+  delete story.titleA;
+  db()
+    .prepare("UPDATE records SET data=? WHERE collection='landing' AND id=?")
+    .run(JSON.stringify(input), old.id);
+  const normalized = list("landing")[0];
+  assert.equal(normalized.revision, old.revision);
+  assert.equal(
+    (normalized.data.story as Record<string, unknown>).photoSrc,
+    "/images/hero/coastal-sunset.webp",
+  );
+  assert.deepEqual(
+    (normalized.data.story as Record<string, unknown>).trips,
+    story.trips,
+  );
+  const message = list("messages").find((row) => row.id === "vi")!;
+  const legacy = structuredClone(message.data) as Record<string, unknown>;
+  const legacyHome = legacy.home as Record<string, unknown>;
+  delete legacyHome.finder;
+  (legacyHome.featured as Record<string, unknown>).title =
+    "Giữ nội dung đã sửa";
+  db()
+    .prepare(
+      "UPDATE records SET data=? WHERE collection='messages' AND id='vi'",
+    )
+    .run(JSON.stringify(legacy));
+  const restored = list("messages").find((row) => row.id === "vi")!;
+  const restoredHome = restored.data.home as Record<string, unknown>;
+  assert.ok(restoredHome.finder);
+  assert.equal(
+    (restoredHome.featured as Record<string, unknown>).title,
+    "Giữ nội dung đã sửa",
+  );
+});
+test("custom pages stay private until publish, support hide/trash/restore and reject unsafe paths", async () => {
+  const { contentPageSchema } = await import("../src/domain/page");
+  const input = contentPageSchema.parse({
+    id: "page_studio_test",
+    slug: "studio-test",
+    title: "Trang thử nghiệm",
+    body: [{ type: "paragraph", text: "Nội dung an toàn" }],
+  });
+  const exists = () =>
+    published("pages", []).some(
+      (page: unknown) => (page as { id: string }).id === input.id,
+    );
+  save("pages", input, 0, "save");
+  assert.equal(exists(), false);
+  save("pages", input, 1, "publish");
+  assert.equal(exists(), true);
+  assert.throws(
+    () =>
+      save(
+        "pages",
+        { ...input, cover: { src: "//evil.example/a.jpg", alt: "Ảnh" } },
+        2,
+        "publish",
+      ),
+    /Đường dẫn không an toàn/,
+  );
+  assert.throws(
+    () => save("pages", { ...input, slug: "chinh-sach-bao-mat" }, 2, "publish"),
+    /dành riêng/,
+  );
+  save("pages", input, 2, "unpublish");
+  assert.equal(exists(), false);
+  save("pages", input, 3, "delete");
+  assert.equal(
+    list("pages").find((page) => page.id === input.id)?.state,
+    "deleted",
+  );
+  save("pages", input, 4, "restore");
+  assert.equal(exists(), false);
+});
+test("home selection validates references and blocks deletion while a tour is pinned", () => {
+  const tour = list("tours").find((row) => row.state !== "deleted")!;
+  const home = list("landing")[0];
+  assert.throws(
+    () =>
+      save(
+        "landing",
+        { ...home.data, featured: { tourIds: ["tour_missing"] } },
+        home.revision,
+        "save",
+      ),
+    /không tồn tại/,
+  );
+  save(
+    "landing",
+    { ...home.data, featured: { tourIds: [tour.id] } },
+    home.revision,
+    "publish",
+  );
+  assert.throws(
+    () => save("tours", tour.data, tour.revision, "delete"),
+    /trang chủ|tham chiếu/,
+  );
+  const latest = list("landing")[0];
+  save(
+    "landing",
+    { ...latest.data, featured: { tourIds: [] } },
+    latest.revision,
+    "publish",
+  );
+  assert.throws(
+    () =>
+      landingSchema.parse({
+        ...latest.data,
+        sectionOrder: Array(11).fill("hero"),
+      }),
+    /một lần/,
+  );
+});
+
+test("publishing one home section keeps other saved section drafts private", async () => {
+  const { saveBatch } = await import("../src/server/cms/store");
+  const home = list("landing")[0];
+  const before = landingSchema.parse(published("landing", [defaultLanding])[0]);
+  const draft = landingSchema.parse({
+    ...home.data,
+    story: {
+      ...(home.data.story as object),
+      titleA: "Unrelated private story draft",
+    },
+  });
+  save("landing", draft, home.revision, "save");
+  const latest = list("landing")[0];
+  const edited = landingSchema.parse({
+    ...latest.data,
+    planning: {
+      ...(latest.data.planning as object),
+      titleA: "Only publish FAQ heading",
+    },
+  });
+  saveBatch([
+    {
+      collection: "landing",
+      data: edited,
+      revision: latest.revision,
+      action: "publish",
+      paths: [["planning"]],
+    },
+  ]);
+  const result = landingSchema.parse(published("landing", [defaultLanding])[0]);
+  assert.equal(result.planning.titleA, "Only publish FAQ heading");
+  assert.equal(result.story.titleA, before.story.titleA);
+  assert.equal(
+    (list("landing")[0].data.story as Record<string, unknown>).titleA,
+    "Unrelated private story draft",
+  );
+  assert.equal(list("landing")[0].state, "draft");
+  assert.throws(
+    () =>
+      saveBatch([
+        {
+          collection: "landing",
+          data: edited,
+          revision: list("landing")[0].revision,
+          action: "publish",
+          paths: [["__proto__", "polluted"]],
+        },
+      ]),
+    /không hợp lệ/,
+  );
+});

@@ -189,6 +189,45 @@
     "consult": {
       "title": "Bạn đang nghĩ tới chuyến đi nào?",
       "description": "Để lại vài thông tin, SEA TRIP sẽ gợi ý điểm đến, thời điểm và phương án phù hợp — hoàn toàn miễn phí."
+    },
+    "finder": {
+      "title": "Mình đi đâu nhé?",
+      "durations": [
+        {
+          "days": "1",
+          "label": "1 ngày",
+          "body": "Đi trong ngày, tối về lại phố."
+        },
+        {
+          "days": "2",
+          "label": "2 ngày",
+          "body": "Cuối tuần đổi gió."
+        },
+        {
+          "days": "3",
+          "label": "3 ngày",
+          "body": "Thong thả thêm một đêm."
+        },
+        {
+          "days": "4+",
+          "label": "Từ 4 ngày",
+          "body": "Nối nhiều điểm, đi sâu hơn."
+        }
+      ],
+      "eyebrow": "LÊN KẾ HOẠCH",
+      "description": "Cho biết nơi muốn đến và số ngày bạn có. Hoặc bắt đầu từ một gợi ý — đường nào cũng tới lịch trình cụ thể.",
+      "destinationLabel": "Điểm đến",
+      "placeholder": "Quy Nhơn, Phú Yên…",
+      "durationLabel": "Thời gian",
+      "flexibleLabel": "Mình linh hoạt",
+      "longDuration": "Từ 4 ngày",
+      "cta": "Tìm chuyến đi",
+      "suggestionsTitle": "Điểm đến gợi ý",
+      "durationsTitle": "Chọn theo số ngày",
+      "helpTitle": "Chưa biết đi đâu?",
+      "helpBody": "Cho biết số ngày và số người — tư vấn miễn phí, không cần đặt cọc online.",
+      "helpCta": "Nhắn tư vấn miễn phí",
+      "guidesCta": "Đọc cẩm nang du lịch"
     }
   },
   "consult": {
@@ -449,15 +488,7 @@
       "Tháng 11",
       "Tháng 12"
     ],
-    "weekdaysShort": [
-      "T2",
-      "T3",
-      "T4",
-      "T5",
-      "T6",
-      "T7",
-      "CN"
-    ],
+    "weekdaysShort": ["T2", "T3", "T4", "T5", "T6", "T7", "CN"],
     "weekdaysFull": [
       "Thứ Hai",
       "Thứ Ba",

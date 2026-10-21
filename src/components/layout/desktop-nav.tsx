@@ -1,4 +1,5 @@
 "use client";
+import { useSiteContact } from "./site-context";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -40,6 +41,7 @@ export function DesktopNav({
   locale: Locale;
   labels: NavLabels;
 }) {
+  const identity = useSiteContact();
   const pathname = usePathname();
   // Links are authored in their Vietnamese-canonical form; strip any prefix
   // before comparing so EN pages still highlight the right item.
@@ -137,8 +139,11 @@ export function DesktopNav({
       className="stt-desktop-nav hidden min-w-0 xl:block"
     >
       <ul className="flex items-center gap-0.5 xl:gap-1">
-        {primaryNav.map((item) => {
-          const label = labels.nav[item.labelKey];
+        {(identity.navigation ?? primaryNav).map((item) => {
+          const label =
+            locale === "en"
+              ? item.labelEn || item.label || labels.nav[item.labelKey]
+              : item.label || labels.nav[item.labelKey];
           const childHrefs = item.children?.map((child) => child.href) ?? [];
           const active = isActive(item.href, childHrefs);
           const allOf = labels.allOf.replace("{label}", label);
@@ -163,17 +168,17 @@ export function DesktopNav({
             );
           }
 
-          const expanded = openLabel === item.labelKey;
+          const expanded = openLabel === item.href;
 
           return (
             <li key={item.href} className="shrink-0">
               <div
                 ref={(node) => {
-                  if (node) itemRefs.current.set(item.labelKey, node);
-                  else itemRefs.current.delete(item.labelKey);
+                  if (node) itemRefs.current.set(item.href, node);
+                  else itemRefs.current.delete(item.href);
                 }}
                 className="relative"
-                onMouseEnter={() => open(item.labelKey)}
+                onMouseEnter={() => open(item.href)}
                 onMouseLeave={scheduleClose}
                 onBlur={(event) => {
                   if (
@@ -189,12 +194,12 @@ export function DesktopNav({
                   type="button"
                   aria-expanded={expanded}
                   aria-haspopup="true"
-                  onClick={() => applyOpen(expanded ? null : item.labelKey)}
+                  onClick={() => applyOpen(expanded ? null : item.href)}
                   onKeyDown={(event) => {
                     if (event.key === "ArrowDown") {
                       event.preventDefault();
                       focusPanelOnOpen.current = true;
-                      open(item.labelKey);
+                      open(item.href);
                     }
                     if (event.key === "Escape") applyOpen(null);
                   }}
@@ -230,7 +235,7 @@ export function DesktopNav({
                       event.preventDefault();
                       applyOpen(null);
                       itemRefs.current
-                        .get(item.labelKey)
+                        .get(item.href)
                         ?.querySelector<HTMLButtonElement>("button")
                         ?.focus();
                     }
@@ -284,7 +289,11 @@ export function DesktopNav({
                               : "border-white/70 bg-white/55 text-foreground-muted shadow-[0_2px_10px_rgba(120,10,50,0.08)] hover:border-primary-strong/40 hover:bg-white/90 hover:text-primary-strong hover:shadow-[0_10px_24px_rgba(224,0,90,0.22)]",
                           )}
                         >
-                          {labels.nav[child.labelKey]}
+                          {locale === "en"
+                            ? child.labelEn ||
+                              child.label ||
+                              labels.nav[child.labelKey]
+                            : child.label || labels.nav[child.labelKey]}
                           <span
                             aria-hidden="true"
                             className="text-[11px] leading-none"

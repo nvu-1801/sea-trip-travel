@@ -1,4 +1,5 @@
 "use client";
+import { ContentStudio, isStudioTab } from "./content-studio";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
@@ -24,17 +25,18 @@ type Lead = {
 };
 const tabs = [
   ["overview", "Tổng quan", "◉"],
+  ["home", "Trang chủ", "◫"],
   ["tours", "Tour du lịch", "◈"],
-  ["articles", "Cẩm nang", "▤"],
-  ["categories", "Danh mục", "▦"],
+  ["categories", "Danh mục tour", "▦"],
   ["destinations", "Điểm đến", "◎"],
-  ["hero", "Giao diện trang chủ", "◫"],
-  ["landing", "Trang chủ sections", "▦"],
+  ["articles", "Cẩm nang du lịch", "▤"],
+  ["pages", "Các trang khác", "▤"],
+  ["chrome", "Đầu trang & menu", "☰"],
+  ["settings", "Chân trang & liên hệ", "⚙"],
   ["media", "Thư viện ảnh", "▧"],
-  ["messages", "Nội dung VI / EN", "Aa"],
-  ["settings", "Website & footer", "⚙"],
+  ["messages", "Nhãn & thông báo", "Aa"],
   ["leads", "Yêu cầu tư vấn", "✉"],
-  ["account", "Bảo mật", "◇"],
+  ["account", "Tài khoản & bảo mật", "◇"],
 ];
 type Guide = {
   purpose: string;
@@ -200,28 +202,35 @@ const GUIDES: Record<string, Guide> = {
       "Không tự gửi lại email đã báo thành công; SMTP lỗi vẫn giữ được dữ liệu khách.",
   },
   overview: {
-    purpose: "Xem nhanh hiệu quả website: lượt xem hôm nay, khách, leads và pipeline kinh doanh.",
+    purpose:
+      "Xem nhanh hiệu quả website: lượt xem hôm nay, khách, leads và pipeline kinh doanh.",
     steps: [
       "Chọn khoảng 7/14/30 ngày để so sánh xu hướng.",
       "Bấm Làm mới để tải số liệu mới nhất từ /api/admin/stats.",
       "Xem Top trang để biết tour/bài nào đang hút khách.",
       "Theo dõi phễu Mới → Đã chốt và pipeline VND ước tính.",
     ],
-    required: "Cần có lượt truy cập (tracker /api/track) thì biểu đồ mới có số liệu.",
+    required:
+      "Cần có lượt truy cập (tracker /api/track) thì biểu đồ mới có số liệu.",
     result: "Số liệu tổng hợp theo giờ Việt Nam, không cần build lại.",
-    pitfalls: "Adblock/chặn beacon có thể làm thiếu số; sai múi giờ trình duyệt không ảnh hưởng vì server chuẩn hoá.",
+    pitfalls:
+      "Adblock/chặn beacon có thể làm thiếu số; sai múi giờ trình duyệt không ảnh hưởng vì server chuẩn hoá.",
   },
   landing: {
-    purpose: "Sửa các khối trang chủ mà tab khác không bao phủ: gợi ý tìm kiếm, câu chuyện, FAQ, tiêu đề Explore/Regions, ảnh Values.",
+    purpose:
+      "Sửa các khối trang chủ mà tab khác không bao phủ: gợi ý tìm kiếm, câu chuyện, FAQ, tiêu đề Explore/Regions, ảnh Values.",
     steps: [
       "Mở bản ghi home-sections rồi bấm Chỉnh sửa.",
       "Sửa gợi ý QuickFinder (label + query), mốc story, câu hỏi FAQ (VI + EN).",
       "Đổi tiêu đề Explore/Regions, tâm trạng vùng miền, ảnh + huy hiệu Values (chọn từ thư viện media).",
       "Lưu nháp rồi Xuất bản thay đổi để lên web ngay, không cần build lại.",
     ],
-    required: "Giữ ít nhất 1 gợi ý, 1 mốc story, 1 FAQ; ảnh Values phải là đường dẫn /... trong thư viện.",
-    result: "Trang chủ cập nhật ngay sau xuất bản; bản nháp không ảnh hưởng web.",
-    pitfalls: "Xoá hết mảng sẽ bị schema từ chối — để trống 1 mục thay vì xoá sạch.",
+    required:
+      "Giữ ít nhất 1 gợi ý, 1 mốc story, 1 FAQ; ảnh Values phải là đường dẫn /... trong thư viện.",
+    result:
+      "Trang chủ cập nhật ngay sau xuất bản; bản nháp không ảnh hưởng web.",
+    pitfalls:
+      "Xoá hết mảng sẽ bị schema từ chối — để trống 1 mục thay vì xoá sạch.",
   },
   account: {
     purpose: "Đổi mật khẩu quản trị và quản lý phiên đăng nhập.",
@@ -310,6 +319,10 @@ export function Dashboard({
     return body;
   }
   async function load(next = tab, background = false) {
+    if (isStudioTab(next)) {
+      setLoading(false);
+      return true;
+    }
     const serial = ++loadSerial.current;
     const activity = activitySerial.current;
     if (!background) setLoading(true);
@@ -370,7 +383,8 @@ export function Dashboard({
     initialVersion,
     onChange: async () => {
       if (busy || loading) return false;
-      if (tab === "account" || tab === "overview") return true;
+      if (tab === "account" || tab === "overview" || isStudioTab(tab))
+        return true;
       if (dirty || selected) {
         setHasUpdates(true);
         return false;
@@ -606,14 +620,39 @@ export function Dashboard({
         <p className="adm-eyebrow">Không gian quản trị</p>
         <nav aria-label="Quản trị">
           {tabs.map(([key, label, icon]) => (
-            <button
-              key={key}
-              aria-current={tab === key ? "page" : undefined}
-              onClick={() => switchTab(key)}
-            >
-              <span>{icon}</span>
-              {label}
-            </button>
+            <div key={key}>
+              {(
+                {
+                  overview: "Tổng quan",
+                  home: "Nội dung website",
+                  chrome: "Thành phần chung",
+                  leads: "Khách hàng",
+                  account: "Hệ thống",
+                } as Record<string, string>
+              )[key] && (
+                <span className="adm-sidebar-group">
+                  {
+                    (
+                      {
+                        overview: "Tổng quan",
+                        home: "Nội dung website",
+                        chrome: "Thành phần chung",
+                        leads: "Khách hàng",
+                        account: "Hệ thống",
+                      } as Record<string, string>
+                    )[key]
+                  }
+                </span>
+              )}
+              <button
+                key={key}
+                aria-current={tab === key ? "page" : undefined}
+                onClick={() => switchTab(key)}
+              >
+                <span aria-hidden="true">{icon}</span>
+                {label}
+              </button>
+            </div>
           ))}
         </nav>
         <Link
@@ -698,7 +737,9 @@ export function Dashboard({
                   <p>{guide.result}</p>
                   <h3>Lỗi thường gặp</h3>
                   <p>{guide.pitfalls}</p>
-                  {["tours", "articles", "categories", "destinations"].includes(tab) && (
+                  {["tours", "articles", "categories", "destinations"].includes(
+                    tab,
+                  ) && (
                     <details>
                       <summary>
                         Phân biệt Lưu nháp · Xuất bản · Ẩn · Thùng rác · Khôi
@@ -744,8 +785,22 @@ export function Dashboard({
             </button>
           </div>
         )}
-        {tab === "overview" ? (
-          <>{csrf ? <Overview csrf={csrf} /> : <p className="adm-empty">Đang tải…</p>}</>
+        {isStudioTab(tab) && csrf ? (
+          <ContentStudio
+            key={tab}
+            tab={tab}
+            csrf={csrf}
+            onDirty={setDirty}
+            onUnauthorized={() => setCsrf(null)}
+          />
+        ) : tab === "overview" ? (
+          <>
+            {csrf ? (
+              <Overview csrf={csrf} />
+            ) : (
+              <p className="adm-empty">Đang tải…</p>
+            )}
+          </>
         ) : tab === "account" ? (
           <section className="adm-panel">
             <h2>Đổi mật khẩu</h2>
@@ -1057,7 +1112,7 @@ export function Dashboard({
             </div>
             {!media.length && (
               <p className="adm-empty">
-                Thêm ảnh mới để kể câu chuyện của bạn. 28 ảnh gốc vẫn được giữ
+                Thêm ảnh mới để kể câu chuyện của bạn. Ảnh gốc vẫn được giữ
                 trong thư viện tour.
               </p>
             )}
@@ -1350,7 +1405,9 @@ export function Dashboard({
                       >
                         Chỉnh sửa ↗
                       </button>
-                      {!["settings", "messages", "hero", "landing"].includes(tab) && (
+                      {!["settings", "messages", "hero", "landing"].includes(
+                        tab,
+                      ) && (
                         <button
                           onClick={() => {
                             const action =

@@ -1,4 +1,5 @@
 "use client";
+import { MediaField } from "./media-field";
 
 import Image from "next/image";
 import { useId, useState } from "react";
@@ -35,30 +36,12 @@ function ImagePicker({
           }}
         />
       </div>
-      <label htmlFor={`${id}-source`}>Ảnh từ thư viện</label>
-      <select
-        id={`${id}-source`}
+      <MediaField
+        label="Thay ảnh"
         value={value.src}
-        onChange={(event) => {
-          const item = references.media?.find(
-            (option) => option.value === event.target.value,
-          );
-          onChange({
-            ...value,
-            src: event.target.value,
-            alt: item?.label || value.alt,
-          });
-        }}
-      >
-        {!references.media?.some((item) => item.value === value.src) && (
-          <option value={value.src}>{value.src}</option>
-        )}
-        {references.media?.map((item) => (
-          <option key={item.value} value={item.value}>
-            {item.label}
-          </option>
-        ))}
-      </select>
+        options={references.media ?? []}
+        onChange={(src) => onChange({ ...value, src })}
+      />
       <label htmlFor={`${id}-alt`}>Mô tả ảnh</label>
       <input
         id={`${id}-alt`}

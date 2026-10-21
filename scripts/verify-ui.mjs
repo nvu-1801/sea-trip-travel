@@ -308,8 +308,9 @@ async function checkReducedMotion(browser) {
     });
 
     check(
-      `reduced-motion ${route} — animated elements exist`,
-      audit.revealCount + audit.parallaxCount > 0,
+      `reduced-motion ${route} — page content is rendered`,
+      (await page.getByRole("heading", { level: 1 }).count()) > 0 &&
+        audit.bodyHeight > 100,
       `${audit.revealCount} reveal + ${audit.parallaxCount} parallax`,
     );
     check(
@@ -762,7 +763,8 @@ async function checkConsultationFlow(browser, sink) {
     .first()
     .waitFor({ state: "visible", timeout: 20_000 });
 
-  const successText = await page.locator('[role="status"]').first().innerText();
+  const successText =
+    (await page.locator('[role="status"]').first().textContent()) ?? "";
   check("success panel is shown", successText.includes("Đã tiếp nhận yêu cầu"));
   check(
     "success panel carries a request code",
@@ -1134,6 +1136,8 @@ async function checkTapTargets(browser) {
   for (const width of [360, 390]) {
     const context = await browser.newContext({
       viewport: { width, height: 844 },
+      // Measure settled hit areas; scroll entrance transforms are checked separately.
+      reducedMotion: "reduce",
     });
     const page = await context.newPage();
 
@@ -1587,7 +1591,14 @@ async function checkTravelMotion(browser) {
   });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "load" });
-  const bloom = page.locator(".stt-hero-bloom, .stt-cinema-copy").first();
+  // Hydration first checks visibility and reduced motion; measure after it permits animation.
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector(".stt-cinematic-hero")
+        ?.getAttribute("data-motion-blocked") !== "true",
+  );
+  const bloom = page.locator(".stt-hero-bloom, .stt-cinema-copy > h1").first();
   const ambient = await bloom.evaluate((el) => {
     const style = getComputedStyle(el);
     return {

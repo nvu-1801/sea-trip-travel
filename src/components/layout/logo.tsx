@@ -50,7 +50,7 @@ export function Logo({
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <Image
-        src="/brand/logo-mark.png"
+        src={identity.logoSrc ?? "/brand/logo-mark.png"}
         alt=""
         width={48}
         height={48}

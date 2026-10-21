@@ -22,6 +22,8 @@ export type NavKey =
   | "privacy";
 
 export type NavLink = {
+  label?: string;
+  labelEn?: string;
   /** Key into `messages.nav`. */
   labelKey: NavKey;
   href: string;

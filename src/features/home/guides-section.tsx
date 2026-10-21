@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { HeadingAccent } from "@/components/ui/heading-accent";
-import { ROUTES } from "@/config/navigation";
 import {
   getFeaturedArticle,
   getArticleBySlug,
@@ -79,7 +78,7 @@ export function GuidesSection({ locale }: { locale: Locale }) {
           <p>{m.home.guides.description}</p>
           <div className="intro-cta">
             <ButtonLink
-              href={localizePath(locale, ROUTES.guides)}
+              href={localizePath(locale, landingSections().links.guides.href)}
               variant="secondary"
               className="group"
             >

@@ -5,9 +5,30 @@ import { messageSeeds } from "@/server/cms/settings";
 import type { Locale } from "./config";
 export { format, plural } from "./messages";
 export type { Messages, Plural } from "./messages";
+function merge(base: unknown, saved: unknown): unknown {
+  if (
+    base &&
+    saved &&
+    typeof base === "object" &&
+    typeof saved === "object" &&
+    !Array.isArray(base) &&
+    !Array.isArray(saved)
+  ) {
+    const a = base as Record<string, unknown>,
+      b = saved as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.keys(a).map((key) => [
+        key,
+        key in b ? merge(a[key], b[key]) : a[key],
+      ]),
+    );
+  }
+  return saved ?? base;
+}
 export function getMessages(locale: Locale): Messages {
-  return (
+  return merge(
+    original(locale),
     published("messages", messageSeeds).find((item) => item.id === locale) ??
-    original(locale)
-  );
+      original(locale),
+  ) as Messages;
 }

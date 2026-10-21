@@ -1,3 +1,5 @@
+import { ContentPageView } from "@/features/pages/content-page";
+import { contentPageSchema } from "@/domain/page";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -69,15 +71,21 @@ export default async function Preview({
 }) {
   if (!(await session())) redirect("/admin");
   const { kind, id } = await params;
-  if (kind !== "tours" && kind !== "articles") notFound();
+  if (kind !== "tours" && kind !== "articles" && kind !== "pages") notFound();
   const row = list(kind).find((row) => row.id === id);
   if (!row) notFound();
   return (
     <main className="adm-preview">
       <Link href="/admin">← Về Studio</Link>
       <p className="adm-eyebrow">Bản nháp đã lưu · chỉ chủ quản trị thấy</p>
-      <h1>{String(row.data.title)}</h1>
-      <Content value={row.data} />
+      {kind === "pages" ? (
+        <ContentPageView page={contentPageSchema.parse(row.data)} locale="vi" />
+      ) : (
+        <>
+          <h1>{String(row.data.title)}</h1>
+          <Content value={row.data} />
+        </>
+      )}
     </main>
   );
 }

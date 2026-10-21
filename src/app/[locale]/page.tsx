@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+import { landingSections } from "@/server/cms/store";
 import "@/features/home/home-editorial.css";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { JourneyStory, PlanningSection } from "@/features/home/journey-story";
@@ -74,23 +76,20 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const locale = await resolveLocale(params);
   const m = getMessages(locale);
   const indexable = homeIndexable(locale);
+  const { display, sectionOrder } = landingSections();
 
-  return (
-    <div className="home-editorial" data-idle-scope>
-      <div className="home-brand-background" aria-hidden="true">
-        <span className="home-brand-wordmark">SEA TRIP</span>
-      </div>
-      {indexable ? null : <TranslationNotice locale={locale} />}
-      <Hero locale={locale} />
-      <QuickFinder locale={locale} />
-      <ExploreSection locale={locale} />
-      <FeaturedToursSection locale={locale} />
-      <TrustStrip locale={locale} />
-      <JourneyStory locale={locale} />
-      <RegionsSection locale={locale} />
-      <ValuesSection locale={locale} />
-      <GuidesSection locale={locale} />
-      <PlanningSection locale={locale} />
+  const blocks = {
+    hero: <Hero locale={locale} />,
+    finder: <QuickFinder locale={locale} />,
+    explore: <ExploreSection locale={locale} />,
+    featured: <FeaturedToursSection locale={locale} />,
+    trust: <TrustStrip locale={locale} />,
+    story: <JourneyStory locale={locale} />,
+    regions: <RegionsSection locale={locale} />,
+    values: <ValuesSection locale={locale} />,
+    guides: <GuidesSection locale={locale} />,
+    planning: <PlanningSection locale={locale} />,
+    consult: (
       <ConsultSection
         locale={locale}
         tone="muted"
@@ -103,6 +102,18 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         }
         description={m.home.consult.description}
       />
+    ),
+  };
+
+  return (
+    <div className="home-editorial" data-idle-scope>
+      <div className="home-brand-background" aria-hidden="true">
+        <span className="home-brand-wordmark">SEA TRIP</span>
+      </div>
+      {indexable ? null : <TranslationNotice locale={locale} />}
+      {sectionOrder.map((key) =>
+        display[key] ? <Fragment key={key}>{blocks[key]}</Fragment> : null,
+      )}
     </div>
   );
 }

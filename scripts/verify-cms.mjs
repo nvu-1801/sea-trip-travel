@@ -88,6 +88,10 @@ try {
   await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Vào SEA TRIP Studio" }).click();
   await page
+    .getByRole("navigation", { name: "Quản trị", exact: true })
+    .getByRole("button", { name: "Tour du lịch", exact: true })
+    .click();
+  await page
     .getByRole("heading", { name: "Tour du lịch", exact: true })
     .waitFor();
   await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().waitFor();
@@ -137,6 +141,10 @@ try {
   };
   await livePage.goto(base);
   await observer.goto(`${base}/admin`);
+  await observer
+    .getByRole("navigation", { name: "Quản trị", exact: true })
+    .getByRole("button", { name: "Tour du lịch", exact: true })
+    .click();
   await observer.getByRole("button", { name: "Chỉnh sửa ↗" }).first().waitFor();
   check(
     "live pages start visible",
@@ -529,10 +537,26 @@ try {
   const library = await (
     await context.request.get(`${base}/api/admin/media`)
   ).json();
+  const seededMedia = spawnSync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--conditions=react-server",
+      "-e",
+      "import {tours} from './src/content/index.ts'; console.log(JSON.stringify([...new Set(tours.flatMap(tour=>tour.images).map(image=>image.src).filter(Boolean))]))",
+    ],
+    { encoding: "utf8" },
+  );
+  assert.equal(seededMedia.status, 0, seededMedia.stderr);
+  const expectedMedia = JSON.parse(seededMedia.stdout).sort();
+  const retainedMedia = library
+    .filter((item) => item.original && !item.id.startsWith("hero:"))
+    .map((item) => item.src)
+    .sort();
   check(
-    "all 28 original photos retained in media library",
-    library.filter((item) => item.original && !item.id.startsWith("hero:"))
-      .length === 28,
+    "all seeded original photos retained in media library",
+    JSON.stringify(retainedMedia) === JSON.stringify(expectedMedia),
   );
   const linked = {
     ...source.data,
@@ -611,10 +635,19 @@ try {
     (await page.locator(".stt-tour-card").count()) > 0,
   );
   await page.goto(base);
-  const motion = page.getByRole("button", { name: /Tạm dừng chuyển động/ });
-  await motion.click();
+  const motionSettings = (await api("settings"))[0];
+  assert.equal(
+    (
+      await mutate("settings", motionSettings, "publish", {
+        ...motionSettings.data,
+        motion: false,
+      })
+    ).status(),
+    200,
+  );
+  await page.reload();
   check(
-    "idle motion can be paused",
+    "idle motion can be paused from website settings",
     (await page.locator("html").getAttribute("data-motion-paused")) === "true",
   );
   mkdirSync("verify-screenshots", { recursive: true });
@@ -622,6 +655,10 @@ try {
   await page.locator("#tim-hanh-trinh").scrollIntoViewIfNeeded();
   await page.screenshot({ path: "verify-screenshots/studio-discovery.png" });
   await page.goto(`${base}/admin`);
+  await page
+    .getByRole("navigation", { name: "Quản trị", exact: true })
+    .getByRole("button", { name: "Tour du lịch", exact: true })
+    .click();
   await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().waitFor();
   await page.screenshot({ path: "verify-screenshots/studio-desktop.png" });
   await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().click();
@@ -632,11 +669,15 @@ try {
   await page.getByRole("button", { name: "Lưu bản nháp", exact: true }).click();
   await page
     .getByRole("status")
-    .filter({ hasText: "Đã lưu thay đổi" })
+    .filter({ hasText: "Đã lưu bản nháp" })
     .waitFor();
   check("structured editor saves draft via browser", true);
   await page.getByRole("button", { name: "Cẩm nang", exact: false }).click();
   await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Nội dung bài viết", exact: true })
+    .click();
   await page
     .locator("summary")
     .filter({ hasText: /^Nội dung$/ })
@@ -649,12 +690,16 @@ try {
   await page.getByRole("button", { name: "Lưu bản nháp", exact: true }).click();
   await page
     .getByRole("status")
-    .filter({ hasText: "Đã lưu thay đổi" })
+    .filter({ hasText: "Đã lưu bản nháp" })
     .waitFor();
   check("article block editor supports headings without JSON", true);
   for (const width of [360, 390, 768]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`${base}/admin`);
+    await page
+      .getByRole("navigation", { name: "Quản trị", exact: true })
+      .getByRole("button", { name: "Tour du lịch", exact: true })
+      .click();
     await page.getByRole("button", { name: "Chỉnh sửa ↗" }).first().waitFor();
     check(
       `admin ${width}px no horizontal overflow`,
@@ -668,7 +713,7 @@ try {
   }
   await page.setViewportSize({ width: 390, height: 900 });
   await page.screenshot({ path: "verify-screenshots/studio-mobile.png" });
-  await page.getByRole("button", { name: "Bảo mật", exact: false }).click();
+  await page.getByRole("button", { name: /bảo mật/i }).click();
   await page.getByLabel("Mật khẩu hiện tại").fill(password);
   await page.getByLabel("Mật khẩu mới").fill(password + "-new");
   await page.getByRole("button", { name: "Cập nhật mật khẩu" }).click();

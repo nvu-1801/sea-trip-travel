@@ -1,5 +1,7 @@
 import "server-only";
 import { z } from "zod";
+import { contentPageSchema } from "@/domain/page";
+import { pageSeeds } from "@/content/pages";
 import { articles, destinations, tourCategories, tours } from "@/content";
 import { tourSchema } from "@/domain/tour";
 import { travelArticleSchema } from "@/domain/article";
@@ -53,6 +55,7 @@ const translatedArticle = z.object({
   seo: travelArticleSchema.shape.seo,
 });
 export const schemas = {
+  pages: contentPageSchema,
   tours: tourSchema.extend({
     _en: translatedTour.optional(),
     _enReviewed: z.boolean().optional(),
@@ -82,6 +85,7 @@ export const schemas = {
 };
 export type Collection = keyof typeof schemas;
 const seeds = {
+  pages: pageSeeds,
   tours,
   articles,
   categories: tourCategories,
@@ -145,15 +149,128 @@ export function list(collection: Collection): CmsRecord[] {
       .all(collection) as unknown as (Omit<CmsRecord, "data"> & {
       data: string;
     })[]
-  ).map((row) => ({ ...row, data: JSON.parse(row.data) }));
+  ).map((row) => {
+    const saved = JSON.parse(row.data);
+    const merge = (base: unknown, value: unknown): unknown => {
+      if (
+        base &&
+        value &&
+        typeof base === "object" &&
+        typeof value === "object" &&
+        !Array.isArray(base) &&
+        !Array.isArray(value)
+      ) {
+        const b = base as Record<string, unknown>,
+          v = value as Record<string, unknown>;
+        return {
+          ...v,
+          ...Object.fromEntries(
+            Object.keys(b).map((key) => [
+              key,
+              key in v ? merge(b[key], v[key]) : b[key],
+            ]),
+          ),
+        };
+      }
+      return value ?? base;
+    };
+    const data =
+      collection === "landing"
+        ? landingSchema.parse(saved)
+        : collection === "settings"
+          ? settingsSchema.parse(saved)
+          : collection === "pages"
+            ? contentPageSchema.parse(saved)
+            : collection === "messages"
+              ? merge(
+                  messageSeeds.find((seed) => seed.id === row.id),
+                  saved,
+                )
+              : saved;
+    return { ...row, data };
+  });
 }
-export function save(
+function mergeDefaults(base: unknown, saved: unknown): unknown {
+  if (
+    base &&
+    saved &&
+    typeof base === "object" &&
+    typeof saved === "object" &&
+    !Array.isArray(base) &&
+    !Array.isArray(saved)
+  ) {
+    const a = base as Record<string, unknown>,
+      b = saved as Record<string, unknown>;
+    return {
+      ...b,
+      ...Object.fromEntries(
+        Object.keys(a).map((key) => [
+          key,
+          key in b ? mergeDefaults(a[key], b[key]) : a[key],
+        ]),
+      ),
+    };
+  }
+  return saved ?? base;
+}
+function scopedPublication(
+  collection: Collection,
+  data: Record<string, unknown>,
+  previous: string | null,
+  paths?: string[][],
+) {
+  if (
+    !previous ||
+    !paths?.length ||
+    paths.some((path) => !path.length) ||
+    !["landing", "settings", "messages"].includes(collection)
+  )
+    return data;
+  const raw = JSON.parse(previous);
+  let baseline = schemas[collection].parse(
+    collection === "messages"
+      ? mergeDefaults(
+          messageSeeds.find((seed) => seed.id === data.id),
+          raw,
+        )
+      : raw,
+  ) as Record<string, unknown>;
+  for (const path of paths) {
+    if (
+      path.some((key) =>
+        ["__proto__", "constructor", "prototype", "id"].includes(key),
+      )
+    )
+      throw new Error("Trường xuất bản không hợp lệ");
+    let value: unknown = data;
+    for (const key of path) {
+      if (!value || typeof value !== "object" || !Object.hasOwn(value, key))
+        throw new Error("Trường xuất bản không tồn tại");
+      value = (value as Record<string, unknown>)[key];
+    }
+    const assign = (
+      object: Record<string, unknown>,
+      keys: string[],
+    ): Record<string, unknown> => {
+      const [head, ...tail] = keys;
+      return {
+        ...object,
+        [head]: tail.length
+          ? assign((object[head] ?? {}) as Record<string, unknown>, tail)
+          : value,
+      };
+    };
+    baseline = assign(baseline, path);
+  }
+  return schemas[collection].parse(baseline) as Record<string, unknown>;
+}
+function saveRecord(
   collection: Collection,
   input: unknown,
   revision: number,
   action: "save" | "publish" | "unpublish" | "delete" | "restore",
+  publishPaths?: string[][],
 ) {
-  seed();
   let normalized = input;
   if (
     collection === "settings" &&
@@ -179,13 +296,20 @@ export function save(
     slug?: string;
     path?: string;
   };
+  if (
+    collection === "pages" &&
+    (data.slug === "chinh-sach-bao-mat") !== (data.id === "page_privacy")
+  )
+    throw new Error(
+      "Đường dẫn chính sách bảo mật được dành riêng cho trang hiện có",
+    );
   const encoded = JSON.stringify(data);
   if (encoded.length > 500000) throw new Error("Nội dung vượt quá giới hạn");
   // Image URLs are local, cannot be protocol-relative, executable or traverse directories.
   const inspect = (value: unknown, key = "") => {
     if (
       typeof value === "string" &&
-      ["src", "ogImage", "path"].includes(key) &&
+      ["src", "ogImage", "path", "photoSrc", "logoSrc"].includes(key) &&
       (!/^\/(?!\/)/.test(value) ||
         value.includes("..") ||
         /[\\\x00-\x1f]/.test(value))
@@ -195,7 +319,7 @@ export function save(
       for (const [k, v] of Object.entries(value)) inspect(v, k);
   };
   inspect(data);
-  return transaction(() => {
+  const commit = () => {
     const previous = db()
       .prepare(
         "SELECT revision,published,state,data FROM records WHERE collection=? AND id=?",
@@ -287,6 +411,26 @@ export function save(
           "Lịch trình tiếng Anh phải khớp số ngày và đúng thứ tự",
         );
     }
+    if (collection === "landing") {
+      const landing = landingSchema.parse(data);
+      if (landing.featured.tourIds.some((id) => !present("tours", id)))
+        throw new Error(
+          "Tour nổi bật không tồn tại; chọn lại tour trong danh sách",
+        );
+      const slugs = [
+        landing.guides.featuredSlug,
+        ...landing.guides.picks,
+      ].filter(Boolean);
+      if (
+        slugs.some(
+          (slug) =>
+            !list("articles").some(
+              (row) => row.data.slug === slug && row.state !== "deleted",
+            ),
+        )
+      )
+        throw new Error("Bài viết được chọn không tồn tại");
+    }
     if (collection === "articles") {
       const article = travelArticleSchema.parse(data);
       if (
@@ -354,11 +498,51 @@ export function save(
       throw new Error(
         "Tour đang được bài viết tham chiếu; gỡ liên kết trước khi xóa",
       );
+    if (
+      action === "delete" &&
+      (collection === "tours" || collection === "articles")
+    ) {
+      const refs = list("landing").flatMap((row) => [
+        row.data,
+        ...((
+          db()
+            .prepare(
+              "SELECT published FROM records WHERE collection='landing' AND id=?",
+            )
+            .get(row.id) as { published: string | null }
+        )?.published
+          ? [
+              JSON.parse(
+                (
+                  db()
+                    .prepare(
+                      "SELECT published FROM records WHERE collection='landing' AND id=?",
+                    )
+                    .get(row.id) as { published: string }
+                ).published,
+              ),
+            ]
+          : []),
+      ]);
+      if (
+        refs.some((raw) => {
+          const home = landingSchema.parse(raw);
+          return collection === "tours"
+            ? home.featured.tourIds.includes(data.id)
+            : [home.guides.featuredSlug, ...home.guides.picks].includes(
+                data.slug ?? "",
+              );
+        })
+      )
+        throw new Error(
+          "Nội dung đang được ghim trên trang chủ. Gỡ lựa chọn và xuất bản trang chủ trước khi xóa.",
+        );
+    }
     const now = new Date().toISOString();
     if (action === "save" || action === "publish") {
       if (collection === "articles")
         (data as Record<string, unknown>).updatedAt = now.slice(0, 10);
-      if (collection === "tours")
+      if (collection === "tours" || collection === "pages")
         (data as Record<string, unknown>).updatedAt = now;
     } else if (previous && "updatedAt" in data) {
       // Thùng rác / ẩn / khôi phục không được đổi ngày hiển thị của bản ghi.
@@ -367,7 +551,7 @@ export function save(
       ).updatedAt;
     }
     const json = JSON.stringify(data);
-    const state =
+    let state =
       action === "delete"
         ? "deleted"
         : action === "publish"
@@ -375,13 +559,24 @@ export function save(
           : action === "unpublish" || action === "restore"
             ? "draft"
             : "draft";
+    const publicData =
+      action === "publish"
+        ? scopedPublication(
+            collection,
+            data,
+            previous?.published ?? null,
+            publishPaths,
+          )
+        : data;
+    if (action === "publish" && JSON.stringify(publicData) !== json)
+      state = "draft";
     const publicValue =
       action === "publish"
         ? ["tours", "articles", "categories", "destinations"].includes(
             collection,
           )
-          ? JSON.stringify({ ...data, _cmsEdited: true })
-          : json
+          ? JSON.stringify({ ...publicData, _cmsEdited: true })
+          : JSON.stringify(publicData)
         : ["unpublish", "delete", "restore"].includes(action)
           ? null
           : (previous?.published ?? null);
@@ -392,10 +587,46 @@ export function save(
       .run(collection, data.id, json, publicValue, state, revision + 1, now);
     audit(action, `${collection}/${data.id}`);
     return { id: data.id, revision: revision + 1 };
-  });
+  };
+  return commit();
+}
+type SaveAction = "save" | "publish" | "unpublish" | "delete" | "restore";
+export function save(
+  collection: Collection,
+  input: unknown,
+  revision: number,
+  action: SaveAction,
+) {
+  seed();
+  return transaction(() => saveRecord(collection, input, revision, action));
+}
+/** One section editor may update copy and selection together. All or nothing. */
+export function saveBatch(
+  changes: {
+    collection: Collection;
+    data: unknown;
+    revision: number;
+    action: SaveAction;
+    paths?: string[][];
+  }[],
+) {
+  seed();
+  return transaction(() =>
+    changes.map((change) =>
+      saveRecord(
+        change.collection,
+        change.data,
+        change.revision,
+        change.action,
+        change.paths,
+      ),
+    ),
+  );
 }
 export function settings() {
-  return published("settings", [defaultSettings])[0] ?? defaultSettings;
+  return settingsSchema.parse(
+    published("settings", [defaultSettings])[0] ?? defaultSettings,
+  );
 }
 export function homeHero() {
   return heroSchema.parse(published("hero", [defaultHero])[0] ?? defaultHero);

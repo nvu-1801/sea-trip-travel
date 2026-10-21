@@ -120,6 +120,8 @@ export default async function LocaleLayout({
             ...siteConfig.contact,
             name: siteConfig.name,
             socialLinks: settings().socialLinks,
+            logoSrc: settings().logoSrc,
+            navigation: settings().navigation,
           }}
         >
           <JsonLd id="ld-agency" data={travelAgencyJsonLd(locale)} />

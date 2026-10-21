@@ -2,6 +2,7 @@ import { z } from "zod";
 import vi from "@/messages/vi.json";
 import en from "@/messages/en.json";
 import { siteConfig } from "@/config/site";
+import { primaryNav } from "@/config/navigation";
 import {
   primarySocialLinks,
   secondarySocialLinks,
@@ -16,9 +17,53 @@ const link = z
         z.url().startsWith("https://").safeParse(value).success),
     "Dùng đường dẫn nội bộ hoặc HTTPS",
   );
+const navLink = z.object({
+  labelKey: z
+    .enum([
+      "home",
+      "quyNhonPhuYen",
+      "quyNhonOneDay",
+      "quyNhonMultiDay",
+      "domestic",
+      "north",
+      "central",
+      "south",
+      "highlands",
+      "guides",
+      "contact",
+      "privacy",
+    ])
+    .default("home"),
+  label: z.string().trim().min(1).max(80),
+  labelEn: z.string().max(80).default(""),
+  href: link.refine(
+    (value) => value.startsWith("/") && !value.includes(".."),
+    "Menu dùng đường dẫn trong website",
+  ),
+});
+const navigationDefaults = primaryNav.map((item) => ({
+  ...item,
+  label: vi.nav[item.labelKey],
+  labelEn: en.nav[item.labelKey],
+  children: item.children?.map((child) => ({
+    ...child,
+    label: vi.nav[child.labelKey],
+    labelEn: en.nav[child.labelKey],
+  })),
+}));
 export const settingsSchema = z.object({
+  navigation: z
+    .array(
+      navLink.extend({
+        children: z.array(navLink).max(12).optional(),
+        descriptionKey: z.enum(["quyNhonPhuYen", "domestic"]).optional(),
+      }),
+    )
+    .max(12)
+    .default(navigationDefaults),
   id: z.literal("site"),
   name: z.string().min(1).max(100),
+  logoSrc: z.string().startsWith("/").max(300).default("/brand/logo-mark.png"),
   contact: z.object({
     hotline: z.string().min(6),
     hotlineHref: z.string().regex(/^tel:\+?[\d]+$/),

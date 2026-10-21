@@ -1,4 +1,4 @@
-import { ROUTES } from "@/config/navigation";
+import { landingSections } from "@/server/cms/store";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { getFeaturedTours } from "@/lib/data/tours";
 import { Container, Section } from "@/components/ui/layout";
@@ -41,7 +41,7 @@ export function FeaturedToursSection({ locale }: { locale: Locale }) {
           <p>{m.home.featured.description}</p>
           <div className="intro-cta">
             <ButtonLink
-              href={localizePath(locale, ROUTES.quyNhonPhuYen)}
+              href={localizePath(locale, landingSections().links.featured.href)}
               variant="secondary"
               className="group"
             >

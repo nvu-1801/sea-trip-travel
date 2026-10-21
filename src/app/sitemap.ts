@@ -1,3 +1,4 @@
+import { contentPages } from "@/server/cms/pages";
 export const dynamic = "force-dynamic";
 import { published } from "@/server/cms/store";
 import { articles as seed_articles, tours as seed_tours } from "@/content";
@@ -123,5 +124,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
       ),
   );
 
-  return [...staticRoutes, ...categoryRoutes, ...tourRoutes, ...articleRoutes];
+  const pageRoutes = contentPages()
+    .filter((page) => page.slug !== "chinh-sach-bao-mat")
+    .flatMap((page) =>
+      entry(
+        `/trang/${page.slug}`,
+        newestDate(page.updatedAt),
+        0.4,
+        "monthly",
+        page.translationReviewed,
+      ),
+    );
+  return [
+    ...staticRoutes.filter(
+      (route) =>
+        !route.url.endsWith(ROUTES.privacy) ||
+        contentPages().some((page) => page.slug === "chinh-sach-bao-mat"),
+    ),
+    ...categoryRoutes,
+    ...tourRoutes,
+    ...articleRoutes,
+    ...pageRoutes,
+  ];
 }

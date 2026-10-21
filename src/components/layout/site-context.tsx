@@ -1,8 +1,11 @@
 "use client";
 import { createContext, useContext } from "react";
+import type { NavItem } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
 type Contact = {
   name?: string;
+  logoSrc?: string;
+  navigation?: readonly NavItem[];
   socialLinks?: { label: string; href: string }[];
   hotline: string;
   hotlineHref: string;
