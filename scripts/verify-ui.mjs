@@ -1590,7 +1590,10 @@ async function checkTravelMotion(browser) {
   });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "load" });
-  const entrance = page.locator('.stt-hero-editorial [data-entrance]').first();
+  await page
+    .locator('.stt-cinematic-hero[data-motion-enabled="true"][data-motion-blocked="false"]')
+    .waitFor({ state: "visible", timeout: 10_000 });
+  const entrance = page.locator(".stt-cinematic-hero .stt-cinema-copy > *").first();
   const ambient = await entrance.evaluate((el) => {
     const style = getComputedStyle(el);
     return {
@@ -1601,7 +1604,7 @@ async function checkTravelMotion(browser) {
   });
   check(
     "hero content entrance settles within five seconds",
-    ambient.name === "stt-entrance" &&
+    ambient.name === "stt-cinema-enter" &&
       ambient.duration <= 5 &&
       ambient.count === "1",
   );
@@ -1642,10 +1645,14 @@ async function checkTravelMotion(browser) {
         getComputedStyle(el).boxShadow !== "none",
     ),
   );
+  const heroImage = page.locator('.stt-cinema-image[data-active="true"] img').first();
   await page.emulateMedia({ reducedMotion: "reduce" });
   check(
-    "reduced motion stops hero atmosphere",
-    await bloom.evaluate((el) => getComputedStyle(el).animationName === "none"),
+    "reduced motion stops hero motion",
+    await heroImage.evaluate((el) => {
+      const style = getComputedStyle(el);
+      return style.animationName === "none" && style.transitionDuration === "0s";
+    }),
   );
   await card.hover();
   await page.waitForTimeout(50);
@@ -1661,7 +1668,7 @@ async function checkTravelMotion(browser) {
   await page.emulateMedia({ media: "print", reducedMotion: "no-preference" });
   check(
     "print stops decorative motion",
-    await bloom.evaluate((el) => getComputedStyle(el).animationName === "none"),
+    await heroImage.evaluate((el) => getComputedStyle(el).animationName === "none"),
   );
   await page.emulateMedia({ media: "screen", reducedMotion: "reduce" });
   for (const width of [360, 390, 768, 1440]) {
