@@ -100,8 +100,8 @@ export const articles: readonly TravelArticleInput[] = [
     tags: ["Quy Nhơn", "Thời điểm", "Kinh nghiệm"],
     readingMinutes: 4,
     cover: {
-      src: "/images/hero/emerald-bay.webp",
-      alt: "Vịnh biển xanh ngọc Quy Nhơn",
+      src: "/images/tours/d7233006cc4fd0f9.jpeg",
+      alt: "Bãi biển Kỳ Co",
     },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-08",
@@ -114,6 +114,12 @@ export const articles: readonly TravelArticleInput[] = [
       {
         type: "paragraph",
         text: "Hãy ưu tiên giai đoạn biển lặng. Đây là điều kiện quan trọng nhất, vì tàu và cano có thể tạm hoãn khi biển động bất kể bạn đã đặt lịch trước.",
+      },
+      {
+        type: "image",
+        alt: "Bãi biển Kỳ Co với nước xanh trong",
+        src: "/images/tours/e16bd7abd194bb4a.jpeg",
+        caption: "Biển Kỳ Co trong những ngày lặng gió — thời điểm lý tưởng để ra đảo.",
       },
       { type: "heading", level: 2, text: "Nếu bạn muốn tránh đông" },
       {
@@ -150,8 +156,8 @@ export const articles: readonly TravelArticleInput[] = [
     tags: ["Quy Nhơn", "Ẩm thực"],
     readingMinutes: 4,
     cover: {
-      src: "/images/hero/coastal-sunset.webp",
-      alt: "Hoàng hôn trên bờ biển Quy Nhơn",
+      src: "/images/destinations/dam-o-loan.jpg",
+      alt: "Đầm Ô Loan, Phú Yên",
     },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-06",
@@ -170,6 +176,16 @@ export const articles: readonly TravelArticleInput[] = [
         ],
       },
       { type: "heading", level: 2, text: "Buổi trưa và tối" },
+      {
+        type: "paragraph",
+        text: "Buổi trưa và tối là lúc thưởng thức hải sản tươi — đặc biệt là sò huyết Đầm Ô Loan nức tiếng.",
+      },
+      {
+        type: "image",
+        alt: "Đầm Ô Loan, Phú Yên",
+        src: "/images/destinations/dam-o-loan.jpg",
+        caption: "Đầm Ô Loan — vựa hải sản và điểm ăn trưa quen thuộc khi đi Phú Yên.",
+      },
       {
         type: "list",
         ordered: false,
@@ -199,8 +215,8 @@ export const articles: readonly TravelArticleInput[] = [
     tags: ["Quy Nhơn", "Di chuyển"],
     readingMinutes: 5,
     cover: {
-      src: "/images/hero/lighthouse-coast.webp",
-      alt: "Hải đăng trên bờ biển Quy Nhơn – Phú Yên",
+      src: "/images/destinations/mui-dien.jpg",
+      alt: "Hải đăng Mũi Đại Lãnh, Phú Yên",
     },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-04",
@@ -218,6 +234,12 @@ export const articles: readonly TravelArticleInput[] = [
       {
         type: "paragraph",
         text: "Ga Diêu Trì nằm trên tuyến Bắc – Nam. Đi tàu phù hợp nếu bạn muốn ngắm cảnh dọc đường và không ngại thời gian di chuyển dài.",
+      },
+      {
+        type: "image",
+        alt: "Hải đăng Mũi Đại Lãnh, Phú Yên",
+        src: "/images/destinations/mui-dien.jpg",
+        caption: "Càng đi sâu về phía nam, cảnh biển càng đáng để dành thêm thời gian.",
       },
       { type: "heading", level: 2, text: "Xe khách" },
       {

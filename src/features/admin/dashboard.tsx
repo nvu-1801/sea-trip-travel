@@ -15,7 +15,7 @@ import {
   type ToastItem,
   type ToastKind,
 } from "./notify";
-import { AdmFilterSelect } from "./ui-select";
+import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
 import {
   TRASH_RETENTION_DAYS,
   articleCoverSrcOf,
@@ -288,9 +288,13 @@ export function Dashboard({
     [durationFilter, setDurationFilter] = useState<"all" | "1day" | "multi">(
       "all",
     ),
-    [lineFilter, setLineFilter] = useState<"all" | "qnpy" | "domestic">("all");
+    [lineFilter, setLineFilter] = useState<"all" | "qnpy" | "domestic">("all"),
+    [leadStatusFilter, setLeadStatusFilter] = useState("all");
   const [references, setReferences] = useState<ReferenceOptions>({});
   const [qnpyIds, setQnpyIds] = useState<ReadonlySet<string>>(new Set());
+  const [tourLinks, setTourLinks] = useState<
+    { categoryIds: string[]; destinationIds: string[] }[]
+  >([]);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const toastId = useRef(0);
   const [confirmReq, setConfirmReq] = useState<
@@ -428,6 +432,26 @@ export function Dashboard({
           categoryTree = [];
         }
       }
+      // Category/destination tabs show live tour usage counts, so the owner
+      // sees where each entry appears before editing or trashing it.
+      let links: { categoryIds: string[]; destinationIds: string[] }[] = [];
+      if (next === "categories" || next === "destinations") {
+        try {
+          const tourRows = (await api("content/tours")) as {
+            data: { categoryIds?: unknown; destinationIds?: unknown };
+          }[];
+          links = tourRows.map((row) => ({
+            categoryIds: Array.isArray(row.data.categoryIds)
+              ? row.data.categoryIds.filter((v): v is string => typeof v === "string")
+              : [],
+            destinationIds: Array.isArray(row.data.destinationIds)
+              ? row.data.destinationIds.filter((v): v is string => typeof v === "string")
+              : [],
+          }));
+        } catch {
+          links = [];
+        }
+      }
       if (
         serial !== loadSerial.current ||
         (background && activity !== activitySerial.current)
@@ -447,6 +471,9 @@ export function Dashboard({
       else if (next === "media") setMedia(library);
       else if (next !== "account") setRows(result);
       setQnpyIds(next === "tours" ? qnpyCategoryIds(categoryTree) : new Set());
+      setTourLinks(
+        next === "categories" || next === "destinations" ? links : [],
+      );
       setHasUpdates(false);
       return true;
     } catch (error) {
@@ -572,6 +599,7 @@ export function Dashboard({
     setFilter("all");
     setDurationFilter("all");
     setLineFilter("all");
+    setLeadStatusFilter("all");
     setHelpOpen(false);
     setTrashOpen(false);
     setTab(next);
@@ -1382,160 +1410,318 @@ export function Dashboard({
         ) : tab === "leads" ? (
           <>
             <div className="adm-stats">
-              {[
-                ["Tổng yêu cầu", leads.length],
+              {(
                 [
-                  "Chưa liên hệ",
-                  leads.filter((l) => l.status === "new").length,
-                ],
-                ["Đã chốt", leads.filter((l) => l.status === "won").length],
-              ].map(([label, count]) => (
-                <div key={label}>
-                  <span>{label}</span>
+                  ["Tổng yêu cầu", leads.length, "all", "✉"],
+                  [
+                    "Mới · cần liên hệ",
+                    leads.filter((l) => l.status === "new").length,
+                    "new",
+                    "●",
+                  ],
+                  [
+                    "Tiềm năng",
+                    leads.filter((l) => l.status === "qualified").length,
+                    "qualified",
+                    "◆",
+                  ],
+                  ["Đã chốt", leads.filter((l) => l.status === "won").length, "won", "★"],
+                ] as const
+              ).map(([label, count, value, icon]) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="adm-stat-btn"
+                  data-active={leadStatusFilter === value}
+                  onClick={() =>
+                    setLeadStatusFilter(leadStatusFilter === value ? "all" : value)
+                  }
+                  title={
+                    value === "all"
+                      ? "Xem tất cả yêu cầu"
+                      : `Lọc yêu cầu: ${label}`
+                  }
+                >
+                  <span>
+                    {icon} {label}
+                  </span>
                   <strong>{count}</strong>
-                </div>
+                  <small>
+                    {leadStatusFilter === value
+                      ? "Đang lọc · bấm để bỏ lọc"
+                      : "Bấm để lọc nhanh"}
+                  </small>
+                </button>
               ))}
             </div>
             <section className="adm-panel">
-              <input
-                aria-label="Tìm khách hàng"
-                placeholder="Tìm tên hoặc số điện thoại…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              {leads
-                .filter((l) =>
-                  JSON.stringify(l.data)
-                    .toLowerCase()
-                    .includes(search.toLowerCase()),
-                )
-                .map((lead) => (
-                  <article
-                    className="adm-lead"
-                    key={lead.id}
-                    data-live-editor={`lead:${lead.id}`}
+              <div className="adm-lead-head">
+                <div>
+                  <h2>Chăm sóc từng yêu cầu</h2>
+                  <p>
+                    Đổi trạng thái bằng dropdown, ghi chú nội bộ được mã hóa,
+                    rồi bấm <strong>Lưu chăm sóc</strong>.
+                  </p>
+                </div>
+              </div>
+              <div className="adm-toolbar">
+                <input
+                  aria-label="Tìm khách hàng"
+                  placeholder="Tìm tên hoặc số điện thoại…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <div
+                className="adm-chip-row adm-lead-chips"
+                role="group"
+                aria-label="Lọc theo trạng thái"
+              >
+                {(
+                  [
+                    ["all", `Tất cả (${leads.length})`],
+                    ["new", `Mới (${leads.filter((l) => l.status === "new").length})`],
+                    [
+                      "contacted",
+                      `Đã liên hệ (${leads.filter((l) => l.status === "contacted").length})`,
+                    ],
+                    [
+                      "qualified",
+                      `Tiềm năng (${leads.filter((l) => l.status === "qualified").length})`,
+                    ],
+                    ["won", `Đã chốt (${leads.filter((l) => l.status === "won").length})`],
+                    [
+                      "lost",
+                      `Chưa phù hợp (${leads.filter((l) => l.status === "lost").length})`,
+                    ],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className="adm-chip-btn"
+                    data-active={leadStatusFilter === value}
+                    aria-pressed={leadStatusFilter === value}
+                    onClick={() => setLeadStatusFilter(value)}
                   >
-                    <div>
-                      <h2>{lead.data.fullName ?? lead.data.name}</h2>
-                      <Link href={`tel:${lead.data.phone}`}>
-                        {lead.data.phone}
-                      </Link>
-                      <p>{lead.data.interest ?? lead.data.tourSlug}</p>
-                      <p>{lead.data.message}</p>
-                      <small>
-                        {new Date(lead.created_at).toLocaleString("vi-VN")} ·
-                        Email: {lead.mail_status}
-                      </small>
-                    </div>
-                    <div>
-                      <label>
-                        Trạng thái
-                        <select
-                          value={lead.status}
-                          onChange={(e) =>
-                            setLeads(
-                              leads.map((l) =>
-                                l.id === lead.id
-                                  ? { ...l, status: e.target.value }
-                                  : l,
-                              ),
-                            )
-                          }
-                        >
-                          {[
-                            ["new", "Mới"],
-                            ["contacted", "Đã liên hệ"],
-                            ["qualified", "Tiềm năng"],
-                            ["won", "Đã chốt"],
-                            ["lost", "Chưa phù hợp"],
-                          ].map(([key, label]) => (
-                            <option key={key} value={key}>
-                              {label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Ghi chú
-                        <textarea
-                          value={lead.note}
-                          onChange={(e) =>
-                            setLeads(
-                              leads.map((l) =>
-                                l.id === lead.id
-                                  ? { ...l, note: e.target.value }
-                                  : l,
-                              ),
-                            )
-                          }
-                        />
-                      </label>
-                      <button
-                        disabled={busy}
-                        onClick={() =>
-                          void run(async () => {
-                            await api("leads", {
-                              method: "PATCH",
-                              body: JSON.stringify({
-                                id: lead.id,
-                                status: lead.status,
-                                note: lead.note,
-                              }),
-                            });
-                            dirtyFields.current.delete(`lead:${lead.id}`);
-                            setDirty(dirtyFields.current.size > 0);
-                            pushToast("success", "Đã cập nhật khách hàng.");
-                          })
-                        }
-                      >
-                        Lưu chăm sóc
-                      </button>
-                      <button
-                        disabled={busy || lead.mail_status === "sent"}
-                        onClick={() =>
-                          void run(async () => {
-                            await api("leads", {
-                              method: "POST",
-                              body: JSON.stringify({ id: lead.id }),
-                            });
-                            await load();
-                            pushToast("success", "Đã gửi lại email thông báo.");
-                          })
-                        }
-                      >
-                        Gửi lại email
-                      </button>
-                      <button
-                        onClick={() => {
-                          void (async () => {
-                            const ok = await requestConfirm({
-                              title: "Xóa dữ liệu khách hàng?",
-                              body: `Xóa vĩnh viễn yêu cầu của "${lead.data.fullName ?? lead.data.name ?? lead.id}". Không thể khôi phục.`,
-                              confirmLabel: "Xóa vĩnh viễn",
-                              danger: true,
-                            });
-                            if (!ok) return;
-                            void run(async () => {
-                              await api("leads", {
-                                method: "DELETE",
-                                body: JSON.stringify({ id: lead.id }),
-                              });
-                              await load();
-                              pushToast("success", "Đã xóa dữ liệu khách hàng.");
-                            });
-                          })();
-                        }}
-                      >
-                        Xóa dữ liệu
-                      </button>
-                    </div>
-                  </article>
+                    {label}
+                  </button>
                 ))}
-              {!leads.length && (
-                <p className="adm-empty">
-                  Các yêu cầu tư vấn mới sẽ xuất hiện tại đây.
-                </p>
-              )}
+              </div>
+              {(() => {
+                const statusVi: Record<string, string> = {
+                  new: "Mới",
+                  contacted: "Đã liên hệ",
+                  qualified: "Tiềm năng",
+                  won: "Đã chốt",
+                  lost: "Chưa phù hợp",
+                };
+                const mailVi: Record<string, string> = {
+                  sent: "Đã gửi ✓",
+                  sending: "Đang gửi…",
+                  pending: "Chờ gửi",
+                  failed: "Gửi lỗi",
+                };
+                const filtered = leads.filter(
+                  (l) =>
+                    (leadStatusFilter === "all" ||
+                      l.status === leadStatusFilter) &&
+                    JSON.stringify(l.data)
+                      .toLowerCase()
+                      .includes(search.toLowerCase()),
+                );
+                if (!filtered.length)
+                  return (
+                    <p className="adm-empty">
+                      {leads.length === 0
+                        ? "Các yêu cầu tư vấn mới sẽ xuất hiện tại đây."
+                        : "Không có yêu cầu nào khớp bộ lọc. Thử đổi trạng thái hoặc từ tìm kiếm."}
+                    </p>
+                  );
+                return (
+                  <div className="adm-lead-list">
+                    {filtered.map((lead) => {
+                      const name = String(
+                        lead.data.fullName ?? lead.data.name ?? "Khách mới",
+                      );
+                      const initial = (
+                        name.trim().charAt(0).toUpperCase() || "?"
+                      ).slice(0, 1);
+                      const interest = String(
+                        lead.data.interest ?? lead.data.tourSlug ?? "",
+                      );
+                      const message = String(lead.data.message ?? "");
+                      return (
+                        <article
+                          className="adm-lead-card"
+                          key={lead.id}
+                          data-live-editor={`lead:${lead.id}`}
+                        >
+                          <div className="adm-lead-info">
+                            <div className="adm-lead-top">
+                              <span
+                                className="adm-lead-avatar"
+                                aria-hidden="true"
+                              >
+                                {initial}
+                              </span>
+                              <div className="adm-lead-who">
+                                <h2>{name}</h2>
+                                {lead.data.phone ? (
+                                  <Link
+                                    className="adm-lead-phone"
+                                    href={`tel:${String(lead.data.phone).replace(/\s+/g, "")}`}
+                                  >
+                                    📞 {String(lead.data.phone)}
+                                  </Link>
+                                ) : (
+                                  <small>Chưa có số điện thoại</small>
+                                )}
+                              </div>
+                              <span
+                                className="adm-lead-pill"
+                                data-tone={lead.status}
+                              >
+                                {statusVi[lead.status] ?? lead.status}
+                              </span>
+                            </div>
+                            {interest && (
+                              <p className="adm-lead-interest">
+                                🧭 {interest}
+                              </p>
+                            )}
+                            {message && (
+                              <p className="adm-lead-message">“{message}”</p>
+                            )}
+                            <p className="adm-lead-meta">
+                              {lead.created_at
+                                ? new Date(lead.created_at).toLocaleString(
+                                    "vi-VN",
+                                  )
+                                : "—"}
+                              {" · "}
+                              Email:{" "}
+                              <span
+                                className="adm-mail-badge"
+                                data-mail={lead.mail_status}
+                              >
+                                {mailVi[lead.mail_status] ?? lead.mail_status}
+                              </span>
+                            </p>
+                          </div>
+                          <div className="adm-lead-care">
+                            <AdmLeadStatusSelect
+                              value={lead.status}
+                              onChange={(next) =>
+                                setLeads(
+                                  leads.map((l) =>
+                                    l.id === lead.id
+                                      ? { ...l, status: next }
+                                      : l,
+                                  ),
+                                )
+                              }
+                            />
+                            <label className="adm-lead-note">
+                              <span>
+                                Ghi chú nội bộ{" "}
+                                <small>(được mã hóa, khách không thấy)</small>
+                              </span>
+                              <textarea
+                                rows={2}
+                                placeholder="VD: đã gọi 2 lần, hẹn cuối tuần chốt…"
+                                value={lead.note}
+                                onChange={(e) =>
+                                  setLeads(
+                                    leads.map((l) =>
+                                      l.id === lead.id
+                                        ? { ...l, note: e.target.value }
+                                        : l,
+                                    ),
+                                  )
+                                }
+                              />
+                            </label>
+                            <div className="adm-lead-actions">
+                              <button
+                                className="adm-primary"
+                                disabled={busy}
+                                onClick={() =>
+                                  void run(async () => {
+                                    await api("leads", {
+                                      method: "PATCH",
+                                      body: JSON.stringify({
+                                        id: lead.id,
+                                        status: lead.status,
+                                        note: lead.note,
+                                      }),
+                                    });
+                                    dirtyFields.current.delete(
+                                      `lead:${lead.id}`,
+                                    );
+                                    setDirty(dirtyFields.current.size > 0);
+                                    pushToast(
+                                      "success",
+                                      "Đã cập nhật khách hàng.",
+                                    );
+                                  })
+                                }
+                              >
+                                ✓ Lưu chăm sóc
+                              </button>
+                              <button
+                                disabled={busy || lead.mail_status === "sent"}
+                                onClick={() =>
+                                  void run(async () => {
+                                    await api("leads", {
+                                      method: "POST",
+                                      body: JSON.stringify({ id: lead.id }),
+                                    });
+                                    await load();
+                                    pushToast(
+                                      "success",
+                                      "Đã gửi lại email thông báo.",
+                                    );
+                                  })
+                                }
+                              >
+                                ✉ Gửi lại email
+                              </button>
+                              <button
+                                className="adm-danger-ghost"
+                                onClick={() => {
+                                  void (async () => {
+                                    const ok = await requestConfirm({
+                                      title: "Xóa dữ liệu khách hàng?",
+                                      body: `Xóa vĩnh viễn yêu cầu của "${name}". Không thể khôi phục.`,
+                                      confirmLabel: "Xóa vĩnh viễn",
+                                      danger: true,
+                                    });
+                                    if (!ok) return;
+                                    void run(async () => {
+                                      await api("leads", {
+                                        method: "DELETE",
+                                        body: JSON.stringify({ id: lead.id }),
+                                      });
+                                      await load();
+                                      pushToast(
+                                        "success",
+                                        "Đã xóa dữ liệu khách hàng.",
+                                      );
+                                    });
+                                  })();
+                                }}
+                              >
+                                🗑 Xóa dữ liệu
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </section>
           </>
         ) : tab === "media" ? (
@@ -2016,50 +2202,113 @@ export function Dashboard({
           </section>
         ) : (
           <>
-            <div className="adm-stats">
-              {[
+            <div className="adm-stats" role="group" aria-label="Tổng quan trạng thái">
+              {(
                 [
-                  "Tất cả nội dung",
-                  rows.filter((r) => r.state !== "deleted").length,
-                ],
-                [
-                  "Đang xuất bản",
-                  rows.filter((r) => r.state === "published").length,
-                ],
-                ["Bản nháp", rows.filter((r) => r.state === "draft").length],
-                ["Thùng rác", rows.filter((r) => r.state === "deleted").length],
-              ].map(([label, count]) =>
-                label === "Thùng rác" &&
-                !["messages", "settings", "hero", "landing"].includes(tab) ? (
-                  <button
-                    key={label}
-                    type="button"
-                    className="adm-stat-btn"
-                    onClick={() => setTrashOpen(true)}
-                    title={`Mở thùng rác ${tabLabel} — giữ ${TRASH_RETENTION_DAYS} ngày`}
-                  >
-                    <span>{label} 🗑</span>
-                    <strong>{count}</strong>
-                    <small>
-                      {trashUrgentCount > 0
-                        ? `${trashUrgentCount} mục sắp bị xóa vĩnh viễn · Bấm để xem`
-                        : `Tự xóa sau ${TRASH_RETENTION_DAYS} ngày · Bấm để xem`}
-                    </small>
-                  </button>
-                ) : (
-                  <div key={label}>
-                    <span>{label}</span>
-                    <strong>{count}</strong>
-                    <small>Sẵn sàng cho hành trình tiếp theo</small>
-                  </div>
-                ),
+                  {
+                    key: "all",
+                    icon: "◈",
+                    tone: "total",
+                    label: "Tất cả nội dung",
+                    count: rows.filter((r) => r.state !== "deleted").length,
+                    hint:
+                      tab === "settings"
+                        ? "Cấu hình website đang quản lý"
+                        : tab === "messages"
+                          ? "Gói ngôn ngữ VI / EN"
+                          : "Đang quản lý (chưa tính Thùng rác)",
+                  },
+                  {
+                    key: "published",
+                    icon: "●",
+                    tone: "live",
+                    label: "Đang xuất bản",
+                    count: rows.filter((r) => r.state === "published").length,
+                    hint: "Đang hiển thị trên website",
+                  },
+                  {
+                    key: "draft",
+                    icon: "✎",
+                    tone: "draft",
+                    label: "Bản nháp",
+                    count: rows.filter((r) => r.state === "draft").length,
+                    hint: "Chưa lên web — cần kiểm tra",
+                  },
+                ] as const
+              ).map((stat) => (
+                <button
+                  key={stat.key}
+                  type="button"
+                  className="adm-stat-btn"
+                  data-tone={stat.tone}
+                  data-active={filter === stat.key}
+                  aria-pressed={filter === stat.key}
+                  title={`${stat.label}: ${stat.count} — ${stat.hint}. Bấm để lọc.`}
+                  onClick={() => setFilter(stat.key)}
+                >
+                  <span className="adm-stat-label">
+                    <i aria-hidden="true">{stat.icon}</i> {stat.label}
+                  </span>
+                  <strong>{stat.count}</strong>
+                  <small>{stat.hint}</small>
+                </button>
+              ))}
+              {!["messages", "settings", "hero", "landing"].includes(tab) ? (
+                <button
+                  key="trash"
+                  type="button"
+                  className="adm-stat-btn"
+                  data-tone="trash"
+                  onClick={() => setTrashOpen(true)}
+                  title={`Mở thùng rác ${tabLabel} — giữ ${TRASH_RETENTION_DAYS} ngày`}
+                >
+                  <span className="adm-stat-label">
+                    <i aria-hidden="true">🗑</i> Thùng rác
+                  </span>
+                  <strong>{rows.filter((r) => r.state === "deleted").length}</strong>
+                  <small>
+                    {trashUrgentCount > 0
+                      ? `${trashUrgentCount} mục sắp bị xóa vĩnh viễn · Bấm để xem`
+                      : `Tự xóa sau ${TRASH_RETENTION_DAYS} ngày · Bấm để xem`}
+                  </small>
+                </button>
+              ) : (
+                <div className="adm-stat-note" aria-live="polite">
+                  <span className="adm-stat-label">
+                    <i aria-hidden="true">✓</i>{" "}
+                    {tab === "settings"
+                      ? "Tự động lên web khi xuất bản"
+                      : "Lưu nháp → xuất bản để lên web"}
+                  </span>
+                  <strong>
+                    v
+                    {Math.max(
+                      0,
+                      ...rows.map((r) => r.revision ?? 0),
+                      0,
+                    )}
+                  </strong>
+                  <small>
+                    {rows[0]?.updated_at
+                      ? `Cập nhật ${new Date(rows[0].updated_at).toLocaleDateString("vi-VN")}`
+                      : "Chưa có thay đổi"}{" "}
+                    · Không dùng Thùng rác ở mục này
+                  </small>
+                </div>
               )}
             </div>
             <section className="adm-panel">
+              {["messages", "settings", "hero", "landing"].includes(tab) ? (
+                <p className="adm-where-note" role="note">
+                  {tab === "settings"
+                    ? "📍 1 cấu hình duy nhất cho toàn website: tên thương hiệu, hotline, email, địa chỉ, footer và mạng xã hội. Bấm Chỉnh sửa ở thẻ bên dưới, xuất bản là header/footer cập nhật ngay."
+                    : "📍 Mỗi dòng chữ VI / EN hiển thị đúng vị trí trên website. Sửa câu chữ ở đây, xuất bản là lên web ngay."}
+                </p>
+              ) : (
               <div className="adm-toolbar">
                 <input
-                  aria-label="Tìm nội dung"
-                  placeholder="Tìm nội dung của bạn…"
+                  aria-label={`Tìm trong ${tabLabel}`}
+                  placeholder={`Tìm trong ${tabLabel} — gõ tên, slug…`}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -2109,6 +2358,7 @@ export function Dashboard({
                   </button>
                 )}
               </div>
+              )}
               {tab === "tours" && filter !== "deleted" && (
                 <div className="adm-tour-chips" role="group" aria-label="Lọc tour">
                   <div className="adm-chip-row" role="group" aria-label="Thời lượng">
@@ -2153,6 +2403,14 @@ export function Dashboard({
                   </div>
                 </div>
               )}
+              {(tab === "categories" || tab === "destinations") &&
+                filter !== "deleted" && (
+                  <p className="adm-where-note" role="note">
+                    {tab === "categories"
+                      ? "📍 Danh mục xuất hiện ở: thẻ Vùng miền trên trang chủ, trang danh sách tour theo tuyến, breadcrumb và sitemap. Đổi tên/đường dẫn ở đây đổi theo mọi nơi."
+                      : "📍 Điểm đến xuất hiện ở: cụm Khám phá trên trang chủ (tuyến Quy Nhơn – Phú Yên), mục điểm đến trong trang chi tiết tour và bài cẩm nang liên quan. Đang dùng trong tour thì không xóa được."}
+                  </p>
+                )}
               {filter === "deleted" && (
                 <p className="adm-trash-note" role="note">
                   🗑 Thùng rác giữ nội dung đã xóa trong {TRASH_RETENTION_DAYS}{" "}
@@ -2223,6 +2481,35 @@ export function Dashboard({
                         <small>
                           {new Date(row.updated_at).toLocaleDateString("vi-VN")}{" "}
                           · v{row.revision}
+                          {(tab === "categories" || tab === "destinations") &&
+                            (() => {
+                              const using = tourLinks.filter((t) =>
+                                tab === "categories"
+                                  ? t.categoryIds.includes(row.id)
+                                  : t.destinationIds.includes(row.id),
+                              ).length;
+                              const path =
+                                tab === "categories" &&
+                                typeof row.data.path === "string"
+                                  ? row.data.path
+                                  : null;
+                              return (
+                                <>
+                                  {" "}·{" "}
+                                  <span className="adm-use-hint">
+                                    📍{" "}
+                                    {path ? (
+                                      <>
+                                        Trang <code>{path}</code> ·{" "}
+                                      </>
+                                    ) : (
+                                      <>Khám phá trang chủ · </>
+                                    )}
+                                    {using} tour đang dùng
+                                  </span>
+                                </>
+                              );
+                            })()}
                           {row.state === "deleted" &&
                             (() => {
                               const left = trashDaysLeft(row.updated_at);

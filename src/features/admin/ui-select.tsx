@@ -91,8 +91,7 @@ export function AdmSelect({
   );
 }
 
-/** Pretty status filter — thay <select> native (xấu, highlight xanh) bằng dropdown custom. */
-export function AdmFilterSelect({
+/** Pretty status filter — thay <select> native (xấu, highlight xanh) bằng dropdown custom. */export function AdmFilterSelect({
   value,
   options,
   label = "Trạng thái nội dung",
@@ -269,6 +268,121 @@ export function AdmMultiSelect({
       )}
       {values.some((v) => !options.some((o) => o.value === v)) && (
         <p className="adm-warn">Có mã không tồn tại trong danh mục — kiểm tra lại trước khi xuất bản.</p>
+      )}
+    </div>
+  );
+}
+
+/** Trạng thái chăm sóc khách — dropdown custom thay <select> native. */
+export const LEAD_STATUSES = [
+  { value: "new", label: "Mới", dot: "#2e90fa", hint: "Chưa liên hệ" },
+  { value: "contacted", label: "Đã liên hệ", dot: "#e8a13d", hint: "Đang trao đổi" },
+  { value: "qualified", label: "Tiềm năng", dot: "#9b5cf6", hint: "Có khả năng chốt" },
+  { value: "won", label: "Đã chốt", dot: "#12a56b", hint: "Thành công" },
+  { value: "lost", label: "Chưa phù hợp", dot: "#98a2b3", hint: "Dừng chăm sóc" },
+] as const;
+
+export function AdmLeadStatusSelect({
+  value,
+  onChange,
+  label = "Trạng thái",
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  label?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const current =
+    LEAD_STATUSES.find((s) => s.value === value) ?? LEAD_STATUSES[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="adm-lead-status" ref={wrapRef}>
+      <span className="adm-lead-status-label" id={`lead-status-${value}`}>
+        {label}
+      </span>
+      <button
+        type="button"
+        className="adm-lead-status-btn"
+        data-tone={current.value}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        data-open={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span
+          className="adm-lead-status-dot"
+          style={{ background: current.dot }}
+          aria-hidden="true"
+        />
+        <span className="adm-lead-status-current">{current.label}</span>
+        <svg
+          className="adm-filter-caret"
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M4 6l4 4 4-4"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {open && (
+        <div className="adm-lead-status-pop" role="listbox" aria-label={label}>
+          {LEAD_STATUSES.map((s) => {
+            const active = s.value === value;
+            return (
+              <button
+                key={s.value}
+                type="button"
+                role="option"
+                aria-selected={active}
+                data-active={active}
+                data-tone={s.value}
+                className="adm-lead-status-opt"
+                onClick={() => {
+                  onChange(s.value);
+                  setOpen(false);
+                }}
+              >
+                <span
+                  className="adm-lead-status-dot"
+                  style={{ background: s.dot }}
+                  aria-hidden="true"
+                />
+                <span className="adm-lead-status-opt-text">
+                  <span>{s.label}</span>
+                  <small>{s.hint}</small>
+                </span>
+                <span className="adm-filter-check" aria-hidden="true">
+                  {active ? "✓" : ""}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       )}
     </div>
   );
