@@ -3,13 +3,13 @@ import { mkdir, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { requireSession } from "@/server/cms/auth";
-import { db, audit } from "@/server/cms/db";
+import { cmsDataDir, db, audit } from "@/server/cms/db";
 import { handle, jsonBody, reply } from "@/server/cms/http";
 import { z } from "zod";
 import { tours } from "@/content";
 import { heroPhotos } from "@/domain/home-hero";
 const directory = () =>
-  process.env.CMS_UPLOAD_DIR ?? path.resolve("data/uploads");
+  process.env.CMS_UPLOAD_DIR ?? path.join(cmsDataDir(), "uploads");
 export async function GET(request: Request) {
   return handle(async () => {
     await requireSession(request);

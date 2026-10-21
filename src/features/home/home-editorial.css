@@ -395,7 +395,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 .journey-finder-form select {
   width: 100%;
   min-width: 0;
-  min-height: 32px;
+  min-height: 44px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -420,10 +420,10 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 .journey-finder-form .stt-time-select[data-enhanced="false"] select {
   font-size: 16px;
   font-weight: 500;
-  min-height: 32px;
+  min-height: 44px;
 }
 .journey-finder-form .stt-time-button {
-  min-height: 32px;
+  min-height: 44px;
   padding: 0 28px 0 0;
   border: 0;
   border-radius: 0;

@@ -83,9 +83,31 @@ export async function login(
       429,
       "Quá nhiều lần thử. Vui lòng thử lại sau 15 phút.",
     );
-  const user = db()
+  let user = db()
     .prepare("SELECT username,password FROM admin WHERE id=1")
     .get() as { username: string; password: string } | undefined;
+  if (!user) {
+    // Database mới tinh (VD: /tmp sau cold start trên Vercel): tự tạo tài
+    // khoản quản trị từ biến môi trường, chỉ khi chưa có tài khoản nào.
+    const username = process.env.ADMIN_USERNAME || "admin";
+    const password = process.env.ADMIN_PASSWORD || "";
+    if (password.length < 14 || password.length > 200)
+      throw new HttpError(
+        503,
+        "Chưa khởi tạo tài khoản quản trị. Đặt ADMIN_USERNAME và ADMIN_PASSWORD (14–200 ký tự) trong biến môi trường rồi đăng nhập lại.",
+      );
+    const salt = randomBytes(16).toString("hex");
+    const encoded = `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
+    db()
+      .prepare(
+        "INSERT OR IGNORE INTO admin(id,username,password) VALUES(1,?,?)",
+      )
+      .run(username, encoded);
+    audit("bootstrap", "admin");
+    user = db()
+      .prepare("SELECT username,password FROM admin WHERE id=1")
+      .get() as { username: string; password: string } | undefined;
+  }
   // Do the same password work for unknown users.
   const valid = verifyPassword(
     password,

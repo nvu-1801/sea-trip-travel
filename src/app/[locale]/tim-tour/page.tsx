@@ -5,6 +5,7 @@ import { TourGrid } from "@/features/tours/tour-grid";
 import { resolveLocaleFromParams } from "@/i18n/params";
 import { Container } from "@/components/ui/layout";
 import { searchKey as normalized } from "@/lib/search";
+import { TimeSelect, type TimeOption } from "@/features/home/time-select";
 export const metadata: Metadata = {
   title: "Tìm hành trình phù hợp",
   robots: { index: false, follow: true },
@@ -42,6 +43,36 @@ export default async function SearchPage({
               tour.priceFrom.amount <= Number(budget))),
     );
   const en = locale === "en";
+  const dayOptions: TimeOption[] = en
+    ? [
+        { value: "", label: "Any duration", hint: "Show every tour" },
+        { value: "1", label: "1 day", hint: "Out in the morning, back by evening" },
+        { value: "2", label: "2 days", hint: "A weekend escape" },
+        { value: "3", label: "3 days", hint: "Roomier, with an extra night" },
+        { value: "4+", label: "4+ days", hint: "Link more stops, go deeper" },
+      ]
+    : [
+        { value: "", label: "Tất cả thời lượng", hint: "Hiện mọi hành trình" },
+        { value: "1", label: "1 ngày", hint: "Đi trong ngày, tối về lại phố" },
+        { value: "2", label: "2 ngày", hint: "Cuối tuần đổi gió" },
+        { value: "3", label: "3 ngày", hint: "Thong thả thêm một đêm" },
+        { value: "4+", label: "Từ 4 ngày", hint: "Nối nhiều điểm, đi sâu hơn" },
+      ];
+  const budgetOptions: TimeOption[] = en
+    ? [
+        { value: "", label: "Any budget", hint: "Every price range" },
+        { value: "1000000", label: "≤ 1,000,000 ₫", hint: "Budget-friendly trips" },
+        { value: "3000000", label: "≤ 3,000,000 ₫", hint: "Mid-range comfort" },
+        { value: "5000000", label: "≤ 5,000,000 ₫", hint: "Roomier journeys" },
+        { value: "contact", label: "Contact for price", hint: "Confirmed when advising" },
+      ]
+    : [
+        { value: "", label: "Tất cả mức giá", hint: "Mọi ngân sách" },
+        { value: "1000000", label: "≤ 1.000.000 ₫", hint: "Tour tiết kiệm" },
+        { value: "3000000", label: "≤ 3.000.000 ₫", hint: "Thoải mái tầm trung" },
+        { value: "5000000", label: "≤ 5.000.000 ₫", hint: "Hành trình thong thả" },
+        { value: "contact", label: "Liên hệ báo giá", hint: "Xác nhận khi tư vấn" },
+      ];
   return (
     <section className="py-12 sm:py-20">
       <Container>
@@ -62,28 +93,21 @@ export default async function SearchPage({
           </label>
           <label>
             {en ? "Duration" : "Thời gian"}
-            <select name="days" defaultValue={days}>
-              <option value="">
-                {en ? "Any duration" : "Tất cả thời lượng"}
-              </option>
-              {[1, 2, 3, "4+"].map((day) => (
-                <option value={day} key={day}>
-                  {day} {en ? "days" : "ngày"}
-                </option>
-              ))}
-            </select>
+            <TimeSelect
+              name="days"
+              label={en ? "Duration" : "Thời gian"}
+              options={dayOptions}
+              defaultValue={days}
+            />
           </label>
           <label>
             {en ? "Budget" : "Ngân sách"}
-            <select name="budget" defaultValue={budget}>
-              <option value="">{en ? "Any budget" : "Tất cả mức giá"}</option>
-              <option value="1000000">≤ 1.000.000 đ</option>
-              <option value="3000000">≤ 3.000.000 đ</option>
-              <option value="5000000">≤ 5.000.000 đ</option>
-              <option value="contact">
-                {en ? "Contact for price" : "Liên hệ báo giá"}
-              </option>
-            </select>
+            <TimeSelect
+              name="budget"
+              label={en ? "Budget" : "Ngân sách"}
+              options={budgetOptions}
+              defaultValue={budget}
+            />
           </label>
           <button type="submit">
             {en ? "Find a journey →" : "Tìm hành trình →"}

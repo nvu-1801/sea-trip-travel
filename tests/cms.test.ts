@@ -48,6 +48,7 @@ import {
   sameOrigin,
 } from "../src/server/cms/auth";
 import { db } from "../src/server/cms/db";
+import { cmsDataDir } from "../src/server/cms/db";
 import {
   encrypt,
   decrypt,
@@ -518,4 +519,13 @@ test("trash auto-deletes rows older than the retention window", () => {
   const ids = list("tours").map((row) => row.id);
   assert.ok(!ids.includes("tour_trash_old"));
   assert.ok(ids.includes("tour_trash_fresh"));
+});
+test("cms data dir stays local unless running on Vercel", () => {
+  const prev = process.env.VERCEL;
+  delete process.env.VERCEL;
+  assert.ok(cmsDataDir().endsWith("data"));
+  process.env.VERCEL = "1";
+  assert.equal(cmsDataDir(), "/tmp");
+  if (prev === undefined) delete process.env.VERCEL;
+  else process.env.VERCEL = prev;
 });

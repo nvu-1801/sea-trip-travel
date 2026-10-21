@@ -81,7 +81,7 @@ export function QuickFinder({ locale }: { locale: Locale }) {
               </>
             ) : (
               <>
-                Mình đi <em>đâu</em> nhé?
+                Một hành trình <em>dành cho bạn</em>
               </>
             )}
           </h2>

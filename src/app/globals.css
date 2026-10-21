@@ -694,24 +694,24 @@ select option {
   transform: translateY(0);
 }
 
-/* Side entrances also use translation only to preserve nested hit areas. */
+/* Side entrances rise vertically so an off-canvas reveal cannot add page scroll. */
 .stt-reveal-3d[data-reveal-3d="left"][data-revealed="false"] {
   opacity: 0;
-  transform: translateX(-24px);
+  transform: translateY(24px);
 }
 .stt-reveal-3d[data-reveal-3d="left"][data-revealed="true"] {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(0);
 }
 
 /* Right */
 .stt-reveal-3d[data-reveal-3d="right"][data-revealed="false"] {
   opacity: 0;
-  transform: translateX(24px);
+  transform: translateY(24px);
 }
 .stt-reveal-3d[data-reveal-3d="right"][data-revealed="true"] {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(0);
 }
 
 /* Zoom is a short rise; scaling a tall form or filter panel shrinks its controls. */

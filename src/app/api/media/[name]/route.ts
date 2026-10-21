@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { cmsDataDir } from "@/server/cms/db";
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ name: string }> },
@@ -11,7 +12,7 @@ export async function GET(
     const data = await readFile(
       /* turbopackIgnore: true */ path.join(
         /* turbopackIgnore: true */ process.env.CMS_UPLOAD_DIR ??
-          path.resolve("data/uploads"),
+          path.join(cmsDataDir(), "uploads"),
         name,
       ),
     );

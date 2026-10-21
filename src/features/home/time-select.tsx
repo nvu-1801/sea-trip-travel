@@ -25,10 +25,13 @@ export function TimeSelect({
   name,
   label,
   options,
+  defaultValue,
 }: {
   name: string;
   label: string;
   options: readonly TimeOption[];
+  /** Initial value (e.g. from URL params). Falls back to the first option. */
+  defaultValue?: string;
 }) {
   // false khi render server / no-JS (hiện select gốc), true sau hydrate.
   const enhanced = useSyncExternalStore(
@@ -37,7 +40,12 @@ export function TimeSelect({
     () => false,
   );
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(options[0]?.value ?? "");
+  const [value, setValue] = useState(
+    () =>
+      options.some((option) => option.value === defaultValue)
+        ? (defaultValue as string)
+        : (options[0]?.value ?? ""),
+  );
   const rootRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuId = useId();

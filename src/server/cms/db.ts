@@ -4,9 +4,20 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 
 let database: DatabaseSync | undefined;
+
+/**
+ * Thư mục dữ liệu ghi được. Vercel serverless chỉ cho ghi /tmp (tạm thời,
+ * mất khi cold start) — VPS dùng volume /app/data bền vững qua `compose.yml`.
+ * Biến môi trường CMS_DB_PATH / CMS_UPLOAD_DIR luôn được ưu tiên khi có.
+ */
+export function cmsDataDir(): string {
+  if (process.env.VERCEL) return "/tmp";
+  return path.resolve("data");
+}
+
 export function db() {
   if (database) return database;
-  const file = process.env.CMS_DB_PATH ?? path.resolve("data/seatrip.sqlite");
+  const file = process.env.CMS_DB_PATH ?? path.join(cmsDataDir(), "seatrip.sqlite");
   mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
   database = new DatabaseSync(file);
   database.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
