@@ -32,6 +32,12 @@ export const customerTours: readonly TourInput[] = [
     "pricingOptions": [],
     "images": [
       {
+        "src": "/images/hero/island-panorama.webp",
+        "alt": "Toàn cảnh vịnh biển và đảo Quy Nhơn",
+        "width": 1600,
+        "height": 900
+      },
+      {
         "src": "/images/tours/e16bd7abd194bb4a.jpeg",
         "alt": "Bãi biển Kỳ Co",
         "width": 458,
@@ -154,6 +160,12 @@ export const customerTours: readonly TourInput[] = [
     "pricingOptions": [],
     "images": [
       {
+        "src": "/images/hero/basalt-sunset.webp",
+        "alt": "Ghềnh đá bazan lúc hoàng hôn",
+        "width": 700,
+        "height": 500
+      },
+      {
         "src": "/images/tours/d0a65704b7b9b73c.jpeg",
         "alt": "Ghềnh Đá Đĩa Phú Yên",
         "width": 503,
@@ -272,6 +284,12 @@ export const customerTours: readonly TourInput[] = [
     "priceFrom": null,
     "pricingOptions": [],
     "images": [
+      {
+        "src": "/images/hero/ky-co-user.png",
+        "alt": "Bãi biển Kỳ Co",
+        "width": 1080,
+        "height": 808
+      },
       {
         "src": "/images/tours/27a72f664ca5f7b0.jpeg",
         "alt": "Du khách tại bãi biển Kỳ Co",
@@ -517,6 +535,12 @@ export const customerTours: readonly TourInput[] = [
     "priceFrom": null,
     "pricingOptions": [],
     "images": [
+      {
+        "src": "/images/destinations/mui-dien.jpg",
+        "alt": "Hải đăng Mũi Đại Lãnh, Phú Yên",
+        "width": 1280,
+        "height": 853
+      },
       {
         "src": "/images/tours/d0a65704b7b9b73c.jpeg",
         "alt": "Ghềnh Đá Đĩa Phú Yên",
@@ -905,10 +929,10 @@ export const customerTours: readonly TourInput[] = [
         "height": 344
       },
       {
-        "src": "/images/tours/be29f9c7f7008249.jpeg",
-        "alt": "Bãi đá Hoàng Hậu",
-        "width": 443,
-        "height": 296
+        "src": "/images/hero/blue-bay.webp",
+        "alt": "Vịnh biển Quy Nhơn nhìn từ trên cao",
+        "width": 1800,
+        "height": 1199
       },
       {
         "src": "/images/tours/9bcf91f5fa419e5d.jpeg",
@@ -1131,10 +1155,10 @@ export const customerTours: readonly TourInput[] = [
         "height": 344
       },
       {
-        "src": "/images/tours/be29f9c7f7008249.jpeg",
-        "alt": "Bãi đá Hoàng Hậu",
-        "width": 443,
-        "height": 296
+        "src": "/images/hero/emerald-bay.webp",
+        "alt": "Vịnh biển xanh Quy Nhơn",
+        "width": 1000,
+        "height": 563
       },
       {
         "src": "/images/tours/9bcf91f5fa419e5d.jpeg",
@@ -1378,10 +1402,10 @@ export const customerTours: readonly TourInput[] = [
         "height": 344
       },
       {
-        "src": "/images/tours/be29f9c7f7008249.jpeg",
-        "alt": "Bãi đá Hoàng Hậu",
-        "width": 443,
-        "height": 296
+        "src": "/images/hero/coastal-sunset.webp",
+        "alt": "Hoàng hôn trên bờ biển Quy Nhơn",
+        "width": 1000,
+        "height": 750
       },
       {
         "src": "/images/tours/9bcf91f5fa419e5d.jpeg",
@@ -1626,10 +1650,10 @@ export const customerTours: readonly TourInput[] = [
         "height": 344
       },
       {
-        "src": "/images/tours/be29f9c7f7008249.jpeg",
-        "alt": "Bãi đá Hoàng Hậu",
-        "width": 443,
-        "height": 296
+        "src": "/images/hero/blue-bay.webp",
+        "alt": "Vịnh biển Quy Nhơn nhìn từ trên cao",
+        "width": 1800,
+        "height": 1199
       },
       {
         "src": "/images/tours/9bcf91f5fa419e5d.jpeg",
