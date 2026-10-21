@@ -274,7 +274,9 @@ export function Dashboard({
     [password, setPassword] = useState(""),
     [showPassword, setShowPassword] = useState(false),
     [helpOpen, setHelpOpen] = useState(false),
-    [current, setCurrent] = useState("");
+    [current, setCurrent] = useState(""),
+    [showCurrentPw, setShowCurrentPw] = useState(false),
+    [showNewPw, setShowNewPw] = useState(false);
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (dirty) e.preventDefault();
@@ -747,11 +749,22 @@ export function Dashboard({
         {tab === "overview" ? (
           <>{csrf ? <Overview csrf={csrf} /> : <p className="adm-empty">Đang tải…</p>}</>
         ) : tab === "account" ? (
-          <section className="adm-panel">
-            <h2>Đổi mật khẩu</h2>
-            <p>
-              Dùng ít nhất 14 ký tự. Các phiên đang đăng nhập sẽ được thu hồi.
-            </p>
+          <section className="adm-panel adm-security">
+            <div className="adm-security-head">
+              <span className="adm-security-shield" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2.5 4.5 5.5v6c0 4.6 3.2 8 7.5 10 4.3-2 7.5-5.4 7.5-10v-6L12 2.5Z" />
+                  <path d="m9 11.5 2.2 2.2L15.5 9.5" />
+                </svg>
+              </span>
+              <div>
+                <h2>Đổi mật khẩu</h2>
+                <p>
+                  Dùng ít nhất 14 ký tự. Sau khi đổi, mọi phiên đang đăng
+                  nhập (kể cả máy này) sẽ bị thu hồi.
+                </p>
+              </div>
+            </div>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -767,29 +780,84 @@ export function Dashboard({
                 });
               }}
             >
-              <label>
-                Mật khẩu hiện tại
+              <label htmlFor="adm-current-pw">Mật khẩu hiện tại</label>
+              <div className="adm-password-wrap">
                 <input
-                  type="password"
+                  id="adm-current-pw"
+                  type={showCurrentPw ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   value={current}
                   onChange={(e) => setCurrent(e.target.value)}
                 />
-              </label>
-              <label>
-                Mật khẩu mới
+                <button
+                  type="button"
+                  className="adm-password-toggle"
+                  aria-label={showCurrentPw ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  aria-pressed={showCurrentPw}
+                  onClick={() => setShowCurrentPw((v) => !v)}
+                >
+                  {showCurrentPw ? "Ẩn" : "Hiện"}
+                </button>
+              </div>
+              <label htmlFor="adm-new-pw">Mật khẩu mới</label>
+              <div className="adm-password-wrap">
                 <input
-                  type="password"
+                  id="adm-new-pw"
+                  type={showNewPw ? "text" : "password"}
                   autoComplete="new-password"
                   required
                   minLength={14}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-              </label>
-              <button className="adm-primary" disabled={busy}>
-                Cập nhật mật khẩu
+                <button
+                  type="button"
+                  className="adm-password-toggle"
+                  aria-label={showNewPw ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  aria-pressed={showNewPw}
+                  onClick={() => setShowNewPw((v) => !v)}
+                >
+                  {showNewPw ? "Ẩn" : "Hiện"}
+                </button>
+              </div>
+              {(() => {
+                const len = password.length;
+                const score =
+                  (len >= 14 ? 1 : 0) +
+                  (len >= 20 ? 1 : 0) +
+                  (/[A-Z]/.test(password) && /[a-z]/.test(password) ? 1 : 0) +
+                  (/\d/.test(password) && /[^A-Za-z0-9]/.test(password) ? 1 : 0);
+                const label =
+                  len === 0 ? "" : score <= 1 ? "Yếu" : score === 2 ? "Trung bình" : score === 3 ? "Khá" : "Mạnh";
+                return (
+                  <div className="adm-pw-meter" aria-live="polite">
+                    <div className="adm-pw-meter-bar">
+                      {[0, 1, 2, 3].map((i) => (
+                        <span
+                          key={i}
+                          data-on={i < score}
+                          data-level={score}
+                        />
+                      ))}
+                    </div>
+                    <p>
+                      {len === 0 ? (
+                        <>Tối thiểu 14 ký tự, tối đa 200 ký tự.</>
+                      ) : len < 14 ? (
+                        <>Còn thiếu {14 - len} ký tự nữa mới đủ độ dài.</>
+                      ) : (
+                        <>Độ dài đạt yêu cầu · Độ mạnh: <strong>{label}</strong> (gợi ý thêm chữ hoa, số và ký tự đặc biệt).</>
+                      )}
+                    </p>
+                  </div>
+                );
+              })()}
+              <button
+                className="adm-primary adm-security-submit"
+                disabled={busy || password.length < 14 || !current}
+              >
+                {busy ? "Đang cập nhật…" : "Cập nhật mật khẩu"}
               </button>
             </form>
           </section>

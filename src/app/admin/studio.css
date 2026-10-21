@@ -272,6 +272,106 @@ form {
   border-radius: 19px;
   padding: 25px;
 }
+.adm-security {
+  position: relative;
+  max-width: 620px;
+  overflow: hidden;
+  border-radius: 24px;
+  padding: clamp(26px, 4vw, 40px);
+  background:
+    radial-gradient(120% 90% at 100% 0%, #ffe4ef 0%, transparent 55%),
+    radial-gradient(100% 80% at 0% 100%, #e8f4f1 0%, transparent 50%),
+    #fff;
+  box-shadow:
+    0 24px 60px -20px rgb(224 0 90 / 0.18),
+    0 2px 8px rgb(33 22 33 / 0.05);
+}
+.adm-security:before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, #e0005a, #ff5c99 55%, #ffd166);
+}
+.adm-security-head {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+.adm-security-shield {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  color: #fff;
+  background: linear-gradient(140deg, #e0005a, #ff0366);
+  box-shadow:
+    0 12px 26px rgb(224 0 90 / 0.4),
+    inset 0 1px 0 #ffffff66;
+}
+.adm-security-shield svg {
+  width: 28px;
+  height: 28px;
+}
+.adm-security-head h2 {
+  margin: 2px 0 6px;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+.adm-security-head p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: #6e5c68;
+}
+.adm-security form {
+  max-width: 100%;
+}
+.adm-security .adm-password-wrap {
+  margin-bottom: 4px;
+}
+.adm-pw-meter {
+  margin: 14px 0 4px;
+}
+.adm-pw-meter-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.adm-pw-meter-bar span {
+  height: 6px;
+  border-radius: 999px;
+  background: #f2dde7;
+  transition:
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.adm-pw-meter-bar span[data-on="true"] {
+  background: linear-gradient(90deg, #e0005a, #ff5c99);
+  box-shadow: 0 2px 10px rgb(224 0 90 / 0.35);
+}
+.adm-pw-meter-bar span[data-on="true"][data-level="4"] {
+  background: linear-gradient(90deg, #0e7a5f, #2fbf9b);
+  box-shadow: 0 2px 10px rgb(14 122 95 / 0.35);
+}
+.adm-pw-meter p {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: #8b7684;
+}
+.adm-pw-meter strong {
+  color: #e0005a;
+}
+.adm-security-submit {
+  margin-top: 16px;
+  width: 100%;
+  border-radius: 14px;
+  min-height: 52px;
+  font-size: 15px;
+}
 .adm-toolbar {
   display: flex;
   gap: 12px;
