@@ -168,6 +168,14 @@ form {
 .adm-shell nav {
   display: grid;
   gap: 5px;
+  align-content: start;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #f0a8c4 transparent;
+  padding-bottom: 8px;
 }
 .adm-shell nav button {
   text-align: left;
@@ -565,10 +573,11 @@ form {
   font-size: 13px;
   font-weight: 700;
 }
-.adm-section-modal {
+.adm-modal.adm-section-modal {
   width: min(1060px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
   overflow-y: auto;
+  overflow-x: clip;
   border-radius: 26px;
   padding: clamp(22px, 3vw, 36px);
   background:
@@ -700,6 +709,13 @@ form {
   border: 1px solid #fecdca;
   border-radius: 10px;
   padding: 8px 12px;
+}
+.adm-section-modal fieldset {
+  min-width: 0;
+}
+.adm-section-modal .adm-object,
+.adm-section-modal .adm-field {
+  min-width: 0;
 }
 @media (min-width: 900px) {
   .adm-section-modal .adm-hero-image-picker {
