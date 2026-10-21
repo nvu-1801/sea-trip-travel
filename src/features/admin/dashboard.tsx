@@ -6,6 +6,8 @@ import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
 import { useContentUpdates } from "@/lib/use-content-updates";
 import { HeroEditor } from "./hero-editor";
 import { Overview } from "./overview";
+import { HomeSections } from "./home-sections";
+import type { HomeSectionMeta } from "@/lib/home-sections";
 import {
   ToastStack,
   ConfirmModal,
@@ -47,17 +49,25 @@ type Lead = {
 };
 const tabs = [
   ["overview", "Tổng quan", "◉"],
+  ["home", "Trang chủ", "⌂"],
   ["tours", "Tour du lịch", "◈"],
   ["articles", "Cẩm nang", "▤"],
   ["categories", "Danh mục", "▦"],
   ["destinations", "Điểm đến", "◎"],
-  ["hero", "Giao diện trang chủ", "◫"],
-  ["landing", "Trang chủ sections", "▦"],
   ["media", "Thư viện ảnh", "▧"],
   ["messages", "Nội dung VI / EN", "Aa"],
   ["settings", "Website & footer", "⚙"],
   ["leads", "Yêu cầu tư vấn", "✉"],
   ["account", "Bảo mật", "◇"],
+];
+const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
+  { label: null, keys: ["overview"] },
+  {
+    label: "Nội dung website",
+    keys: ["home", "tours", "articles", "categories", "destinations", "media"],
+  },
+  { label: "Bán hàng", keys: ["leads"] },
+  { label: "Hệ thống", keys: ["messages", "settings", "account"] },
 ];
 const TOUR_GROUPS = [
   { duration: "1day", line: "qnpy", title: "Quy Nhơn – Phú Yên · Tour 1 ngày" },
@@ -95,22 +105,21 @@ const LIFECYCLE: Guide = {
     "Hai người cùng sửa: phiên cũ bị từ chối ghi đè — tải lại trang trước khi lưu tiếp.",
 };
 const GUIDES: Record<string, Guide> = {
-  hero: {
+  home: {
     purpose:
-      "Chọn giữa carousel ảnh lớn và bố cục ảnh ghép cho section đầu trang chủ.",
+      "Quản lý toàn bộ khối trang chủ theo đúng thứ tự hiển thị trên website: mỗi thẻ là một phần thật (banner, tìm kiếm, tour, FAQ...).",
     steps: [
-      "Chỉnh sửa cấu hình home, chọn kiểu section đầu.",
-      "Chọn ảnh từ thư viện; chỉnh vị trí ngang/dọc để giữ chủ thể trên màn hình nhỏ.",
-      "Nhập nội dung tiếng Việt/English và các đường dẫn CTA nội bộ.",
-      "Carousel cho phép thêm, bỏ, đổi thứ tự slide và bật/tắt tự chuyển.",
-      "Lưu nháp chưa đổi website. Xuất bản để các trang đang mở cập nhật trong khoảng 5 giây.",
+      "Nhìn thẻ để biết phần đó nằm ở đâu trên trang chủ và đang hiển thị gì.",
+      "Bấm Sửa để mở modal chỉ chứa trường của phần đó; ảnh chọn từ thư viện.",
+      "Bấm Lưu bản nháp để giữ, Xuất bản thay đổi để lên web ngay.",
+      "Thẻ Chân trang mở sang tab Website & footer; tiêu đề form tư vấn sửa ở tab Song ngữ.",
     ],
     required:
-      "Luôn giữ 1–8 slide, mô tả ảnh, chú thích VI/EN; đường dẫn nút bắt đầu bằng /.",
+      "Mỗi modal chỉ sửa đúng phần của mình; ảnh phải là đường dẫn /... trong thư viện.",
     result:
-      "Chuyển kiểu không làm mất cấu hình của kiểu còn lại. Bỏ slide không xoá file ảnh.",
+      "Xuất bản một phần chỉ đổi phần đó; bản nháp không ảnh hưởng website.",
     pitfalls:
-      "Tự chuyển dừng khi giảm chuyển động, tab ẩn hoặc thao tác bàn phím. Ảnh mới tải ở Thư viện ảnh trước khi chọn.",
+      "Đừng xóa trắng danh sách (gợi ý, mốc thời gian, FAQ) — schema yêu cầu giữ ít nhất 1 mục.",
   },
   tours: {
     purpose:
@@ -244,18 +253,6 @@ const GUIDES: Record<string, Guide> = {
     result: "Số liệu tổng hợp theo giờ Việt Nam, không cần build lại.",
     pitfalls: "Adblock/chặn beacon có thể làm thiếu số; sai múi giờ trình duyệt không ảnh hưởng vì server chuẩn hoá.",
   },
-  landing: {
-    purpose: "Sửa các khối trang chủ mà tab khác không bao phủ: gợi ý tìm kiếm, câu chuyện, FAQ, tiêu đề Explore/Regions, ảnh Values.",
-    steps: [
-      "Mở bản ghi home-sections rồi bấm Chỉnh sửa.",
-      "Sửa gợi ý QuickFinder (label + query), mốc story, câu hỏi FAQ (VI + EN).",
-      "Đổi tiêu đề Explore/Regions, tâm trạng vùng miền, ảnh + huy hiệu Values (chọn từ thư viện media).",
-      "Lưu nháp rồi Xuất bản thay đổi để lên web ngay, không cần build lại.",
-    ],
-    required: "Giữ ít nhất 1 gợi ý, 1 mốc story, 1 FAQ; ảnh Values phải là đường dẫn /... trong thư viện.",
-    result: "Trang chủ cập nhật ngay sau xuất bản; bản nháp không ảnh hưởng web.",
-    pitfalls: "Xoá hết mảng sẽ bị schema từ chối — để trống 1 mục thay vì xoá sạch.",
-  },
   account: {
     purpose: "Đổi mật khẩu quản trị và quản lý phiên đăng nhập.",
     steps: [
@@ -298,6 +295,15 @@ export function Dashboard({
   const toastId = useRef(0);
   const [confirmReq, setConfirmReq] = useState<
     (ConfirmRequest & { resolve: (ok: boolean) => void }) | null
+  >(null);
+  const [homeData, setHomeData] = useState<{
+    hero: RecordRow | null;
+    landing: RecordRow | null;
+  }>({ hero: null, landing: null });
+  const [homeModal, setHomeModal] = useState<
+    | { kind: "hero"; title: string; where: string }
+    | { kind: "section"; key: string; title: string; where: string }
+    | null
   >(null);
   const loadSerial = useRef(0);
   const activitySerial = useRef(0);
@@ -374,6 +380,26 @@ export function Dashboard({
         api("media"),
       ]);
       if (next === "overview") {
+        setSelected(null);
+        setDirty(false);
+        dirtyFields.current.clear();
+        setHasUpdates(false);
+        return true;
+      }
+      if (next === "home") {
+        const [heroRows, landingRows] = await Promise.all([
+          api("content/hero").catch(() => null),
+          api("content/landing").catch(() => null),
+        ]);
+        if (
+          serial !== loadSerial.current ||
+          (background && activity !== activitySerial.current)
+        )
+          return false;
+        setHomeData({
+          hero: (heroRows as RecordRow[] | null)?.[0] ?? null,
+          landing: (landingRows as RecordRow[] | null)?.[0] ?? null,
+        });
         setSelected(null);
         setDirty(false);
         dirtyFields.current.clear();
@@ -500,6 +526,7 @@ export function Dashboard({
       return;
     loadSerial.current++;
     setSelected(null);
+    setHomeModal(null);
     setDirty(false);
     setRows([]);
     setSearch("");
@@ -511,10 +538,11 @@ export function Dashboard({
     setTab(next);
     setNotice("");
   }
-  async function save(action: string) {
-    if (!selected) return;
+  async function save(action: string, collection: string = tab): Promise<boolean> {
+    if (!selected) return false;
+    let ok = false;
     await run(async () => {
-      await api(`content/${tab}`, {
+      await api(`content/${collection}`, {
         method: "POST",
         body: JSON.stringify({
           data: selected.data,
@@ -536,7 +564,43 @@ export function Dashboard({
                 : "Đã lưu thay đổi.",
       );
       if (action === "restore") setFilter("all");
+      ok = true;
     });
+    return ok;
+  }
+  function openHomeEditor(meta: HomeSectionMeta) {
+    const record = meta.key === "hero" ? homeData.hero : homeData.landing;
+    if (!record) {
+      pushToast("error", "Chưa tải được dữ liệu trang chủ. Hãy tải lại trang.");
+      return;
+    }
+    setSelected({
+      ...record,
+      data: structuredClone(record.data),
+    });
+    setDirty(false);
+    setHomeModal(
+      meta.key === "hero"
+        ? { kind: "hero", title: meta.title, where: meta.where }
+        : { kind: "section", key: meta.key, title: meta.title, where: meta.where },
+    );
+  }
+  function closeHomeModal() {
+    void (async () => {
+      if (
+        !dirty ||
+        (await requestConfirm({
+          title: "Bỏ thay đổi?",
+          body: "Đóng modal sẽ bỏ các thay đổi chưa lưu của phần này.",
+          confirmLabel: "Bỏ thay đổi",
+          danger: true,
+        }))
+      ) {
+        setHomeModal(null);
+        setSelected(null);
+        setDirty(false);
+      }
+    })();
   }
   function trashOrRestore(row: RecordRow) {
     void (async () => {
@@ -992,15 +1056,29 @@ export function Dashboard({
         </Link>
         <p className="adm-eyebrow">Không gian quản trị</p>
         <nav aria-label="Quản trị">
-          {tabs.map(([key, label, icon]) => (
-            <button
-              key={key}
-              aria-current={tab === key ? "page" : undefined}
-              onClick={() => void switchTab(key)}
-            >
-              <span>{icon}</span>
-              {label}
-            </button>
+          {TAB_GROUPS.map((group) => (
+            <div key={group.label ?? "main"} className="adm-nav-group">
+              {group.label && (
+                <p className="adm-nav-label" aria-hidden="true">
+                  {group.label}
+                </p>
+              )}
+              {group.keys.map((key) => {
+                const entry = tabs.find((t) => t[0] === key);
+                if (!entry) return null;
+                const [, label, icon] = entry;
+                return (
+                  <button
+                    key={key}
+                    aria-current={tab === key ? "page" : undefined}
+                    onClick={() => void switchTab(key)}
+                  >
+                    <span>{icon}</span>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           ))}
         </nav>
         <Link
@@ -1557,6 +1635,134 @@ export function Dashboard({
               </p>
             )}
           </section>
+        ) : tab === "home" ? (
+          <>
+            <section className="adm-panel adm-home-intro">
+              <div>
+                <h2>Các khối trang chủ theo đúng thứ tự hiển thị</h2>
+                <p>
+                  Mỗi thẻ là một phần thật trên landing page. Bấm Sửa để mở
+                  modal chỉ chứa trường của phần đó — lưu nháp hoặc xuất bản
+                  ngay trong modal.
+                </p>
+              </div>
+            </section>
+            {loading && !homeData.hero && !homeData.landing ? (
+              <p className="adm-empty">Nội dung đang được tải…</p>
+            ) : (
+              <HomeSections
+                heroData={homeData.hero?.data ?? null}
+                landingData={homeData.landing?.data ?? null}
+                onEditHero={(title) =>
+                  openHomeEditor({
+                    key: "hero",
+                    collection: "hero",
+                    title,
+                    where: "Đầu trang chủ — banner ảnh lớn",
+                    illustration: "",
+                  })
+                }
+                onEditSection={(meta) => openHomeEditor(meta)}
+                onGoSettings={() => void switchTab("settings")}
+              />
+            )}
+            {homeModal && selected && (
+              <div
+                className="adm-modal-veil"
+                onMouseDown={(event) => {
+                  if (event.target === event.currentTarget) closeHomeModal();
+                }}
+              >
+                <div
+                  className="adm-modal adm-section-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="adm-section-title"
+                >
+                  <div className="adm-section-modal-head">
+                    <div>
+                      <p className="adm-eyebrow">Trang chủ · {homeModal.where}</p>
+                      <h2 id="adm-section-title">{homeModal.title}</h2>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Đóng"
+                      onClick={closeHomeModal}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  {homeModal.kind === "hero" ? (
+                    <HeroEditor
+                      value={selected.data as unknown as HeroConfig}
+                      references={references}
+                      onChange={(data) => {
+                        setSelected({
+                          ...selected,
+                          data: data as unknown as Record<string, EditorValue>,
+                        });
+                        setDirty(true);
+                      }}
+                    />
+                  ) : (
+                    <Editor
+                      value={{
+                        [homeModal.key]: selected.data[homeModal.key],
+                      }}
+                      locked={selected.revision > 0}
+                      references={references}
+                      onChange={(value) => {
+                        const next = value as Record<string, EditorValue>;
+                        setSelected((current) =>
+                          current
+                            ? {
+                                ...current,
+                                data: {
+                                  ...current.data,
+                                  [homeModal.key]: next[homeModal.key],
+                                },
+                              }
+                            : current,
+                        );
+                        setDirty(true);
+                      }}
+                    />
+                  )}
+                  <div className="adm-modal-actions">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        void save(
+                          "save",
+                          homeModal.kind === "hero" ? "hero" : "landing",
+                        ).then((ok) => {
+                          if (ok) setHomeModal(null);
+                        });
+                      }}
+                    >
+                      Lưu bản nháp
+                    </button>
+                    <button
+                      type="button"
+                      className="adm-primary"
+                      disabled={busy}
+                      onClick={() => {
+                        void save(
+                          "publish",
+                          homeModal.kind === "hero" ? "hero" : "landing",
+                        ).then((ok) => {
+                          if (ok) setHomeModal(null);
+                        });
+                      }}
+                    >
+                      {busy ? "Đang lưu…" : "Xuất bản thay đổi ↗"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         ) : selected ? (
           <section className="adm-panel adm-edit">
             <div className="adm-editor-header">
@@ -1842,13 +2048,12 @@ export function Dashboard({
                 />
                 <button
                   type="button"
-                  className={`adm-trash-btn${filter === "deleted" ? " adm-trash-btn--active" : ""}`}
-                  onClick={() =>
-                    setFilter(filter === "deleted" ? "all" : "deleted")
-                  }
-                  aria-pressed={filter === "deleted"}
+                  className={`adm-trash-btn${trashOpen || filter === "deleted" ? " adm-trash-btn--active" : ""}`}
+                  onClick={() => setTrashOpen(true)}
+                  aria-pressed={trashOpen}
+                  title={`Xem ${deletedCount} mục trong thùng rác — tự xóa sau ${TRASH_RETENTION_DAYS} ngày`}
                 >
-                  🗑 Thùng rác
+                  🗑 Thùng rác · {TRASH_RETENTION_DAYS} ngày
                   <span className="adm-trash-count">{deletedCount}</span>
                 </button>
                 {!["messages", "settings", "hero", "landing"].includes(tab) && (
@@ -1925,6 +2130,23 @@ export function Dashboard({
                       {section.items.map((row) => renderTourCard(row))}
                     </section>
                   ))
+                ) : articleSections ? (
+                  articleSections.map((section) => (
+                    <section key={section.key} className="adm-tour-group">
+                      <header className="adm-tour-group-head adm-article-group-head">
+                        <div>
+                          <h3>{section.title}</h3>
+                          <p>{section.hint}</p>
+                        </div>
+                        <span className="adm-tour-group-count">
+                          {section.items.length} bài
+                        </span>
+                      </header>
+                      {section.items.map((row) => renderArticleCard(row))}
+                    </section>
+                  ))
+                ) : tab === "articles" ? (
+                  visibleRows.map((row) => renderArticleCard(row))
                 ) : (
                   visibleRows.map((row) => (
                     <article key={row.id}>
@@ -2009,6 +2231,162 @@ export function Dashboard({
               )}
             </section>
           </>
+        )}
+        {trashOpen && (
+          <div
+            className="adm-trash-veil"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Thùng rác ${tabLabel}`}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setTrashOpen(false);
+            }}
+          >
+            <section className="adm-trash-panel">
+              <header className="adm-trash-head">
+                <div>
+                  <p className="adm-eyebrow">SEA TRIP · Thùng rác</p>
+                  <h2>
+                    🗑 {tabLabel} · {trashRows.length} mục
+                  </h2>
+                  <p>
+                    Mỗi mục được giữ {TRASH_RETENTION_DAYS} ngày kể từ lúc xóa
+                    rồi hệ thống tự xóa vĩnh viễn. Khôi phục để đưa về bản
+                    nháp — chưa xuất bản lên website.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="adm-trash-close"
+                  aria-label="Đóng thùng rác"
+                  onClick={() => setTrashOpen(false)}
+                >
+                  ×
+                </button>
+              </header>
+              <div className="adm-trash-summary" role="status">
+                <div>
+                  <span>Đang giữ</span>
+                  <strong>{trashRows.length}</strong>
+                </div>
+                <div data-urgent={trashUrgentCount > 0}>
+                  <span>Sắp xóa ≤ 7 ngày</span>
+                  <strong>{trashUrgentCount}</strong>
+                </div>
+                <div>
+                  <span>Chu kỳ giữ</span>
+                  <strong>{TRASH_RETENTION_DAYS} ngày</strong>
+                </div>
+              </div>
+              {trashRows.length === 0 ? (
+                <p className="adm-empty">
+                  Thùng rác trống. Nội dung bạn chuyển vào thùng rác sẽ nằm ở
+                  đây đủ {TRASH_RETENTION_DAYS} ngày trước khi tự xóa vĩnh
+                  viễn.
+                </p>
+              ) : (
+                <ul className="adm-trash-list">
+                  {[...trashRows]
+                    .sort((a, b) =>
+                      String(a.updated_at).localeCompare(String(b.updated_at)),
+                    )
+                    .map((row) => {
+                      const meta = trashMetaOf(row);
+                      const title = String(
+                        row.data.title ?? row.data.name ?? row.id,
+                      );
+                      const cover =
+                        tab === "articles"
+                          ? articleCoverSrcOf(row.data)
+                          : coverSrcOf(row.data);
+                      const urgent =
+                        meta.left !== null && meta.left <= 7;
+                      return (
+                        <li
+                          key={row.id}
+                          className="adm-trash-item"
+                          data-urgent={urgent}
+                        >
+                          <div
+                            className="adm-trash-thumb"
+                            aria-hidden="true"
+                          >
+                            {cover ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={cover} alt="" loading="lazy" />
+                            ) : (
+                              <span>🗑</span>
+                            )}
+                          </div>
+                          <div className="adm-trash-body">
+                            <h3>{title}</h3>
+                            <p className="adm-trash-dates">
+                              Xóa lúc: {meta.deletedLabel} · Tự xóa vĩnh viễn:{" "}
+                              {meta.deleteAtLabel}
+                            </p>
+                            <div
+                              className="adm-trash-bar"
+                              role="progressbar"
+                              aria-valuemin={0}
+                              aria-valuemax={TRASH_RETENTION_DAYS}
+                              aria-valuenow={
+                                meta.left === null
+                                  ? undefined
+                                  : TRASH_RETENTION_DAYS - meta.left
+                              }
+                              aria-label={`Còn ${meta.left ?? "?"} ngày trước khi tự xóa`}
+                            >
+                              <span
+                                style={{
+                                  width: `${Math.round((meta.ratio ?? 0) * 100)}%`,
+                                }}
+                              />
+                            </div>
+                            <p
+                              className={`adm-trash-countdown${urgent ? " adm-trash-countdown--urgent" : ""}`}
+                            >
+                              {meta.left === null
+                                ? "Không rõ hạn xóa"
+                                : meta.left === 0
+                                  ? "Sẽ tự xóa vĩnh viễn trong hôm nay"
+                                  : `Còn ${meta.left} / ${TRASH_RETENTION_DAYS} ngày — tự xóa vĩnh viễn`}
+                            </p>
+                          </div>
+                          <div className="adm-trash-actions">
+                            <button
+                              type="button"
+                              className="adm-primary"
+                              onClick={() => trashOrRestore(row)}
+                            >
+                              Khôi phục
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTrashOpen(false);
+                                setSelected(row);
+                                setDirty(false);
+                              }}
+                            >
+                              Xem / Sửa
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                </ul>
+              )}
+              <footer className="adm-trash-foot">
+                <span>
+                  Mẹo: khôi phục xong bấm “Xuất bản thay đổi” thì nội dung mới
+                  hiện lại trên website.
+                </span>
+                <button type="button" onClick={() => setTrashOpen(false)}>
+                  Đóng thùng rác
+                </button>
+              </footer>
+            </section>
+          </div>
         )}
         <ToastStack items={toasts} onClose={dismissToast} />
         <ConfirmModal
