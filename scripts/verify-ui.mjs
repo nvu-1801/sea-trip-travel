@@ -282,7 +282,7 @@ async function checkReducedMotion(browser) {
 
     const audit = await page.evaluate(() => {
       const revealNodes = Array.from(
-        document.querySelectorAll("[data-reveal]"),
+        document.querySelectorAll("[data-reveal], [data-reveal-3d]"),
       );
       const parallaxNodes = Array.from(
         document.querySelectorAll("[data-parallax]"),
@@ -763,7 +763,10 @@ async function checkConsultationFlow(browser, sink) {
     .waitFor({ state: "visible", timeout: 20_000 });
 
   const successText = await page.locator('[role="status"]').first().innerText();
-  check("success panel is shown", successText.includes("Đã tiếp nhận yêu cầu"));
+  check(
+    "success panel is shown",
+    /đã tiếp nhận yêu cầu/i.test(successText),
+  );
   check(
     "success panel carries a request code",
     /STT-\d{8}-[0-9A-F]{4}/.test(successText),
@@ -1433,7 +1436,7 @@ async function checkPrint(browser) {
   const m = await page.evaluate(() => {
     const animated = Array.from(
       document.querySelectorAll(
-        "[data-reveal],[data-parallax],[data-entrance]",
+        "[data-reveal],[data-reveal-3d],[data-parallax],[data-entrance]",
       ),
     );
     const printHidden = Array.from(
@@ -1587,8 +1590,8 @@ async function checkTravelMotion(browser) {
   });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "load" });
-  const bloom = page.locator(".stt-hero-bloom, .stt-cinema-copy").first();
-  const ambient = await bloom.evaluate((el) => {
+  const entrance = page.locator('.stt-hero-editorial [data-entrance]').first();
+  const ambient = await entrance.evaluate((el) => {
     const style = getComputedStyle(el);
     return {
       name: style.animationName,
@@ -1597,8 +1600,10 @@ async function checkTravelMotion(browser) {
     };
   });
   check(
-    "hero atmosphere settles within five seconds",
-    ambient.name !== "none" && ambient.duration <= 5 && ambient.count === "1",
+    "hero content entrance settles within five seconds",
+    ambient.name === "stt-entrance" &&
+      ambient.duration <= 5 &&
+      ambient.count === "1",
   );
   const card = page.locator(".stt-tour-card").first();
   check(

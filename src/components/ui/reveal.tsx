@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ElementType, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** 3D Editorial viewport entrance without flickering. Respects motion preferences. */
+/** Editorial viewport entrance without flickering. Respects motion preferences. */
 export type RevealVariant = "rise" | "left" | "right" | "zoom";
 
 export function Reveal({
