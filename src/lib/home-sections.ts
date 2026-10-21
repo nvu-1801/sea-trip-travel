@@ -6,6 +6,9 @@
 
 export type HomeSectionCollection = "hero" | "landing";
 
+/** Nhóm hiển thị trên tab quản trị: đầu / giữa / cuối trang. */
+export type HomeSectionGroup = "top" | "main" | "bottom";
+
 export type HomeSectionMeta = {
   /** Key inside the record data ("hero" uses the whole hero record). */
   key: string;
@@ -14,9 +17,37 @@ export type HomeSectionMeta = {
   /** Where this appears on the landing page, in plain words. */
   where: string;
   illustration: string;
+  /** Biểu tượng minh họa trên thẻ quản trị. */
+  icon: string;
+  /** Nhóm phân chia trên tab quản trị. */
+  group: HomeSectionGroup;
+  /** Gợi ý ngắn: sửa gì trong phần này. */
+  tip: string;
   /** Opens the Website & footer tab instead of an editor modal. */
   linkTab?: string;
 };
+
+export const HOME_GROUPS: readonly {
+  key: HomeSectionGroup;
+  title: string;
+  hint: string;
+}[] = [
+  {
+    key: "top",
+    title: "A · Đầu trang",
+    hint: "Khách thấy đầu tiên — banner và tìm kiếm",
+  },
+  {
+    key: "main",
+    title: "B · Giữa trang",
+    hint: "Nội dung chính — tour, điểm đến, giá trị",
+  },
+  {
+    key: "bottom",
+    title: "C · Cuối trang",
+    hint: "Chốt đơn — cẩm nang, hỏi đáp, chân trang",
+  },
+];
 
 export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
   {
@@ -25,6 +56,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Ảnh đầu trang",
     where: "Đầu trang chủ — banner ảnh lớn",
     illustration: "/images/hero/ky-co-user.png",
+    icon: "🖼",
+    group: "top",
+    tip: "Đổi ảnh, tiêu đề, nút bấm và bật/tắt tự chạy slide.",
   },
   {
     key: "finder",
@@ -32,6 +66,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Thanh tìm kiếm tour",
     where: "Ngay dưới banner — gợi ý Quy Nhơn / Phú Yên / Kỳ Co",
     illustration: "/images/hero/blue-bay.webp",
+    icon: "🔍",
+    group: "top",
+    tip: "Sửa các gợi ý tìm kiếm nhanh dưới banner.",
   },
   {
     key: "explore",
@@ -39,6 +76,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Khám phá điểm đến",
     where: "Cụm 3 điểm nổi bật dưới thanh tìm kiếm",
     illustration: "/images/destinations/hon-kho.jpg",
+    icon: "🗺",
+    group: "main",
+    tip: "Đổi tiêu đề và 3 điểm đến nổi bật.",
   },
   {
     key: "featured",
@@ -46,6 +86,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Tour nổi bật",
     where: "Lưới tour chính giữa trang chủ",
     illustration: "/images/tours/d7233006cc4fd0f9.jpeg",
+    icon: "⭐",
+    group: "main",
+    tip: "Ghim tour thủ công hoặc để tự động theo tuyến.",
   },
   {
     key: "trust",
@@ -53,6 +96,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Cam kết dịch vụ",
     where: "Dải 4 cam kết dưới tour nổi bật",
     illustration: "/images/hero/emerald-bay.webp",
+    icon: "🛡",
+    group: "main",
+    tip: "Sửa 4 cam kết dịch vụ hiển thị dạng dải.",
   },
   {
     key: "story",
@@ -60,6 +106,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Lịch trình gợi ý",
     where: "Khối nền tối: 1 ngày / 2 ngày / 4+ ngày",
     illustration: "/images/hero/coastal-sunset.webp",
+    icon: "🕒",
+    group: "main",
+    tip: "Sửa các mốc lịch trình gợi ý theo số ngày.",
   },
   {
     key: "regions",
@@ -67,6 +116,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Tour theo vùng miền",
     where: "4 thẻ vùng miền",
     illustration: "/images/destinations/hoi-an.jpg",
+    icon: "🏝",
+    group: "main",
+    tip: "Đổi tiêu đề và 4 thẻ vùng miền.",
   },
   {
     key: "values",
@@ -74,6 +126,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Giá trị SEA TRIP",
     where: "Khối ảnh + 4 nguyên tắc làm việc",
     illustration: "/images/hero/island-panorama.webp",
+    icon: "💎",
+    group: "main",
+    tip: "Đổi ảnh, huy hiệu và 4 nguyên tắc làm việc.",
   },
   {
     key: "guides",
@@ -81,6 +136,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Cẩm nang nổi bật",
     where: "Bài viết lớn + 3 bài phụ",
     illustration: "/images/destinations/bai-xep.jpg",
+    icon: "📰",
+    group: "bottom",
+    tip: "Chọn bài tiêu điểm hoặc để tự động bài mới nhất.",
   },
   {
     key: "planning",
@@ -88,6 +146,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Hỏi đáp & tư vấn",
     where: "FAQ + form nhận tư vấn cuối trang",
     illustration: "/images/destinations/mui-dien.jpg",
+    icon: "💬",
+    group: "bottom",
+    tip: "Sửa câu hỏi thường gặp và form nhận tư vấn.",
   },
   {
     key: "footer",
@@ -95,6 +156,9 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     title: "Chân trang",
     where: "Logo, địa chỉ, mạng xã hội — sửa ở Website & footer",
     illustration: "/images/hero/lighthouse-coast.webp",
+    icon: "🧭",
+    group: "bottom",
+    tip: "Phần này sửa ở tab Website & footer.",
     linkTab: "settings",
   },
 ];

@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { HOME_SECTIONS, sectionSummary } from "../src/lib/home-sections";
+import {
+  HOME_GROUPS,
+  HOME_SECTIONS,
+  sectionSummary,
+} from "../src/lib/home-sections";
 
 test("home sections mirror the landing page order with unique keys", () => {
   assert.equal(HOME_SECTIONS.length, 11);

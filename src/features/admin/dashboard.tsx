@@ -8,6 +8,7 @@ import { HeroEditor } from "./hero-editor";
 import { Overview } from "./overview";
 import { HomeSections } from "./home-sections";
 import type { HomeSectionMeta } from "@/lib/home-sections";
+import { HOME_SECTIONS } from "@/lib/home-sections";
 import {
   ToastStack,
   ConfirmModal,
@@ -305,8 +306,23 @@ export function Dashboard({
     landing: RecordRow | null;
   }>({ hero: null, landing: null });
   const [homeModal, setHomeModal] = useState<
-    | { kind: "hero"; title: string; where: string }
-    | { kind: "section"; key: string; title: string; where: string }
+    | {
+        kind: "hero";
+        title: string;
+        where: string;
+        icon: string;
+        tip: string;
+        num: number;
+      }
+    | {
+        kind: "section";
+        key: string;
+        title: string;
+        where: string;
+        icon: string;
+        tip: string;
+        num: number;
+      }
     | null
   >(null);
   const loadSerial = useRef(0);
@@ -358,6 +374,14 @@ export function Dashboard({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [trashOpen]);
+  useEffect(() => {
+    if (!homeModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeHomeModal();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [homeModal]); // eslint-disable-line react-hooks/exhaustive-deps
   async function api(url: string, options: RequestInit = {}) {
     const response = await fetch(`/api/admin/${url}`, {
       ...options,
@@ -641,6 +665,7 @@ export function Dashboard({
       pushToast("error", "Chưa tải được dữ liệu trang chủ. Hãy tải lại trang.");
       return;
     }
+    const num = HOME_SECTIONS.findIndex((s) => s.key === meta.key) + 1;
     setSelected({
       ...record,
       data: structuredClone(record.data),
@@ -648,8 +673,23 @@ export function Dashboard({
     setDirty(false);
     setHomeModal(
       meta.key === "hero"
-        ? { kind: "hero", title: meta.title, where: meta.where }
-        : { kind: "section", key: meta.key, title: meta.title, where: meta.where },
+        ? {
+            kind: "hero",
+            title: meta.title,
+            where: meta.where,
+            icon: meta.icon,
+            tip: meta.tip,
+            num,
+          }
+        : {
+            kind: "section",
+            key: meta.key,
+            title: meta.title,
+            where: meta.where,
+            icon: meta.icon,
+            tip: meta.tip,
+            num,
+          },
     );
   }
   function closeHomeModal() {
@@ -1863,14 +1903,52 @@ export function Dashboard({
         ) : tab === "home" ? (
           <>
             <section className="adm-panel adm-home-intro">
-              <div>
-                <h2>Các khối trang chủ theo đúng thứ tự hiển thị</h2>
-                <p>
-                  Mỗi thẻ là một phần thật trên landing page. Bấm Sửa để mở
-                  modal chỉ chứa trường của phần đó — lưu nháp hoặc xuất bản
-                  ngay trong modal.
-                </p>
+              <div className="adm-home-intro-top">
+                <div>
+                  <h2>Các khối trang chủ theo đúng thứ tự hiển thị</h2>
+                  <p>
+                    Mỗi thẻ là một phần thật trên landing page, chia 3 nhóm
+                    Đầu – Giữa – Cuối trang. Bấm Sửa để mở modal chỉ chứa
+                    trường của phần đó.
+                  </p>
+                </div>
+                <div className="adm-home-states" role="status">
+                  <span
+                    className={`adm-badge ${homeData.hero ? (homeData.hero.state === "published" ? "" : "draft") : "draft"}`}
+                  >
+                    Banner:{" "}
+                    {homeData.hero
+                      ? homeData.hero.state === "published"
+                        ? "Đang xuất bản"
+                        : "Bản nháp"
+                      : "Đang tải…"}
+                  </span>
+                  <span
+                    className={`adm-badge ${homeData.landing ? (homeData.landing.state === "published" ? "" : "draft") : "draft"}`}
+                  >
+                    Sections:{" "}
+                    {homeData.landing
+                      ? homeData.landing.state === "published"
+                        ? "Đang xuất bản"
+                        : "Bản nháp"
+                      : "Đang tải…"}
+                  </span>
+                </div>
               </div>
+              <ol className="adm-home-steps">
+                <li>
+                  <strong>1 · Xem</strong>
+                  <span>Tìm đúng số thứ tự của khối trên trang</span>
+                </li>
+                <li>
+                  <strong>2 · Sửa</strong>
+                  <span>Mở modal, chỉ sửa trường của khối đó</span>
+                </li>
+                <li>
+                  <strong>3 · Xuất bản</strong>
+                  <span>Lưu nháp để giữ, xuất bản để lên web ngay</span>
+                </li>
+              </ol>
             </section>
             {loading && !homeData.hero && !homeData.landing ? (
               <p className="adm-empty">Nội dung đang được tải…</p>
@@ -1878,15 +1956,9 @@ export function Dashboard({
               <HomeSections
                 heroData={homeData.hero?.data ?? null}
                 landingData={homeData.landing?.data ?? null}
-                onEditHero={(title) =>
-                  openHomeEditor({
-                    key: "hero",
-                    collection: "hero",
-                    title,
-                    where: "Đầu trang chủ — banner ảnh lớn",
-                    illustration: "",
-                  })
-                }
+                heroState={homeData.hero?.state}
+                landingState={homeData.landing?.state}
+                onEditHero={(meta) => openHomeEditor(meta)}
                 onEditSection={(meta) => openHomeEditor(meta)}
                 onGoSettings={() => void switchTab("settings")}
               />
@@ -1904,18 +1976,41 @@ export function Dashboard({
                   aria-modal="true"
                   aria-labelledby="adm-section-title"
                 >
-                  <div className="adm-section-modal-head">
-                    <div>
-                      <p className="adm-eyebrow">Trang chủ · {homeModal.where}</p>
+                  <div className="adm-section-modal-banner">
+                    <span className="adm-section-modal-icon" aria-hidden="true">
+                      {homeModal.icon}
+                    </span>
+                    <div className="adm-section-modal-titles">
+                      <p className="adm-eyebrow">
+                        Trang chủ · Phần {String(homeModal.num).padStart(2, "0")}{" "}
+                        · {homeModal.where}
+                      </p>
                       <h2 id="adm-section-title">{homeModal.title}</h2>
+                      <p className="adm-section-modal-tip">
+                        💡 {homeModal.tip}
+                      </p>
                     </div>
                     <button
                       type="button"
-                      aria-label="Đóng"
+                      className="adm-section-modal-close"
+                      aria-label="Đóng (Esc)"
                       onClick={closeHomeModal}
                     >
                       ×
                     </button>
+                  </div>
+                  <div className="adm-section-modal-status" role="status">
+                    <span
+                      className={`adm-badge ${selected.state === "published" ? "" : "draft"}`}
+                    >
+                      {selected.state === "published"
+                        ? "Đang xuất bản"
+                        : "Bản nháp"}
+                    </span>
+                    <span>
+                      Phiên bản {selected.revision}
+                      {dirty ? " · Có thay đổi chưa lưu" : " · Chưa có gì mới"}
+                    </span>
                   </div>
                   {homeModal.kind === "hero" ? (
                     <HeroEditor
@@ -1956,6 +2051,11 @@ export function Dashboard({
                     />
                   )}
                   <div className="adm-modal-actions">
+                    <span className="adm-modal-hint">
+                      {dirty
+                        ? "Có thay đổi chưa lưu — lưu nháp để giữ, xuất bản để lên web ngay."
+                        : "Chưa có thay đổi nào trong phần này."}
+                    </span>
                     <button
                       type="button"
                       disabled={busy}
@@ -2467,17 +2567,54 @@ export function Dashboard({
                             ? "Section đầu trang chủ"
                             : tab === "landing"
                               ? "Các khối trang chủ (finder/story/FAQ/explore/regions/values)"
-                              : String(row.data.title ?? row.data.name ?? row.id)}
+                              : tab === "settings"
+                                ? `⚙ ${String(row.data.name ?? "Cấu hình website")} · mã “${row.id}”`
+                                : tab === "messages"
+                                  ? row.id === "vi"
+                                    ? "🇻🇳 Tiếng Việt — câu chữ chính"
+                                    : row.id === "en"
+                                      ? "🇬🇧 Tiếng Anh — bản dịch"
+                                      : String(row.data.title ?? row.data.name ?? row.id)
+                                  : String(row.data.title ?? row.data.name ?? row.id)}
                         </h2>
                         <p>
-                          {String(
-                            row.data.summary ??
-                              row.data.excerpt ??
-                              row.data.description ??
-                              row.data.slug ??
-                              row.id,
-                          ).slice(0, 120)}
+                          {tab === "settings"
+                            ? (() => {
+                                const contact = (row.data.contact ?? {}) as Record<string, unknown>;
+                                const hotline = typeof contact.hotline === "string" ? contact.hotline : "";
+                                const email = typeof contact.email === "string" ? contact.email : "";
+                                const footer = Array.isArray(row.data.footerLinks)
+                                  ? (row.data.footerLinks as unknown[]).length
+                                  : 0;
+                                const social = Array.isArray(row.data.socialLinks)
+                                  ? (row.data.socialLinks as unknown[]).length
+                                  : 0;
+                                return `Hotline ${hotline || "—"} · ${email || "—"} · ${footer} link footer · ${social} mạng xã hội`;
+                              })()
+                            : tab === "messages"
+                              ? row.id === "vi"
+                                ? "Mọi tiêu đề, nút bấm, nhãn form tiếng Việt trên website."
+                                : "Bản dịch tiếng Anh tương ứng — xuất bản để lên web ngay."
+                              : String(
+                                  row.data.summary ??
+                                    row.data.excerpt ??
+                                    row.data.description ??
+                                    row.data.slug ??
+                                    row.id,
+                                ).slice(0, 120)}
                         </p>
+                        {(tab === "settings" ||
+                          tab === "messages" ||
+                          tab === "hero" ||
+                          tab === "landing") && (
+                          <p className="adm-card-place">
+                            {tab === "settings"
+                              ? "📍 Hiện ở: header · footer · trang liên hệ · nút gọi/Zalo"
+                              : tab === "messages"
+                                ? "📍 Hiện ở: trang chủ · liên hệ · chính sách · thông báo"
+                                : "📍 Hiện ở: trang chủ"}
+                          </p>
+                        )}
                         <small>
                           {new Date(row.updated_at).toLocaleDateString("vi-VN")}{" "}
                           · v{row.revision}
