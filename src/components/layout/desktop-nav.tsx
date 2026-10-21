@@ -119,8 +119,10 @@ export function DesktopNav({
     cn(
       "group/item relative inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2",
       "text-[0.8125rem] font-semibold transition-all duration-200 hover:bg-primary-soft/70",
+      expanded &&
+        "bg-primary-soft/70 shadow-[0_4px_16px_rgba(224,0,90,0.12)] backdrop-blur-xl",
       active || expanded
-        ? "bg-white/70 text-primary-strong shadow-[0_4px_16px_rgba(224,0,90,0.12)] backdrop-blur-xl"
+        ? "text-primary-strong"
         : "text-foreground hover:text-primary-strong",
     );
 
