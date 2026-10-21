@@ -6,6 +6,29 @@ import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
 import { useContentUpdates } from "@/lib/use-content-updates";
 import { HeroEditor } from "./hero-editor";
 import { Overview } from "./overview";
+import {
+  ToastStack,
+  ConfirmModal,
+  type ConfirmRequest,
+  type ToastItem,
+  type ToastKind,
+} from "./notify";
+import { AdmFilterSelect } from "./ui-select";
+import {
+  TRASH_RETENTION_DAYS,
+  articleCoverSrcOf,
+  articleExcerptOf,
+  articleTagsOf,
+  coverSrcOf,
+  durationBadgeOf,
+  durationGroupOf,
+  lineGroupOf,
+  priceLabelOf,
+  qnpyCategoryIds,
+  trashDaysLeft,
+  trashDeleteAtMs,
+  trashElapsedRatio,
+} from "@/lib/admin-tour-groups";
 import type { HeroConfig } from "@/domain/home-hero";
 type RecordRow = {
   id: string;
@@ -36,6 +59,16 @@ const tabs = [
   ["leads", "Yêu cầu tư vấn", "✉"],
   ["account", "Bảo mật", "◇"],
 ];
+const TOUR_GROUPS = [
+  { duration: "1day", line: "qnpy", title: "Quy Nhơn – Phú Yên · Tour 1 ngày" },
+  {
+    duration: "multi",
+    line: "qnpy",
+    title: "Quy Nhơn – Phú Yên · Tour nhiều ngày",
+  },
+  { duration: "1day", line: "domestic", title: "Trong nước · Tour 1 ngày" },
+  { duration: "multi", line: "domestic", title: "Trong nước · Tour nhiều ngày" },
+] as const;
 type Guide = {
   purpose: string;
   steps: string[];
@@ -254,8 +287,18 @@ export function Dashboard({
     [busy, setBusy] = useState(false),
     [loading, setLoading] = useState(false),
     [dirty, setDirty] = useState(false),
-    [filter, setFilter] = useState("all");
+    [filter, setFilter] = useState("all"),
+    [durationFilter, setDurationFilter] = useState<"all" | "1day" | "multi">(
+      "all",
+    ),
+    [lineFilter, setLineFilter] = useState<"all" | "qnpy" | "domestic">("all");
   const [references, setReferences] = useState<ReferenceOptions>({});
+  const [qnpyIds, setQnpyIds] = useState<ReadonlySet<string>>(new Set());
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const toastId = useRef(0);
+  const [confirmReq, setConfirmReq] = useState<
+    (ConfirmRequest & { resolve: (ok: boolean) => void }) | null
+  >(null);
   const loadSerial = useRef(0);
   const activitySerial = useRef(0);
   const dirtyFields = useRef(new Set<string>());
@@ -275,6 +318,7 @@ export function Dashboard({
     [showPassword, setShowPassword] = useState(false),
     [remember, setRemember] = useState(false),
     [helpOpen, setHelpOpen] = useState(false),
+    [trashOpen, setTrashOpen] = useState(false),
     [current, setCurrent] = useState(""),
     [showCurrentPw, setShowCurrentPw] = useState(false),
     [showNewPw, setShowNewPw] = useState(false);
@@ -296,6 +340,14 @@ export function Dashboard({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [helpOpen]);
+  useEffect(() => {
+    if (!trashOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTrashOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [trashOpen]);
   async function api(url: string, options: RequestInit = {}) {
     const response = await fetch(`/api/admin/${url}`, {
       ...options,
@@ -334,6 +386,22 @@ export function Dashboard({
           : next === "media" || next === "account"
             ? null
             : await api(`content/${next}`);
+      // Tour grouping needs the category tree: which categories live under
+      // the Quy Nhơn – Phú Yên root. Loaded only for the tours tab.
+      let categoryTree: { id: string; parentId?: string | null }[] = [];
+      if (next === "tours") {
+        try {
+          const categoryRows = (await api("content/categories")) as {
+            data: { id: string; parentId?: string | null };
+          }[];
+          categoryTree = categoryRows.map((row) => ({
+            id: row.data.id,
+            parentId: row.data.parentId ?? null,
+          }));
+        } catch {
+          categoryTree = [];
+        }
+      }
       if (
         serial !== loadSerial.current ||
         (background && activity !== activitySerial.current)
@@ -352,6 +420,7 @@ export function Dashboard({
       if (next === "leads") setLeads(result);
       else if (next === "media") setMedia(library);
       else if (next !== "account") setRows(result);
+      setQnpyIds(next === "tours" ? qnpyCategoryIds(categoryTree) : new Set());
       setHasUpdates(false);
       return true;
     } catch (error) {
@@ -397,8 +466,37 @@ export function Dashboard({
       setBusy(false);
     }
   }
-  function switchTab(next: string) {
-    if (dirty && !confirm("Bạn có thay đổi chưa lưu. Rời màn hình này?"))
+  function pushToast(kind: ToastKind, text: string) {
+    toastId.current += 1;
+    const id = toastId.current;
+    setToasts((current) => [...current.slice(-3), { id, kind, text }]);
+  }
+  function dismissToast(id: number) {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+  }
+  function requestConfirm(
+    request: Exclude<ConfirmRequest, null>,
+  ): Promise<boolean> {
+    return new Promise((resolve) => {
+      setConfirmReq({ ...request, resolve });
+    });
+  }
+  function settleConfirm(ok: boolean) {
+    setConfirmReq((current) => {
+      current?.resolve(ok);
+      return null;
+    });
+  }
+  async function switchTab(next: string) {
+    if (
+      dirty &&
+      !(await requestConfirm({
+        title: "Rời màn hình này?",
+        body: "Bạn có thay đổi chưa lưu. Rời đi sẽ bỏ các thay đổi đó.",
+        confirmLabel: "Rời màn hình",
+        danger: true,
+      }))
+    )
       return;
     loadSerial.current++;
     setSelected(null);
@@ -406,7 +504,10 @@ export function Dashboard({
     setRows([]);
     setSearch("");
     setFilter("all");
+    setDurationFilter("all");
+    setLineFilter("all");
     setHelpOpen(false);
+    setTrashOpen(false);
     setTab(next);
     setNotice("");
   }
@@ -422,19 +523,62 @@ export function Dashboard({
         }),
       });
       await load();
-      setNotice(
+      pushToast(
+        "success",
         action === "publish"
           ? "Đã xuất bản. Nội dung mới có hiệu lực trên website."
           : action === "unpublish"
             ? "Đã ẩn khỏi website. Bản nháp vẫn được giữ lại."
             : action === "delete"
-              ? "Đã chuyển vào Thùng rác. Mở bộ lọc Thùng rác để xem hoặc khôi phục."
+              ? "Đã chuyển vào Thùng rác. Mở Thùng rác để xem hoặc khôi phục."
               : action === "restore"
                 ? "Đã khôi phục thành bản nháp."
                 : "Đã lưu thay đổi.",
       );
       if (action === "restore") setFilter("all");
     });
+  }
+  function trashOrRestore(row: RecordRow) {
+    void (async () => {
+      const action = row.state === "deleted" ? "restore" : "delete";
+      const title = String(row.data.title ?? row.data.name ?? row.id);
+      const ok = await requestConfirm(
+        action === "delete"
+          ? {
+              title: "Chuyển vào thùng rác?",
+              body: `"${title}" sẽ gỡ khỏi website ngay. Giữ trong thùng rác ${TRASH_RETENTION_DAYS} ngày trước khi tự xóa vĩnh viễn.`,
+              confirmLabel: "Chuyển vào thùng rác",
+              danger: true,
+            }
+          : {
+              title: "Khôi phục nội dung?",
+              body: `"${title}" sẽ trở lại thành bản nháp, chưa xuất bản lên website.`,
+              confirmLabel: "Khôi phục",
+              danger: false,
+            },
+      );
+      if (!ok) return;
+      void run(async () => {
+        await api(`content/${tab}`, {
+          method: "POST",
+          body: JSON.stringify({
+            data: row.data,
+            revision: row.revision,
+            action,
+          }),
+        });
+        await load();
+        if (action === "restore") {
+          setFilter("all");
+          pushToast("success", "Đã khôi phục thành bản nháp.");
+        } else {
+          pushToast(
+            "success",
+            "Đã chuyển vào Thùng rác. Mở Thùng rác để xem hoặc khôi phục.",
+          );
+        }
+      });
+    })();
   }
   function create() {
     if (!rows.length) {
@@ -473,11 +617,238 @@ export function Dashboard({
       "Bản nháp tạo từ mẫu nội dung. Kiểm tra lịch trình, ảnh và thông tin trước khi xuất bản.",
     );
   }
-  const visibleRows = rows.filter(
-    (row) =>
-      (filter === "all" ? row.state !== "deleted" : row.state === filter) &&
-      JSON.stringify(row.data).toLowerCase().includes(search.toLowerCase()),
+  const deletedCount = rows.filter((r) => r.state === "deleted").length;
+  const trashRows = rows.filter((r) => r.state === "deleted");
+  const trashUrgentCount = trashRows.filter((r) => {
+    const left = trashDaysLeft(r.updated_at);
+    return left !== null && left <= 7;
+  }).length;
+  const tabLabel = tabs.find((t) => t[0] === tab)?.[1] ?? tab;
+  function trashMetaOf(row: RecordRow) {
+    const left = trashDaysLeft(row.updated_at);
+    const deleteAtMs = trashDeleteAtMs(row.updated_at);
+    const ratio = trashElapsedRatio(row.updated_at);
+    const fmtDate = (ms: number | null) =>
+      ms === null ? "—" : new Date(ms).toLocaleDateString("vi-VN");
+    return {
+      left,
+      deleteAtMs,
+      ratio,
+      deletedLabel: (() => {
+        const t = new Date(row.updated_at).getTime();
+        return Number.isFinite(t)
+          ? new Date(t).toLocaleDateString("vi-VN")
+          : "—";
+      })(),
+      deleteAtLabel: fmtDate(deleteAtMs),
+    };
+  }
+  const stateScopedRows = rows.filter((r) =>
+    filter === "all" ? r.state !== "deleted" : r.state === filter,
   );
+  const tourScope = tab === "tours" ? stateScopedRows : [];
+  const countBy = (
+    duration: "all" | "1day" | "multi",
+    line: "all" | "qnpy" | "domestic",
+  ) =>
+    tourScope.filter(
+      (r) =>
+        (duration === "all" || durationGroupOf(r.data) === duration) &&
+        (line === "all" || lineGroupOf(r.data, qnpyIds) === line),
+    ).length;
+  const visibleRows = rows.filter((row) => {
+    if (filter === "all" ? row.state === "deleted" : row.state !== filter)
+      return false;
+    if (tab === "tours") {
+      if (durationFilter !== "all" && durationGroupOf(row.data) !== durationFilter)
+        return false;
+      if (lineFilter !== "all" && lineGroupOf(row.data, qnpyIds) !== lineFilter)
+        return false;
+    }
+    return JSON.stringify(row.data)
+      .toLowerCase()
+      .includes(search.toLowerCase());
+  });
+  // Grouped tour sections (only when browsing, not searching, not in trash).
+  const tourSections =
+    tab === "tours" && filter !== "deleted" && !search
+      ? [
+          ...TOUR_GROUPS.map((group) => ({
+            key: `${group.duration}-${group.line}`,
+            title: group.title,
+            items: visibleRows.filter(
+              (row) =>
+                durationGroupOf(row.data) === group.duration &&
+                lineGroupOf(row.data, qnpyIds) === group.line,
+            ),
+          })),
+          {
+            key: "unknown",
+            title: "Chưa phân loại",
+            items: visibleRows.filter(
+              (row) =>
+                durationGroupOf(row.data) === "unknown" ||
+                lineGroupOf(row.data, qnpyIds) === "unknown",
+            ),
+          },
+        ].filter((section) => section.items.length > 0)
+      : null;
+  function renderTourCard(row: RecordRow) {
+    const cover = coverSrcOf(row.data);
+    const price = priceLabelOf(row.data);
+    const badge = durationBadgeOf(row.data);
+    const line = lineGroupOf(row.data, qnpyIds);
+    const slug = typeof row.data.slug === "string" ? row.data.slug : "";
+    return (
+      <article key={row.id} className="adm-tour-card">
+        <div className="adm-tour-thumb" aria-hidden="true">
+          {cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cover} alt="" loading="lazy" />
+          ) : (
+            <span>◈</span>
+          )}
+        </div>
+        <div className="adm-tour-body">
+          <div className="adm-tour-badges">
+            <span className={`adm-badge ${row.state}`}>
+              {row.state === "published" ? "Đang xuất bản" : "Bản nháp"}
+            </span>
+            {badge && <span className="adm-tour-dur">{badge}</span>}
+            {line !== "unknown" && (
+              <span className="adm-tour-line">
+                {line === "qnpy" ? "QN – Phú Yên" : "Trong nước"}
+              </span>
+            )}
+          </div>
+          <h2>{String(row.data.title ?? row.data.name ?? row.id)}</h2>
+          <p>
+            {String(row.data.summary ?? row.data.slug ?? row.id).slice(0, 120)}
+          </p>
+          <p className="adm-card-place">
+            📍 Card tour · {badge ?? "chưa rõ thời lượng"} ·{" "}
+            {line === "qnpy"
+              ? "Nhóm Quy Nhơn – Phú Yên"
+              : line === "domestic"
+                ? "Nhóm tour trong nước"
+                : "Chưa phân loại tuyến"}
+            {slug ? ` · /tour/${slug}` : ""}
+          </p>
+          <small>
+            {new Date(row.updated_at).toLocaleDateString("vi-VN")} · v
+            {row.revision} · {price ?? "Liên hệ"}
+          </small>
+        </div>
+        <div className="adm-record-actions">
+          <button
+            onClick={() => {
+              setSelected(row);
+              setDirty(false);
+            }}
+          >
+            Chỉnh sửa ↗
+          </button>
+          <button onClick={() => trashOrRestore(row)}>Thùng rác</button>
+        </div>
+      </article>
+    );
+  }
+  // Cẩm nang: nhóm đúng cấu trúc landing page (bài nổi bật / lưới bài viết)
+  // để admin nhận ra card nào nằm ở phần nào trên website.
+  const articleSections =
+    tab === "articles" && filter !== "deleted" && !search
+      ? [
+          {
+            key: "featured",
+            title: "Bài nổi bật · Card lớn đầu trang Cẩm nang",
+            hint: "Chỉ nên giữ 1 bài featured=true. Bài này hiện to nhất ở /cam-nang-du-lich.",
+            items: visibleRows.filter((row) => row.data.featured === true),
+          },
+          {
+            key: "regular",
+            title: "Bài thường · Lưới danh sách bên dưới",
+            hint: "Các card nhỏ 3 cột: ảnh 16:10, ngày đăng, phút đọc, tags.",
+            items: visibleRows.filter((row) => row.data.featured !== true),
+          },
+        ].filter((section) => section.items.length > 0)
+      : null;
+  function renderArticleCard(row: RecordRow) {
+    const data = row.data as Record<string, EditorValue>;
+    const cover = articleCoverSrcOf(data);
+    const excerpt = articleExcerptOf(data);
+    const tags = articleTagsOf(data);
+    const isFeatured = data.featured === true;
+    const slug = typeof data.slug === "string" ? data.slug : String(row.id);
+    const publishedAt =
+      typeof data.publishedAt === "string" ? data.publishedAt : "";
+    const reading =
+      typeof data.readingMinutes === "number" ? data.readingMinutes : null;
+    const author =
+      typeof data.author === "string" ? data.author : "SEA TRIP TRAVEL";
+    return (
+      <article
+        key={row.id}
+        className={`adm-article-card${isFeatured ? " adm-article-card--featured" : ""}`}
+      >
+        <div className="adm-article-thumb" aria-hidden="true">
+          {cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cover} alt="" loading="lazy" />
+          ) : (
+            <span>▤</span>
+          )}
+          {isFeatured && <span className="adm-article-flag">★ Nổi bật</span>}
+        </div>
+        <div className="adm-article-body">
+          <div className="adm-tour-badges">
+            <span className={`adm-badge ${row.state}`}>
+              {row.state === "published" ? "Đang xuất bản" : "Bản nháp"}
+            </span>
+            {publishedAt && (
+              <span className="adm-article-meta">📅 {publishedAt}</span>
+            )}
+            {reading !== null && (
+              <span className="adm-article-meta">⏱ {reading} phút đọc</span>
+            )}
+          </div>
+          <h2>{String(data.title ?? row.id)}</h2>
+          <p className="adm-article-excerpt">{excerpt.slice(0, 140)}</p>
+          <p className="adm-card-place">
+            📍 {isFeatured ? "Card lớn đầu trang" : "Card lưới danh sách"} ·{" "}
+            <code>/cam-nang-du-lich/{slug}</code> · {author}
+          </p>
+          {tags.length > 0 && (
+            <p className="adm-article-tags">
+              {tags.map((tag) => (
+                <span key={tag}>#{tag}</span>
+              ))}
+            </p>
+          )}
+        </div>
+        <div className="adm-record-actions">
+          <button
+            onClick={() => {
+              setSelected(row);
+              setDirty(false);
+            }}
+          >
+            Chỉnh sửa ↗
+          </button>
+          {slug && (
+            <a
+              className="adm-ghost-link"
+              href={`/vi/cam-nang-du-lich/${slug}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Xem trên web ↗
+            </a>
+          )}
+          <button onClick={() => trashOrRestore(row)}>Thùng rác</button>
+        </div>
+      </article>
+    );
+  }
   async function loginSubmit(e: React.FormEvent) {
     e.preventDefault();
     await run(async () => {
@@ -625,7 +996,7 @@ export function Dashboard({
             <button
               key={key}
               aria-current={tab === key ? "page" : undefined}
-              onClick={() => switchTab(key)}
+              onClick={() => void switchTab(key)}
             >
               <span>{icon}</span>
               {label}
@@ -643,10 +1014,19 @@ export function Dashboard({
         <button
           onClick={() =>
             void run(async () => {
-              if (dirty && !confirm("Bỏ thay đổi chưa lưu và đăng xuất?"))
+              if (
+                dirty &&
+                !(await requestConfirm({
+                  title: "Đăng xuất?",
+                  body: "Bạn có thay đổi chưa lưu. Đăng xuất sẽ bỏ các thay đổi đó.",
+                  confirmLabel: "Đăng xuất",
+                  danger: true,
+                }))
+              )
                 return;
               await api("auth", { method: "DELETE" });
               setCsrf(null);
+              pushToast("info", "Đã đăng xuất khỏi Studio.");
             })
           }
         >
@@ -740,12 +1120,19 @@ export function Dashboard({
               type="button"
               disabled={busy || loading}
               onClick={() => {
-                if (
-                  dirty &&
-                  !confirm("Tải cập nhật sẽ bỏ thay đổi chưa lưu. Tiếp tục?")
-                )
-                  return;
-                void load();
+                void (async () => {
+                  if (
+                    dirty &&
+                    !(await requestConfirm({
+                      title: "Tải bản cập nhật?",
+                      body: "Tải cập nhật sẽ bỏ thay đổi chưa lưu của bạn.",
+                      confirmLabel: "Tải cập nhật",
+                      danger: true,
+                    }))
+                  )
+                    return;
+                  void load();
+                })();
               }}
             >
               Tải cập nhật
@@ -980,7 +1367,7 @@ export function Dashboard({
                             });
                             dirtyFields.current.delete(`lead:${lead.id}`);
                             setDirty(dirtyFields.current.size > 0);
-                            setNotice("Đã cập nhật khách hàng");
+                            pushToast("success", "Đã cập nhật khách hàng.");
                           })
                         }
                       >
@@ -995,7 +1382,7 @@ export function Dashboard({
                               body: JSON.stringify({ id: lead.id }),
                             });
                             await load();
-                            setNotice("Đã gửi lại email thông báo.");
+                            pushToast("success", "Đã gửi lại email thông báo.");
                           })
                         }
                       >
@@ -1003,14 +1390,23 @@ export function Dashboard({
                       </button>
                       <button
                         onClick={() => {
-                          if (confirm("Xóa vĩnh viễn dữ liệu khách hàng này?"))
+                          void (async () => {
+                            const ok = await requestConfirm({
+                              title: "Xóa dữ liệu khách hàng?",
+                              body: `Xóa vĩnh viễn yêu cầu của "${lead.data.fullName ?? lead.data.name ?? lead.id}". Không thể khôi phục.`,
+                              confirmLabel: "Xóa vĩnh viễn",
+                              danger: true,
+                            });
+                            if (!ok) return;
                             void run(async () => {
                               await api("leads", {
                                 method: "DELETE",
                                 body: JSON.stringify({ id: lead.id }),
                               });
                               await load();
+                              pushToast("success", "Đã xóa dữ liệu khách hàng.");
                             });
+                          })();
                         }}
                       >
                         Xóa dữ liệu
@@ -1053,7 +1449,8 @@ export function Dashboard({
                         body: file,
                       });
                       await load();
-                      setNotice(
+                      pushToast(
+                        "success",
                         "Đã tải ảnh. Sao chép đường dẫn để dùng trong nội dung.",
                       );
                     });
@@ -1102,7 +1499,7 @@ export function Dashboard({
                             });
                             dirtyFields.current.delete(`media:${item.id}`);
                             setDirty(dirtyFields.current.size > 0);
-                            setNotice("Đã lưu mô tả ảnh trong thư viện.");
+                            pushToast("success", "Đã lưu mô tả ảnh trong thư viện.");
                           })
                         }
                       >
@@ -1111,25 +1508,41 @@ export function Dashboard({
                     </>
                   )}
                   <button
-                    onClick={() =>
+                    onClick={() => {
                       void navigator.clipboard
                         .writeText(item.src)
-                        .then(() => setNotice("Đã sao chép đường dẫn ảnh"))
-                    }
+                        .then(() =>
+                          pushToast("success", "Đã sao chép đường dẫn ảnh."),
+                        )
+                        .catch(() =>
+                          setNotice(
+                            "Không sao chép được. Trình duyệt đã chặn clipboard.",
+                          ),
+                        );
+                    }}
                   >
                     Sao chép đường dẫn
                   </button>
                   <button
                     disabled={item.original}
                     onClick={() => {
-                      if (confirm("Xóa ảnh chưa sử dụng?"))
+                      void (async () => {
+                        const ok = await requestConfirm({
+                          title: "Xóa ảnh khỏi thư viện?",
+                          body: `Xóa "${item.alt || item.src}". Chỉ xóa được ảnh chưa dùng ở tour/bài viết.`,
+                          confirmLabel: "Xóa ảnh",
+                          danger: true,
+                        });
+                        if (!ok) return;
                         void run(async () => {
                           await api("media", {
                             method: "DELETE",
                             body: JSON.stringify({ id: item.id }),
                           });
                           await load();
+                          pushToast("success", "Đã xóa ảnh khỏi thư viện.");
                         });
+                      })();
                     }}
                   >
                     Xóa ảnh
@@ -1150,10 +1563,20 @@ export function Dashboard({
               <div>
                 <button
                   onClick={() => {
-                    if (!dirty || confirm("Bỏ thay đổi chưa lưu?")) {
-                      setSelected(null);
-                      setDirty(false);
-                    }
+                    void (async () => {
+                      if (
+                        !dirty ||
+                        (await requestConfirm({
+                          title: "Bỏ thay đổi chưa lưu?",
+                          body: "Quay lại danh sách sẽ bỏ các thay đổi chưa lưu.",
+                          confirmLabel: "Bỏ thay đổi",
+                          danger: true,
+                        }))
+                      ) {
+                        setSelected(null);
+                        setDirty(false);
+                      }
+                    })();
                   }}
                 >
                   ← Danh sách
@@ -1326,8 +1749,15 @@ export function Dashboard({
                 <button
                   disabled={busy}
                   onClick={() => {
-                    if (confirm("Ẩn nội dung này khỏi website?"))
-                      void save("unpublish");
+                    void (async () => {
+                      const ok = await requestConfirm({
+                        title: "Ẩn nội dung khỏi website?",
+                        body: "Nội dung sẽ gỡ khỏi trang public nhưng bản nháp vẫn được giữ lại.",
+                        confirmLabel: "Ẩn khỏi website",
+                        danger: false,
+                      });
+                      if (ok) void save("unpublish");
+                    })();
                   }}
                 >
                   Ẩn khỏi website
@@ -1349,13 +1779,32 @@ export function Dashboard({
                 ],
                 ["Bản nháp", rows.filter((r) => r.state === "draft").length],
                 ["Thùng rác", rows.filter((r) => r.state === "deleted").length],
-              ].map(([label, count]) => (
-                <div key={label}>
-                  <span>{label}</span>
-                  <strong>{count}</strong>
-                  <small>Sẵn sàng cho hành trình tiếp theo</small>
-                </div>
-              ))}
+              ].map(([label, count]) =>
+                label === "Thùng rác" &&
+                !["messages", "settings", "hero", "landing"].includes(tab) ? (
+                  <button
+                    key={label}
+                    type="button"
+                    className="adm-stat-btn"
+                    onClick={() => setTrashOpen(true)}
+                    title={`Mở thùng rác ${tabLabel} — giữ ${TRASH_RETENTION_DAYS} ngày`}
+                  >
+                    <span>{label} 🗑</span>
+                    <strong>{count}</strong>
+                    <small>
+                      {trashUrgentCount > 0
+                        ? `${trashUrgentCount} mục sắp bị xóa vĩnh viễn · Bấm để xem`
+                        : `Tự xóa sau ${TRASH_RETENTION_DAYS} ngày · Bấm để xem`}
+                    </small>
+                  </button>
+                ) : (
+                  <div key={label}>
+                    <span>{label}</span>
+                    <strong>{count}</strong>
+                    <small>Sẵn sàng cho hành trình tiếp theo</small>
+                  </div>
+                ),
+              )}
             </div>
             <section className="adm-panel">
               <div className="adm-toolbar">
@@ -1365,19 +1814,43 @@ export function Dashboard({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
-                <select
-                  aria-label="Trạng thái nội dung"
+                <AdmFilterSelect
                   value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
+                  onChange={setFilter}
+                  options={[
+                    {
+                      value: "all",
+                      label: "Tất cả",
+                      count: rows.filter((r) => r.state !== "deleted").length,
+                    },
+                    {
+                      value: "published",
+                      label: "Đang xuất bản",
+                      count: rows.filter((r) => r.state === "published").length,
+                    },
+                    {
+                      value: "draft",
+                      label: "Bản nháp",
+                      count: rows.filter((r) => r.state === "draft").length,
+                    },
+                    {
+                      value: "deleted",
+                      label: "Thùng rác",
+                      count: deletedCount,
+                    },
+                  ]}
+                />
+                <button
+                  type="button"
+                  className={`adm-trash-btn${filter === "deleted" ? " adm-trash-btn--active" : ""}`}
+                  onClick={() =>
+                    setFilter(filter === "deleted" ? "all" : "deleted")
+                  }
+                  aria-pressed={filter === "deleted"}
                 >
-                  <option value="all">Tất cả</option>
-                  <option value="published">Đang xuất bản</option>
-                  <option value="draft">Bản nháp</option>
-                  <option value="deleted">
-                    Thùng rác (
-                    {rows.filter((r) => r.state === "deleted").length})
-                  </option>
-                </select>
+                  🗑 Thùng rác
+                  <span className="adm-trash-count">{deletedCount}</span>
+                </button>
                 {!["messages", "settings", "hero", "landing"].includes(tab) && (
                   <button
                     className="adm-primary"
@@ -1388,89 +1861,138 @@ export function Dashboard({
                   </button>
                 )}
               </div>
-              <div className="adm-records">
-                {visibleRows.map((row) => (
-                  <article key={row.id}>
-                    <div className="adm-record-mark">
-                      {tabs.find((t) => t[0] === tab)?.[2]}
-                    </div>
-                    <div className="adm-record-copy">
-                      <span className={`adm-badge ${row.state}`}>
-                        {row.state === "published"
-                          ? "Đang xuất bản"
-                          : row.state === "deleted"
-                            ? "Thùng rác"
-                            : "Bản nháp"}
-                      </span>
-                      <h2>
-                        {tab === "hero"
-                          ? "Section đầu trang chủ"
-                          : tab === "landing"
-                            ? "Các khối trang chủ (finder/story/FAQ/explore/regions/values)"
-                            : String(row.data.title ?? row.data.name ?? row.id)}
-                      </h2>
-                      <p>
-                        {String(
-                          row.data.summary ??
-                            row.data.excerpt ??
-                            row.data.description ??
-                            row.data.slug ??
-                            row.id,
-                        ).slice(0, 120)}
-                      </p>
-                      <small>
-                        {new Date(row.updated_at).toLocaleDateString("vi-VN")} ·
-                        v{row.revision}
-                      </small>
-                    </div>
-                    <div className="adm-record-actions">
+              {tab === "tours" && filter !== "deleted" && (
+                <div className="adm-tour-chips" role="group" aria-label="Lọc tour">
+                  <div className="adm-chip-row" role="group" aria-label="Thời lượng">
+                    {(
+                      [
+                        ["all", "Tất cả"],
+                        ["1day", `1 ngày (${countBy("1day", "all")})`],
+                        ["multi", `Nhiều ngày (${countBy("multi", "all")})`],
+                      ] as const
+                    ).map(([value, label]) => (
                       <button
-                        onClick={() => {
-                          setSelected(row);
-                          setDirty(false);
-                        }}
+                        key={value}
+                        type="button"
+                        className="adm-chip-btn"
+                        data-active={durationFilter === value}
+                        aria-pressed={durationFilter === value}
+                        onClick={() => setDurationFilter(value)}
                       >
-                        Chỉnh sửa ↗
+                        {label}
                       </button>
-                      {!["settings", "messages", "hero", "landing"].includes(tab) && (
+                    ))}
+                  </div>
+                  <div className="adm-chip-row" role="group" aria-label="Tuyến tour">
+                    {(
+                      [
+                        ["all", "Mọi tuyến"],
+                        ["qnpy", `QN – Phú Yên (${countBy("all", "qnpy")})`],
+                        ["domestic", `Trong nước (${countBy("all", "domestic")})`],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className="adm-chip-btn adm-chip-btn--line"
+                        data-active={lineFilter === value}
+                        aria-pressed={lineFilter === value}
+                        onClick={() => setLineFilter(value)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {filter === "deleted" && (
+                <p className="adm-trash-note" role="note">
+                  🗑 Thùng rác giữ nội dung đã xóa trong {TRASH_RETENTION_DAYS}{" "}
+                  ngày rồi tự xóa vĩnh viễn. Cần gấp? Khôi phục thành bản nháp
+                  để giữ lại.
+                </p>
+              )}
+              <div className="adm-records">
+                {tourSections ? (
+                  tourSections.map((section) => (
+                    <section key={section.key} className="adm-tour-group">
+                      <header className="adm-tour-group-head">
+                        <h3>{section.title}</h3>
+                        <span className="adm-tour-group-count">
+                          {section.items.length} tour
+                        </span>
+                      </header>
+                      {section.items.map((row) => renderTourCard(row))}
+                    </section>
+                  ))
+                ) : (
+                  visibleRows.map((row) => (
+                    <article key={row.id}>
+                      <div className="adm-record-mark">
+                        {tabs.find((t) => t[0] === tab)?.[2]}
+                      </div>
+                      <div className="adm-record-copy">
+                        <span className={`adm-badge ${row.state}`}>
+                          {row.state === "published"
+                            ? "Đang xuất bản"
+                            : row.state === "deleted"
+                              ? "Thùng rác"
+                              : "Bản nháp"}
+                        </span>
+                        <h2>
+                          {tab === "hero"
+                            ? "Section đầu trang chủ"
+                            : tab === "landing"
+                              ? "Các khối trang chủ (finder/story/FAQ/explore/regions/values)"
+                              : String(row.data.title ?? row.data.name ?? row.id)}
+                        </h2>
+                        <p>
+                          {String(
+                            row.data.summary ??
+                              row.data.excerpt ??
+                              row.data.description ??
+                              row.data.slug ??
+                              row.id,
+                          ).slice(0, 120)}
+                        </p>
+                        <small>
+                          {new Date(row.updated_at).toLocaleDateString("vi-VN")}{" "}
+                          · v{row.revision}
+                          {row.state === "deleted" &&
+                            (() => {
+                              const left = trashDaysLeft(row.updated_at);
+                              return left === null ? null : (
+                                <>
+                                  {" "}·{" "}
+                                  <span className="adm-trash-left">
+                                    Còn {left} ngày — tự xóa vĩnh viễn sau{" "}
+                                    {TRASH_RETENTION_DAYS} ngày
+                                  </span>
+                                </>
+                              );
+                            })()}
+                        </small>
+                      </div>
+                      <div className="adm-record-actions">
                         <button
                           onClick={() => {
-                            const action =
-                              row.state === "deleted" ? "restore" : "delete";
-                            if (
-                              confirm(
-                                action === "delete"
-                                  ? "Chuyển nội dung vào thùng rác?"
-                                  : "Khôi phục thành bản nháp?",
-                              )
-                            )
-                              void run(async () => {
-                                await api(`content/${tab}`, {
-                                  method: "POST",
-                                  body: JSON.stringify({
-                                    data: row.data,
-                                    revision: row.revision,
-                                    action,
-                                  }),
-                                });
-                                await load();
-                                if (action === "restore") {
-                                  setFilter("all");
-                                  setNotice("Đã khôi phục thành bản nháp.");
-                                } else {
-                                  setNotice(
-                                    "Đã chuyển vào Thùng rác. Mở bộ lọc Thùng rác để xem hoặc khôi phục.",
-                                  );
-                                }
-                              });
+                            setSelected(row);
+                            setDirty(false);
                           }}
                         >
-                          {row.state === "deleted" ? "Khôi phục" : "Thùng rác"}
+                          Chỉnh sửa ↗
                         </button>
-                      )}
-                    </div>
-                  </article>
-                ))}
+                        {!["settings", "messages", "hero", "landing"].includes(
+                          tab,
+                        ) && (
+                          <button onClick={() => trashOrRestore(row)}>
+                            {row.state === "deleted" ? "Khôi phục" : "Thùng rác"}
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  ))
+                )}
               </div>
               {loading && !rows.length ? (
                 <p className="adm-empty">Nội dung đang được tải…</p>
@@ -1488,6 +2010,13 @@ export function Dashboard({
             </section>
           </>
         )}
+        <ToastStack items={toasts} onClose={dismissToast} />
+        <ConfirmModal
+          request={confirmReq}
+          busy={busy}
+          onCancel={() => settleConfirm(false)}
+          onConfirm={() => settleConfirm(true)}
+        />
         <footer className="adm-footnote">
           SEA TRIP STUDIO · Nội dung tốt tạo nên những kết nối đẹp.
         </footer>

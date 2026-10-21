@@ -39,6 +39,8 @@ import {
   published,
   consumeLimit,
   schemas,
+  purgeExpiredTrash,
+  TRASH_RETENTION_DAYS,
 } from "../src/server/cms/store";
 import {
   hashPassword,
@@ -479,4 +481,41 @@ test("landing sections carry admin-editable trust, principles, featured and guid
     }).success,
     false,
   );
+});
+test("trash auto-deletes rows older than the retention window", () => {
+  const oldDate = new Date(
+    Date.now() - (TRASH_RETENTION_DAYS + 5) * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const freshDate = new Date().toISOString();
+  db()
+    .prepare(
+      "INSERT INTO records(collection,id,data,published,state,revision,updated_at) VALUES(?,?,?,?,?,?,?)",
+    )
+    .run(
+      "tours",
+      "tour_trash_old",
+      "{}",
+      null,
+      "deleted",
+      1,
+      oldDate,
+    );
+  db()
+    .prepare(
+      "INSERT INTO records(collection,id,data,published,state,revision,updated_at) VALUES(?,?,?,?,?,?,?)",
+    )
+    .run(
+      "tours",
+      "tour_trash_fresh",
+      "{}",
+      null,
+      "deleted",
+      1,
+      freshDate,
+    );
+  const removed = purgeExpiredTrash();
+  assert.ok(removed >= 1);
+  const ids = list("tours").map((row) => row.id);
+  assert.ok(!ids.includes("tour_trash_old"));
+  assert.ok(ids.includes("tour_trash_fresh"));
 });

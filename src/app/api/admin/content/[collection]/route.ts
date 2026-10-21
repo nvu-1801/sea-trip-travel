@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { requireSession } from "@/server/cms/auth";
-import { list, save, schemas, type Collection } from "@/server/cms/store";
+import {
+  list,
+  purgeExpiredTrash,
+  save,
+  schemas,
+  type Collection,
+} from "@/server/cms/store";
 import { handle, jsonBody, reply } from "@/server/cms/http";
 function collection(value: string): Collection {
   if (!Object.hasOwn(schemas, value))
@@ -13,6 +19,7 @@ export async function GET(
 ) {
   return handle(async () => {
     await requireSession(request);
+    purgeExpiredTrash();
     return reply(list(collection((await params).collection)));
   });
 }

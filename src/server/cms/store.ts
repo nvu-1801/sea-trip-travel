@@ -147,6 +147,26 @@ export function list(collection: Collection): CmsRecord[] {
     })[]
   ).map((row) => ({ ...row, data: JSON.parse(row.data) }));
 }
+
+/**
+ * Permanently removes trashed rows older than the retention window.
+ * Deleted rows carry `updated_at` = time of the delete action, so no
+ * migration is needed. Runs lazily from the admin content API — never
+ * touches published rows.
+ */
+export const TRASH_RETENTION_DAYS = 60;
+
+export function purgeExpiredTrash(nowMs: number = Date.now()): number {
+  const cutoff = new Date(
+    nowMs - TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  return transaction(() => {
+    const result = db()
+      .prepare("DELETE FROM records WHERE state='deleted' AND updated_at<?")
+      .run(cutoff);
+    return Number(result.changes ?? 0);
+  });
+}
 export function save(
   collection: Collection,
   input: unknown,
