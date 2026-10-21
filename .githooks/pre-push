@@ -1,0 +1,18 @@
+#!/bin/sh
+# Pre-push gate. Enable once per clone:
+#   git config core.hooksPath .githooks
+# Skip in an emergency (never for main-bound work):
+#   PREFLIGHT_SKIP=1 git push ...
+set -e
+
+if [ "${PREFLIGHT_SKIP:-0}" = "1" ]; then
+  echo "preflight: skipped because PREFLIGHT_SKIP=1"
+  exit 0
+fi
+
+command -v npm >/dev/null 2>&1 || {
+  echo "preflight: npm not found; install Node.js before pushing" >&2
+  exit 1
+}
+
+exec npm run verify:preflight
