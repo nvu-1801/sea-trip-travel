@@ -74,6 +74,7 @@ export function AdmSelect({
                 key={o.value}
                 type="button"
                 role="option"
+                data-value={o.value}
                 aria-selected={o.value === value}
                 data-active={o.value === value}
                 onClick={() => { onChange(o.value); setOpen(false); }}
