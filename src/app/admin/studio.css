@@ -3286,3 +3286,317 @@ form {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Tổng quan: diagrams ---- */
+.adm-chart-legend {
+  display: flex;
+  gap: 14px;
+  margin: 4px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6e5c68;
+}
+.adm-chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.adm-chart-legend i {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.adm-spark {
+  width: 100%;
+  height: 36px;
+  margin-top: 8px;
+}
+.adm-kpi .adm-stack,
+.adm-kpi .adm-gauge {
+  margin-top: 8px;
+}
+.adm-gauge {
+  height: 10px;
+  border-radius: 999px;
+  background: #fdf0f5;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.adm-gauge span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e0005a, #ff7a3d);
+  transition: width 0.4s ease;
+}
+/* Donut */
+.adm-donut-wrap {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.adm-donut {
+  width: 168px;
+  height: 168px;
+  margin: 0 auto;
+}
+.adm-donut-total {
+  font-size: 22px;
+  font-weight: 800;
+  fill: #211621;
+}
+.adm-donut-sub {
+  font-size: 11px;
+  fill: #8b7684;
+}
+.adm-donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+.adm-donut-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  background: #fffdfd;
+  border: 1px solid #f2dde7;
+  border-radius: 10px;
+  padding: 7px 11px;
+}
+.adm-donut-legend i {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 4px;
+}
+.adm-donut-legend span {
+  flex: 1;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-donut-legend small {
+  font-size: 11px;
+}
+/* Ranked pages */
+.adm-rank {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.adm-rank li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+}
+.adm-rank-num {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 12px;
+  background: #fdf0f5;
+  color: #8b7684;
+}
+.adm-rank-num[data-top="true"] {
+  background: linear-gradient(135deg, #e0005a, #ff0366);
+  color: #fff;
+  box-shadow: 0 6px 16px rgb(224 0 90 / 0.3);
+}
+.adm-rank-path {
+  flex: none;
+  width: 38%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.adm-rank-track {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: #fdf0f5;
+  overflow: hidden;
+}
+.adm-rank-track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e0005a, #ff7a3d);
+}
+/* Funnel diagram */
+.adm-funnel-diagram {
+  display: grid;
+  gap: 2px;
+  margin-top: 12px;
+}
+.adm-funnel-conv {
+  margin: 4px 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #0e5a56;
+}
+.adm-funnel-stage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.adm-funnel-label {
+  flex: none;
+  width: 118px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.adm-funnel-track {
+  flex: 1;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  background: #fdf0f5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.adm-funnel-track span {
+  display: block;
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e0005a, #ff5c99);
+}
+.adm-funnel-diagram > div:nth-child(2) .adm-funnel-track span {
+  background: linear-gradient(90deg, #c4004e, #ff7a3d);
+}
+.adm-funnel-diagram > div:nth-child(3) .adm-funnel-track span {
+  background: linear-gradient(90deg, #9b5cf6, #2e90fa);
+}
+.adm-funnel-diagram > div:nth-child(4) .adm-funnel-track span {
+  background: linear-gradient(90deg, #067647, #2fbf9b);
+}
+.adm-funnel-hint {
+  margin: 2px 0 6px 128px;
+  font-size: 11px;
+  color: #8b7684;
+}
+/* Status stack */
+.adm-stack {
+  display: flex;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fdf0f5;
+}
+.adm-stack span {
+  display: block;
+  height: 100%;
+  min-width: 3px;
+}
+.adm-stack-empty {
+  font-size: 10px;
+  color: #8b7684;
+  line-height: 12px;
+  padding-left: 8px;
+}
+.adm-stack-legend {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.adm-stack-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #6e5c68;
+}
+.adm-stack-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+.adm-stack-legend strong {
+  font-size: 11px;
+}
+/* Timeline */
+.adm-timeline {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+}
+.adm-timeline li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 10px 4px;
+  font-size: 12.5px;
+}
+.adm-timeline li + li {
+  border-top: 1px dashed #f2dde7;
+}
+.adm-timeline li:before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: -6px;
+  bottom: 50%;
+  width: 2px;
+  background: #f7e3ec;
+}
+.adm-timeline li:first-child:before {
+  display: none;
+}
+.adm-timeline i {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #fff, 0 0 0 6px #f2dde7;
+}
+.adm-timeline-status {
+  font-weight: 700;
+  min-width: 92px;
+}
+.adm-timeline time {
+  margin-left: auto;
+  color: #8b7684;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.adm-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: baseline;
+}
+@media (max-width: 640px) {
+  .adm-funnel-label {
+    width: 92px;
+    font-size: 11.5px;
+  }
+  .adm-funnel-hint {
+    margin-left: 102px;
+  }
+  .adm-rank-path {
+    width: 32%;
+  }
+}

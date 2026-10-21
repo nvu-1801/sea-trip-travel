@@ -182,9 +182,9 @@ export const articles: readonly TravelArticleInput[] = [
       },
       {
         type: "image",
-        alt: "Đầm Ô Loan, Phú Yên",
-        src: "/images/destinations/dam-o-loan.jpg",
-        caption: "Đầm Ô Loan — vựa hải sản và điểm ăn trưa quen thuộc khi đi Phú Yên.",
+        alt: "Bờ biển làng chài Nhơn Hải",
+        src: "/images/destinations/hon-kho.jpg",
+        caption: "Làng chài ven biển — nơi thưởng thức hải sản tươi vừa đánh bắt trong ngày.",
       },
       {
         type: "list",
@@ -215,8 +215,8 @@ export const articles: readonly TravelArticleInput[] = [
     tags: ["Quy Nhơn", "Di chuyển"],
     readingMinutes: 5,
     cover: {
-      src: "/images/destinations/mui-dien.jpg",
-      alt: "Hải đăng Mũi Đại Lãnh, Phú Yên",
+      src: "/images/hero/blue-bay.webp",
+      alt: "Vịnh biển Quy Nhơn nhìn từ trên cao",
     },
     author: "SEA TRIP TRAVEL",
     publishedAt: "2026-01-04",
@@ -283,6 +283,12 @@ export const articles: readonly TravelArticleInput[] = [
       {
         type: "paragraph",
         text: "Nên tới sớm vì khu vực này khá trống trải và nắng lên nhanh. Đi lại trên đá cần chú ý vì bề mặt có thể trơn.",
+      },
+      {
+        type: "image",
+        alt: "Các cột đá bazan xếp lớp tại Ghềnh Đá Đĩa",
+        src: "/images/tours/e58a823508e08a30.jpeg",
+        caption: "Ghềnh Đá Đĩa buổi sớm — khối đá bazan hình cột xếp lớp độc đáo.",
       },
       { type: "heading", level: 2, text: "Buổi chiều: Bãi Xép" },
       {

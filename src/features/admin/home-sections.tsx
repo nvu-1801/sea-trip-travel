@@ -31,12 +31,13 @@ export function HomeSections({
   onEditSection: (meta: HomeSectionMeta) => void;
   onGoSettings: () => void;
 }) {
-  let counter = 0;
+  // Số thứ tự toàn cục theo đúng thứ tự landing page (01–11).
+  const numbered = HOME_SECTIONS.map((meta, i) => ({ meta, num: i + 1 }));
   return (
     <div className="adm-home-groups">
       {HOME_GROUPS.map((group) => {
-        const items = HOME_SECTIONS.filter(
-          (meta) => meta.group === group.key,
+        const items = numbered.filter(
+          ({ meta }) => meta.group === group.key,
         );
         if (items.length === 0) return null;
         return (
@@ -51,9 +52,7 @@ export function HomeSections({
               </span>
             </header>
             <div className="adm-home-grid">
-              {items.map((meta) => {
-                counter += 1;
-                const num = counter;
+              {items.map(({ meta, num }) => {
                 const data = meta.key === "hero" ? heroData : landingData;
                 const state =
                   meta.collection === null

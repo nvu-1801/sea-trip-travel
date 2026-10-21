@@ -69,3 +69,31 @@ test("section summaries reflect real record data", () => {
     /bai-viet/,
   );
 });
+
+test("home sections carry admin display metadata (icon, group, tip)", () => {
+  assert.deepEqual(
+    HOME_GROUPS.map((group) => group.key),
+    ["top", "main", "bottom"],
+  );
+  const groupKeys = new Set(HOME_GROUPS.map((group) => group.key));
+  for (const section of HOME_SECTIONS) {
+    assert.ok(section.icon.length > 0, `${section.key} needs an icon`);
+    assert.ok(section.tip.length > 0, `${section.key} needs a tip`);
+    assert.ok(
+      groupKeys.has(section.group),
+      `${section.key} has an unknown group`,
+    );
+  }
+  assert.deepEqual(
+    HOME_SECTIONS.filter((section) => section.group === "top").map(
+      (section) => section.key,
+    ),
+    ["hero", "finder"],
+  );
+  assert.deepEqual(
+    HOME_SECTIONS.filter((section) => section.group === "bottom").map(
+      (section) => section.key,
+    ),
+    ["guides", "planning", "footer"],
+  );
+});
