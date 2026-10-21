@@ -849,9 +849,9 @@ export function Dashboard({
               setDirty(false);
             }}
           >
-            Chỉnh sửa ↗
+            ✎ Chỉnh sửa
           </button>
-          <button onClick={() => trashOrRestore(row)}>Thùng rác</button>
+          <button onClick={() => trashOrRestore(row)}>🗑 Xoá</button>
         </div>
       </article>
     );
@@ -935,7 +935,7 @@ export function Dashboard({
               setDirty(false);
             }}
           >
-            Chỉnh sửa ↗
+            ✎ Chỉnh sửa
           </button>
           {slug && (
             <a
@@ -947,7 +947,7 @@ export function Dashboard({
               Xem trên web ↗
             </a>
           )}
-          <button onClick={() => trashOrRestore(row)}>Thùng rác</button>
+          <button onClick={() => trashOrRestore(row)}>🗑 Xoá</button>
         </div>
       </article>
     );
@@ -2245,13 +2245,13 @@ export function Dashboard({
                             setDirty(false);
                           }}
                         >
-                          Chỉnh sửa ↗
+                          ✎ Chỉnh sửa
                         </button>
                         {!["settings", "messages", "hero", "landing"].includes(
                           tab,
                         ) && (
                           <button onClick={() => trashOrRestore(row)}>
-                            {row.state === "deleted" ? "Khôi phục" : "Thùng rác"}
+                            {row.state === "deleted" ? "↩ Khôi phục" : "🗑 Xoá"}
                           </button>
                         )}
                       </div>
@@ -2401,7 +2401,7 @@ export function Dashboard({
                               className="adm-primary"
                               onClick={() => trashOrRestore(row)}
                             >
-                              Khôi phục
+                              ↩ Khôi phục
                             </button>
                             <button
                               type="button"
