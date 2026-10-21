@@ -26,7 +26,7 @@ export const tourCategories: readonly TourCategoryInput[] = [
     id: "cat_quy_nhon_1_ngay",
     image: {
       src: "/images/tours/e16bd7abd194bb4a.jpeg",
-      alt: "Bãi biển Kỳ Co",
+      alt: "Du khách lội nước trong veo ở Hòn Khô, núi đá phía sau",
     },
     slug: "tour-quy-nhon-1-ngay",
     path: "/tour-quy-nhon-phu-yen/tour-quy-nhon-1-ngay",
@@ -59,8 +59,8 @@ export const tourCategories: readonly TourCategoryInput[] = [
   {
     id: "cat_tour_trong_nuoc",
     image: {
-      src: "/images/destinations/ha-long.jpg",
-      alt: "Vịnh Hạ Long nhìn từ đảo Ti Tốp",
+      src: "/images/hero/island-panorama.webp",
+      alt: "Toàn cảnh đảo xanh và làng chài nhìn từ trên cao",
     },
     slug: "tour-trong-nuoc",
     path: "/tour-trong-nuoc",

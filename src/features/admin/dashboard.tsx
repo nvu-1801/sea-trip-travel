@@ -156,29 +156,35 @@ const GUIDES: Record<string, Guide> = {
       "Không nhập HTML hay script — nội dung hiển thị qua khối cấu trúc, mã lạ sẽ bị từ chối.",
   },
   categories: {
-    purpose: "Quản lý danh mục tour và đường dẫn nhóm như /danh-muc/<slug>.",
+    purpose:
+      "Danh mục = kệ để xếp tour, quyết định menu, trang /tour-... và breadcrumb. Tour nào muốn hiện ở tuyến nào thì gắn danh mục đó trong form tour.",
     steps: [
-      "Thêm mới danh mục, đặt tên và mô tả; đường dẫn mới phải dạng /danh-muc/<slug>.",
-      "Chọn danh mục cha nếu là nhóm con; kiểm tra thứ tự hiển thị.",
-      "Xuất bản để đường dẫn hoạt động ngay trên website.",
+      "Nhìn 2 nhóm Gốc bên dưới: Quy Nhơn – Phú Yên và Tour Trong Nước — mỗi nhóm là một trang danh sách tour riêng.",
+      "Bấm Chỉnh sửa để đổi tên, mô tả, ảnh, thứ tự; đường dẫn /danh-muc/... bị khóa sau lần lưu đầu để không gãy link.",
+      "Muốn tour hiện ở tuyến nào: mở tab Tour du lịch → form tour → mục Danh mục → tick chọn (không gõ tay).",
+      "Xuất bản danh mục mới là menu, footer và trang tuyến cập nhật ngay.",
     ],
-    required: "Tên, đường dẫn đúng định dạng; danh mục cha không tạo vòng lặp.",
+    required:
+      "Tên, đường dẫn đúng dạng /danh-muc/<slug>; danh mục con phải chọn danh mục cha, không tạo vòng lặp.",
     result:
-      "Danh mục mới có trang riêng ngay sau xuất bản; đổi tên không đổi đường dẫn cũ.",
+      "Danh mục mới có trang riêng ngay sau xuất bản; đổi tên không đổi đường dẫn cũ; số tour đang dùng hiện ngay trên từng thẻ.",
     pitfalls:
-      "Không xóa danh mục đang có tour hoặc danh mục con tham chiếu — gỡ liên kết trước.",
+      "Không xóa danh mục đang có tour hoặc danh mục con tham chiếu — gỡ liên kết trong form tour trước.",
   },
   destinations: {
     purpose:
-      "Quản lý điểm đến: thông tin, hình ảnh, tỉnh/thành, vùng miền, thứ tự.",
+      "Điểm đến = địa danh (Kỳ Co, Hòn Khô...) để gắn vào tour và hiện ở khối Khám phá trang chủ. Tour nào đi qua đâu thì tick điểm đó.",
     steps: [
-      "Thêm mới hoặc chỉnh sửa điểm đến; điền tên, tóm tắt, tỉnh/thành.",
-      "Chọn ảnh từ thư viện; kiểm tra vùng miền và thứ tự hiển thị.",
-      "Xuất bản để điểm đến hiện ở khối khám phá và trang tuyến.",
+      "Nhìn 5 nhóm vùng miền bên dưới: Quy Nhơn – Phú Yên lên khối Khám phá trang chủ; 4 miền còn lại dùng trong trang tour và tìm kiếm.",
+      "Bấm Chỉnh sửa để đổi tên, tỉnh/thành, tóm tắt, ảnh, thứ tự hiển thị.",
+      "Muốn tour hiện điểm đến: mở tab Tour du lịch → form tour → mục Điểm đến → tick chọn.",
+      "Muốn bài cẩm nang gợi ý tour: mở bài viết → mục tour liên quan.",
     ],
     required: "Tên, tóm tắt; ảnh nên có mô tả (alt) rõ ràng.",
-    result: "Điểm đến xuất bản hiện ngay ở trang chủ và trang tuyến liên quan.",
-    pitfalls: "Không xóa điểm đến đang được tour hoặc bài viết tham chiếu.",
+    result:
+      "Điểm đến xuất bản hiện ngay ở trang chủ (nhóm QN–PY), trang chi tiết tour và kết quả tìm kiếm; số tour đang dùng hiện ngay trên từng thẻ.",
+    pitfalls:
+      "Không xóa điểm đến đang được tour hoặc bài viết tham chiếu — số tour đang dùng = 0 mới xóa được.",
   },
   media: {
     purpose:
@@ -1015,6 +1021,157 @@ export function Dashboard({
               Xem trên web ↗
             </a>
           )}
+          <button onClick={() => trashOrRestore(row)}>🗑 Xoá</button>
+        </div>
+      </article>
+    );
+  }
+  // Danh mục: nhóm theo cây cha → con để nhìn là biết trang nào chứa trang nào.
+  const REGION_LABELS: Record<string, string> = {
+    "quy-nhon-phu-yen": "Quy Nhơn – Phú Yên",
+    "mien-bac": "Miền Bắc",
+    "mien-trung": "Miền Trung",
+    "mien-nam": "Miền Nam",
+    "tay-nguyen": "Tây Nguyên",
+  };
+  const categorySections =
+    tab === "categories" && filter !== "deleted" && !search
+      ? (() => {
+          const byId = new Map(rows.map((r) => [r.id, r]));
+          const roots = visibleRows.filter(
+            (r) =>
+              typeof r.data.parentId !== "string" || !byId.has(r.data.parentId as string),
+          );
+          return roots
+            .map((root) => ({
+              key: root.id,
+              title: `▦ ${String(root.data.name ?? root.id)} — trang tuyến chính`,
+              hint: typeof root.data.path === "string" ? `Trang ${root.data.path} · chứa các nhóm con bên dưới` : undefined,
+              path: typeof root.data.path === "string" ? root.data.path : "",
+              items: [
+                root,
+                ...visibleRows.filter((r) => r.data.parentId === root.id),
+              ],
+            }))
+            .filter((section) => section.items.length > 0);
+        })()
+      : null;
+  // Điểm đến: nhóm theo 5 vùng miền để biết điểm nào lên trang chủ, điểm nào ở tuyến nào.
+  const destinationSections =
+    tab === "destinations" && filter !== "deleted" && !search
+      ? ["quy-nhon-phu-yen", "mien-bac", "mien-trung", "mien-nam", "tay-nguyen"]
+          .map((region) => ({
+            key: region,
+            title:
+              region === "quy-nhon-phu-yen"
+                ? "◎ Quy Nhơn – Phú Yên · lên khối Khám phá trang chủ"
+                : `◎ ${REGION_LABELS[region] ?? region} · dùng trong tour + tìm kiếm`,
+            items: visibleRows.filter((row) => row.data.region === region),
+          }))
+          .filter((section) => section.items.length > 0)
+      : null;
+  function tourUsageOf(id: string, kind: "category" | "destination") {
+    return tourLinks.filter((t) =>
+      kind === "category"
+        ? t.categoryIds.includes(id)
+        : t.destinationIds.includes(id),
+    ).length;
+  }
+  function renderTaxonomyCard(
+    row: RecordRow,
+    kind: "category" | "destination",
+    parentName?: string,
+  ) {
+    const data = row.data as Record<string, EditorValue>;
+    const cover =
+      typeof data.image === "object" && data.image !== null
+        ? String((data.image as Record<string, unknown>).src ?? "")
+        : typeof data.image === "string"
+          ? data.image
+          : "";
+    const name = String(data.name ?? row.id);
+    const path = typeof data.path === "string" ? data.path : "";
+    const using = tourUsageOf(row.id, kind);
+    const order = typeof data.order === "number" ? data.order : null;
+    const region =
+      typeof data.region === "string"
+        ? (REGION_LABELS[data.region] ?? data.region)
+        : "";
+    const province = typeof data.province === "string" ? data.province : "";
+    const viewHref =
+      kind === "category" && path
+        ? `/vi${path}`
+        : `/vi/tim-tour?q=${encodeURIComponent(name.split(" – ")[0].split(" - ")[0])}`;
+    return (
+      <article key={row.id} className="adm-tour-card">
+        <div className="adm-tour-thumb" aria-hidden="true">
+          {cover ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cover} alt="" loading="lazy" />
+          ) : (
+            <span>{kind === "category" ? "▦" : "◎"}</span>
+          )}
+        </div>
+        <div className="adm-tour-body">
+          <div className="adm-tour-badges">
+            <span className={`adm-badge ${row.state}`}>
+              {row.state === "published" ? "Đang xuất bản" : "Bản nháp"}
+            </span>
+            {kind === "category" ? (
+              <span className="adm-tour-line">
+                {parentName ? `↳ Con của ${parentName}` : "★ Danh mục Gốc"}
+              </span>
+            ) : (
+              region && <span className="adm-tour-line">{region}</span>
+            )}
+            {order !== null && (
+              <span className="adm-tour-dur">Thứ tự {order}</span>
+            )}
+          </div>
+          <h2>{name}</h2>
+          <p>
+            {String(
+              data.tagline ?? data.summary ?? data.description ?? "",
+            ).slice(0, 120) || "Chưa có mô tả — bấm Chỉnh sửa để bổ sung."}
+          </p>
+          <p className="adm-card-place">
+            {kind === "category" ? (
+              <>
+                📍 Trang <code>{path || "—"}</code> · {using} tour đang dùng
+                {province ? ` · ${province}` : ""}
+              </>
+            ) : (
+              <>
+                📍 {province ? `${province} · ` : ""}
+                {using} tour đang dùng ·{" "}
+                {data.region === "quy-nhon-phu-yen"
+                  ? "lên Khám phá trang chủ"
+                  : "dùng trong tour + tìm kiếm"}
+              </>
+            )}
+          </p>
+          <small>
+            {new Date(row.updated_at).toLocaleDateString("vi-VN")} · v
+            {row.revision} · {using === 0 ? "chưa gắn vào tour nào" : `${using} tour`}
+          </small>
+        </div>
+        <div className="adm-record-actions">
+          <button
+            onClick={() => {
+              setSelected(row);
+              setDirty(false);
+            }}
+          >
+            ✎ Chỉnh sửa
+          </button>
+          <a
+            className="adm-ghost-link"
+            href={viewHref}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Xem trên web ↗
+          </a>
           <button onClick={() => trashOrRestore(row)}>🗑 Xoá</button>
         </div>
       </article>
@@ -2505,11 +2662,63 @@ export function Dashboard({
               )}
               {(tab === "categories" || tab === "destinations") &&
                 filter !== "deleted" && (
-                  <p className="adm-where-note" role="note">
-                    {tab === "categories"
-                      ? "📍 Danh mục xuất hiện ở: thẻ Vùng miền trên trang chủ, trang danh sách tour theo tuyến, breadcrumb và sitemap. Đổi tên/đường dẫn ở đây đổi theo mọi nơi."
-                      : "📍 Điểm đến xuất hiện ở: cụm Khám phá trên trang chủ (tuyến Quy Nhơn – Phú Yên), mục điểm đến trong trang chi tiết tour và bài cẩm nang liên quan. Đang dùng trong tour thì không xóa được."}
-                  </p>
+                  <div className="adm-where-panel" role="note">
+                    <h3>
+                      {tab === "categories"
+                        ? "▦ Danh mục dùng để làm gì?"
+                        : "◎ Điểm đến dùng để làm gì?"}
+                    </h3>
+                    <p className="adm-where-lead">
+                      {tab === "categories"
+                        ? "Danh mục là kệ xếp tour. Muốn tour hiện ở tuyến nào → mở form tour → tick danh mục đó."
+                        : "Điểm đến là địa danh gắn vào tour. Muốn tour đi qua đâu → mở form tour → tick điểm đó."}
+                    </p>
+                    <ul>
+                      {tab === "categories" ? (
+                        <>
+                          <li>
+                            <strong>Menu + footer</strong>
+                            <span>2 danh mục Gốc hiện ở menu và footer.</span>
+                            <a href="/vi" target="_blank" rel="noreferrer">Xem menu ↗</a>
+                          </li>
+                          <li>
+                            <strong>Trang tuyến</strong>
+                            <span>Mỗi danh mục là 1 trang /tour-... liệt kê tour con.</span>
+                            <a href="/vi/tour-quy-nhon-phu-yen" target="_blank" rel="noreferrer">Xem trang tuyến ↗</a>
+                          </li>
+                          <li>
+                            <strong>Trong form tour</strong>
+                            <span>Mục “Danh mục” — tick chọn, không gõ tay mã.</span>
+                          </li>
+                          <li>
+                            <strong>Breadcrumb + sitemap</strong>
+                            <span>Tự sinh từ cây cha → con; đổi tên không đổi link.</span>
+                          </li>
+                        </>
+                      ) : (
+                        <>
+                          <li>
+                            <strong>Khối Khám phá trang chủ</strong>
+                            <span>Nhóm Quy Nhơn – Phú Yên hiện ảnh + tóm tắt.</span>
+                            <a href="/vi" target="_blank" rel="noreferrer">Xem trang chủ ↗</a>
+                          </li>
+                          <li>
+                            <strong>Trang chi tiết tour</strong>
+                            <span>Mục điểm đến + số điểm trong tour-facts.</span>
+                          </li>
+                          <li>
+                            <strong>Tìm kiếm</strong>
+                            <span>Gõ tên điểm đến ở /tim-tour ra tour liên quan.</span>
+                            <a href="/vi/tim-tour" target="_blank" rel="noreferrer">Thử tìm kiếm ↗</a>
+                          </li>
+                          <li>
+                            <strong>Cách gắn</strong>
+                            <span>Mở form tour → mục “Điểm đến” → tick chọn.</span>
+                          </li>
+                        </>
+                      )}
+                    </ul>
+                  </div>
                 )}
               {filter === "deleted" && (
                 <p className="adm-trash-note" role="note">
@@ -2548,6 +2757,68 @@ export function Dashboard({
                   ))
                 ) : tab === "articles" ? (
                   visibleRows.map((row) => renderArticleCard(row))
+                ) : categorySections ? (
+                  categorySections.map((section) => (
+                    <section key={section.key} className="adm-tour-group">
+                      <header className="adm-tour-group-head adm-article-group-head">
+                        <div>
+                          <h3>{section.title}</h3>
+                          {section.hint && <p>{section.hint}</p>}
+                        </div>
+                        <span className="adm-tour-group-count">
+                          {section.items.length} danh mục
+                        </span>
+                      </header>
+                      {section.items.map((row) => {
+                        const parentId =
+                          typeof row.data.parentId === "string"
+                            ? row.data.parentId
+                            : "";
+                        const parent = rows.find((r) => r.id === parentId);
+                        return renderTaxonomyCard(
+                          row,
+                          "category",
+                          parent ? String(parent.data.name ?? parent.id) : undefined,
+                        );
+                      })}
+                      {section.path && (
+                        <a
+                          className="adm-ghost-link"
+                          href={`/vi${section.path}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Xem trang tuyến này ↗
+                        </a>
+                      )}
+                    </section>
+                  ))
+                ) : destinationSections ? (
+                  destinationSections.map((section) => (
+                    <section key={section.key} className="adm-tour-group">
+                      <header className="adm-tour-group-head adm-article-group-head">
+                        <div>
+                          <h3>{section.title}</h3>
+                          <p>
+                            {section.key === "quy-nhon-phu-yen"
+                              ? "Ảnh + tóm tắt hiện ở khối Khám phá trang chủ."
+                              : "Gắn vào form tour để tour hiện ở tuyến này và tìm kiếm."}
+                          </p>
+                        </div>
+                        <span className="adm-tour-group-count">
+                          {section.items.length} điểm
+                        </span>
+                      </header>
+                      {section.items.map((row) => renderTaxonomyCard(row, "destination"))}
+                    </section>
+                  ))
+                ) : tab === "categories" || tab === "destinations" ? (
+                  visibleRows.map((row) =>
+                    renderTaxonomyCard(
+                      row,
+                      tab === "categories" ? "category" : "destination",
+                    ),
+                  )
                 ) : (
                   visibleRows.map((row) => (
                     <article key={row.id}>

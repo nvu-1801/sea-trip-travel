@@ -3,10 +3,10 @@ import { Container } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
 import {
   ArrowRightIcon,
-  ChevronDownIcon,
   ClockIcon,
   MapPinIcon,
 } from "@/components/ui/icons";
+import { TimeSelect, type TimeOption } from "./time-select";
 import type { Locale } from "@/i18n/config";
 import { landingSections } from "@/server/cms/store";
 import { localizePath } from "@/i18n/routing";
@@ -33,6 +33,21 @@ export function QuickFinder({ locale }: { locale: Locale }) {
   }
   const en = locale === "en";
   const action = localizePath(locale, "/tim-tour");
+  const timeOptions: TimeOption[] = en
+    ? [
+        { value: "", label: "I am flexible", hint: "Show every duration" },
+        { value: "1", label: "1 day", hint: "Out in the morning, back by evening" },
+        { value: "2", label: "2 days", hint: "A weekend escape" },
+        { value: "3", label: "3 days", hint: "Roomier, with an extra night" },
+        { value: "4+", label: "4+ days", hint: "Link more stops, go deeper" },
+      ]
+    : [
+        { value: "", label: "Mình linh hoạt", hint: "Hiện mọi thời lượng" },
+        { value: "1", label: "1 ngày", hint: "Đi trong ngày, tối về lại phố" },
+        { value: "2", label: "2 ngày", hint: "Cuối tuần đổi gió" },
+        { value: "3", label: "3 ngày", hint: "Thong thả thêm một đêm" },
+        { value: "4+", label: "Từ 4 ngày", hint: "Nối nhiều điểm, đi sâu hơn" },
+      ];
   const durations = en
     ? [
         { days: "1", label: "1 day", body: "Out in the morning, back by evening." },
@@ -87,37 +102,33 @@ export function QuickFinder({ locale }: { locale: Locale }) {
               <span className="finder-control">
                 <input
                   name="q"
+                  type="text"
                   maxLength={100}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  enterKeyHint="search"
+                  aria-label={en ? "Destination" : "Điểm đến"}
                   placeholder={
                     en ? "Where would you like to go?" : "Quy Nhơn, Phú Yên…"
                   }
                 />
               </span>
             </label>
-            <label className="finder-field">
-              <span>
+            <div className="finder-field">
+              <span id="finder-duration-label">
                 <ClockIcon className="finder-field-icon" />
                 {en ? "Duration" : "Thời gian"}
               </span>
-              <span className="finder-control finder-select">
-                <select name="days" defaultValue="">
-                  <option value="">
-                    {en ? "I am flexible" : "Mình linh hoạt"}
-                  </option>
-                  {[1, 2, 3].map((day) => (
-                    <option key={day} value={day}>
-                      {en
-                        ? `${day} ${day === 1 ? "day" : "days"}`
-                        : `${day} ngày`}
-                    </option>
-                  ))}
-                  <option value="4+">
-                    {en ? "4 days or more" : "Từ 4 ngày"}
-                  </option>
-                </select>
-                <ChevronDownIcon className="finder-select-icon" />
+              <span className="finder-control">
+                <TimeSelect
+                  name="days"
+                  label={en ? "Duration" : "Thời gian"}
+                  options={timeOptions}
+                />
               </span>
-            </label>
+            </div>
             <button type="submit">
               {en ? "Find a trip" : "Tìm chuyến đi"}
               <ArrowRightIcon className="h-4 w-4" />
