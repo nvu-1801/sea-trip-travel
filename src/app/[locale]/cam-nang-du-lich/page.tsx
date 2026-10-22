@@ -41,6 +41,9 @@ export async function generateMetadata({
     locale,
     noIndex: !indexable,
     hreflang: indexable,
+    enIndexable: featured
+      ? isIndexable(articleTranslationStatus(featured.id, "en"), "en")
+      : false,
   });
 }
 

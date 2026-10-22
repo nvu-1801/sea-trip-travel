@@ -10,7 +10,8 @@ import { contentVersion, transaction } from "../src/server/cms/db";
 import { versionResponse } from "../src/server/cms/version-response";
 import { defaultHero, heroSchema } from "../src/domain/home-hero";
 import { defaultLanding, landingSchema } from "../src/domain/landing";
-import { homeHero } from "../src/server/cms/store";
+import { homeHero, settings } from "../src/server/cms/store";
+import { HOME_SEO } from "../src/content/seo";
 import { searchKey } from "../src/lib/search";
 import {
   resolveArticle,
@@ -100,22 +101,34 @@ test("partial English translations preserve the source itinerary and article bod
   assert.deepEqual(Object.keys(translated._en ?? {}), ["title"]);
 });
 test("origin protection rejects cross-site and missing Origin", () => {
+  const previousSite = process.env.SITE_URL;
+  const previousPublic = process.env.NEXT_PUBLIC_SITE_URL;
+  delete process.env.SITE_URL;
   delete process.env.NEXT_PUBLIC_SITE_URL;
-  assert.doesNotThrow(() =>
-    sameOrigin(
-      new Request("https://example.com/api/admin", {
-        headers: { origin: "https://example.com" },
-      }),
-    ),
-  );
-  assert.throws(() =>
-    sameOrigin(
-      new Request("https://example.com/api/admin", {
-        headers: { origin: "https://evil.test" },
-      }),
-    ),
-  );
-  assert.throws(() => sameOrigin(new Request("https://example.com/api/admin")));
+  try {
+    assert.doesNotThrow(() =>
+      sameOrigin(
+        new Request("https://example.com/api/admin", {
+          headers: { origin: "https://example.com" },
+        }),
+      ),
+    );
+    assert.throws(() =>
+      sameOrigin(
+        new Request("https://example.com/api/admin", {
+          headers: { origin: "https://evil.test" },
+        }),
+      ),
+    );
+    assert.throws(() =>
+      sameOrigin(new Request("https://example.com/api/admin")),
+    );
+  } finally {
+    if (previousSite === undefined) delete process.env.SITE_URL;
+    else process.env.SITE_URL = previousSite;
+    if (previousPublic === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
+    else process.env.NEXT_PUBLIC_SITE_URL = previousPublic;
+  }
 });
 test("draft edits stay private; publish is immediate; optimistic locking rejects stale writes", () => {
   const first = list("tours")[0];
@@ -557,6 +570,29 @@ test("stale tour rows inherit photo sources from the content files", () => {
   assert.equal(images[0].alt, "Ruộng bậc thang Sa Pa");
   // Idempotent: a second boot must not touch the repaired row.
   assert.equal(fillTourImageSources(), 0);
+});
+
+test("settings rows written before the SEO fields inherit safe defaults", () => {
+  const row = list("settings")[0];
+  const legacy = { ...row.data } as Record<string, unknown>;
+  delete legacy.seo;
+  db()
+    .prepare(
+      "UPDATE records SET data=?, published=? WHERE collection='settings' AND id=?",
+    )
+    .run(JSON.stringify(legacy), JSON.stringify(legacy), row.id);
+  try {
+    const current = settings();
+    assert.equal(current.seo.homeTitle, HOME_SEO.vi.title);
+    assert.equal(current.seo.homeDescription, HOME_SEO.vi.description);
+    assert.equal(current.seo.homeTitleEn, HOME_SEO.en.title);
+  } finally {
+    db()
+      .prepare(
+        "UPDATE records SET data=?, published=? WHERE collection='settings' AND id=?",
+      )
+      .run(JSON.stringify(row.data), JSON.stringify(row.data), row.id);
+  }
 });
 
 test("trash auto-deletes rows older than the retention window", () => {
