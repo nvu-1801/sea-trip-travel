@@ -68,6 +68,10 @@ export async function generateMetadata({
     image: article.seo?.ogImage ?? article.cover?.src,
     noIndex: !indexable,
     hreflang: indexable,
+    enIndexable: isIndexable(
+      articleTranslationStatus(article.id, "en"),
+      "en",
+    ),
   });
 }
 

@@ -82,3 +82,7 @@ Danh sách hiện tải 500 lead gần nhất; khi vận hành lượng lớn c�
 ## Trước phát hành
 
 Kiểm tra trên mobile, VI/EN, giá/chính sách và ảnh; xem lại tìm kiếm, form tư vấn, email và footer. Backup SQLite + uploads + lưu khóa mã hóa ở nơi riêng. Không đưa mật khẩu, khóa mã hóa, `.env.production` hoặc SSH key vào Git/chat.
+
+## SEO
+
+Xem `docs/SEO-QNPY.md` d? bi?t b?n d? t? kh�a ? URL, c�ch �p d?ng SEO v�o DB production b?ng `npm run seo:apply` (dry-run m?c d?nh) v� quy t?c hreflang/sitemap. Home SEO s?a trong **Website & footer ? SEO**; category/tour SEO s?a trong form tuong ?ng.

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
 import { TourEditor, type TourEditorHandle } from "./tour-editor";
@@ -344,6 +345,7 @@ export function Dashboard({
   const loadSerial = useRef(0);
   const activitySerial = useRef(0);
   const dirtyFields = useRef(new Set<string>());
+  const router = useRouter();
   const tourEditorRef = useRef<TourEditorHandle>(null);
   const destinationEditorRef = useRef<DestinationEditorHandle>(null);
   const helpButtonRef = useRef<HTMLButtonElement>(null);
@@ -755,6 +757,47 @@ export function Dashboard({
       </div>
     );
   }
+  /** Undo every unsaved edit in the open record without leaving Studio. */
+  async function discardChanges() {
+    if (!selected || !dirty) return;
+    const ok = await requestConfirm({
+      title: "Bỏ các thay đổi chưa lưu?",
+      body: "Form sẽ trở về đúng bản đang lưu trên máy chủ. Thao tác này không xoá dữ liệu đã lưu.",
+      confirmLabel: "Bỏ thay đổi",
+      danger: true,
+    });
+    if (!ok) return;
+    const original = rows.find((row) => row.id === selected.id);
+    if (original) {
+      setSelected({
+        ...selected,
+        data: structuredClone(original.data),
+        revision: original.revision,
+        state: original.state,
+      });
+    } else {
+      setSelected(null);
+    }
+    setDirty(false);
+    dirtyFields.current.clear();
+    pushToast("info", "Đã bỏ các thay đổi chưa lưu.");
+  }
+
+  /** Leave Studio for the public site, after protecting unsaved work. */
+  async function leaveStudio() {
+    if (
+      dirty &&
+      !(await requestConfirm({
+        title: "Rời Studio?",
+        body: "Bạn có thay đổi chưa lưu. Rời Studio sẽ bỏ các thay đổi đó.",
+        confirmLabel: "Về website",
+        danger: false,
+      }))
+    )
+      return;
+    router.push("/");
+  }
+
   function openHomeEditor(meta: HomeSectionMeta) {
     const record = meta.key === "hero" ? homeData.hero : homeData.landing;
     if (!record) {
@@ -1394,6 +1437,9 @@ export function Dashboard({
           <Link href="/" className="adm-brand">
             ✺ SEA TRIP <small>STUDIO</small>
           </Link>
+          <Link href="/" className="adm-login-back">
+            ← Về website
+          </Link>
           <span className="adm-eyebrow">Không gian dành cho chủ quản trị</span>
           <h1>
             Chào mừng
@@ -1540,8 +1586,15 @@ export function Dashboard({
           target="_blank"
           rel="noreferrer"
         >
-          Mở website ↗
+          Mở website (tab mới) ↗
         </Link>
+        <button
+          type="button"
+          className="adm-leave"
+          onClick={() => void leaveStudio()}
+        >
+          ← Về website
+        </button>
         <button
           onClick={() =>
             void run(async () => {
@@ -2440,26 +2493,36 @@ export function Dashboard({
           <section className="adm-panel adm-edit">
             <div className="adm-editor-header">
               <div>
-                <button
-                  onClick={() => {
-                    void (async () => {
-                      if (
-                        !dirty ||
-                        (await requestConfirm({
-                          title: "Bỏ thay đổi chưa lưu?",
-                          body: "Quay lại danh sách sẽ bỏ các thay đổi chưa lưu.",
-                          confirmLabel: "Bỏ thay đổi",
-                          danger: true,
-                        }))
-                      ) {
-                        setSelected(null);
-                        setDirty(false);
-                      }
-                    })();
-                  }}
-                >
-                  ← Danh sách
-                </button>
+                <div className="adm-edit-top-actions">
+                  <button
+                    onClick={() => {
+                      void (async () => {
+                        if (
+                          !dirty ||
+                          (await requestConfirm({
+                            title: "Bỏ thay đổi chưa lưu?",
+                            body: "Quay lại danh sách sẽ bỏ các thay đổi chưa lưu.",
+                            confirmLabel: "Bỏ thay đổi",
+                            danger: true,
+                          }))
+                        ) {
+                          setSelected(null);
+                          setDirty(false);
+                        }
+                      })();
+                    }}
+                  >
+                    ← Danh sách
+                  </button>
+                  <button
+                    type="button"
+                    className="adm-discard"
+                    disabled={!dirty}
+                    onClick={() => void discardChanges()}
+                  >
+                    Bỏ thay đổi
+                  </button>
+                </div>
                 <h2>
                   {tab === "hero"
                     ? "Khối mở đầu trang chủ"

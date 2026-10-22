@@ -1,7 +1,7 @@
 {
   "site": {
     "description": "SEA TRIP TRAVEL curates destinations and designs domestic travel experiences, focused on Quy Nhon – Phu Yen and routes across the North, Central, South and Central Highlands of Vietnam.",
-    "tagline": "Curated destinations – Elevated experiences",
+    "tagline": "Quy Nhon & Phu Yen – Elevated experiences",
     "workingHours": "Mon – Sat, 08:00 – 18:00"
   },
   "common": {
@@ -114,11 +114,11 @@
   },
   "home": {
     "hero": {
-      "badge": "Vietnam travel · Curated",
-      "titleLine1": "Curated destinations",
-      "titleLine2": "elevated experiences",
-      "lead": "Right season, right place, and a pace that is entirely your own.",
-      "bodyA": "SEA TRIP TRAVEL designs domestic journeys slowly and carefully, starting from our focus route",
+      "badge": "Quy Nhon – Phu Yen travel · Curated",
+      "titleLine1": "Quy Nhon & Phu Yen",
+      "titleLine2": "the coast, at your pace",
+      "lead": "Selected coastal tours and clear itineraries, with advice around your time.",
+      "bodyA": "SEA TRIP TRAVEL curates places and designs domestic journeys, starting from our focus route",
       "bodyB": "— where clear seas meet basalt rock and lighthouses.",
       "ctaTours": "See Quy Nhon – Phu Yen tours",
       "ctaConsult": "Free consultation",

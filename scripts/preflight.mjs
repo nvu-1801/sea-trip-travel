@@ -24,6 +24,7 @@ const fullSteps = [
   ["tour import verification", "npm run verify:tour-import"],
   ["cms verification", "npm run verify:cms"],
   ["hero verification", "npm run verify:hero"],
+  ["seo verification", "npm run verify:seo"],
 ];
 
 const steps = full ? [...fastSteps, ...fullSteps] : fastSteps;

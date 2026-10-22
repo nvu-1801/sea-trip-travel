@@ -49,6 +49,7 @@ function entry(
         languages: {
           vi: absoluteUrl(localizePath("vi", path)),
           en: absoluteUrl(localizePath("en", path)),
+          "x-default": absoluteUrl(localizePath("vi", path)),
         },
       }
     : undefined;

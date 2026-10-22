@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ImageField, type UploadedImage } from "./image-picker";
 import type { TourIssue } from "@/domain/tour-rules";
 import { describeTourIssue } from "@/domain/tour-rules";
@@ -214,6 +214,82 @@ export function NumberField({
           }
         />
         {suffix ? <span className="adm-number-suffix">{suffix}</span> : null}
+      </div>
+    </Field>
+  );
+}
+
+const VND = new Intl.NumberFormat("vi-VN");
+
+/**
+ * Price input in VND.
+ *
+ * A plain `type=number` field made "012222" look like a quantity and hid the
+ * thousands separators. This control accepts digits, strips leading zeroes and
+ * formats the value as Vietnamese money while typing; the parent still stores
+ * an integer.
+ */
+export function PriceField({
+  path,
+  label,
+  value,
+  onChange,
+  onBlur,
+  error,
+  hint,
+  disabled = false,
+  max = 1_000_000_000,
+}: {
+  path: string;
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  onBlur?: () => void;
+  error?: string;
+  hint?: string;
+  disabled?: boolean;
+  max?: number;
+}) {
+  const id = fieldId(path);
+  const focused = useRef(false);
+  const [text, setText] = useState(value > 0 ? VND.format(value) : "");
+
+  useEffect(() => {
+    if (!focused.current) setText(value > 0 ? VND.format(value) : "");
+  }, [value]);
+
+  return (
+    <Field id={id} label={label} hint={hint} error={error}>
+      <div className="adm-number-wrap">
+        <input
+          id={id}
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          value={text}
+          placeholder="Ví dụ: 2.290.000"
+          disabled={disabled}
+          maxLength={15}
+          aria-invalid={error ? true : undefined}
+          data-tour-error={error ? "true" : undefined}
+          onFocus={() => {
+            focused.current = true;
+          }}
+          onBlur={() => {
+            focused.current = false;
+            setText(value > 0 ? VND.format(value) : "");
+            onBlur?.();
+          }}
+          onChange={(event) => {
+            const digits = event.target.value
+              .replace(/\D/g, "")
+              .replace(/^0+(?=\d)/, "");
+            const amount = digits ? Math.min(Number(digits), max) : 0;
+            setText(amount > 0 ? VND.format(amount) : "");
+            onChange(amount);
+          }}
+        />
+        <span className="adm-number-suffix">₫</span>
       </div>
     </Field>
   );

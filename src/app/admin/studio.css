@@ -205,6 +205,26 @@ form {
   margin-top: auto;
   padding: 12px;
 }
+.adm-leave {
+  width: 100%;
+  color: #a30047;
+  background: #fff1f6;
+  border-color: #f0a8c4;
+}
+.adm-leave:hover:not(:disabled) {
+  background: #ffe3ee;
+  border-color: #ff9dc2;
+}
+.adm-login-back {
+  display: inline-block;
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #a30047;
+}
+.adm-login-back:hover {
+  text-decoration: underline;
+}
 .adm-main {
   width: 100%;
   max-width: 1540px;
@@ -1616,6 +1636,26 @@ form {
   border-bottom: 1px solid #f7e3ec;
   padding-bottom: 20px;
   margin-bottom: 22px;
+}
+.adm-edit-top-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.adm-discard {
+  color: #b42318;
+  border-color: #fecdca;
+  background: #fff;
+}
+.adm-discard:hover:not(:disabled) {
+  background: #fceae8;
+}
+.adm-discard:disabled {
+  color: #98a2b3;
+  border-color: #e6c6d6;
+  background: #f9fafb;
+  cursor: not-allowed;
 }
 .adm-editor-header h2 {
   margin: 18px 0 6px;
@@ -4505,6 +4545,7 @@ form {
   color: #b42318;
   border-color: #fecdca;
   background: #fff;
+  box-shadow: none;
 }
 .adm-list-actions .adm-danger:hover:not(:disabled) {
   background: #fceae8;
@@ -4602,33 +4643,66 @@ form {
 }
 .adm-price-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.1fr) minmax(0, 1.1fr) auto;
+  gap: 10px;
   align-items: start;
   border: 1px solid #f7e3ec;
   border-radius: 11px;
-  padding: 10px;
+  padding: 12px;
   background: #fffdfd;
 }
 .adm-price-row .adm-field {
   margin-bottom: 0;
 }
+.adm-price-row .adm-field > label {
+  font-size: 12px;
+  line-height: 1.35;
+}
+.adm-price-row .adm-hint {
+  font-size: 10.5px;
+  line-height: 1.4;
+}
 .adm-price-actions {
-  margin-top: 22px;
+  margin-top: 24px;
 }
 .adm-number-wrap {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  border: 1px solid #e6c6d6;
+  border-radius: 11px;
+  background: #fff;
+  overflow: hidden;
+}
+.adm-number-wrap:focus-within {
+  border-color: #e0005a;
+  outline: 2px solid #ffd3e3;
 }
 .adm-number-wrap input {
   flex: 1;
   min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding-right: 8px;
+}
+.adm-number-wrap input:focus {
+  outline: 0;
+}
+.adm-number-wrap input:disabled {
+  background: #fdf0f5;
 }
 .adm-number-suffix {
-  font-size: 12px;
-  font-weight: 700;
-  color: #8b7684;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #a30047;
+  background: #fff1f6;
+  border-left: 1px solid #f2dde7;
 }
 .adm-error-summary {
   border: 1px solid #fecdca;
