@@ -45,7 +45,10 @@ function useRevealObserver<T extends HTMLElement>() {
       },
       {
         threshold: 0,
-        rootMargin: "0px 0px 100px 0px", // Trigger 100px in advance so there is no popping!
+        // Start when the element is about a tenth of the viewport above the
+        // bottom edge, so the 920ms entrance is actually visible instead of
+        // finishing while the block is still below the fold.
+        rootMargin: "0px 0px -10% 0px",
       },
     );
 
@@ -97,7 +100,7 @@ export function Reveal({
       data-reveal-3d={variant}
       data-revealed="false"
       style={{
-        transitionDelay: delay > 0 ? `${Math.min(delay, 5) * 85}ms` : undefined,
+        transitionDelay: delay > 0 ? `${Math.min(delay, 5) * 90}ms` : undefined,
       }}
       className={cn("stt-reveal-3d", className)}
     >
@@ -117,7 +120,7 @@ export function RevealGroup({
   children,
   className,
   as: Tag = "div",
-  stagger = 64,
+  stagger = 90,
 }: {
   children: ReactNode;
   className?: string;

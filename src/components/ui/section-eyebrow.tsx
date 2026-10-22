@@ -4,13 +4,12 @@ import { cn } from "@/lib/utils";
 /**
  * Editorial section kicker.
  *
- * The old treatment was a rounded pill with a pulsing dot and a middle dot in
- * the copy. This version is quieter: an antique-gold hairline, an optional
- * serif-italic chapter number, then a letterspaced label. It reads as a
- * magazine marker instead of a tag, and removes every decorative dot.
+ * A quiet magazine marker: an optional serif-italic chapter number followed by
+ * a letterspaced label. No horizontal rules, dots or pills — the type itself
+ * carries the hierarchy.
  *
  * Accepts the existing CMS strings, e.g. `01 / CÓ HẸN VỚI BIỂN` or
- * `LÊN KẾ HOẠCH`, and normalises `·` separators into the same gold rule.
+ * `LÊN KẾ HOẠCH`, and splits `·` separators into simple spaced labels.
  */
 export function SectionEyebrow({
   children,
@@ -26,7 +25,6 @@ export function SectionEyebrow({
     return (
       <p className={cn("section-eyebrow", className)}>
         <span className="section-eyebrow-number">{numbered[1]}</span>
-        <span className="section-eyebrow-rule" aria-hidden="true" />
         <span className="section-eyebrow-text">{numbered[2]}</span>
       </p>
     );
@@ -35,12 +33,8 @@ export function SectionEyebrow({
   const parts = value.split(/\s*[·•]\s*/).filter(Boolean);
   return (
     <p className={cn("section-eyebrow", className)}>
-      <span className="section-eyebrow-rule" aria-hidden="true" />
       {parts.map((part, index) => (
         <Fragment key={`${part}-${index}`}>
-          {index > 0 ? (
-            <span className="section-eyebrow-rule" aria-hidden="true" />
-          ) : null}
           <span className="section-eyebrow-text">{part}</span>
         </Fragment>
       ))}

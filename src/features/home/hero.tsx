@@ -10,11 +10,11 @@ export function Hero({ locale }: { locale: Locale }) {
   const config = homeHero();
   const messages = getMessages(locale).home.hero;
   const custom = config[locale];
-  // The old badge used a middle dot (`·`) and a leading dot marker. The new
-  // editorial treatment uses a gold rule and an em dash; normalise CMS copy
-  // written before this change so the visual is consistent after deploy.
+  // Normalise older CMS copy that used a middle dot or a leading marker. The
+  // editorial treatment no longer draws rules or em dashes: a middle dot keeps
+  // the two phrases readable without adding another horizontal line.
   const badge = (custom.badge || messages.badge)
-    .replace(/\s*[·•]\s*/g, " — ")
+    .replace(/\s*[·•]\s*/g, " · ")
     .replace(/^[\s—–-]+/, "")
     .trim();
   const copy: HeroCopy = {

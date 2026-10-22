@@ -10,7 +10,8 @@ Website landing page có thể đổi bộ màu mà không sửa component.
 - `src/app/[locale]/layout.tsx` đọc theme đã xuất bản từ CMS settings và gắn
   `data-theme` + `style={vars}` lên `<html>`.
 - Studio → **Giao diện** dùng đúng object `vars` đó cho khung xem trước, nên
-  preview và website không thể lệch màu.
+  preview và website không thể lệch màu. Khung preview cũng vẽ lại watermark
+  "SEA TRIP" của trang chủ, để thấy ngay `--theme-wordmark` đổi theo theme.
 - Theme được lưu trong collection `theme` (một record `id: "site"`), tách khỏi
   `settings` để xuất bản theme không kéo theo các thay đổi hotline/footer đang
   nháp. Record theme có revision và luồng **Lưu nháp / Xuất bản** riêng.
@@ -52,7 +53,9 @@ CSS — miễn là component dùng token chung (`bg-background`, `text-primary-s
   `theme-on-dark` / `theme-dark` đạt **≥ 4.5:1**.
 - `--theme-dark`, `--theme-dark-2`, `--theme-on-dark` điều khiển hero, section
   tối, ảnh destination và planning card.
-- `--theme-wordmark` là màu watermark "SEA TRIP" ở nền trang chủ.
+- `--theme-wordmark` là màu watermark "SEA TRIP" ở nền trang chủ; khung xem
+  trước trong Studio → Giao diện dùng cùng token này nên màu watermark đổi
+  ngay khi chọn theme.
 - Logo là file ảnh, không đổi theo theme.
 - Test `tests/themes.test.ts` kiểm tra đủ token và contrast của mọi theme; thêm
   theme mới là test tự động chạy theo.

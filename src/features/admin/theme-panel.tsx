@@ -177,6 +177,12 @@ export function ThemePanel({
               </span>
             </div>
             <div className="adm-theme-preview-cards">
+              {/* Same watermark the landing page renders behind its sections;
+                  it reads --theme-wordmark, so the colour changes with the
+                  theme exactly like it does on the public site. */}
+              <div className="adm-theme-preview-watermark" aria-hidden="true">
+                <span>SEA TRIP</span>
+              </div>
               <div className="adm-theme-preview-card">
                 <span className="adm-theme-preview-thumb" aria-hidden="true" />
                 <strong>Kỳ Co – Eo Gió</strong>
