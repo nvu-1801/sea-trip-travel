@@ -1049,6 +1049,110 @@ async function checkContactDetails(browser) {
  * inline links in a sentence (WCAG "inline" exception), and a checkbox whose
  * wrapping label is itself ≥44 (the label is the target).
  */
+async function checkHeaderSearch(browser) {
+  section("8b. Header search — compact icon, destination results, empty state");
+
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
+  const page = await context.newPage();
+  await page.goto(BASE, { waitUntil: "load" });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(700);
+
+  const trigger = page.getByRole("button", {
+    name: "Tìm điểm đến",
+    exact: true,
+  });
+  check("header search icon is visible", await trigger.isVisible());
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", {
+    name: "Tìm điểm đến",
+    exact: true,
+  });
+  await dialog.waitFor();
+  check("header search panel opens", await dialog.isVisible());
+
+  const input = dialog.getByRole("combobox", {
+    name: "Tìm điểm đến",
+    exact: true,
+  });
+  check(
+    "search input receives focus",
+    await input.evaluate((el) => el === document.activeElement),
+  );
+
+  await input.fill("ky co");
+  await page.waitForTimeout(250);
+  check(
+    "accent-insensitive search finds Kỳ Co",
+    (await dialog.getByRole("option").count()) > 0,
+  );
+  check(
+    "result row shows the tour count",
+    /tour/.test(await dialog.getByRole("option").first().innerText()),
+  );
+
+  await dialog.getByRole("option").first().click();
+  await page.waitForURL(/destination=dest_ky_co_eo_gio/, { timeout: 20_000 });
+  check(
+    "selecting a result exact-filters the tour search",
+    page.url().includes("destination=dest_ky_co_eo_gio"),
+  );
+  check(
+    "filtered search shows matching tours",
+    (await page.locator(".stt-tour-card").count()) > 0,
+  );
+  check(
+    "active destination filter is announced",
+    (await page
+      .getByText("Đang lọc theo điểm đến", { exact: false })
+      .count()) > 0,
+  );
+
+  await trigger.click();
+  await dialog.waitFor();
+  await dialog
+    .getByRole("combobox", { name: "Tìm điểm đến", exact: true })
+    .fill("abcxyz");
+  await page.waitForTimeout(250);
+  check(
+    "unknown destination shows the concierge message",
+    (await dialog
+      .getByText("chưa có trong những hành trình đang mở", { exact: false })
+      .count()) > 0,
+  );
+  check(
+    "empty state offers a private consultation",
+    (await dialog
+      .getByRole("link", { name: "Nhận tư vấn riêng", exact: true })
+      .count()) > 0,
+  );
+
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  check("Escape closes header search", !(await dialog.isVisible()));
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(BASE, { waitUntil: "load" });
+  await page.waitForTimeout(500);
+  await trigger.click();
+  await dialog.waitFor();
+  check(
+    "mobile search opens without horizontal overflow",
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+  );
+  check(
+    "mobile search input is at least 44px tall",
+    (await input.boundingBox()).height >= 44,
+  );
+
+  await context.close();
+}
+
 async function checkTapTargets(browser) {
   section("10. Tap targets — 24px everywhere, 44px for primary controls");
 
@@ -1841,6 +1945,7 @@ async function main() {
     await checkDatePicker(browser);
     await checkConsultationFlow(browser, sink);
     await checkContactDetails(browser);
+    await checkHeaderSearch(browser);
     await checkTapTargets(browser);
     await checkFloatingRail(browser);
     await checkAnchorNav(browser);

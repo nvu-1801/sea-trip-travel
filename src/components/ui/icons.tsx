@@ -59,6 +59,13 @@ export const CloseIcon = (p: IconProps) => (
   </Svg>
 );
 
+export const SearchIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.6-3.6" />
+  </Svg>
+);
+
 export const PhoneIcon = (p: IconProps) => (
   <Svg {...p}>
     <path d="M6.5 3h3l1.5 4-2 1.5a12 12 0 0 0 6.5 6.5l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 5.2 2 2 0 0 1 6.5 3Z" />

@@ -53,8 +53,8 @@ Branch: **`fix/ui-interaction-a11y`** (từ `e6f69ff`). **Chưa commit, chưa pu
 | Việc | Trạng thái | Bằng chứng |
 | --- | --- | --- |
 | Nhảy bậc heading `h1 → h3` ở **9 trang** danh sách | ✅ sửa | Thêm `h2.sr-only` ở `category-page-view.tsx` (8 trang) và `cam-nang-du-lich/page.tsx` (1 trang). `heading-audit-live`: **0/32 route lỗi** (trước: 9). `.sr-only` = `position:absolute; 1×1px; clip-path` → không đổi layout |
-| Token `--color-foreground-subtle` fail AA ở **mọi** nền sáng | ✅ sửa | `#8b7684` → `#7b6876`: 4.18→5.14 (trắng), 3.89→4.79 (`surface-muted`), 3.77→4.64 (`surface-sunken`) |
-| Token `--color-primary-strong` fail AA trên nền pha màu | ✅ sửa | `#e0005a` → `#d10053`. Đo được ở nền xấu nhất (`brand-100` — nền hover của nav) chỉ **4.05**; nay 4.56. Các nền khác 4.94–5.47 |
+| Token `--color-foreground-subtle` fail AA ở **mọi** nền sáng | ✅ sửa | `#8b7684` → `#756063` (đợt luxury): 5.41 (trang), 5.03 (`surface-muted`), 4.74 (`surface-sunken`) |
+| Token `--color-primary-strong` fail AA trên nền pha màu | ✅ sửa | `#e0005a` → `#a81455` (đợt luxury): 6.74 trên nền trang, 6.17 trên `primary-soft`, 5.91 trên nền sand tối nhất |
 | Code chết: **18 export** không được tham chiếu ở đâu | ✅ xoá | gồm `getToursByIds` — hàm này lọc trên `tour.slug` trong khi tên nói `Id` (bug tên). Giữ 3 type schema (`ContentStatus`, `SeoMeta`, `IsoDate`). Scan lại chỉ còn 3 type đó |
 | Hero: chữ `g` bị cắt trong tiêu đề gradient | ✅ sửa | `background-clip: text` chỉ vẽ trong border box; `line-height 1.04` khiến đuôi `g` và dấu dưới `ệ` rơi ra ngoài. Thêm `padding-bottom: .16em` + `margin-bottom: -.16em` vào `brand-gradient-text` |
 | Hero: làm mềm + thêm subtitle | ✅ | Dòng gradient nhẹ hơn (`font-semibold` thay vì extrabold), gradient êm hơn (`brand-600 → brand-400 → sun-400`), thêm subtitle |

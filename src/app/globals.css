@@ -13,11 +13,11 @@
   /* --- Brand rose ramp -----------------------------------------------------
      The logo keeps its saturated #FF0366 pink; everything around it shifts to
      a softer, aged-rose range so large surfaces feel calm rather than candy. */
-  --color-brand-50: #fdf2f5;
-  --color-brand-100: #fbe3e9;
-  --color-brand-200: #f4c9d6;
-  --color-brand-300: #eaa6ba;
-  --color-brand-400: #dd7898;
+  --color-brand-50: #fdf5f7;
+  --color-brand-100: #f8e4ea;
+  --color-brand-200: #efccd7;
+  --color-brand-300: #dfa9b9;
+  --color-brand-400: #d17f97;
   --color-brand-500: #ff0366; /* logo pink — decorative / large display only */
   --color-brand-600: #d81b60;
   --color-brand-700: #b0175a;
@@ -33,38 +33,40 @@
   --color-sun-600: #b56f2f;
 
   /* --- Semantic palette ---------------------------------------------------
-     Warm alabaster and champagne replace the pink-tinted whites. The page
-     reads as paper and linen, which keeps the photography and the pink/gold
-     logo as the only strong colour notes. */
-  --color-background: #faf6f1;
-  --color-surface: #fffdfb;
-  --color-surface-muted: #f6ede4;
-  --color-surface-sunken: #f0e4d8;
+     A quieter, more expensive canvas: rose-ivory paper, porcelain cards and a
+     rose-taupe recess. The pink/gold logo stays the only saturated note, so
+     the page reads warm and refined rather than candy-pink. The balance of
+     rose, ivory and deep ink is deliberately unisex. */
+  --color-background: #f8f4f1;
+  --color-surface: #fffdfc;
+  --color-surface-muted: #f5ece8;
+  --color-surface-sunken: #eee2dd;
 
-  --color-champagne: #f3e5d3;
-  --color-champagne-deep: #e7d2bb;
-  --color-rose-gold: #c98a83;
+  --color-champagne: #f2e3d2;
+  --color-champagne-deep: #e4cdb7;
+  --color-rose-gold: #c08a84;
 
-  --color-foreground: #2b2125;
-  --color-ink: #2b2125;
-  --color-foreground-muted: #6a575b;
-  /* AA on every light surface in the palette (min 4.74:1 on sunken sand),
-     while staying a warm taupe rather than a cold grey. */
-  --color-foreground-subtle: #756063;
+  --color-foreground: #241a20;
+  --color-ink: #241a20;
+  --color-muted: #6b5a60;
+  --color-foreground-muted: #6b5a60;
+  /* AA on every light surface in the palette (min 4.83:1 on the deepest
+     rose-taupe), while staying a warm taupe rather than a cold grey. */
+  --color-foreground-subtle: #6f5d64;
 
-  --color-border: #ead9cf;
-  --color-border-strong: #dcc3b5;
+  --color-border: #e8d8d2;
+  --color-border-strong: #d7c2bb;
 
   --color-primary: #d81b60;
-  /* Deep raspberry clears AA on porcelain, champagne, sand, primary-soft and
-     the brand-100 hover (min 5.91:1). The brighter logo pink stays reserved
-     for large decorative marks. */
+  /* Deep raspberry clears AA on porcelain, champagne, rose-taupe and
+     primary-soft (min 5.72:1). The brighter logo pink stays reserved for
+     large decorative marks. */
   --color-primary-strong: #a81455;
   --color-primary-strong-hover: #8c1248;
-  --color-primary-soft: #f8e9ed;
+  --color-primary-soft: #f7e8ed;
 
   --color-accent: #d9b26a;
-  --color-accent-strong: #8a5a14;
+  --color-accent-strong: #7d5316;
 
   --color-success: #067647;
   --color-success-soft: #ecfdf3;
@@ -115,13 +117,13 @@
   --radius-2xl: 1.75rem;
   --radius-3xl: 2.25rem;
 
-  /* --- Elevation (soft cocoa-tinted, never harsh) --------------------------- */
+  /* --- Elevation (soft plum-tinted, never harsh) --------------------------- */
   --shadow-soft:
-    0 1px 2px rgb(60 38 28 / 0.04), 0 4px 12px rgb(60 38 28 / 0.05);
+    0 1px 2px rgb(52 28 38 / 0.04), 0 4px 12px rgb(52 28 38 / 0.05);
   --shadow-card:
-    0 1px 2px rgb(60 38 28 / 0.05), 0 10px 24px -8px rgb(60 38 28 / 0.12);
+    0 1px 2px rgb(52 28 38 / 0.05), 0 10px 24px -8px rgb(52 28 38 / 0.12);
   --shadow-lifted:
-    0 2px 4px rgb(60 38 28 / 0.06), 0 20px 44px -14px rgb(60 38 28 / 0.2);
+    0 2px 4px rgb(52 28 38 / 0.06), 0 20px 44px -14px rgb(52 28 38 / 0.2);
   --shadow-focus: 0 0 0 3px rgb(168 20 85 / 0.28);
 
   /* --- Motion ------------------------------------------------------------- */
@@ -171,23 +173,28 @@ html:not([lang="en"]) .nf-lang-en {
   body {
     background-color: var(--color-background);
     /*
-     * Layered "paper and light" canvas: a champagne glow from the top left,
-     * the faintest rose reflection from the top right, then a warm ivory-to-
-     * sand wash. It keeps every flat section from looking like bare white
-     * without tinting the whole page pink.
+     * Layered "silk paper" canvas: a champagne glow from the top left, the
+     * faintest rose reflection from the top right, a rose-gold breath at the
+     * bottom, then a porcelain-to-rose-ivory wash. It keeps flat sections from
+     * looking like bare white without tinting the whole page pink.
      */
     background-image:
       radial-gradient(
         72% 55% at 6% -8%,
-        rgb(217 178 106 / 0.16) 0%,
+        rgb(217 178 106 / 0.14) 0%,
         transparent 62%
       ),
       radial-gradient(
         60% 45% at 100% 2%,
-        rgb(216 27 96 / 0.055) 0%,
+        rgb(216 27 96 / 0.045) 0%,
         transparent 58%
       ),
-      linear-gradient(180deg, #fdf9f4 0%, #faf6f1 46%, #f8f1e9 100%);
+      radial-gradient(
+        42% 32% at 50% 108%,
+        rgb(192 138 132 / 0.09) 0%,
+        transparent 62%
+      ),
+      linear-gradient(180deg, #fdfbf9 0%, #f8f4f1 46%, #f3ebe6 100%);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-synthesis-weight: none;
@@ -219,8 +226,8 @@ html:not([lang="en"]) .nf-lang-en {
   }
 
   ::selection {
-    background-color: var(--color-brand-100);
-    color: var(--color-brand-900);
+    background-color: #f0dcc6;
+    color: #4a1a2c;
   }
 
   /* Slim, brand-tinted scrollbar where the browser supports it. Purely
@@ -228,7 +235,7 @@ html:not([lang="en"]) .nf-lang-en {
   @supports (scrollbar-width: thin) {
     html {
       scrollbar-width: thin;
-      scrollbar-color: var(--color-brand-200) transparent;
+      scrollbar-color: var(--color-border-strong) transparent;
     }
   }
 
@@ -242,13 +249,13 @@ html:not([lang="en"]) .nf-lang-en {
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: var(--color-brand-200);
+    background-color: var(--color-border-strong);
     border: 3px solid var(--color-background);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-brand-300);
+    background-color: var(--color-rose-gold);
   }
 
   /* Only show focus rings for keyboard users when a custom ring is applied. */
@@ -301,6 +308,70 @@ html:not([lang="en"]) .nf-lang-en {
   margin-bottom: -0.16em;
 }
 
+/* --- Component polish: raspberry lacquer + champagne paper ---------------- */
+.stt-btn-primary {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background-image: linear-gradient(
+    135deg,
+    #b0175a 0%,
+    var(--color-primary-strong) 52%,
+    #741038 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 10px 24px -14px rgb(60 38 28 / 0.55);
+}
+
+.stt-btn-primary:hover {
+  background-image: linear-gradient(
+    135deg,
+    #9c124e 0%,
+    var(--color-primary-strong-hover) 48%,
+    #5f0c31 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 16px 32px -16px rgb(60 38 28 / 0.6);
+}
+
+.stt-btn-secondary {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    #fff7ee 100%
+  );
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85);
+}
+
+.stt-btn-secondary:hover {
+  border-color: var(--color-sun-400);
+  background-image: linear-gradient(
+    180deg,
+    #fffdfb 0%,
+    var(--color-champagne) 100%
+  );
+  color: var(--color-primary-strong);
+}
+
+.stt-btn-inverse {
+  border: 1px solid rgb(255 255 255 / 0.5);
+  background-image: linear-gradient(180deg, #fffdfb 0%, #fff4e9 100%);
+  color: var(--color-primary-strong);
+}
+
+.stt-btn-inverse:hover {
+  background-image: linear-gradient(180deg, #ffffff 0%, #f8ead9 100%);
+}
+
+/* Porcelain fields catch the light like the cards around them. */
+.stt-control {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    #fffaf4 100%
+  );
+}
+
 /* Page container: one source of truth for horizontal rhythm. */
 @utility container-page {
   width: 100%;
@@ -333,8 +404,13 @@ html:not([lang="en"]) .nf-lang-en {
   background-image:
     radial-gradient(
       60% 50% at 100% 0%,
-      rgb(217 178 106 / 0.14) 0%,
+      rgb(217 178 106 / 0.12) 0%,
       transparent 62%
+    ),
+    radial-gradient(
+      50% 42% at 0% 100%,
+      rgb(192 138 132 / 0.07) 0%,
+      transparent 60%
     ),
     linear-gradient(
       180deg,
@@ -350,8 +426,13 @@ html:not([lang="en"]) .nf-lang-en {
   background-image:
     radial-gradient(
       55% 45% at 0% 100%,
-      rgb(216 27 96 / 0.06) 0%,
+      rgb(192 138 132 / 0.1) 0%,
       transparent 60%
+    ),
+    radial-gradient(
+      45% 38% at 100% 0%,
+      rgb(217 178 106 / 0.08) 0%,
+      transparent 58%
     ),
     linear-gradient(
       180deg,
@@ -383,36 +464,69 @@ html:not([lang="en"]) .nf-lang-en {
   gap: 8px;
   border: 1px solid var(--color-border-strong);
   border-radius: 999px;
-  background: var(--color-surface);
+  background: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-champagne) 190%
+  );
   padding: 8px 16px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.16em;
   color: var(--color-primary-strong);
-  box-shadow: var(--shadow-soft);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    0 8px 20px -16px rgb(52 28 38 / 0.55);
 }
 
-@keyframes stt-dot-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 3px rgba(168, 20, 85, 0.14);
-  }
-  50% {
-    transform: scale(1.18);
-    box-shadow: 0 0 0 6px rgba(168, 20, 85, 0.26);
-  }
+
+
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-primary-strong);
 }
 
-.eyebrow-pill > span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+.section-eyebrow-number {
+  flex: none;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-accent-strong);
+}
+
+.section-eyebrow-rule {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 1px;
   background: linear-gradient(
-    135deg,
-    var(--color-primary-strong),
+    90deg,
+    var(--color-rose-gold),
     var(--color-sun-400)
   );
-  animation: stt-dot-pulse 3.5s ease-in-out infinite;
+}
+
+.section-eyebrow-text {
+  min-width: 0;
 }
 
 .intro-centered h2 {
@@ -462,6 +576,27 @@ html:not([lang="en"]) .nf-lang-en {
   }
 }
 
+.stt-footer {
+  background-color: var(--color-surface-sunken);
+  background-image:
+    radial-gradient(
+      70% 55% at 50% 0%,
+      rgb(217 178 106 / 0.18) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      45% 40% at 100% 100%,
+      rgb(168 20 85 / 0.05) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      #f2e6dc 0%,
+      var(--color-surface-sunken) 52%,
+      #eadbd0 100%
+    );
+}
+
 .footer-glow {
   pointer-events: none;
   position: absolute;
@@ -472,7 +607,8 @@ html:not([lang="en"]) .nf-lang-en {
   transform: translateX(-50%);
   background: radial-gradient(
     closest-side,
-    rgb(168 20 85 / 0.09),
+    rgb(217 178 106 / 0.2),
+    rgb(168 20 85 / 0.04) 58%,
     transparent
   );
 }
@@ -487,7 +623,7 @@ html:not([lang="en"]) .nf-lang-en {
   font-size: clamp(72px, 17vw, 210px);
   line-height: 0.78;
   letter-spacing: -0.02em;
-  color: var(--color-brand-100);
+  color: var(--color-champagne-deep);
   margin-bottom: -0.12em;
 }
 
@@ -848,7 +984,11 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 
 .stt-tour-card {
   border-radius: 24px;
-  background: linear-gradient(180deg, #ffffff 0%, #fffbfd 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    #fbf3ee 100%
+  );
   transition:
     border-color 280ms ease,
     box-shadow 360ms ease,
@@ -856,7 +996,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 }
 .stt-card-media {
   border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(135deg, #234844 0%, #0e5a56 100%);
+  background: linear-gradient(135deg, #2a1e24 0%, #4a2a36 100%);
 }
 /* Horizontal spotlight: photo column gets a right rule instead of a bottom
    one on sm and up. */
@@ -870,19 +1010,19 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(9 46 48 / 0.06) 0%, transparent 40%, rgb(9 46 48 / 0.42) 100%);
+  background: linear-gradient(180deg, rgb(29 18 24 / 0.06) 0%, transparent 40%, rgb(29 18 24 / 0.42) 100%);
 }
 .stt-card-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.94);
+  background: rgb(255 253 252 / 0.94);
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-ink);
-  box-shadow: 0 8px 20px rgb(33 61 59 / 0.16);
+  box-shadow: 0 8px 20px rgb(52 28 38 / 0.18);
   backdrop-filter: blur(8px);
 }
 @keyframes stt-badge-pulse {
@@ -910,26 +1050,42 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  border: 1px solid rgb(255 255 255 / 0.18);
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(
+    135deg,
+    #8c1248 0%,
+    var(--color-primary-strong) 54%,
+    #6f0f3a 100%
+  );
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 800;
   color: #fff;
-  box-shadow: 0 8px 20px rgb(168 20 85 / 0.4);
+  box-shadow:
+    inset 0 1px 0 rgb(255 209 102 / 0.35),
+    0 8px 20px rgb(60 38 28 / 0.32);
   animation: stt-badge-pulse 4s ease-in-out infinite;
 }
 .stt-card-price-float {
   position: absolute;
   right: 12px;
   bottom: 12px;
+  border: 1px solid rgb(255 255 255 / 0.2);
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(
+    135deg,
+    #8c1248 0%,
+    var(--color-primary-strong) 54%,
+    #6f0f3a 100%
+  );
   color: white;
   font-size: 13px;
   font-weight: 800;
   padding: 7px 14px;
-  box-shadow: 0 12px 26px rgb(168 20 85 / 0.4);
+  box-shadow:
+    inset 0 1px 0 rgb(255 209 102 / 0.38),
+    0 12px 26px rgb(60 38 28 / 0.34);
   animation: stt-price-bob 4.5s ease-in-out infinite;
 }
 .stt-card-dest {
@@ -1019,25 +1175,35 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   align-items: center;
   gap: 8px;
   border-radius: 999px;
-  background: var(--color-primary-soft);
-  border: 1px solid var(--color-brand-200);
+  background: linear-gradient(180deg, #fffdfb 0%, #fff5e9 100%);
+  border: 1px solid var(--color-champagne-deep);
   color: var(--color-primary-strong);
   font-size: 13px;
   font-weight: 800;
   padding: 10px 16px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85);
   transition:
     background 0.25s,
     color 0.25s,
-    border-color 0.25s;
+    border-color 0.25s,
+    box-shadow 0.25s;
 }
 .stt-tour-card:hover .stt-card-cta {
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(
+    135deg,
+    #b0175a 0%,
+    var(--color-primary-strong) 52%,
+    #741038 100%
+  );
   border-color: transparent;
   color: white;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 8px 18px -10px rgb(60 38 28 / 0.5);
 }
 
 .stt-tour-card:focus-within {
-  border-color: var(--color-brand-300);
+  border-color: var(--color-rose-gold);
   box-shadow:
     0 0 0 3px var(--color-brand-100),
     var(--shadow-lifted);
@@ -1059,7 +1225,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 
 @media (hover: hover) and (pointer: fine) {
   .stt-tour-card:hover {
-    border-color: var(--color-brand-200);
+    border-color: var(--color-rose-gold);
     box-shadow: var(--shadow-lifted);
   }
 
@@ -1110,8 +1276,8 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   .stt-tour-card:hover {
     transform: translateY(-0.35rem) perspective(1000px) rotateX(1.5deg);
     box-shadow:
-      0 20px 44px -10px rgb(60 38 28 / 0.16),
-      0 6px 16px -4px rgb(33 61 59 / 0.08);
+      0 20px 44px -10px rgb(52 28 38 / 0.16),
+      0 6px 16px -4px rgb(52 28 38 / 0.1);
   }
 
   .stt-tour-card:hover .stt-card-photo {
@@ -1414,7 +1580,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   height: 52px;
   flex-shrink: 0;
   border-radius: 17px;
-  background: linear-gradient(140deg, #ff0366, #ff7c2c);
+  background: linear-gradient(145deg, var(--color-brand-700), var(--color-sun-500));
   color: #fff;
   box-shadow:
     0 8px 22px #e0005a30,
@@ -1599,7 +1765,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   position: absolute;
   inset: 0 0 auto 0;
   height: 3px;
-  background: linear-gradient(90deg, #e0005a, #ff5c99 55%, #ffd166);
+  background: linear-gradient(90deg, var(--color-brand-700), var(--color-brand-300) 55%, var(--color-sun-400));
 }
 @keyframes stt-time-in {
   from {
@@ -1687,7 +1853,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   box-shadow: 0 8px 22px rgb(224 0 90 / 0.14);
 }
 .stt-time-option[data-active="true"] {
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   border-color: transparent;
   color: #fff;
   box-shadow: 0 12px 28px rgb(224 0 90 / 0.35);
@@ -1788,7 +1954,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   color: white;
   font-size: 14px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   box-shadow:
     0 8px 22px #d6005030,
     inset 0 1px 0 #ffffff33;
@@ -1955,8 +2121,8 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   background-size: 18px 18px;
 }
 .stt-search-form select option {
-  background: white;
-  color: #213d3b;
+  background: var(--color-surface);
+  color: var(--color-ink);
   font-size: 14px;
 }
 .stt-search-form input:hover,
@@ -1973,21 +2139,32 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 }
 .stt-search-form button {
   min-height: 48px;
+  border: 1px solid rgb(255 255 255 / 0.12);
   border-radius: 14px;
   padding: 12px 22px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(
+    135deg,
+    #b0175a 0%,
+    var(--color-primary-strong) 52%,
+    #741038 100%
+  );
   color: white;
   font-size: 13px;
   font-weight: 700;
-  box-shadow: 0 10px 24px #d1005330;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 10px 24px rgb(60 38 28 / 0.16);
   transition:
     transform 0.25s,
     filter 0.25s,
     box-shadow 0.25s;
 }
 .stt-search-form button:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.06);
   transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.24),
+    0 14px 28px rgb(60 38 28 / 0.2);
 }
 @keyframes stt-ocean-breathe {
   0%,
@@ -2014,8 +2191,7 @@ html[data-motion-paused="true"] .stt-coastal-lines,
 html[data-motion-paused="true"] .stt-trust-icon,
 html[data-motion-paused="true"] .stt-phone-buzz,
 html[data-motion-paused="true"] .stt-card-badge,
-html[data-motion-paused="true"] .stt-card-price-float,
-html[data-motion-paused="true"] .eyebrow-pill > span {
+html[data-motion-paused="true"] .stt-card-price-float {
   animation: none !important;
   transform: none !important;
   opacity: 1 !important;

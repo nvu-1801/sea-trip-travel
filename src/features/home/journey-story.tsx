@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container, Section } from "@/components/ui/layout";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { AssetImage } from "@/components/ui/asset-image";
 import { Reveal } from "@/components/ui/reveal";
 import {
@@ -52,11 +53,11 @@ export function JourneyStory({ locale }: { locale: Locale }) {
       />
       <Container>
         <Reveal className="journey-story-heading">
-          <p className="journal-eyebrow">
+          <SectionEyebrow className="journal-eyebrow">
             {en
               ? "MAKE TIME FOR A JOURNEY"
               : "DÀNH THỜI GIAN CHO MỘT CHUYẾN ĐI"}
-          </p>
+          </SectionEyebrow>
           <h2>
             {en ? "No need to go far." : "Không cần đi thật xa."}
             <br />
@@ -131,10 +132,9 @@ export function PlanningSection({ locale }: { locale: Locale }) {
       <Container>
         <div className="planning-layout">
           <Reveal>
-            <p className="journal-eyebrow planning-eyebrow">
-              <span className="planning-eyebrow-dot" aria-hidden="true" />
+            <SectionEyebrow className="journal-eyebrow planning-eyebrow">
               {en ? "BEFORE YOU GO" : "TRƯỚC KHI LÊN ĐƯỜNG"}
-            </p>
+            </SectionEyebrow>
             <h2>
               {en ? "A little planning." : "Chuẩn bị một chút."}
               <br />

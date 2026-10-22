@@ -1,6 +1,7 @@
 import { ROUTES } from "@/config/navigation";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { Container, Section } from "@/components/ui/layout";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { AssetImage } from "@/components/ui/asset-image";
@@ -65,10 +66,9 @@ export function ValuesSection({ locale }: { locale: Locale }) {
     >
       <Container>
         <Reveal className="intro-centered">
-          <p className="eyebrow-pill">
-            <span aria-hidden="true" />
+          <SectionEyebrow className="eyebrow-pill">
             {m.home.values.eyebrow}
-          </p>
+          </SectionEyebrow>
           <h2>
             <HeadingAccent
               text={m.home.values.title}

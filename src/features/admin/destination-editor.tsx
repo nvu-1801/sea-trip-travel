@@ -146,7 +146,7 @@ function collectIssues(
     add("order", "Thứ tự trong vùng phải là số từ 0 trở lên.");
 
   const slug = textOf(data.slug);
-  if (slug && !/^[a-z0-9-]+$/.test(slug))
+  if (!slug || !/^[a-z0-9-]+$/.test(slug))
     add("slug", "Slug chỉ dùng chữ thường, số và dấu gạch ngang.");
 
   const image = imageOf(data);
@@ -245,6 +245,12 @@ export const DestinationEditor = forwardRef<
 
   const update = (patch: AdminRecord) =>
     onChange({ ...data, ...patch });
+  const setEnglish = (patch: AdminRecord) => {
+    const next: AdminRecord = { ...en, ...patch };
+    for (const key of Object.keys(next))
+      if (next[key] === undefined) delete next[key];
+    update({ _en: next });
+  };
   const markTouched = (path: string) =>
     setTouched((current) => new Set(current).add(path));
 
@@ -531,36 +537,48 @@ export const DestinationEditor = forwardRef<
           where="cụm tối đa 3 thẻ điểm đến trên landing page"
           errors={booked("home")}
         >
-          <div
-            className="adm-home-status"
-            role="status"
-            data-tone={
-              showOnHome
-                ? recordState === "published"
-                  ? "on"
-                  : "draft"
-                : "off"
-            }
-          >
-            <strong>
-              {showOnHome ? "Đang bật Khám phá" : "Không hiện ở Khám phá"}
-            </strong>
-            <span>
-              {enabledCount}/{HOME_DESTINATION_LIMIT} điểm đang bật
-              {showOnHome && slot ? ` · vị trí #${slot}` : ""}
-            </span>
+          <div className="adm-home-status" role="status">
+            <div className="adm-home-status-row">
+              <span className="adm-home-status-label">Website</span>
+              <strong
+                data-tone={recordState === "published" ? "on" : "draft"}
+              >
+                {recordState === "published"
+                  ? "Đang xuất bản"
+                  : "Bản nháp — chưa lên web"}
+              </strong>
+            </div>
+            <div className="adm-home-status-row">
+              <span className="adm-home-status-label">Khám phá</span>
+              <strong data-tone={showOnHome ? "on" : "off"}>
+                {showOnHome ? "Đang bật" : "Đang tắt"}
+              </strong>
+              <span className="adm-home-status-count">
+                {enabledCount}/{HOME_DESTINATION_LIMIT} điểm đang bật
+                {showOnHome && slot ? ` · vị trí #${slot}` : ""}
+              </span>
+            </div>
             {showOnHome && recordState !== "published" ? (
               <small>
-                Đây là bản nháp — bấm Xuất bản thay đổi để thẻ lên trang chủ.
+                Đang bật Khám phá nhưng chưa xuất bản — bấm “Xuất bản thay
+                đổi” để thẻ lên trang chủ.
               </small>
             ) : null}
             {!showOnHome && recordState !== "published" ? (
-              <small>Bản nháp: xuất bản rồi bật Khám phá nếu muốn lên trang chủ.</small>
+              <small>
+                Bản nháp: xuất bản rồi bật Khám phá nếu muốn lên trang chủ.
+              </small>
             ) : null}
             {!showOnHome && recordState === "published" && !slotsFull ? (
               <small>
                 Điểm này đang tắt cho khối Khám phá. Bật công tắc bên dưới để
                 thẻ xuất hiện trên trang chủ.
+              </small>
+            ) : null}
+            {slotsFull && !showOnHome ? (
+              <small>
+                Đã đủ {HOME_DESTINATION_LIMIT}/{HOME_DESTINATION_LIMIT} điểm
+                Khám phá — tắt một điểm khác trước khi bật điểm này.
               </small>
             ) : null}
           </div>
@@ -649,7 +667,7 @@ export const DestinationEditor = forwardRef<
                   })
                 }
               >
-                ＋ Thêm bản dịch tiếng Anh
+                + Thêm bản dịch tiếng Anh
               </button>
             </div>
           ) : (
@@ -666,12 +684,7 @@ export const DestinationEditor = forwardRef<
                 value={textOf(en.name)}
                 placeholder={name}
                 onChange={(next) =>
-                  update({
-                    _en: {
-                      ...en,
-                      ...(next.trim() ? { name: next } : { name: undefined }),
-                    },
-                  })
+                  setEnglish({ name: next.trim() ? next : undefined })
                 }
               />
               <TextField
@@ -683,14 +696,7 @@ export const DestinationEditor = forwardRef<
                 rows={2}
                 maxLength={180}
                 onChange={(next) =>
-                  update({
-                    _en: {
-                      ...en,
-                      ...(next.trim()
-                        ? { summary: next }
-                        : { summary: undefined }),
-                    },
-                  })
+                  setEnglish({ summary: next.trim() ? next : undefined })
                 }
               />
               <TextField
@@ -699,14 +705,7 @@ export const DestinationEditor = forwardRef<
                 value={textOf(en.province)}
                 placeholder={province}
                 onChange={(next) =>
-                  update({
-                    _en: {
-                      ...en,
-                      ...(next.trim()
-                        ? { province: next }
-                        : { province: undefined }),
-                    },
-                  })
+                  setEnglish({ province: next.trim() ? next : undefined })
                 }
               />
             </>

@@ -7,6 +7,7 @@ import {
   getNonFeaturedArticles,
 } from "@/lib/data/articles";
 import { Container, Section } from "@/components/ui/layout";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon, ClockIcon } from "@/components/ui/icons";
@@ -66,10 +67,9 @@ export function GuidesSection({ locale }: { locale: Locale }) {
     <Section tone="muted" spacing="loose">
       <Container>
         <Reveal className="intro-centered">
-          <p className="eyebrow-pill">
-            <span aria-hidden="true" />
+          <SectionEyebrow className="eyebrow-pill">
             {m.home.guides.eyebrow}
-          </p>
+          </SectionEyebrow>
           <h2>
             <HeadingAccent
               text={m.home.guides.title}

@@ -4,9 +4,12 @@
   isolation: isolate;
   /* Clip the fixed decorative layer to the landing page, before the footer. */
   clip-path: inset(0);
-  background: #fff4f8;
-  --journal-ink: #213d3b;
-  --journal-muted: #677572;
+  background:
+    radial-gradient(70% 55% at 8% 0%, rgb(217 178 106 / 0.11), transparent 60%),
+    radial-gradient(55% 45% at 100% 6%, rgb(216 27 96 / 0.045), transparent 60%),
+    linear-gradient(180deg, #fdfbf9 0%, #f8f4f1 45%, #f3ebe6 100%);
+  --journal-ink: #241a20;
+  --journal-muted: #6b5a60;
   --journal-title-size: clamp(32px, 3.4vw, 52px);
   --journal-title-weight: 600;
 }
@@ -30,7 +33,7 @@
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.065em;
-  color: #ffe2ec;
+  color: #ecddd5;
   transform-origin: center;
   animation: home-brand-drift 20s ease-in-out infinite alternate;
 }
@@ -39,7 +42,7 @@
   background: transparent;
 }
 .home-editorial > [data-hero-mode] {
-  background-color: #fff4f8;
+  background-color: var(--color-background);
 }
 @keyframes home-brand-drift {
   from {
@@ -68,38 +71,10 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 }
 .home-editorial .journal-eyebrow,
 .home-editorial .intro-centered .eyebrow-pill {
-  display: inline-flex;
-  align-items: center;
   justify-self: start;
   width: fit-content;
   max-width: 100%;
-  gap: 10px;
-  padding: 8px 14px;
   margin: 0;
-  border: 1px solid #f5dce7;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: none;
-  font-size: 11px;
-  font-weight: 650;
-  line-height: 1.6;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-primary-strong);
-}
-.home-editorial .journal-eyebrow::before,
-.home-editorial .intro-centered .eyebrow-pill::before {
-  content: "";
-  flex: 0 0 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #e60060;
-  box-shadow: 0 0 0 4px #e6006014;
-}
-.home-editorial .journal-eyebrow > span,
-.home-editorial .intro-centered .eyebrow-pill > span {
-  display: none;
 }
 .journal-heading {
   display: flex;
@@ -140,7 +115,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   max-width: none;
   margin: 0 0 38px;
   padding-bottom: 28px;
-  border-bottom: 1px solid #213d3b20;
+  border-bottom: 1px solid #241a2020;
   text-align: left;
   align-items: end;
 }
@@ -179,7 +154,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   min-height: 44px;
   padding: 8px 0;
   border: 0;
-  border-bottom: 1px solid #213d3b40;
+  border-bottom: 1px solid #241a2040;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -214,10 +189,12 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   padding: 56px 0 44px;
 }
 .finder-search-card {
-  background: var(--color-surface);
+  background: linear-gradient(180deg, var(--color-surface) 0%, #fffaf4 100%);
   border: 1px solid var(--color-border);
   border-radius: 22px;
-  box-shadow: 0 18px 48px -10px rgba(168, 20, 85, 0.12), 0 4px 14px rgba(33, 61, 59, 0.06);
+  box-shadow:
+    0 18px 48px -10px rgb(168 20 85 / 0.1),
+    0 4px 14px rgb(60 38 28 / 0.06);
   padding: 14px;
   transform-style: preserve-3d;
   /* Nâng cả thẻ (kèm menu dropdown) lên trên các panels bên dưới.
@@ -293,7 +270,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   color: #ffe3ee;
 }
 .finder-panel-help .finder-panel-title {
-  color: #ffd166;
+  color: var(--color-sun-400);
 }
 .finder-panel-help > p {
   font-size: 14px;
@@ -313,7 +290,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   gap: 10px;
   min-height: 50px;
   border-radius: 14px;
-  background: #fff;
+  background: var(--color-surface);
   color: var(--color-primary-strong);
   font-weight: 800;
   font-size: 14px;
@@ -350,7 +327,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   background: var(--color-surface);
   box-shadow:
     0 18px 50px #d1005312,
-    0 2px 8px #213d3b0d;
+    0 2px 8px #241a200d;
 }
 .finder-field {
   display: grid;
@@ -364,8 +341,21 @@ html[data-motion-paused="true"] .home-brand-wordmark {
     box-shadow 0.25s;
 }
 .finder-field + .finder-field {
-  border-left: 1px solid var(--color-border);
-  border-radius: 0 20px 20px 0;
+  position: relative;
+  border-left: 0;
+  border-radius: 20px;
+}
+/* Inset hairline instead of a full-height border: both fields can keep their
+   rounded corners without a square divider cutting through them. */
+.finder-field + .finder-field::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 16px;
+  bottom: 16px;
+  width: 1px;
+  background: var(--color-border);
+  pointer-events: none;
 }
 .finder-field:hover {
   background: var(--color-primary-soft);
@@ -486,7 +476,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   min-height: 58px;
   border-radius: 20px;
   padding: 12px 28px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
   font-size: 15px;
   font-weight: 700;
@@ -545,7 +535,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   height: 100%;
   overflow: hidden;
   border-radius: 14px;
-  background: #244846;
+  background: #2a1e24;
   transform-style: preserve-3d;
   transition:
     transform 500ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -560,7 +550,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 15%, #082826c7 100%);
+  background: linear-gradient(180deg, transparent 15%, #1d1218c7 100%);
 }
 .destination-editorial-copy {
   position: absolute;
@@ -638,9 +628,10 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 }
 .journal-featured {
   background:
-    radial-gradient(55% 45% at 95% 8%, #ff03660e 0%, transparent 60%),
-    radial-gradient(45% 40% at 5% 95%, #0e5a5612 0%, transparent 60%), #f5f5ed;
-  border-block: 1px solid #e6e7df;
+    radial-gradient(55% 45% at 95% 8%, rgb(217 178 106 / 0.14) 0%, transparent 60%),
+    radial-gradient(45% 40% at 5% 95%, rgb(192 138 132 / 0.08) 0%, transparent 60%),
+    var(--color-surface-muted);
+  border-block: 1px solid var(--color-border);
 }
 .journal-featured .stt-tour-grid {
   gap: 22px;
@@ -649,7 +640,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: #143e3b;
+  background: #241a20;
   padding: clamp(56px, 6vw, 90px) 0;
   color: white;
 }
@@ -663,7 +654,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(100deg, #092e30ed, #092e3094);
+  background: linear-gradient(100deg, #1d1218ed, #1d121894);
 }
 .journey-story-heading {
   max-width: 850px;
@@ -672,23 +663,23 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   color: #fff8e9;
 }
 .home-editorial .journey-story h2 em {
-  color: #ffbad4;
+  color: var(--color-brand-300);
 }
-.home-editorial .journey-story .journal-eyebrow {
-  color: #ffdaea;
-  background: #ffffff12;
-  border-color: #ffffff35;
+.home-editorial .journey-story .section-eyebrow {
+  color: #f0dcc6;
 }
-.home-editorial .journey-story .journal-eyebrow::before {
-  background: #ffbad4;
-  box-shadow: 0 0 0 4px #ffbad41a;
+.home-editorial .journey-story .section-eyebrow-number {
+  color: var(--color-sun-300);
+}
+.home-editorial .journey-story .section-eyebrow-rule {
+  background: linear-gradient(90deg, transparent, var(--color-sun-400));
 }
 .journey-story-heading > p:last-child {
   max-width: 530px;
   margin-top: 24px;
   font-size: 15px;
   line-height: 1.85;
-  color: #e1e9e5;
+  color: #efe1d9;
 }
 .journey-duration-grid {
   display: grid;
@@ -717,7 +708,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   position: absolute;
   inset: 0 0 auto 0;
   height: 3px;
-  background: linear-gradient(90deg, #ff0366, #ffd166);
+  background: linear-gradient(90deg, var(--color-brand-600), var(--color-sun-400));
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -755,7 +746,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 }
 .journey-duration-grid p {
   font-size: 13px;
-  color: #dde5df;
+  color: #eadbd3;
   line-height: 1.75;
   max-width: 270px;
 }
@@ -830,7 +821,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   border-radius: 24px;
   overflow: hidden;
   color: #fff;
-  background: #234844;
+  background: #2a1e24;
   box-shadow: 0 12px 30px #163b3410;
   transform-style: preserve-3d;
   transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 500ms ease;
@@ -866,7 +857,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   padding: 6px 9px;
   border: 1px solid #ffffff70;
   border-radius: 99px;
-  background: #163d3955;
+  background: #241a2055;
   white-space: nowrap;
   letter-spacing: 0;
 }
@@ -966,8 +957,9 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
 }
 .journal-values {
   background:
-    radial-gradient(60% 50% at 8% 12%, #ff03660d 0%, transparent 60%),
-    radial-gradient(50% 40% at 95% 90%, #0e5a5610 0%, transparent 60%), #f4f4ea;
+    radial-gradient(60% 50% at 8% 12%, rgb(216 27 96 / 0.055) 0%, transparent 60%),
+    radial-gradient(50% 40% at 95% 90%, rgb(217 178 106 / 0.16) 0%, transparent 60%),
+    #f2e7dc;
 }
 .values-premium {
   position: relative;
@@ -994,15 +986,15 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   border-radius: 32px;
   border: 1px solid #ffffffcc;
   box-shadow:
-    0 32px 70px #213d3b2b,
-    0 4px 14px #213d3b1a;
+    0 32px 70px #241a202b,
+    0 4px 14px #241a201a;
   object-fit: cover;
 }
 .values-photo-glow {
   position: absolute;
   inset: 12% -8% -6% 12%;
   z-index: -1;
-  background: linear-gradient(135deg, #ff036633, #0e5a5633);
+  background: linear-gradient(135deg, rgb(216 27 96 / 0.18), rgb(198 143 69 / 0.2));
   filter: blur(46px);
   border-radius: 40px;
 }
@@ -1010,9 +1002,9 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   position: absolute;
   border-radius: 20px;
   border: 1px solid #ffffffd9;
-  background: #ffffffee;
+  background: rgb(255 253 252 / 0.94);
   backdrop-filter: blur(12px);
-  box-shadow: 0 18px 44px #213d3b26;
+  box-shadow: 0 18px 44px #241a2026;
   padding: 14px 16px;
   transform-style: preserve-3d;
 }
@@ -1028,7 +1020,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   width: fit-content;
   padding: 4px 10px;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
   font-size: 10px;
   font-weight: 800;
@@ -1076,7 +1068,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   width: 48px;
   height: 48px;
   border-radius: 16px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
   font-size: 17px;
   font-weight: 800;
@@ -1096,9 +1088,9 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
 .values-item-card {
   border: 1px solid var(--color-border);
   border-radius: 20px;
-  background: #fffffff2;
+  background: rgb(255 253 252 / 0.95);
   padding: 18px 20px;
-  box-shadow: 0 10px 28px #213d3b0f;
+  box-shadow: 0 10px 28px #241a200f;
   transition:
     transform 0.3s,
     box-shadow 0.3s,
@@ -1150,13 +1142,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   border-radius: 999px;
   background: white;
 }
-.planning-eyebrow-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
-  box-shadow: 0 0 0 4px #d1005318;
-}
+
 .planning-steps {
   display: flex;
   flex-wrap: wrap;
@@ -1195,18 +1181,18 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   padding: 18px 18px 18px 20px;
   border-radius: 22px;
   background:
-    radial-gradient(120% 140% at 100% 0%, #ff036655 0%, transparent 50%),
-    linear-gradient(135deg, #213d3b 0%, #2f5a56 100%);
+    radial-gradient(120% 140% at 100% 0%, rgb(217 178 106 / 0.28) 0%, transparent 52%),
+    linear-gradient(135deg, #241a20 0%, #4a2a36 100%);
   color: white;
   text-decoration: none;
-  box-shadow: 0 16px 40px #213d3b2e;
+  box-shadow: 0 16px 40px #241a202e;
   transition:
     transform 0.25s,
     box-shadow 0.25s;
 }
 .planning-assist:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 48px #213d3b38;
+  box-shadow: 0 20px 48px #241a2038;
 }
 .planning-assist-copy {
   display: grid;
@@ -1227,7 +1213,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   height: 44px;
   flex: none;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
 }
 .planning-questions details {
@@ -1281,7 +1267,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
     transform 0.25s;
 }
 .planning-questions details[open] .planning-q-icon {
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
 }
 .planning-q-text {
@@ -1533,22 +1519,7 @@ a:focus-visible .guide-zoom img {
    SEA TRIP Editorial Idle & Ambient Motions (Mềm mại, Tự nhiên, 60fps)
    ============================================================================= */
 
-@keyframes stt-dot-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 3px rgba(230, 0, 96, 0.14);
-  }
-  50% {
-    transform: scale(1.18);
-    box-shadow: 0 0 0 6px rgba(230, 0, 96, 0.26);
-  }
-}
 
-.home-editorial .journal-eyebrow::before,
-.home-editorial .intro-centered .eyebrow-pill::before,
-.planning-eyebrow-dot {
-  animation: stt-dot-pulse 3.5s ease-in-out infinite;
-}
 
 /* QuickFinder Idle Motion */
 @keyframes stt-beacon-glow {
@@ -1556,7 +1527,7 @@ a:focus-visible .guide-zoom img {
     box-shadow: 0 10px 30px #4d0a2622, inset 0 0 0 1px rgba(255, 209, 102, 0.15);
   }
   50% {
-    box-shadow: 0 16px 42px #ff03662d, inset 0 0 0 1px rgba(255, 209, 102, 0.45);
+    box-shadow: 0 16px 42px rgb(168 20 85 / 0.16), inset 0 0 0 1px rgba(217, 178, 106, 0.45);
   }
 }
 @keyframes stt-glow-breathe {
@@ -1726,9 +1697,6 @@ html[data-motion-paused="true"] .finder-panel-help,
 html[data-motion-paused="true"] .journey-duration,
 html[data-motion-paused="true"] .journey-duration-grid a,
 html[data-motion-paused="true"] .journey-finder-form > button,
-html[data-motion-paused="true"] .home-editorial .journal-eyebrow::before,
-html[data-motion-paused="true"] .home-editorial .intro-centered .eyebrow-pill::before,
-html[data-motion-paused="true"] .planning-eyebrow-dot,
 html[data-motion-paused="true"] .guide-index-num {
   animation: none !important;
   transform: none !important;

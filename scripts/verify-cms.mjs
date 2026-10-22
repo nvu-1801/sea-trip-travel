@@ -651,11 +651,29 @@ try {
   for (const width of [360, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await page.waitForTimeout(250);
+    const layout = await page.evaluate(() => {
+      const doc = document.documentElement;
+      const widest = [];
+      for (const element of document.querySelectorAll("body *")) {
+        const rect = element.getBoundingClientRect();
+        if (rect.width === 0 || rect.right <= innerWidth + 1) continue;
+        widest.push({
+          el: `${element.tagName.toLowerCase()}.${String(element.className).slice(0, 48)}`,
+          right: Math.round(rect.right),
+          width: Math.round(rect.width),
+        });
+      }
+      widest.sort((a, b) => b.right - a.right);
+      return {
+        scrollWidth: doc.scrollWidth,
+        innerWidth,
+        widest: widest.slice(0, 6),
+      };
+    });
     check(
       `tour form ${width}px has no horizontal overflow`,
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth + 1,
-      ),
+      layout.scrollWidth <= layout.innerWidth + 1,
+      JSON.stringify(layout),
     );
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -665,6 +683,35 @@ try {
     .filter({ hasText: "Đã lưu thay đổi" })
     .waitFor();
   check("structured editor saves draft via browser", true);
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Trang chủ/ })
+    .click();
+  await page
+    .getByRole("heading", {
+      name: "Các khối trang chủ theo đúng thứ tự hiển thị",
+    })
+    .waitFor();
+  await page.getByRole("button", { name: /Sửa tour nổi bật/ }).click();
+  const featuredHomeDialog = page.getByRole("dialog", {
+    name: "Tour nổi bật",
+  });
+  await featuredHomeDialog.waitFor();
+  check(
+    "home featured editor offers a tour picker",
+    (await featuredHomeDialog
+      .getByText("Chọn tour hiển thị trong khối", { exact: false })
+      .count()) > 0,
+  );
+  check(
+    "home featured editor points to the tour form for photos and prices",
+    (await featuredHomeDialog
+      .getByText("Sửa tour", { exact: false })
+      .count()) > 0,
+  );
+  await featuredHomeDialog
+    .getByRole("button", { name: "Đóng (Esc)", exact: true })
+    .click();
   await page
     .getByRole("navigation", { name: "Quản trị" })
     .getByRole("button", { name: /Điểm đến/ })
@@ -693,6 +740,26 @@ try {
   });
   await destinationPreview.waitFor();
   check("destination card preview opens", await destinationPreview.isVisible());
+  check(
+    "destination preview states publication clearly",
+    (await destinationPreview
+      .getByText(/Đang xuất bản trên website|Bản nháp — chưa lên website/)
+      .count()) > 0,
+  );
+  check(
+    "destination preview offers a direct edit action",
+    (await destinationPreview
+      .getByRole("button", { name: "Sửa điểm đến", exact: true })
+      .count()) > 0,
+  );
+  const previewFont = await destinationPreview
+    .locator(".adm-home-preview-copy h3")
+    .evaluate((el) => getComputedStyle(el).fontFamily);
+  check(
+    "destination preview title uses a Vietnamese font",
+    /Be Vietnam Pro|Fraunces/.test(previewFont),
+    previewFont,
+  );
   await destinationPreview
     .getByRole("button", { name: "Đóng", exact: true })
     .click();
@@ -715,6 +782,14 @@ try {
   check(
     "destination form shows the live home card preview",
     (await page.getByText("Thẻ sẽ xuất hiện", { exact: false }).count()) > 0,
+  );
+  const destinationStatus = page.locator(".adm-home-status");
+  check(
+    "destination form separates website publication from home visibility",
+    (await destinationStatus.getByText("Website", { exact: true }).count()) >
+      0 &&
+      (await destinationStatus.getByText("Khám phá", { exact: true }).count()) >
+        0,
   );
   const actionsBeforeForm = await page.evaluate(() => {
     const actions = document.querySelector(".adm-edit-actions");
@@ -744,7 +819,29 @@ try {
     );
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.getByRole("button", { name: "Cẩm nang", exact: false }).click();
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Trang chủ/ })
+    .click();
+  await page
+    .getByRole("heading", { name: "Trang chủ", exact: true })
+    .waitFor();
+  const editSectionButtons = page.getByRole("button", { name: /^Sửa / });
+  await editSectionButtons.first().waitFor();
+  const sectionCount = await editSectionButtons.count();
+  check("home lists every landing section", sectionCount >= 8);
+  for (let index = 0; index < sectionCount; index += 1) {
+    await editSectionButtons.nth(index).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.waitFor();
+    await dialog.locator('button[aria-label="Đóng (Esc)"]').click();
+    await dialog.waitFor({ state: "hidden" });
+  }
+  check("every home section editor opens without crashing", true);
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Cẩm nang/ })
+    .click();
   await page.getByRole("button", { name: /Chỉnh sửa/ }).first().click();
   await page
     .locator("summary")
@@ -779,6 +876,45 @@ try {
   }
   await page.setViewportSize({ width: 390, height: 900 });
   await page.screenshot({ path: "verify-screenshots/studio-mobile.png" });
+
+  // Header quick search: shortcut, accent-free query, opens the matching form.
+  await page.getByRole("button", { name: "Tìm kiếm nhanh trong Studio" }).click();
+  const quick = page.getByRole("dialog", {
+    name: "Tìm kiếm nhanh trong Studio",
+  });
+  await quick.waitFor();
+  check("header quick search opens", await quick.isVisible());
+  check(
+    "quick search fits a 390px viewport",
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+  );
+  await quick.getByRole("combobox").fill("sapa");
+  await quick.getByRole("option", { name: /Sa Pa – Fansipan/ }).waitFor();
+  await page.keyboard.press("Enter");
+  await page.getByLabel(/^Tiêu đề/).first().waitFor();
+  check(
+    "quick search opens the matching tour form without diacritics",
+    (await page.getByLabel(/^Tiêu đề/).first().inputValue()).includes("Sa Pa"),
+  );
+
+  await page.keyboard.press("Control+k");
+  const quickAgain = page.getByRole("dialog", {
+    name: "Tìm kiếm nhanh trong Studio",
+  });
+  await quickAgain.getByRole("combobox").fill("thu vien anh");
+  await quickAgain.getByRole("option", { name: /Thư viện ảnh/ }).click();
+  await page
+    .getByRole("heading", { name: "Thư viện ảnh", exact: true })
+    .waitFor();
+  check("quick search switches admin tabs", true);
+  await page.keyboard.press("Control+k");
+  await quickAgain.waitFor();
+  await page.keyboard.press("Escape");
+  await quickAgain.waitFor({ state: "hidden" });
+  check("Escape closes quick search", true);
+
   await page.getByRole("button", { name: "Bảo mật", exact: false }).click();
   await page.getByLabel("Mật khẩu hiện tại").fill(password);
   await page.getByLabel("Mật khẩu mới").fill(password + "-new");

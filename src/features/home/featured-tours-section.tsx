@@ -2,6 +2,7 @@ import { ROUTES } from "@/config/navigation";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { getFeaturedTours } from "@/lib/data/tours";
 import { Container, Section } from "@/components/ui/layout";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon } from "@/components/ui/icons";
@@ -26,10 +27,9 @@ export function FeaturedToursSection({ locale }: { locale: Locale }) {
     <Section tone="muted" spacing="loose" className="journal-featured">
       <Container>
         <Reveal className="intro-centered">
-          <p className="eyebrow-pill">
-            <span aria-hidden="true" />
+          <SectionEyebrow className="eyebrow-pill">
             {m.home.featured.eyebrow}
-          </p>
+          </SectionEyebrow>
           <h2>
             <HeadingAccent
               text={m.home.featured.title}

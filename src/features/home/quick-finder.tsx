@@ -1,5 +1,6 @@
 import { ROUTES } from "@/config/navigation";
 import { Container } from "@/components/ui/layout";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { Reveal } from "@/components/ui/reveal";
 import {
   ArrowRightIcon,
@@ -70,10 +71,9 @@ export function QuickFinder({ locale }: { locale: Locale }) {
     >
       <Container>
         <Reveal className="intro-centered">
-          <p className="eyebrow-pill">
-            <span aria-hidden="true" />
+          <SectionEyebrow className="eyebrow-pill">
             {en ? "PLAN YOUR TRIP" : "LÊN KẾ HOẠCH"}
-          </p>
+          </SectionEyebrow>
           <h2 id="finder-title">
             {en ? (
               <>

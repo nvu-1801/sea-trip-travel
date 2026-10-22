@@ -6,6 +6,7 @@ import {
   sectionSummary,
   type HomeSectionMeta,
 } from "@/lib/home-sections";
+import { AdminIcon, type AdminIconName } from "./admin-icons";
 
 /**
  * "Trang chủ" tab: cards grouped Đầu / Giữa / Cuối trang, in the exact order
@@ -72,7 +73,12 @@ export function HomeSections({
                       <span className="adm-section-num">
                         {String(num).padStart(2, "0")}
                       </span>
-                      <span className="adm-section-icon">{meta.icon}</span>
+                      <span className="adm-section-icon">
+                        <AdminIcon
+                          name={meta.icon as AdminIconName}
+                          size={16}
+                        />
+                      </span>
                     </div>
                     <div className="adm-section-body">
                       <div className="adm-section-top">
@@ -83,9 +89,7 @@ export function HomeSections({
                           <span className="adm-badge draft">Bản nháp</span>
                         ) : null}
                       </div>
-                      <h3>
-                        {meta.icon} {meta.title}
-                      </h3>
+                      <h3>{meta.title}</h3>
                       <p className="adm-section-summary">
                         {missing
                           ? "Đang tải…"
@@ -94,7 +98,7 @@ export function HomeSections({
                               meta.key === "footer" ? {} : data,
                             )}
                       </p>
-                      <p className="adm-section-tip">💡 {meta.tip}</p>
+                      <p className="adm-section-tip">{meta.tip}</p>
                       <div className="adm-section-actions">
                         {meta.linkTab ? (
                           <button type="button" onClick={onGoSettings}>
@@ -103,7 +107,7 @@ export function HomeSections({
                         ) : (
                           <button
                             type="button"
-                            className="adm-primary"
+                            className="adm-section-edit"
                             disabled={missing}
                             onClick={() =>
                               meta.key === "hero"
@@ -111,7 +115,7 @@ export function HomeSections({
                                 : onEditSection(meta)
                             }
                           >
-                            Sửa {meta.title.toLowerCase()} ✎
+                            Sửa {meta.title.toLowerCase()}
                           </button>
                         )}
                       </div>
