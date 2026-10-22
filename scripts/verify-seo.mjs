@@ -72,7 +72,7 @@ try {
   const homeTitle = text(pick(home.html, /<title>([^<]*)<\/title>/i)[0]);
   check(
     "home title targets Quy Nhon – Phu Yen",
-    homeTitle === "Du lịch Quy Nhơn Phú Yên | SEA TRIP TRAVEL",
+    homeTitle === "Du lịch Quy Nhơn – Phú Yên | SEA TRIP TRAVEL",
     homeTitle,
   );
   check(

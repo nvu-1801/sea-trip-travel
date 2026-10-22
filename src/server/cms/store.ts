@@ -269,6 +269,56 @@ export function fillTourImageSources(): number {
   return repaired;
 }
 
+/**
+ * Settings rows seeded before the SEO fields existed have no `seo` object.
+ * Public metadata merges defaults at read time, but the Studio form reads the
+ * stored row — without this the owner would never see the new fields. Fill the
+ * defaults once, preserving any values already saved.
+ */
+export function backfillSettingsSeo(): number {
+  const rows = db()
+    .prepare("SELECT id,data,published FROM records WHERE collection='settings'")
+    .all() as { id: string; data: string; published: string | null }[];
+  const update = db().prepare(
+    "UPDATE records SET data=?, published=? WHERE collection='settings' AND id=?",
+  );
+  const hasSeo = (value: unknown) => {
+    if (!value || typeof value !== "object") return false;
+    const record = value as Record<string, unknown>;
+    return Object.keys(defaultSettings.seo).every(
+      (key) =>
+        typeof record[key] === "string" &&
+        (record[key] as string).trim().length > 0,
+    );
+  };
+  const mergeSeo = (value: unknown) => ({
+    ...defaultSettings.seo,
+    ...(value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : {}),
+  });
+
+  let repaired = 0;
+  for (const row of rows) {
+    const data = JSON.parse(row.data) as Record<string, unknown>;
+    const published = row.published
+      ? (JSON.parse(row.published) as Record<string, unknown>)
+      : null;
+    const dataNeeds = !hasSeo(data.seo);
+    const publishedNeeds = published ? !hasSeo(published.seo) : false;
+    if (!dataNeeds && !publishedNeeds) continue;
+    if (dataNeeds) data.seo = mergeSeo(data.seo);
+    if (published && publishedNeeds) published.seo = mergeSeo(published.seo);
+    update.run(
+      JSON.stringify(data),
+      published ? JSON.stringify(published) : null,
+      row.id,
+    );
+    repaired += 1;
+  }
+  return repaired;
+}
+
 let seeded = false;
 export function seed() {
   if (seeded) return;
@@ -290,6 +340,7 @@ export function seed() {
       }
     backfillDestinationHomeFlags();
     fillTourImageSources();
+    backfillSettingsSeo();
   });
   seeded = true;
 }

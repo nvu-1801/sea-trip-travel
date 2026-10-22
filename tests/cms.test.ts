@@ -45,6 +45,7 @@ import {
   purgeExpiredTrash,
   TRASH_RETENTION_DAYS,
   fillTourImageSources,
+  backfillSettingsSeo,
 } from "../src/server/cms/store";
 import {
   hashPassword,
@@ -787,6 +788,24 @@ test("settings rows written before the SEO fields inherit safe defaults", () => 
       )
       .run(JSON.stringify(row.data), JSON.stringify(row.data), row.id);
   }
+});
+
+test("legacy settings rows receive SEO defaults for the Studio form", () => {
+  const row = list("settings")[0];
+  const legacy = { ...row.data } as Record<string, unknown>;
+  delete legacy.seo;
+  db()
+    .prepare(
+      "UPDATE records SET data=?, published=? WHERE collection='settings' AND id=?",
+    )
+    .run(JSON.stringify(legacy), JSON.stringify(legacy), row.id);
+
+  assert.ok(backfillSettingsSeo() >= 1);
+  const current = list("settings")[0].data as {
+    seo?: { homeTitle?: string };
+  };
+  assert.equal(current.seo?.homeTitle, HOME_SEO.vi.title);
+  assert.equal(backfillSettingsSeo(), 0);
 });
 
 test("trash auto-deletes rows older than the retention window", () => {

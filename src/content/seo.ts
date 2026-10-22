@@ -10,7 +10,7 @@
 
 export const HOME_SEO = {
   vi: {
-    title: "Du lịch Quy Nhơn Phú Yên | SEA TRIP TRAVEL",
+    title: "Du lịch Quy Nhơn – Phú Yên | SEA TRIP TRAVEL",
     description:
       "Khám phá Quy Nhơn – Phú Yên cùng SEA TRIP TRAVEL. Tham khảo tour Kỳ Co – Eo Gió, Hòn Khô, Ghềnh Đá Đĩa và lịch trình phù hợp cho chuyến đi của bạn.",
   },
