@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
@@ -28,6 +29,7 @@ import type { Locale } from "@/i18n/config";
 import { format, getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { ROUTES } from "@/config/navigation";
+import { CATEGORY_SEO } from "@/content/seo";
 
 /**
  * Shared view for all tour category pages (parent and child).
@@ -78,14 +80,22 @@ export function buildCategoryMetadata(
     categoryTranslationStatus(category.id, locale),
     locale,
   );
+  const seoDefault = locale === "vi" ? CATEGORY_SEO[category.id] : undefined;
 
   return buildMetadata({
-    title: category.seo?.title ?? category.name,
-    description: category.seo?.description ?? category.description,
+    title: category.seo?.title ?? seoDefault?.title ?? category.name,
+    description:
+      category.seo?.description ??
+      seoDefault?.description ??
+      category.description,
     path: category.path,
     locale,
     noIndex: !indexable,
     hreflang: indexable,
+    enIndexable: isIndexable(
+      categoryTranslationStatus(category.id, "en"),
+      "en",
+    ),
   });
 }
 
@@ -173,6 +183,18 @@ export function CategoryPageView({
             <p className="max-w-2xl text-[1.0625rem] leading-relaxed text-foreground-muted">
               {category.description}
             </p>
+
+            {category.region === "quy-nhon-phu-yen" ? (
+              <Link
+                href={localizePath(
+                  locale,
+                  "/cam-nang-du-lich/kinh-nghiem-du-lich-quy-nhon-phu-yen",
+                )}
+                className="w-fit text-sm font-semibold text-primary-strong underline decoration-primary/30 underline-offset-4 transition-colors hover:decoration-primary"
+              >
+                Kinh nghiệm du lịch Quy Nhơn – Phú Yên cho người đi lần đầu
+              </Link>
+            ) : null}
 
             {children.length > 0 ? (
               <ul className="mt-2 flex flex-wrap gap-2">

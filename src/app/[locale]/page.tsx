@@ -2,7 +2,6 @@ import "@/features/home/home-editorial.css";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { JourneyStory, PlanningSection } from "@/features/home/journey-story";
 import type { Metadata } from "next";
-import { siteConfig } from "@/config/runtime-site";
 import { buildMetadata } from "@/lib/seo";
 import { Hero } from "@/features/home/hero";
 import { QuickFinder } from "@/features/home/quick-finder";
@@ -19,6 +18,7 @@ import { tourTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
 import { getMessages } from "@/i18n/server";
+import { settings } from "@/server/cms/store";
 
 /**
  * Home page.
@@ -48,16 +48,22 @@ export async function generateMetadata({
   params,
 }: PageProps<"/[locale]">): Promise<Metadata> {
   const locale = await resolveLocale(params);
-  const m = getMessages(locale);
   const indexable = homeIndexable(locale);
+  const enIndexable = homeIndexable("en");
+  const seo = settings().seo;
 
   return buildMetadata({
-    title: `${siteConfig.name} — ${m.site.tagline}`,
-    description: m.site.description,
+    title: locale === "vi" ? seo.homeTitle : seo.homeTitleEn,
+    description:
+      locale === "vi" ? seo.homeDescription : seo.homeDescriptionEn,
     path: "/",
     locale,
     noIndex: !indexable,
     hreflang: indexable,
+    enIndexable,
+    // HOME_SEO includes the brand, so bypass the layout template and avoid
+    // "… | SEA TRIP TRAVEL | SEA TRIP TRAVEL".
+    absoluteTitle: true,
     keywords:
       locale === "vi"
         ? [
