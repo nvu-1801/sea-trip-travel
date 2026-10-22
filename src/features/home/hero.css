@@ -101,15 +101,6 @@
     color-mix(in srgb, var(--theme-dark) 45%, transparent);
   margin-bottom: 22px;
 }
-/* A fine gold rule replaces the old pink dot: quieter, more editorial. */
-.stt-cinema-eyebrow::before {
-  content: "";
-  width: 30px;
-  height: 1px;
-  flex-shrink: 0;
-  background: linear-gradient(90deg, transparent, var(--color-sun-400));
-  opacity: 0.95;
-}
 .stt-cinema-copy h1 {
   font-family: var(--font-fraunces), Georgia, serif;
   font-size: clamp(44px, 5.6vw, 84px);
@@ -364,9 +355,6 @@
     font-size: 13px;
     letter-spacing: 0;
     margin-bottom: 16px;
-  }
-  .stt-cinema-eyebrow::before {
-    width: 22px;
   }
   .stt-cinema-description {
     font-size: 14px;

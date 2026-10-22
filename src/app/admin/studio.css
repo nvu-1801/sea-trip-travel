@@ -2992,8 +2992,8 @@ a.adm-image-action:hover {
   .adm-shell aside {
     position: static;
     height: auto;
-    padding: 18px;
-    gap: 12px;
+    padding: 12px 14px;
+    gap: 10px;
     border-bottom: 1px solid #f2dde7;
   }
   .adm-shell aside > .adm-eyebrow,
@@ -3002,14 +3002,22 @@ a.adm-image-action:hover {
   }
   .adm-shell nav {
     display: flex;
-    overflow-x: auto;
     gap: 5px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  /* One scrollable chip row instead of stacked columns per menu group. */
+  .adm-shell nav .adm-nav-group {
+    display: contents;
+  }
+  .adm-shell nav .adm-nav-label {
+    display: none;
   }
   .adm-shell nav button {
     white-space: nowrap;
     flex-shrink: 0;
     font-size: 11px;
-    min-height: 44px;
+    min-height: 40px;
     padding: 8px 11px;
   }
   .adm-shell aside > button {
@@ -3472,7 +3480,7 @@ a.adm-image-action:hover {
   }
   .adm-grid-2,
   .adm-grid-3 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 /* ---- Sticky editor actions (above the form, never over the last field) ---- */
