@@ -433,6 +433,7 @@ export function Dashboard({
   const sectionDialogRef = useRef<HTMLDivElement>(null);
   const sectionBodyRef = useRef<HTMLDivElement>(null);
   const quickFetchedAt = useRef(0);
+  const [navOpen, setNavOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickQuery, setQuickQuery] = useState("");
   const [quickItems, setQuickItems] = useState<AdminSearchItem[] | null>(null);
@@ -586,6 +587,30 @@ export function Dashboard({
       target?.focus();
     };
   }, [quickOpen]);
+  // The mobile sidebar is a drawer: lock the page behind it, close on Escape
+  // and return focus to the trigger so keyboard users are never trapped.
+  useEffect(() => {
+    if (!navOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setNavOpen(false);
+    };
+    const onResize = () => {
+      if (window.innerWidth > 760) setNavOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus && previousFocus.isConnected) {
+        previousFocus.focus({ preventScroll: true });
+      }
+    };
+  }, [navOpen]);
   async function api(url: string, options: RequestInit = {}) {
     const response = await fetch(`/api/admin/${url}`, {
       ...options,
@@ -855,6 +880,7 @@ export function Dashboard({
     next: string,
     open?: { id: string; slug?: string },
   ) {
+    setNavOpen(false);
     if (
       dirty &&
       !(await requestConfirm({
@@ -1894,6 +1920,7 @@ export function Dashboard({
   return (
     <div
       className="adm-shell"
+      data-nav-open={navOpen ? "true" : "false"}
       onClickCapture={() => activitySerial.current++}
       onInputCapture={() => activitySerial.current++}
       onChangeCapture={(event) => {
@@ -1906,17 +1933,33 @@ export function Dashboard({
         }
       }}
     >
-      <aside>
-        <Link
-          className="adm-brand"
-          href="/"
-          onClick={(event) => {
-            event.preventDefault();
-            leaveToWebsite();
-          }}
-        >
-          SEA TRIP <small>STUDIO</small>
-        </Link>
+      <div
+        className="adm-nav-scrim"
+        aria-hidden="true"
+        onClick={() => setNavOpen(false)}
+      />
+      <aside id="adm-sidebar" aria-label="Điều hướng Studio">
+        <div className="adm-side-head">
+          <Link
+            className="adm-brand"
+            href="/"
+            onClick={(event) => {
+              event.preventDefault();
+              setNavOpen(false);
+              leaveToWebsite();
+            }}
+          >
+            SEA TRIP <small>STUDIO</small>
+          </Link>
+          <button
+            type="button"
+            className="adm-nav-close"
+            aria-label="Đóng menu quản trị"
+            onClick={() => setNavOpen(false)}
+          >
+            ×
+          </button>
+        </div>
         <p className="adm-eyebrow">Không gian quản trị</p>
         <nav aria-label="Quản trị">
           {TAB_GROUPS.map((group) => (
@@ -1949,6 +1992,7 @@ export function Dashboard({
           href="/"
           onClick={(event) => {
             event.preventDefault();
+            setNavOpen(false);
             leaveToWebsite();
           }}
         >
@@ -1957,37 +2001,31 @@ export function Dashboard({
         <button
           type="button"
           className="adm-logout"
-          onClick={logoutFromStudio}
+          onClick={() => {
+            setNavOpen(false);
+            logoutFromStudio();
+          }}
         >
           Đăng xuất khỏi Studio
         </button>
       </aside>
       <main className="adm-main">
         <header className="adm-topbar">
+          <button
+            type="button"
+            className="adm-topbar-menu"
+            aria-controls="adm-sidebar"
+            aria-expanded={navOpen}
+            aria-label="Mở menu quản trị"
+            onClick={() => setNavOpen(true)}
+          >
+            <AdminIcon name="menu" size={18} />
+          </button>
           <div className="adm-topbar-lead">
-            <span className="adm-topbar-brand">
-              SEA TRIP <b>STUDIO</b>
-            </span>
-            <span className="adm-topbar-slash" aria-hidden="true">
-              /
-            </span>
+            <span className="adm-topbar-group">{tabGroup}</span>
             <span className="adm-topbar-section">{tabLabel}</span>
           </div>
           <div className="adm-topbar-actions">
-            {!selected &&
-            ["tours", "articles", "categories", "destinations"].includes(
-              tab,
-            ) ? (
-              <button
-                type="button"
-                className="adm-topbar-new"
-                onClick={create}
-                disabled={busy || loading}
-              >
-                <AdminIcon name="plus" size={15} />
-                <span>Tạo mới</span>
-              </button>
-            ) : null}
             <button
               type="button"
               ref={quickButtonRef}
@@ -2000,44 +2038,77 @@ export function Dashboard({
             >
               <SearchIcon className="adm-search-icon" />
               <span className="adm-search-text">
-                Tìm tour, bài viết, điểm đến…
+                <span className="adm-search-long">
+                  Tìm tour, bài viết, điểm đến…
+                </span>
+                <span className="adm-search-short">Tìm nhanh…</span>
               </span>
               <kbd>Ctrl K</kbd>
             </button>
-            <button
-              type="button"
-              ref={helpButtonRef}
-              className="adm-topbar-icon"
-              aria-expanded={helpOpen}
-              aria-controls="adm-help-panel"
-              aria-label={
-                helpOpen
-                  ? "Đóng hướng dẫn sử dụng"
-                  : "Mở hướng dẫn sử dụng trang này"
-              }
-              title="Hướng dẫn sử dụng trang này"
-              onClick={() => setHelpOpen((value) => !value)}
-            >
-              ?
-            </button>
-            <button
-              type="button"
-              className="adm-topbar-icon"
-              aria-label="Mở website trong tab mới"
-              title="Mở website"
-              onClick={leaveToWebsite}
-            >
-              ↗
-            </button>
-            <button
-              type="button"
-              className="adm-avatar adm-topbar-user"
-              aria-label="Bảo mật tài khoản"
-              title="Bảo mật tài khoản"
-              onClick={() => void navigateTo("account")}
-            >
-              ST
-            </button>
+            {!selected &&
+            ["tours", "articles", "categories", "destinations"].includes(
+              tab,
+            ) ? (
+              <button
+                type="button"
+                className="adm-topbar-new"
+                onClick={create}
+                disabled={busy || loading}
+                title="Tạo mới trong mục đang mở"
+              >
+                <AdminIcon name="plus" size={15} />
+                <span>Tạo mới</span>
+              </button>
+            ) : null}
+            <span className="adm-topbar-divider" aria-hidden="true" />
+            <div className="adm-topbar-tools">
+              {!["account", "overview", "activity"].includes(tab) && (
+                <button
+                  type="button"
+                  className="adm-topbar-icon adm-topbar-refresh"
+                  aria-label="Tải lại dữ liệu mục này"
+                  title="Tải lại dữ liệu"
+                  disabled={busy || loading}
+                  onClick={() => void load()}
+                >
+                  <AdminIcon name="refresh" size={16} />
+                </button>
+              )}
+              <button
+                type="button"
+                ref={helpButtonRef}
+                className="adm-topbar-icon"
+                aria-expanded={helpOpen}
+                aria-controls="adm-help-panel"
+                aria-label={
+                  helpOpen
+                    ? "Đóng hướng dẫn sử dụng"
+                    : "Mở hướng dẫn sử dụng trang này"
+                }
+                title="Hướng dẫn sử dụng trang này"
+                onClick={() => setHelpOpen((value) => !value)}
+              >
+                ?
+              </button>
+              <button
+                type="button"
+                className="adm-topbar-icon adm-topbar-site"
+                aria-label="Mở website trong tab mới"
+                title="Mở website"
+                onClick={leaveToWebsite}
+              >
+                ↗
+              </button>
+              <button
+                type="button"
+                className="adm-avatar adm-topbar-user"
+                aria-label="Bảo mật tài khoản"
+                title="Bảo mật tài khoản"
+                onClick={() => void navigateTo("account")}
+              >
+                ST
+              </button>
+            </div>
           </div>
         </header>
         <header className="adm-masthead">
