@@ -868,6 +868,96 @@ try {
     .filter({ hasText: "Đã lưu thay đổi" })
     .waitFor();
   check("article block editor supports headings without JSON", true);
+
+  // URL-backed sections: direct links, reload and Back/Forward.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Điểm đến/ })
+    .click();
+  await page
+    .getByRole("heading", { name: "Điểm đến", exact: true })
+    .waitFor();
+  check(
+    "section URL reflects the current section",
+    new URL(page.url()).pathname === "/admin/destinations",
+  );
+  await page.reload();
+  await page
+    .getByRole("heading", { name: "Điểm đến", exact: true })
+    .waitFor();
+  check(
+    "reload keeps the current section",
+    new URL(page.url()).pathname === "/admin/destinations",
+  );
+  await page.goBack();
+  await page
+    .getByRole("heading", { name: "Cẩm nang", exact: true })
+    .waitFor();
+  check(
+    "Back returns to the previous section",
+    new URL(page.url()).pathname === "/admin/articles",
+  );
+  await page.goForward();
+  await page
+    .getByRole("heading", { name: "Điểm đến", exact: true })
+    .waitFor();
+  check(
+    "Forward returns to the next section",
+    new URL(page.url()).pathname === "/admin/destinations",
+  );
+
+  // “Về website” is a same-tab trip that must not touch the session.
+  await page.getByRole("link", { name: /Về website/ }).click();
+  await page.waitForURL(`${base}/`);
+  check("Về website opens the public home in the same tab", true);
+  check(
+    "Về website keeps the admin session",
+    (await context.request.get(`${base}/api/admin/auth`)).status() === 200,
+  );
+  await page.goto(`${base}/admin/destinations`);
+  await page
+    .getByRole("heading", { name: "Điểm đến", exact: true })
+    .waitFor();
+  check("returning to the Studio is still signed in", true);
+
+  // Unsaved changes block a section jump until the owner decides.
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Tour du lịch/ })
+    .click();
+  await page.getByRole("button", { name: /Chỉnh sửa/ }).first().click();
+  const dirtyTitle = page.getByLabel(/^Tiêu đề/).first();
+  await dirtyTitle.fill("Thay đổi chưa lưu");
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Điểm đến/ })
+    .click();
+  const leaveDialog = page.getByRole("alertdialog");
+  await leaveDialog.waitFor();
+  check(
+    "unsaved changes prompt before leaving a section",
+    (await leaveDialog.innerText()).includes("thay đổi chưa lưu"),
+  );
+  await leaveDialog.getByRole("button", { name: "Hủy bỏ" }).click();
+  check(
+    "cancelling the prompt keeps the current editor",
+    page.url().includes("/admin/tours") &&
+      (await dirtyTitle.inputValue()) === "Thay đổi chưa lưu",
+  );
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Điểm đến/ })
+    .click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Rời màn hình" })
+    .click();
+  await page
+    .getByRole("heading", { name: "Điểm đến", exact: true })
+    .waitFor();
+  check("confirming the prompt opens the requested section", true);
+
   for (const width of [360, 390, 768]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`${base}/admin`);
@@ -924,6 +1014,29 @@ try {
   await page.keyboard.press("Escape");
   await quickAgain.waitFor({ state: "hidden" });
   check("Escape closes quick search", true);
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page
+    .getByRole("button", { name: "Đăng xuất khỏi Studio", exact: true })
+    .click();
+  await page
+    .getByRole("heading", { name: "Chào mừng bạn trở lại." })
+    .waitFor();
+  check(
+    "logout lands on the dedicated login page",
+    new URL(page.url()).pathname === "/admin/login",
+  );
+  check(
+    "logout revokes the admin session",
+    (await context.request.get(`${base}/api/admin/auth`)).status() === 401,
+  );
+  await page.getByLabel("Tên đăng nhập", { exact: true }).fill("qa-owner");
+  await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Vào SEA TRIP Studio" }).click();
+  await page
+    .getByRole("heading", { name: "Tổng quan", exact: true })
+    .waitFor();
+  check("login after logout returns to the Studio", true);
 
   await page.getByRole("button", { name: "Bảo mật", exact: false }).click();
   await page.getByLabel("Mật khẩu hiện tại").fill(password);

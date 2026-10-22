@@ -1,5 +1,5 @@
 import { Container } from "@/components/ui/layout";
-import { Reveal } from "@/components/ui/reveal";
+import { RevealGroup } from "@/components/ui/reveal";
 import {
   CalendarIcon,
   CompassIcon,
@@ -94,18 +94,15 @@ export function TrustStrip({ locale }: { locale: Locale }) {
       className="border-y border-border bg-surface"
     >
       <Container>
-        <ul className="grid grid-cols-1 gap-x-8 gap-y-5 py-8 sm:grid-cols-2 sm:py-9 lg:grid-cols-4">
-          {items.map((item, index) => (
-            <Reveal
-              as="li"
-              key={item.title}
-              delay={index}
-              className="flex items-start gap-3.5"
-            >
+        <RevealGroup
+          as="ul"
+          className="grid grid-cols-1 gap-x-8 gap-y-5 py-8 sm:grid-cols-2 sm:py-9 lg:grid-cols-4"
+        >
+          {items.map((item) => (
+            <li key={item.title} className="flex items-start gap-3.5">
               <span
                 aria-hidden="true"
-                className="stt-trust-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft transition-transform duration-300"
-                style={{ animationDelay: `${index * 1.4}s` }}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft"
               >
                 <item.icon className="h-5 w-5 text-primary-strong" />
               </span>
@@ -117,9 +114,9 @@ export function TrustStrip({ locale }: { locale: Locale }) {
                   {item.body}
                 </span>
               </span>
-            </Reveal>
+            </li>
           ))}
-        </ul>
+        </RevealGroup>
       </Container>
     </section>
   );

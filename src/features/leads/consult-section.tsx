@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { siteConfig } from "@/config/runtime-site";
 import { Container, Section } from "@/components/ui/layout";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
-import { Reveal } from "@/components/ui/reveal";
+import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import {
   PhoneIcon,
   ClockIcon,
@@ -86,13 +86,13 @@ export function ConsultSection({
   return (
     <Section id={id} tone={tone} spacing={spacing}>
       <Container>
-        <Reveal className="intro-centered">
+        <RevealGroup className="intro-centered">
           <SectionEyebrow className="eyebrow-pill">
             {m.consult.eyebrow}
           </SectionEyebrow>
           <h2>{title ?? m.consult.defaultTitle}</h2>
           <p>{description ?? m.consult.defaultDescription}</p>
-        </Reveal>
+        </RevealGroup>
         <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-12 lg:gap-8">
           <Reveal className="h-full lg:col-span-5" variant="left">
             <div className="flex h-full flex-col rounded-3xl border border-border bg-surface p-6 shadow-card sm:p-8">

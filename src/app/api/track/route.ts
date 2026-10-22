@@ -11,6 +11,19 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  /**
+   * Dev guard.
+   *
+   * The CMS SQLite file (and its WAL) lives in `data/`, inside the project
+   * tree. Turbopack watches that tree, so writing a page view on every load
+   * restarts the entry chunk; the HMR restart reloads the page, which writes
+   * another view — an endless reload loop. Page views only matter in
+   * production, so keep the dev database read-only here.
+   */
+  if (process.env.NODE_ENV !== "production") {
+    return Response.json({ ok: true }, { status: 202 });
+  }
+
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
     if (!consumeLimit(`track:${ip}`, 120, 60_000)) {

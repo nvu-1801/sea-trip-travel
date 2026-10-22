@@ -2,7 +2,7 @@ import { ROUTES } from "@/config/navigation";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { Container, Section } from "@/components/ui/layout";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
-import { Reveal } from "@/components/ui/reveal";
+import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { AssetImage } from "@/components/ui/asset-image";
 import { ArrowRightIcon } from "@/components/ui/icons";
@@ -65,7 +65,7 @@ export function ValuesSection({ locale }: { locale: Locale }) {
       className="journal-values values-premium"
     >
       <Container>
-        <Reveal className="intro-centered">
+        <RevealGroup className="intro-centered">
           <SectionEyebrow className="eyebrow-pill">
             {m.home.values.eyebrow}
           </SectionEyebrow>
@@ -76,7 +76,7 @@ export function ValuesSection({ locale }: { locale: Locale }) {
             />
           </h2>
           <p>{m.home.values.description}</p>
-        </Reveal>
+        </RevealGroup>
         <div className="values-grid">
           <div className="values-visual">
             <Reveal>
@@ -85,6 +85,7 @@ export function ValuesSection({ locale }: { locale: Locale }) {
                   image={{ src: visual.src, alt: visual.alt }}
                   sizes="(max-width: 1024px) 90vw, 32vw"
                   className="values-photo"
+                  unveil
                 />
                 <div className="values-photo-glow" aria-hidden="true" />
                 <div className="values-float values-float-top">

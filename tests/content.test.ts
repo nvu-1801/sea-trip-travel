@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { tours } from "@/content";
+import {
+  articles,
+  tourCategories,
+  tours,
+} from "@/content";
 import {
   getCategories,
   getCategoryByPath,
@@ -133,6 +137,33 @@ describe("content integrity", () => {
     for (const tour of tours) {
       assert.ok(tour.categoryIds.length >= 1, `${tour.slug} has no category`);
       assert.ok(tour.itinerary.length >= 1, `${tour.slug} has no itinerary`);
+    }
+  });
+
+  it("ships the region-card and guide-cover photos the CMS backfill restores", () => {
+    // These are the rows production seeded without a photo; the CMS repair
+    // copies exactly these addresses, so both the path and the file must stay.
+    const expectedPhotos: Record<string, string> = {
+      cat_mien_bac: "/images/destinations/ha-long.jpg",
+      cat_mien_trung: "/images/destinations/hoi-an.jpg",
+      cat_mien_nam: "/images/destinations/phu-quoc.jpg",
+      cat_tay_nguyen: "/images/destinations/da-lat.jpg",
+      art_kinh_nghiem_qn_py: "/images/hero/island-panorama.webp",
+      art_thoi_diem_qn: "/images/tours/d7233006cc4fd0f9.jpeg",
+      art_an_gi_o_qn: "/images/destinations/dam-o-loan.jpg",
+      art_di_chuyen_qn: "/images/hero/blue-bay.webp",
+      art_ghenh_da_dia_bai_xep: "/images/destinations/bai-xep.jpg",
+    };
+    const photos = [
+      ...tourCategories.map((category) => [category.id, category.image?.src] as const),
+      ...articles.map((article) => [article.id, article.cover?.src] as const),
+    ];
+    for (const [id, src] of photos) {
+      // Only the rows listed here were photoless in production; newer content
+      // may legitimately add photos and should not fail this backfill check.
+      if (!(id in expectedPhotos)) continue;
+      assert.equal(src, expectedPhotos[id], `${id} has an unexpected photo`);
+      assert.ok(existsSync(`public${src}`), `${src} is missing from public/`);
     }
   });
 });

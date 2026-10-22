@@ -10,7 +10,10 @@ import {
 } from "./destination-editor";
 import { useContentUpdates } from "@/lib/use-content-updates";
 import { HeroEditor } from "./hero-editor";
+import { ThemePanel } from "./theme-panel";
+import type { ThemeId } from "@/config/themes";
 import { Overview } from "./overview";
+import { ActivityCheck } from "./activity-check";
 import { HomeSections } from "./home-sections";
 import { HomeFeaturedEditor } from "./home-featured-editor";
 import type { HomeSectionMeta } from "@/lib/home-sections";
@@ -24,6 +27,7 @@ import {
 } from "./notify";
 import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
 import { mediaSelectOptions } from "@/lib/admin-media-options";
+import { adminSectionHref } from "@/lib/admin-routes";
 import {
   TRASH_RETENTION_DAYS,
   articleCoverSrcOf,
@@ -83,6 +87,7 @@ type QuickEntry = {
 const tabs = [
   ["overview", "Tổng quan", "overview"],
   ["home", "Trang chủ", "home"],
+  ["theme", "Giao diện", "theme"],
   ["tours", "Tour du lịch", "tours"],
   ["articles", "Cẩm nang", "articles"],
   ["categories", "Danh mục", "categories"],
@@ -91,13 +96,14 @@ const tabs = [
   ["messages", "Nội dung VI / EN", "messages"],
   ["settings", "Website & footer", "settings"],
   ["leads", "Yêu cầu tư vấn", "leads"],
+  ["activity", "Kiểm tra hoạt động", "activity"],
   ["account", "Bảo mật", "account"],
 ] as const;
 const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
-  { label: null, keys: ["overview"] },
+  { label: null, keys: ["overview", "activity"] },
   {
     label: "Nội dung website",
-    keys: ["home", "tours", "articles", "categories", "destinations", "media"],
+    keys: ["home", "theme", "tours", "articles", "categories", "destinations", "media"],
   },
   { label: "Bán hàng", keys: ["leads"] },
   { label: "Hệ thống", keys: ["messages", "settings", "account"] },
@@ -153,6 +159,21 @@ const GUIDES: Record<string, Guide> = {
       "Xuất bản một phần chỉ đổi phần đó; bản nháp không ảnh hưởng website.",
     pitfalls:
       "Đừng xóa trắng danh sách (gợi ý, mốc thời gian, FAQ) — schema yêu cầu giữ ít nhất 1 mục.",
+  },
+  theme: {
+    purpose:
+      "Chọn giao diện màu sắc cho toàn bộ landing page public: nền, chữ, nút, liên kết, thẻ tour và menu.",
+    steps: [
+      "Bấm một theme để xem trước ngay trong khung bên phải.",
+      "Kiểm tra độ dễ đọc của chữ, nút và thẻ ở cả desktop lẫn mobile.",
+      "Bấm Lưu & áp dụng để đổi website ngay; hoặc Lưu bản nháp để giữ lựa chọn cho sau.",
+    ],
+    required:
+      "Chọn đúng một theme trong danh sách; theme hiện tại luôn có sẵn.",
+    result:
+      "Theme đã xuất bản được giữ sau khi tải lại và áp dụng cho mọi trang public.",
+    pitfalls:
+      "Studio giữ giao diện quản trị riêng. Theme không thay logo, ảnh hay bố cục nội dung.",
   },
   tours: {
     purpose:
@@ -293,6 +314,22 @@ const GUIDES: Record<string, Guide> = {
     result: "Số liệu tổng hợp theo giờ Việt Nam, không cần build lại.",
     pitfalls: "Adblock/chặn beacon có thể làm thiếu số; sai múi giờ trình duyệt không ảnh hưởng vì server chuẩn hoá.",
   },
+  activity: {
+    purpose:
+      "Xem nhanh các thao tác quản trị gần đây và biết có hoạt động nào cần xem lại hay không.",
+    steps: [
+      "Chọn khoảng thời gian, admin, loại thao tác hoặc kết quả cần xem.",
+      "Đọc thẻ trạng thái phía trên: bình thường, cần xem lại hay chưa đủ dữ liệu.",
+      "Bấm vào một dòng để xem ai làm, làm gì, lúc nào, IP và thay đổi trước/sau.",
+      "Đọc mục “Vì sao được đánh dấu?” để biết quy tắc nào đã khớp.",
+    ],
+    required:
+      "Cần có bản ghi audit trong khoảng thời gian đã chọn; log cũ có thể thiếu người thực hiện hoặc IP.",
+    result:
+      "Danh sách chỉ đọc, không sửa hay xóa log. Thời gian hiển thị theo giờ Việt Nam.",
+    pitfalls:
+      "Log trống hoặc thiếu trường không có nghĩa là hệ thống bình thường; trang sẽ báo “Chưa đủ dữ liệu”.",
+  },
   account: {
     purpose: "Đổi mật khẩu quản trị và quản lý phiên đăng nhập.",
     steps: [
@@ -310,13 +347,19 @@ const GUIDES: Record<string, Guide> = {
 export function Dashboard({
   initialCsrf,
   initialVersion,
+  section = "overview",
+  initialEdit,
 }: {
   initialCsrf: string | null;
   initialVersion?: string;
+  /** URL section; the sidebar and quick search navigate instead of setting it. */
+  section?: string;
+  /** `?edit=` id/slug from a direct link or quick search. */
+  initialEdit?: string;
 }) {
+  const tab = section;
   const [hasUpdates, setHasUpdates] = useState(false);
   const [csrf, setCsrf] = useState(initialCsrf),
-    [tab, setTab] = useState("overview"),
     [rows, setRows] = useState<RecordRow[]>([]),
     [selected, setSelected] = useState<RecordRow | null>(null),
     [search, setSearch] = useState(""),
@@ -344,6 +387,7 @@ export function Dashboard({
     hero: RecordRow | null;
     landing: RecordRow | null;
   }>({ hero: null, landing: null });
+  const [themeRecord, setThemeRecord] = useState<RecordRow | null>(null);
   const [homeTours, setHomeTours] = useState<RecordRow[]>([]);
   const [homeModal, setHomeModal] = useState<
     | {
@@ -367,12 +411,18 @@ export function Dashboard({
   >(null);
   const loadSerial = useRef(0);
   const activitySerial = useRef(0);
-  /** Record to open after switching tabs (home featured editor / quick search). */
+  /** Record to open from `?edit=` when the section list arrives. */
   const pendingOpen = useRef<{
     tab: string;
     id: string;
     slug?: string;
-  } | null>(null);
+  } | null>(
+    initialEdit
+      ? { tab: section, id: initialEdit, slug: initialEdit }
+      : null,
+  );
+  /** Set just before a confirmed document navigation, to skip beforeunload. */
+  const skipUnload = useRef(false);
   const dirtyFields = useRef(new Set<string>());
   const tourEditorRef = useRef<TourEditorHandle>(null);
   const destinationEditorRef = useRef<DestinationEditorHandle>(null);
@@ -380,6 +430,8 @@ export function Dashboard({
   const quickButtonRef = useRef<HTMLButtonElement>(null);
   const quickInputRef = useRef<HTMLInputElement>(null);
   const quickDialogRef = useRef<HTMLDivElement>(null);
+  const sectionDialogRef = useRef<HTMLDivElement>(null);
+  const sectionBodyRef = useRef<HTMLDivElement>(null);
   const quickFetchedAt = useRef(0);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickQuery, setQuickQuery] = useState("");
@@ -408,7 +460,10 @@ export function Dashboard({
     [showNewPw, setShowNewPw] = useState(false);
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
-      if (dirty) e.preventDefault();
+      if (dirty && !skipUnload.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
@@ -440,6 +495,57 @@ export function Dashboard({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [homeModal]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Lock the page behind the section modal: otherwise the document scrollbar
+  // stays visible next to the modal and the wheel chains to the page once the
+  // modal body reaches its end. Focus moves into the modal body and returns to
+  // the trigger on close, so keyboard users never land on the dimmed page.
+  useEffect(() => {
+    if (!homeModal) return;
+    const { body, documentElement } = document;
+    const dialog = sectionDialogRef.current;
+    const previousOverflow = body.style.overflow;
+    const previousPaddingRight = body.style.paddingRight;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const scrollbarGap = window.innerWidth - documentElement.clientWidth;
+    body.style.overflow = "hidden";
+    if (scrollbarGap > 0) body.style.paddingRight = `${scrollbarGap}px`;
+    sectionBodyRef.current?.focus({ preventScroll: true });
+
+    const focusables = () =>
+      dialog
+        ? Array.from(
+            dialog.querySelectorAll<HTMLElement>(
+              'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])',
+            ),
+          ).filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null)
+        : [];
+
+    const keepFocusInside = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const items = focusables();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    dialog?.addEventListener("keydown", keepFocusInside);
+    return () => {
+      dialog?.removeEventListener("keydown", keepFocusInside);
+      body.style.overflow = previousOverflow;
+      body.style.paddingRight = previousPaddingRight;
+      if (previousFocus && previousFocus.isConnected) {
+        previousFocus.focus({ preventScroll: true });
+      }
+    };
+  }, [homeModal]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (
@@ -490,7 +596,10 @@ export function Dashboard({
     });
     const body = await response.json();
     if (!response.ok) {
-      if (response.status === 401) setCsrf(null);
+      if (response.status === 401) {
+        skipUnload.current = true;
+        window.location.replace("/admin/login?expired=1");
+      }
       throw new Error(body.error ?? "Có lỗi xảy ra");
     }
     return body;
@@ -500,6 +609,14 @@ export function Dashboard({
     const activity = activitySerial.current;
     if (!background) setLoading(true);
     try {
+      if (next === "activity") {
+        // The activity page owns its own read-only feed and filters.
+        setSelected(null);
+        setDirty(false);
+        dirtyFields.current.clear();
+        setHasUpdates(false);
+        return true;
+      }
       const [options, library] = await Promise.all([
         api("options"),
         api("media"),
@@ -531,6 +648,24 @@ export function Dashboard({
           ...options,
           media: mediaSelectOptions(library),
         });
+        setSelected(null);
+        setDirty(false);
+        dirtyFields.current.clear();
+        setHasUpdates(false);
+        return true;
+      }
+      if (next === "theme") {
+        const themeRows = (await api("content/theme")) as RecordRow[];
+        if (
+          serial !== loadSerial.current ||
+          (background && activity !== activitySerial.current)
+        )
+          return false;
+        setReferences({
+          ...options,
+          media: mediaSelectOptions(library),
+        });
+        setThemeRecord(themeRows.find((row) => row.id === "site") ?? null);
         setSelected(null);
         setDirty(false);
         dirtyFields.current.clear();
@@ -634,7 +769,7 @@ export function Dashboard({
     initialVersion,
     onChange: async () => {
       if (busy || loading) return false;
-      if (tab === "account" || tab === "overview") return true;
+      if (tab === "account" || tab === "overview" || tab === "activity") return true;
       if (dirty || selected) {
         setHasUpdates(true);
         return false;
@@ -642,8 +777,8 @@ export function Dashboard({
       return load(tab, true);
     },
     onUnauthorized: () => {
-      setCsrf(null);
-      setNotice("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+      skipUnload.current = true;
+      window.location.replace("/admin/login?expired=1");
     },
   });
   async function run(operation: () => Promise<void>) {
@@ -715,7 +850,7 @@ export function Dashboard({
       return null;
     });
   }
-  async function switchTab(
+  async function navigateTo(
     next: string,
     open?: { id: string; slug?: string },
   ) {
@@ -729,22 +864,48 @@ export function Dashboard({
       }))
     )
       return;
-    loadSerial.current++;
-    pendingOpen.current = open ? { tab: next, ...open } : null;
-    setSelected(null);
-    setHomeModal(null);
-    setDirty(false);
-    setRows([]);
-    setSearch("");
-    setFilter("all");
-    setDurationFilter("all");
-    setLineFilter("all");
-    setLeadStatusFilter("all");
-    setHelpOpen(false);
-    setTrashOpen(false);
-    setHomePreview(null);
-    setTab(next);
-    setNotice("");
+    skipUnload.current = true;
+    // Deliberate document navigation: it gives Back/Forward and beforeunload
+    // the browser's native unsaved-changes guard.
+    window.location.href = adminSectionHref(next, open);
+  }
+
+  function leaveToWebsite() {
+    void (async () => {
+      if (
+        dirty &&
+        !(await requestConfirm({
+          title: "Về website?",
+          body: "Bạn có thay đổi chưa lưu. Về website sẽ bỏ các thay đổi đó; phiên đăng nhập vẫn được giữ.",
+          confirmLabel: "Về website",
+          danger: false,
+        }))
+      )
+        return;
+      skipUnload.current = true;
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.href = "/";
+    })();
+  }
+
+  function logoutFromStudio() {
+    void (async () => {
+      if (
+        dirty &&
+        !(await requestConfirm({
+          title: "Đăng xuất khỏi Studio?",
+          body: "Bạn có thay đổi chưa lưu. Đăng xuất sẽ bỏ các thay đổi đó.",
+          confirmLabel: "Đăng xuất",
+          danger: true,
+        }))
+      )
+        return;
+      await run(async () => {
+        await api("auth", { method: "DELETE" });
+        skipUnload.current = true;
+        window.location.replace("/admin/login?loggedOut=1");
+      });
+    })();
   }
   function closeQuickSearch() {
     setQuickOpen(false);
@@ -777,7 +938,7 @@ export function Dashboard({
   function chooseQuick(entry: QuickEntry) {
     closeQuickSearch();
     if (entry.kind === "nav") {
-      void switchTab(entry.tab);
+      void navigateTo(entry.tab);
       return;
     }
     if (tab === entry.tab) {
@@ -793,7 +954,7 @@ export function Dashboard({
         return;
       }
     }
-    void switchTab(entry.tab, { id: entry.id ?? "", slug: entry.slug });
+    void navigateTo(entry.tab, { id: entry.id ?? "", slug: entry.slug });
   }
   async function save(action: string, collection: string = tab): Promise<boolean> {
     if (!selected) return false;
@@ -848,6 +1009,26 @@ export function Dashboard({
       ok = true;
     });
     return ok;
+  }
+  async function saveTheme(theme: ThemeId, action: "save" | "publish") {
+    if (!themeRecord) return;
+    await run(async () => {
+      await api("content/theme", {
+        method: "POST",
+        body: JSON.stringify({
+          data: { ...themeRecord.data, theme },
+          revision: themeRecord.revision,
+          action,
+        }),
+      });
+      await load("theme");
+      pushToast(
+        "success",
+        action === "publish"
+          ? "Đã lưu và áp dụng giao diện mới trên website."
+          : "Đã lưu nháp giao diện. Xuất bản để áp dụng.",
+      );
+    });
   }
   /**
    * Single sticky action bar for the record editor. It sits above the form and
@@ -961,28 +1142,7 @@ export function Dashboard({
     })();
   }
   function editTourFromHome(key: string) {
-    void (async () => {
-      if (
-        dirty &&
-        !(await requestConfirm({
-          title: "Mở form tour?",
-          body: "Thay đổi chưa lưu của khối Tour nổi bật sẽ bị bỏ. Bạn có muốn mở tour để sửa ảnh và giá không?",
-          confirmLabel: "Mở form tour",
-          danger: true,
-        }))
-      )
-        return;
-      pendingOpen.current = { tab: "tours", id: key, slug: key };
-      setHomeModal(null);
-      setSelected(null);
-      setDirty(false);
-      setRows([]);
-      setFilter("all");
-      setDurationFilter("all");
-      setLineFilter("all");
-      setSearch("");
-      setTab("tours");
-    })();
+    void navigateTo("tours", { id: key, slug: key });
   }
   function trashOrRestore(row: RecordRow) {
     void (async () => {
@@ -1739,7 +1899,14 @@ export function Dashboard({
       }}
     >
       <aside>
-        <Link className="adm-brand" href="/">
+        <Link
+          className="adm-brand"
+          href="/"
+          onClick={(event) => {
+            event.preventDefault();
+            leaveToWebsite();
+          }}
+        >
           SEA TRIP <small>STUDIO</small>
         </Link>
         <p className="adm-eyebrow">Không gian quản trị</p>
@@ -1759,7 +1926,7 @@ export function Dashboard({
                   <button
                     key={key}
                     aria-current={tab === key ? "page" : undefined}
-                    onClick={() => void switchTab(key)}
+                    onClick={() => void navigateTo(key)}
                   >
                     <AdminIcon name={icon as AdminIconName} size={17} />
                     {label}
@@ -1772,31 +1939,19 @@ export function Dashboard({
         <Link
           className="adm-site-link"
           href="/"
-          target="_blank"
-          rel="noreferrer"
+          onClick={(event) => {
+            event.preventDefault();
+            leaveToWebsite();
+          }}
         >
-          Mở website ↗
+          Về website <span aria-hidden="true">↗</span>
         </Link>
         <button
-          onClick={() =>
-            void run(async () => {
-              if (
-                dirty &&
-                !(await requestConfirm({
-                  title: "Đăng xuất?",
-                  body: "Bạn có thay đổi chưa lưu. Đăng xuất sẽ bỏ các thay đổi đó.",
-                  confirmLabel: "Đăng xuất",
-                  danger: true,
-                }))
-              )
-                return;
-              await api("auth", { method: "DELETE" });
-              setCsrf(null);
-              pushToast("info", "Đã đăng xuất khỏi Studio.");
-            })
-          }
+          type="button"
+          className="adm-logout"
+          onClick={logoutFromStudio}
         >
-          Đăng xuất
+          Đăng xuất khỏi Studio
         </button>
       </aside>
       <main className="adm-main">
@@ -1812,7 +1967,9 @@ export function Dashboard({
             </p>
             <h1>{tabLabel}</h1>
             <p className="adm-masthead-deck">
-              Một nơi để chăm chút nội dung và những hành trình tiếp theo.
+              {tab === "activity"
+                ? "Theo dõi thao tác quản trị và những điểm cần xem lại."
+                : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
             </p>
           </div>
           <div className="adm-masthead-side">
@@ -1950,6 +2107,8 @@ export function Dashboard({
         )}
         {tab === "overview" ? (
           <>{csrf ? <Overview csrf={csrf} /> : <p className="adm-empty">Đang tải…</p>}</>
+        ) : tab === "activity" ? (
+          <ActivityCheck />
         ) : tab === "account" ? (
           <section className="adm-panel adm-security">
             <div className="adm-security-head">
@@ -1977,8 +2136,8 @@ export function Dashboard({
                   });
                   setPassword("");
                   setCurrent("");
-                  setCsrf(null);
-                  setNotice("Đã đổi mật khẩu. Đăng nhập lại để tiếp tục.");
+                  skipUnload.current = true;
+                  window.location.replace("/admin/login?loggedOut=1");
                 });
               }}
             >
@@ -2579,7 +2738,7 @@ export function Dashboard({
                 landingState={homeData.landing?.state}
                 onEditHero={(meta) => openHomeEditor(meta)}
                 onEditSection={(meta) => openHomeEditor(meta)}
-                onGoSettings={() => void switchTab("settings")}
+                onGoSettings={() => void navigateTo("settings")}
               />
             )}
             {homeModal && selected && (
@@ -2590,6 +2749,7 @@ export function Dashboard({
                 }}
               >
                 <div
+                  ref={sectionDialogRef}
                   className="adm-modal adm-section-modal"
                   role="dialog"
                   aria-modal="true"
@@ -2597,7 +2757,10 @@ export function Dashboard({
                 >
                   <div className="adm-section-modal-banner">
                     <span className="adm-section-modal-icon" aria-hidden="true">
-                      {homeModal.icon}
+                      <AdminIcon
+                        name={homeModal.icon as AdminIconName}
+                        size={26}
+                      />
                     </span>
                     <div className="adm-section-modal-titles">
                       <p className="adm-eyebrow">
@@ -2631,66 +2794,74 @@ export function Dashboard({
                       {dirty ? " · Có thay đổi chưa lưu" : " · Chưa có gì mới"}
                     </span>
                   </div>
-                  {homeModal.kind === "hero" ? (
-                    <HeroEditor
-                      value={selected.data as unknown as HeroConfig}
-                      references={references}
-                      onUploadImage={uploadImage}
-                      onChange={(data) => {
-                        setSelected({
-                          ...selected,
-                          data: data as unknown as Record<string, EditorValue>,
-                        });
-                        setDirty(true);
-                      }}
-                    />
-                  ) : homeModal.key === "featured" ? (
-                    <HomeFeaturedEditor
-                      value={
-                        (selected.data.featured ?? { tourIds: [] }) as Record<
-                          string,
-                          unknown
-                        >
-                      }
-                      options={references.tours ?? []}
-                      meta={featuredTourMeta}
-                      onEditTour={editTourFromHome}
-                      onChange={(featured) => {
-                        setSelected({
-                          ...selected,
-                          data: {
-                            ...selected.data,
-                            featured: featured as EditorValue,
-                          },
-                        });
-                        setDirty(true);
-                      }}
-                    />
-                  ) : (
-                    <Editor
-                      value={{
-                        [homeModal.key]: selected.data[homeModal.key],
-                      }}
-                      locked={selected.revision > 0}
-                      references={references}
-                      onUploadImage={uploadImage}
-                      onChange={(value) => {
-                        const next = value as Record<string, EditorValue>;
-                        setSelected((current) =>
-                          current
-                            ? {
-                                ...current,
-                                data: {
-                                  ...current.data,
-                                  [homeModal.key]: next[homeModal.key],
-                                },
-                              }
-                            : current,
-                        );
-                        setDirty(true);
-                      }}
-                    />
-                  )}
+                  <div
+                    ref={sectionBodyRef}
+                    className="adm-section-modal-body"
+                    tabIndex={0}
+                    role="group"
+                    aria-label={`Nội dung phần ${homeModal.title}`}
+                  >
+                    {homeModal.kind === "hero" ? (
+                      <HeroEditor
+                        value={selected.data as unknown as HeroConfig}
+                        references={references}
+                        onUploadImage={uploadImage}
+                        onChange={(data) => {
+                          setSelected({
+                            ...selected,
+                            data: data as unknown as Record<string, EditorValue>,
+                          });
+                          setDirty(true);
+                        }}
+                      />
+                    ) : homeModal.key === "featured" ? (
+                      <HomeFeaturedEditor
+                        value={
+                          (selected.data.featured ?? { tourIds: [] }) as Record<
+                            string,
+                            unknown
+                          >
+                        }
+                        options={references.tours ?? []}
+                        meta={featuredTourMeta}
+                        onEditTour={editTourFromHome}
+                        onChange={(featured) => {
+                          setSelected({
+                            ...selected,
+                            data: {
+                              ...selected.data,
+                              featured: featured as EditorValue,
+                            },
+                          });
+                          setDirty(true);
+                        }}
+                      />
+                    ) : (
+                      <Editor
+                        value={{
+                          [homeModal.key]: selected.data[homeModal.key],
+                        }}
+                        locked={selected.revision > 0}
+                        references={references}
+                        onUploadImage={uploadImage}
+                        onChange={(value) => {
+                          const next = value as Record<string, EditorValue>;
+                          setSelected((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  data: {
+                                    ...current.data,
+                                    [homeModal.key]: next[homeModal.key],
+                                  },
+                                }
+                              : current,
+                          );
+                          setDirty(true);
+                        }}
+                      />
+                    )}
+                  </div>
                   <div className="adm-modal-actions">
                     <span className="adm-modal-hint">
                       {dirty
@@ -2731,6 +2902,12 @@ export function Dashboard({
               </div>
             )}
           </>
+        ) : tab === "theme" ? (
+          <ThemePanel
+            record={themeRecord}
+            busy={busy}
+            onSave={(theme, action) => void saveTheme(theme, action)}
+          />
         ) : selected ? (
           <section className="adm-panel adm-edit">
             <div className="adm-editor-header">
@@ -2911,7 +3088,7 @@ export function Dashboard({
                 value={selected.data as unknown as Record<string, unknown>}
                 references={references}
                 onUploadImage={uploadImage}
-                onNavigateTab={(next) => void switchTab(next)}
+                onNavigateTab={(next) => void navigateTo(next)}
                 locked={selected.revision > 0}
                 onChange={(data) => {
                   setSelected({

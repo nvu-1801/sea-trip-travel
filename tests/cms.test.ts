@@ -6,6 +6,7 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { contentVersion, transaction } from "../src/server/cms/db";
 import { versionResponse } from "../src/server/cms/version-response";
 import { defaultHero, heroSchema } from "../src/domain/home-hero";
@@ -46,6 +47,9 @@ import {
   TRASH_RETENTION_DAYS,
   fillTourImageSources,
   backfillSettingsSeo,
+  fillMissingMediaSources,
+  migrateContent,
+  MEDIA_SOURCE_MIGRATION,
 } from "../src/server/cms/store";
 import {
   hashPassword,
@@ -560,6 +564,175 @@ test("stale tour rows inherit photo sources from the content files", () => {
   assert.equal(images[0].alt, "Ruộng bậc thang Sa Pa");
   // Idempotent: a second boot must not touch the repaired row.
   assert.equal(fillTourImageSources(), 0);
+});
+
+const storeFileUrl = new URL("../src/server/cms/store.ts", import.meta.url).href;
+
+/** Write a row exactly as an older release stored it. */
+function writeStoredRow(
+  collection: string,
+  id: string,
+  data: Record<string, unknown>,
+) {
+  db()
+    .prepare(
+      "UPDATE records SET data=?,published=? WHERE collection=? AND id=?",
+    )
+    .run(JSON.stringify(data), JSON.stringify(data), collection, id);
+}
+
+function readStoredRow(collection: string, id: string) {
+  return db()
+    .prepare("SELECT data,published FROM records WHERE collection=? AND id=?")
+    .get(collection, id) as { data: string; published: string | null };
+}
+
+function restoreStoredRow(
+  collection: string,
+  id: string,
+  row: { data: string; published: string | null },
+) {
+  db()
+    .prepare(
+      "UPDATE records SET data=?,published=? WHERE collection=? AND id=?",
+    )
+    .run(row.data, row.published, collection, id);
+}
+
+test("legacy category and article rows recover the seed photo in draft and published", () => {
+  const categoryId = "cat_mien_bac";
+  const articleId = "art_thoi_diem_qn";
+  const before = {
+    category: readStoredRow("categories", categoryId),
+    article: readStoredRow("articles", articleId),
+  };
+  const category = list("categories").find((row) => row.id === categoryId)!;
+  const article = list("articles").find((row) => row.id === articleId)!;
+  const categoryAlt = (category.data.image as { alt: string }).alt;
+  const articleAlt = (article.data.cover as { alt: string }).alt;
+  // Production stored `src: null` on categories and no `src` at all on the
+  // article covers; both shapes must be treated as "no photo yet".
+  const staleCategory = {
+    ...category.data,
+    image: { alt: categoryAlt, src: null },
+  };
+  const staleArticle = { ...article.data, cover: { alt: articleAlt } };
+  writeStoredRow("categories", categoryId, staleCategory);
+  writeStoredRow("articles", articleId, staleArticle);
+
+  const publicVersionBefore = contentVersion("public");
+  assert.ok(fillMissingMediaSources() >= 2);
+  // The write goes through the same table trigger as an admin edit, so the
+  // public content version moves and cached clients refresh.
+  assert.ok(Number(contentVersion("public")) > Number(publicVersionBefore));
+
+  const liveCategory = published<{
+    id: string;
+    image?: { src?: string; alt?: string };
+  }>("categories", []).find((row) => row.id === categoryId)!;
+  assert.equal(liveCategory.image?.src, "/images/destinations/ha-long.jpg");
+  assert.equal(liveCategory.image?.alt, categoryAlt);
+  const liveArticle = published<{
+    id: string;
+    cover?: { src?: string; alt?: string };
+  }>("articles", []).find((row) => row.id === articleId)!;
+  assert.equal(liveArticle.cover?.src, "/images/tours/d7233006cc4fd0f9.jpeg");
+  assert.equal(liveArticle.cover?.alt, articleAlt);
+
+  // Only `src` was added — alt, body, SEO and every other stored field survive.
+  assert.deepEqual(list("categories").find((row) => row.id === categoryId)!.data, {
+    ...staleCategory,
+    image: { ...staleCategory.image, src: "/images/destinations/ha-long.jpg" },
+  });
+  assert.deepEqual(list("articles").find((row) => row.id === articleId)!.data, {
+    ...staleArticle,
+    cover: { ...staleArticle.cover, src: "/images/tours/d7233006cc4fd0f9.jpeg" },
+  });
+
+  // Running again finds nothing missing and writes nothing.
+  assert.equal(fillMissingMediaSources(), 0);
+  restoreStoredRow("categories", categoryId, before.category);
+  restoreStoredRow("articles", articleId, before.article);
+});
+
+test("the media backfill never replaces a photo the owner picked", () => {
+  const id = "cat_mien_trung";
+  const before = readStoredRow("categories", id);
+  const row = JSON.parse(before.data) as Record<string, unknown>;
+  const chosen = {
+    ...(row.image as Record<string, unknown>),
+    src: "/images/uploads/owner-pick.jpg",
+    alt: "Ảnh chủ shop chọn",
+  };
+  writeStoredRow("categories", id, { ...row, image: chosen });
+
+  fillMissingMediaSources();
+  const stored = list("categories").find((item) => item.id === id)!;
+  assert.equal(
+    (stored.data.image as { src: string }).src,
+    "/images/uploads/owner-pick.jpg",
+  );
+  assert.equal((stored.data.image as { alt: string }).alt, "Ảnh chủ shop chọn");
+  assert.equal(
+    (JSON.parse(readStoredRow("categories", id).published!) as {
+      image: { src: string };
+    }).image.src,
+    "/images/uploads/owner-pick.jpg",
+  );
+  restoreStoredRow("categories", id, before);
+});
+
+test("a deploy repairs an old volume once and records the migration", () => {
+  const id = "cat_tay_nguyen";
+  const before = readStoredRow("categories", id);
+  const row = JSON.parse(before.data) as Record<string, unknown>;
+  const alt = (row.image as { alt: string }).alt;
+  // Old volume: the photo has no address and no migration has run yet.
+  writeStoredRow("categories", id, { ...row, image: { alt } });
+  db().prepare("DELETE FROM cms_migrations WHERE id=?").run(MEDIA_SOURCE_MIGRATION);
+
+  // Booting the new build is a separate process, exactly like a deploy.
+  const boot = spawnSync(
+    process.execPath,
+    [
+      "--import",
+      "tsx",
+      "--conditions=react-server",
+      "-e",
+      `const { list } = require(${JSON.stringify(fileURLToPath(storeFileUrl))}); list("categories");`,
+    ],
+    { env: process.env, encoding: "utf8" },
+  );
+  assert.equal(boot.status, 0, boot.stderr);
+  assert.equal(
+    (list("categories").find((item) => item.id === id)!.data.image as {
+      src?: string;
+    }).src,
+    "/images/destinations/da-lat.jpg",
+  );
+  assert.equal(
+    (
+      JSON.parse(readStoredRow("categories", id).published!) as {
+        image: { src?: string };
+      }
+    ).image.src,
+    "/images/destinations/da-lat.jpg",
+  );
+
+  // The ledger records it once; a later boot does not touch the row again.
+  const ledger = db()
+    .prepare("SELECT COUNT(*) AS total FROM cms_migrations WHERE id=?")
+    .get(MEDIA_SOURCE_MIGRATION) as { total: number };
+  assert.equal(ledger.total, 1);
+  writeStoredRow("categories", id, { ...row, image: { alt } });
+  assert.equal(migrateContent(), 0);
+  assert.equal(
+    (list("categories").find((item) => item.id === id)!.data.image as {
+      src?: string;
+    }).src,
+    undefined,
+  );
+  restoreStoredRow("categories", id, before);
 });
 
 test("destination CRUD round-trips draft, publish, unpublish, delete and restore", () => {

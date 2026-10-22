@@ -78,11 +78,19 @@ export async function login(
   if (
     !consumeLimit(`login:${ip}`, 10, 15 * 60 * 1000) ||
     !consumeLimit("login:global", 100, 15 * 60 * 1000)
-  )
+  ) {
+    audit("login-blocked", "admin", {
+      ip,
+      status: "failure",
+      details: {
+        reason: "Quá nhiều lần thử đăng nhập trong 15 phút",
+      },
+    });
     throw new HttpError(
       429,
       "Quá nhiều lần thử. Vui lòng thử lại sau 15 phút.",
     );
+  }
   let user = db()
     .prepare("SELECT username,password FROM admin WHERE id=1")
     .get() as { username: string; password: string } | undefined;
@@ -103,7 +111,7 @@ export async function login(
         "INSERT OR IGNORE INTO admin(id,username,password) VALUES(1,?,?)",
       )
       .run(username, encoded);
-    audit("bootstrap", "admin");
+    audit("bootstrap", "admin", { actor: username, ip, status: "success" });
     user = db()
       .prepare("SELECT username,password FROM admin WHERE id=1")
       .get() as { username: string; password: string } | undefined;
@@ -113,8 +121,18 @@ export async function login(
     password,
     user?.password ?? "00000000000000000000000000000000:" + "00".repeat(64),
   );
-  if (!user || username !== user.username || !valid)
+  if (!user || username !== user.username || !valid) {
+    audit("login-failed", "admin", {
+      ip,
+      status: "failure",
+      details: {
+        // Factual context only; never the attempted password.
+        usernameTried: username.slice(0, 80),
+        reason: "Tên đăng nhập hoặc mật khẩu không đúng",
+      },
+    });
     throw new HttpError(401, "Tên đăng nhập hoặc mật khẩu không đúng");
+  }
   const token = randomBytes(32).toString("hex"),
     csrf = randomBytes(24).toString("hex");
   // Phiên thường 8 giờ; tick "nhớ đăng nhập" kéo dài 30 ngày.
@@ -131,7 +149,11 @@ export async function login(
     path: "/",
     maxAge,
   });
-  audit("login", "admin");
+  audit("login", "admin", {
+    actor: user.username,
+    ip,
+    status: "success",
+  });
   return { csrf };
 }
 export async function logout() {

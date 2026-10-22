@@ -67,6 +67,12 @@ type AssetImageProps = {
    * clip it.
    */
   parallax?: boolean;
+  /**
+   * Curtain reveal on scroll (CSS scroll-driven, transform only). The wrapper
+   * must clip, which `AssetImage` already does; set `--unveil-color` through
+   * `className` when the surrounding section is not the default surface.
+   */
+  unveil?: boolean;
 };
 
 export function AssetImage({
@@ -79,6 +85,7 @@ export function AssetImage({
   markPlaceholder = false,
   variant = "scene",
   parallax = false,
+  unveil = false,
 }: AssetImageProps) {
   const alt = image?.alt ?? altFallback;
   const src = image?.src;
@@ -87,6 +94,7 @@ export function AssetImage({
     return (
       <div
         data-parallax={parallax ? "" : undefined}
+        data-unveil={unveil ? "" : undefined}
         className={cn(
           "relative isolate overflow-hidden bg-surface-sunken",
           className,
@@ -120,6 +128,7 @@ export function AssetImage({
   return (
     <div
       data-parallax={parallax ? "" : undefined}
+      data-unveil={unveil ? "" : undefined}
       className={cn("relative isolate overflow-hidden", className)}
       role="img"
       aria-label={alt}

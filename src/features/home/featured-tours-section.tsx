@@ -3,7 +3,7 @@ import { HeadingAccent } from "@/components/ui/heading-accent";
 import { getFeaturedTours } from "@/lib/data/tours";
 import { Container, Section } from "@/components/ui/layout";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
-import { Reveal } from "@/components/ui/reveal";
+import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { TourGrid } from "@/features/tours/tour-grid";
@@ -26,7 +26,7 @@ export function FeaturedToursSection({ locale }: { locale: Locale }) {
   return (
     <Section tone="muted" spacing="loose" className="journal-featured">
       <Container>
-        <Reveal className="intro-centered">
+        <RevealGroup className="intro-centered">
           <SectionEyebrow className="eyebrow-pill">
             {m.home.featured.eyebrow}
           </SectionEyebrow>
@@ -49,7 +49,7 @@ export function FeaturedToursSection({ locale }: { locale: Locale }) {
               <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </ButtonLink>
           </div>
-        </Reveal>
+        </RevealGroup>
 
         <div className="mt-10 grid gap-6">
           {tours[0] ? (

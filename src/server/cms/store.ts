@@ -3,13 +3,22 @@ import { z } from "zod";
 import { articles, destinations, tourCategories, tours } from "@/content";
 import { tourRecordSchema } from "@/domain/tour-cms";
 import { collectTourBusinessIssues } from "@/domain/tour-rules";
+import { defaultThemeRecord, themeRecordSchema } from "@/domain/theme";
 import { travelArticleSchema } from "@/domain/article";
 import {
   destinationSchema,
   MAX_HOME_DESTINATIONS,
 } from "@/domain/destination";
 import { tourCategorySchema } from "@/domain/category";
-import { db, audit, transaction } from "./db";
+import {
+  db,
+  audit,
+  transaction,
+  migrationApplied,
+  markMigration,
+  type AuditContext,
+} from "./db";
+import { AUDIT_FIELD_LABELS } from "@/lib/audit-activity";
 import { defaultHero, heroSchema } from "@/domain/home-hero";
 import { defaultLanding, landingSchema } from "@/domain/landing";
 import {
@@ -62,6 +71,7 @@ export const schemas = {
     _enReviewed: z.boolean().optional(),
   }),
   settings: settingsSchema,
+  theme: themeRecordSchema,
   hero: heroSchema,
   landing: landingSchema,
   messages: messagesSchema,
@@ -73,6 +83,7 @@ const seeds = {
   categories: tourCategories,
   destinations,
   settings: [defaultSettings],
+  theme: [defaultThemeRecord],
   hero: [defaultHero],
   landing: [defaultLanding],
   messages: messageSeeds,
@@ -319,6 +330,111 @@ export function backfillSettingsSeo(): number {
   return repaired;
 }
 
+type SinglePhotoKey = "image" | "cover";
+
+/** The photo the content files currently ship for one category/article row. */
+function seedSinglePhoto(
+  collection: "categories" | "articles",
+  id: string,
+): { key: SinglePhotoKey; src: string } | undefined {
+  if (collection === "categories") {
+    const src = tourCategories.find((item) => item.id === id)?.image?.src;
+    return src ? { key: "image", src } : undefined;
+  }
+  const src = articles.find((item) => item.id === id)?.cover?.src;
+  return src ? { key: "cover", src } : undefined;
+}
+
+/**
+ * Fill one photo address, and nothing else. Only a missing/empty `src` is
+ * written; `alt`, `caption`, focal points and every other field stay exactly
+ * as the row stored them, and a photo the editor picked is never replaced.
+ */
+function fillMissingPhotoSource(
+  payload: Record<string, unknown> | null,
+  key: SinglePhotoKey,
+  src: string,
+): boolean {
+  if (!payload) return false;
+  const raw = payload[key];
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return false;
+  const photo = raw as { src?: unknown };
+  // `undefined`, `null` and "" all mean "no photo" in the older rows.
+  if (photo.src) return false;
+  photo.src = src;
+  return true;
+}
+
+/**
+ * Categories (`image.src`) and articles (`cover.src`) render a branded gradient
+ * whenever the stored photo has no address, which is what production showed on
+ * the region cards and guide covers: those rows were seeded before the content
+ * files carried their photos, and `seed()` inserts with `INSERT OR IGNORE`, so
+ * a later deploy never touched them.
+ *
+ * This repair copies only the missing `src` from the content files into both
+ * `data` (draft) and `published` (what the site reads). Rows that already point
+ * at a photo — an upload or a library pick by the owner — are left untouched,
+ * and trashed rows are skipped so nothing the owner discarded is rewritten, so
+ * the function is safe to run more than once.
+ */
+export function fillMissingMediaSources(): number {
+  const rows = db()
+    .prepare(
+      "SELECT collection,id,data,published FROM records WHERE collection IN ('categories','articles') AND state!='deleted'",
+    )
+    .all() as {
+    collection: "categories" | "articles";
+    id: string;
+    data: string;
+    published: string | null;
+  }[];
+  const update = db().prepare(
+    "UPDATE records SET data=?,published=? WHERE collection=? AND id=?",
+  );
+
+  let repaired = 0;
+  for (const row of rows) {
+    const photo = seedSinglePhoto(row.collection, row.id);
+    if (!photo) continue;
+    const data = JSON.parse(row.data) as Record<string, unknown>;
+    const live = row.published
+      ? (JSON.parse(row.published) as Record<string, unknown>)
+      : null;
+    // Evaluate both before deciding: `||` would skip the published payload.
+    const filledDraft = fillMissingPhotoSource(data, photo.key, photo.src);
+    const filledLive = fillMissingPhotoSource(live, photo.key, photo.src);
+    if (!filledDraft && !filledLive) continue;
+    update.run(
+      JSON.stringify(data),
+      live ? JSON.stringify(live) : null,
+      row.collection,
+      row.id,
+    );
+    repaired += 1;
+  }
+  return repaired;
+}
+
+/**
+ * Id of the one-time media repair. Add a new id when the content files gain
+ * photos for rows that already exist, so the new photos reach an older volume.
+ */
+export const MEDIA_SOURCE_MIGRATION = "media-sources/categories-articles:v1";
+
+/** Applies every pending content repair. The caller owns the transaction. */
+function applyPendingMigrations(): number {
+  if (migrationApplied(MEDIA_SOURCE_MIGRATION)) return 0;
+  const repaired = fillMissingMediaSources();
+  markMigration(MEDIA_SOURCE_MIGRATION);
+  return repaired;
+}
+
+/** Public entry point for scripts/tests; a no-op once the ledger has the id. */
+export function migrateContent(): number {
+  return transaction(applyPendingMigrations);
+}
+
 let seeded = false;
 export function seed() {
   if (seeded) return;
@@ -341,6 +457,8 @@ export function seed() {
     backfillDestinationHomeFlags();
     fillTourImageSources();
     backfillSettingsSeo();
+    // Runs inside this transaction: SQLite has no nested BEGIN.
+    applyPendingMigrations();
   });
   seeded = true;
 }
@@ -390,11 +508,70 @@ export function purgeExpiredTrash(nowMs: number = Date.now()): number {
     return Number(result.changes ?? 0);
   });
 }
+const AUDIT_PREVIEW_LIMIT = 120;
+
+function previewAuditValue(value: unknown): string | number | boolean | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number" || typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    return value.length > AUDIT_PREVIEW_LIMIT
+      ? `${value.slice(0, AUDIT_PREVIEW_LIMIT - 1).trimEnd()}…`
+      : value;
+  }
+  if (Array.isArray(value)) return `${value.length} mục`;
+  if (typeof value === "object") return "Đã thay đổi";
+  return String(value);
+}
+
+/**
+ * Compact before/after summary for the activity page.
+ *
+ * Full record bodies are never stored: they are long and some collections carry
+ * unpublished drafts. Only mapped, customer-readable field names are kept.
+ */
+function summarizeAuditChanges(
+  previousData: string | undefined,
+  next: Record<string, unknown>,
+) {
+  let before: Record<string, unknown> = {};
+  if (previousData) {
+    try {
+      before = JSON.parse(previousData) as Record<string, unknown>;
+    } catch {
+      before = {};
+    }
+  }
+  const labels: string[] = [];
+  const changes: { label: string; before: string | number | boolean | null; after: string | number | boolean | null }[] = [];
+  for (const key of new Set([...Object.keys(before), ...Object.keys(next)])) {
+    if (key === "id" || key === "updatedAt") continue;
+    let unchanged = false;
+    try {
+      unchanged = JSON.stringify(before[key]) === JSON.stringify(next[key]);
+    } catch {
+      unchanged = false;
+    }
+    if (unchanged) continue;
+    const label = AUDIT_FIELD_LABELS[key];
+    if (!label) continue;
+    if (!labels.includes(label)) labels.push(label);
+    if (changes.length < 8) {
+      changes.push({
+        label,
+        before: previewAuditValue(before[key]),
+        after: previewAuditValue(next[key]),
+      });
+    }
+  }
+  return { changedFields: labels, changes };
+}
+
 export function save(
   collection: Collection,
   input: unknown,
   revision: number,
   action: "save" | "publish" | "unpublish" | "delete" | "restore",
+  context: AuditContext = {},
 ) {
   seed();
   let normalized = input;
@@ -635,7 +812,27 @@ export function save(
         "INSERT INTO records(collection,id,data,published,state,revision,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(collection,id) DO UPDATE SET data=excluded.data,published=excluded.published,state=excluded.state,revision=excluded.revision,updated_at=excluded.updated_at",
       )
       .run(collection, data.id, json, publicValue, state, revision + 1, now);
-    audit(action, `${collection}/${data.id}`);
+    const auditSummary = summarizeAuditChanges(
+      previous?.data,
+      data as Record<string, unknown>,
+    );
+    audit(action, `${collection}/${data.id}`, {
+      ...context,
+      status: "success",
+      details: {
+        record: {
+          title: String(
+            (data as Record<string, unknown>).title ??
+              (data as Record<string, unknown>).name ??
+              data.id,
+          ).slice(0, 160),
+          stateBefore: previous?.state ?? null,
+          stateAfter: state,
+        },
+        changedFields: auditSummary.changedFields,
+        changes: auditSummary.changes,
+      },
+    });
     return { id: data.id, revision: revision + 1 };
   });
 }
@@ -650,6 +847,11 @@ export function settings() {
     contact: { ...defaultSettings.contact, ...stored.contact },
     seo: { ...defaultSettings.seo, ...(stored as { seo?: object }).seo },
   });
+}
+export function siteTheme() {
+  return (
+    published("theme", [defaultThemeRecord])[0] ?? defaultThemeRecord
+  ).theme;
 }
 export function homeHero() {
   return heroSchema.parse(published("hero", [defaultHero])[0] ?? defaultHero);

@@ -24,6 +24,8 @@ export type AdminIconName =
   | "map"
   | "star"
   | "shield"
+  | "alert"
+  | "activity"
   | "clock"
   | "compass"
   | "gem"
@@ -46,7 +48,8 @@ export type AdminIconName =
   | "language"
   | "briefcase"
   | "money"
-  | "refresh";
+  | "refresh"
+  | "theme";
 
 const PATHS: Record<AdminIconName, ReactNode> = {
   overview: (
@@ -149,6 +152,17 @@ const PATHS: Record<AdminIconName, ReactNode> = {
     <>
       <path d="M12 3.5 19 6v5.5c0 4.3-2.8 7.4-7 9-4.2-1.6-7-4.7-7-9V6Z" />
       <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  alert: (
+    <>
+      <path d="M12 4 21 20H3Z" />
+      <path d="M12 9.5v5M12 17h.01" />
+    </>
+  ),
+  activity: (
+    <>
+      <path d="M3 12h4l2.5-6 4 12 2.5-6h5" />
     </>
   ),
   clock: (
@@ -280,6 +294,14 @@ const PATHS: Record<AdminIconName, ReactNode> = {
     <>
       <path d="M20 11a8 8 0 1 0-2 5.3" />
       <path d="M20 5v6h-6" />
+    </>
+  ),
+  theme: (
+    <>
+      <path d="M12 3a9 9 0 1 0 0 18c1.7 0 2.2-1.1 1.4-2.2-.7-1.1 0-2.3 1.4-2.3H17a4 4 0 0 0 4-4A9 9 0 0 0 12 3Z" />
+      <circle cx="7.5" cy="11.5" r="1" />
+      <circle cx="9.5" cy="7.5" r="1" />
+      <circle cx="14.5" cy="7.5" r="1" />
     </>
   ),
 };

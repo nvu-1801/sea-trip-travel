@@ -69,7 +69,35 @@ GitHub Environment `production` / repository:
 
 Workflow từ chối commit đã cũ khi main có SHA mới hơn. Trên VPS, `flock` tuần tự hóa deploy, tạo release riêng, backup SQLite bằng VACUUM INTO và copy uploads trước cập nhật, build image gắn SHA. Compose đợi health và đối chiếu SHA/database. Nếu khởi động hoặc health nội bộ thất bại, tự chạy lại image trước. Job còn kiểm tra health HTTPS công khai; nếu bước này lỗi, kiểm tra proxy/DNS và rollback thủ công theo dưới. Không tuyên bố deploy thành công khi job health lỗi.
 
-Migrations hiện chỉ tạo bảng bổ sung (`user_version=1`), không phá dữ liệu. Khi thay schema sau này, cần migration phiên bản và đánh giá tương thích image cũ; không tự khôi phục DB cũ vì có thể mất lead mới.
+Migrations hiện chỉ tạo bảng hoặc cột bổ sung (`user_version=1`), không phá dữ liệu. Khi thay schema sau này, cần migration phiên bản và đánh giá tương thích image cũ; không tự khôi phục DB cũ vì có thể mất lead mới.
+
+## Email báo cập nhật cho chủ doanh nghiệp
+
+Sau khi `deploy.sh` xác nhận container mới đúng SHA, database kết nối và bước kiểm tra `https://<domain>/api/health` công khai đạt, workflow chạy `scripts/deploy/notify.sh` để gửi một email tới chủ website. Không có quy trình deploy thứ hai: email dùng SMTP đã có trong `/opt/seatrip/.env.production` và chạy trong chính container vừa deploy.
+
+- Chỉ gửi sau khi cả health nội bộ và health công khai đạt. Deploy lỗi, rollback hoặc health công khai lỗi thì không gửi.
+- Mỗi SHA chỉ gửi một lần. Danh sách SHA đã thông báo nằm ở `/app/data/release-notices.json` trong volume `seatrip_content`, nên deploy lại cùng bản sẽ không gửi trùng.
+- Người nhận: `RELEASE_NOTICE_RECIPIENTS` (nhiều địa chỉ ngăn cách bằng dấu phẩy). Để trống thì dùng `SALES_RECIPIENTS`.
+- Dùng chung `MAIL_TRANSPORT=smtp`, `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASSWORD`, `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME` và `NEXT_PUBLIC_SITE_URL` đã có. Không cần thêm mật khẩu SMTP vào GitHub.
+- Tắt tạm mà không sửa quy trình deploy: `RELEASE_NOTICE_ENABLED=false`.
+- Lỗi gửi email chỉ hiện cảnh báo ở bước “Send owner update email”; bản đã deploy thành công vẫn giữ nguyên, không rollback.
+
+### Ghi chú dành cho khách hàng
+
+Email không tự đoán tính năng từ commit message. Chỉ commit có trailer tường minh mới được đưa vào:
+
+```text
+feat: add tour filters
+
+Customer-Note: Bộ lọc tìm tour nhanh và dễ dùng hơn trên điện thoại
+Customer-Note: Trang tour hiển thị lịch trình và giá rõ ràng hơn
+```
+
+- Viết tiếng Việt, ngắn gọn, nói điều khách nhìn thấy và lợi ích. Không viết tên tệp, mã commit, URL, log hay thuật ngữ kỹ thuật.
+- Chỉ lấy các commit giữa SHA đang chạy trên production và SHA mới. Lần deploy đầu tiên chỉ lấy commit mới nhất.
+- Không có trailer nào: email vẫn xác nhận cập nhật thành công nhưng ghi rõ “không kèm ghi chú thay đổi dành cho khách hàng”; không tự bịa nội dung.
+- Ghi chú có dấu hiệu kỹ thuật bị loại; số lượng bị loại được ghi trong log deploy.
+- Nếu thiếu cấu hình, log deploy ghi rõ tên biến cần thêm vào `.env.production`.
 
 ## Backup và phục hồi
 

@@ -5,7 +5,7 @@ import {
 } from "@/lib/data/destinations";
 import { Container, Section } from "@/components/ui/layout";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
-import { Reveal } from "@/components/ui/reveal";
+import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import { AssetImage } from "@/components/ui/asset-image";
 import type { Locale } from "@/i18n/config";
 import { landingSections } from "@/server/cms/store";
@@ -42,7 +42,7 @@ export function ExploreSection({ locale }: { locale: Locale }) {
   return (
     <Section className="journal-explore">
       <Container>
-        <Reveal className="journal-heading">
+        <RevealGroup className="journal-heading">
           <div>
             <SectionEyebrow className="journal-eyebrow">{copy.eyebrow}</SectionEyebrow>
             <h2>
@@ -52,7 +52,7 @@ export function ExploreSection({ locale }: { locale: Locale }) {
             </h2>
           </div>
           <p>{copy.body}</p>
-        </Reveal>
+        </RevealGroup>
         <div className="destination-editorial" data-count={destinations.length}>
           {destinations.map((destination, index) => (
             <Reveal
@@ -68,6 +68,7 @@ export function ExploreSection({ locale }: { locale: Locale }) {
                   image={destination.image}
                   className="destination-editorial-photo"
                   sizes="(max-width: 700px) 100vw, 55vw"
+                  unveil={index === 0}
                 />
                 <div className="destination-editorial-copy">
                   <span className="destination-number">
