@@ -152,14 +152,14 @@
      a generic fade. The CTA is still only four steps behind the eyebrow, and
      phones shorten both the duration and the distance. */
   --stt-reveal-duration: 920ms;
-  --stt-reveal-distance: 1.75rem;
+  --stt-reveal-distance: 2.25rem;
   --stt-stagger: 90ms;
 }
 
 @media (max-width: 639px) {
   :root {
     --stt-reveal-duration: 620ms;
-    --stt-reveal-distance: 1.25rem;
+    --stt-reveal-distance: 1.5rem;
   }
 }
 
@@ -912,7 +912,7 @@ select option {
 /* Rise (Default). Keep the motion two-dimensional so controls inside a reveal
    retain their real tap-target size while the section enters. */
 .stt-reveal-3d[data-reveal-3d="rise"][data-revealed="false"] {
-  transform: translate3d(0, var(--stt-reveal-distance, 1.75rem), 0);
+  transform: translate3d(0, var(--stt-reveal-distance, 2.25rem), 0);
 }
 .stt-reveal-3d[data-reveal-3d="rise"][data-revealed="true"] {
   transform: translateY(0);
@@ -920,7 +920,7 @@ select option {
 
 /* Side entrances rise vertically so an off-canvas reveal cannot add page scroll. */
 .stt-reveal-3d[data-reveal-3d="left"][data-revealed="false"] {
-  transform: translate3d(0, var(--stt-reveal-distance, 1.75rem), 0);
+  transform: translate3d(0, var(--stt-reveal-distance, 2.25rem), 0);
 }
 .stt-reveal-3d[data-reveal-3d="left"][data-revealed="true"] {
   transform: translateY(0);
@@ -928,7 +928,7 @@ select option {
 
 /* Right */
 .stt-reveal-3d[data-reveal-3d="right"][data-revealed="false"] {
-  transform: translate3d(0, var(--stt-reveal-distance, 1.75rem), 0);
+  transform: translate3d(0, var(--stt-reveal-distance, 2.25rem), 0);
 }
 .stt-reveal-3d[data-reveal-3d="right"][data-revealed="true"] {
   transform: translateY(0);
@@ -956,7 +956,7 @@ select option {
 }
 .stt-seq[data-revealed="false"] > * {
   opacity: 0;
-  transform: translate3d(0, var(--stt-reveal-distance, 1.75rem), 0);
+  transform: translate3d(0, var(--stt-reveal-distance, 2.25rem), 0);
 }
 .stt-seq[data-revealed="true"] > * {
   opacity: 1;
