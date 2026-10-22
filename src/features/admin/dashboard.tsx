@@ -1076,6 +1076,9 @@ export function Dashboard({
     return left !== null && left <= 7;
   }).length;
   const tabLabel = tabs.find((t) => t[0] === tab)?.[1] ?? tab;
+  const tabPosition = tabs.findIndex((entry) => entry[0] === tab);
+  const tabGroup =
+    TAB_GROUPS.find((group) => group.keys.includes(tab))?.label ?? "Studio";
 
   /* --- Quick search palette --------------------------------------------- */
   const quickNeedle = quickQuery.trim();
@@ -1797,46 +1800,67 @@ export function Dashboard({
         </button>
       </aside>
       <main className="adm-main">
-        <header>
-          <div>
-            <span className="adm-eyebrow">SEA TRIP · Content & sales</span>
-            <h1>{tabs.find((t) => t[0] === tab)?.[1]}</h1>
-            <p>Một nơi để chăm chút nội dung và những hành trình tiếp theo.</p>
+        <header className="adm-masthead">
+          <div className="adm-masthead-copy">
+            <p className="adm-masthead-kicker">
+              <span className="adm-masthead-rule" aria-hidden="true" />
+              SEA TRIP
+              <span className="adm-masthead-sep" aria-hidden="true">
+                ·
+              </span>
+              Content &amp; sales
+            </p>
+            <h1>{tabLabel}</h1>
+            <p className="adm-masthead-deck">
+              Một nơi để chăm chút nội dung và những hành trình tiếp theo.
+            </p>
           </div>
-          <div className="adm-header-side">
-            <button
-              type="button"
-              ref={quickButtonRef}
-              className="adm-quick-open"
-              aria-haspopup="dialog"
-              aria-expanded={quickOpen}
-              aria-keyshortcuts="Control+K Meta+K"
-              aria-label="Tìm kiếm nhanh trong Studio"
-              onClick={() => void openQuickSearch()}
-            >
-              <SearchIcon className="adm-quick-open-icon" />
-              <span className="adm-quick-open-text">Tìm nhanh…</span>
-              <kbd>Ctrl K</kbd>
-            </button>
-            <button
-              type="button"
-              ref={helpButtonRef}
-              className="adm-help-btn"
-              aria-expanded={helpOpen}
-              aria-controls="adm-help-panel"
-              aria-label={
-                helpOpen
-                  ? "Đóng hướng dẫn sử dụng"
-                  : "Mở hướng dẫn sử dụng trang này"
-              }
-              onClick={() => setHelpOpen((value) => !value)}
-            >
-              ?
-            </button>
-            <div className="adm-avatar" aria-label="Chủ quản trị">
-              ST
+          <div className="adm-masthead-side">
+            <div className="adm-header-side">
+              <button
+                type="button"
+                ref={quickButtonRef}
+                className="adm-quick-open"
+                aria-haspopup="dialog"
+                aria-expanded={quickOpen}
+                aria-keyshortcuts="Control+K Meta+K"
+                aria-label="Tìm kiếm nhanh trong Studio"
+                onClick={() => void openQuickSearch()}
+              >
+                <SearchIcon className="adm-quick-open-icon" />
+                <span className="adm-quick-open-text">Tìm nhanh…</span>
+                <kbd>Ctrl K</kbd>
+              </button>
+              <button
+                type="button"
+                ref={helpButtonRef}
+                className="adm-help-btn"
+                aria-expanded={helpOpen}
+                aria-controls="adm-help-panel"
+                aria-label={
+                  helpOpen
+                    ? "Đóng hướng dẫn sử dụng"
+                    : "Mở hướng dẫn sử dụng trang này"
+                }
+                onClick={() => setHelpOpen((value) => !value)}
+              >
+                ?
+              </button>
+              <div className="adm-avatar" aria-label="Chủ quản trị">
+                ST
+              </div>
             </div>
+            <p className="adm-masthead-chapter">
+              <span className="adm-masthead-chapter-no" aria-hidden="true">
+                {String(tabPosition + 1).padStart(2, "0")}
+              </span>
+              <span className="adm-masthead-chapter-rule" aria-hidden="true" />
+              <span>{tabGroup}</span>
+            </p>
           </div>
+          <span className="adm-masthead-folio" aria-hidden="true">
+            {String(tabPosition + 1).padStart(2, "0")}
+          </span>
         </header>
         {helpOpen && (
           <section
