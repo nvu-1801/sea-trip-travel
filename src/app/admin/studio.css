@@ -4670,12 +4670,14 @@ a.adm-image-action:hover {
   margin: 12px 0 0;
   padding: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
 }
 .adm-rank li {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
   font-size: 12.5px;
 }
 .adm-rank-num {
@@ -4696,8 +4698,7 @@ a.adm-image-action:hover {
   box-shadow: 0 6px 16px rgb(224 0 90 / 0.3);
 }
 .adm-rank-path {
-  flex: none;
-  width: 38%;
+  flex: 0 1 38%;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4706,6 +4707,7 @@ a.adm-image-action:hover {
 }
 .adm-rank-track {
   flex: 1;
+  min-width: 0;
   height: 10px;
   border-radius: 999px;
   background: #fdf0f5;

@@ -15,6 +15,7 @@ export function Hero({ locale }: { locale: Locale }) {
   // the two phrases readable without adding another horizontal line.
   const badge = (custom.badge || messages.badge)
     .replace(/\s*[·•]\s*/g, " · ")
+    .replace(/\s+[—–-]\s+/g, " · ")
     .replace(/^[\s—–-]+/, "")
     .trim();
   const copy: HeroCopy = {
