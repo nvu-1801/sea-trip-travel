@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import { getTourSlugs, getTourBySlug } from "@/lib/data/tours";
+import { getDestinations } from "@/lib/data/destinations";
 import { toTourCard } from "@/features/tours/tour-card-model";
 import { TourGrid } from "@/features/tours/tour-grid";
 import { resolveLocaleFromParams } from "@/i18n/params";
 import { Container } from "@/components/ui/layout";
 import { searchKey as normalized } from "@/lib/search";
 import { TimeSelect, type TimeOption } from "@/features/home/time-select";
-export const metadata: Metadata = {
-  title: "Tìm hành trình phù hợp",
-  robots: { index: false, follow: true },
-};
+export async function generateMetadata({
+  params,
+}: PageProps<"/[locale]/tim-tour">): Promise<Metadata> {
+  const locale = await resolveLocaleFromParams(params);
+  return {
+    title:
+      locale === "en" ? "Find a journey that fits" : "Tìm hành trình phù hợp",
+    robots: { index: false, follow: true },
+  };
+}
 export default async function SearchPage({
   params,
   searchParams,
@@ -19,6 +26,13 @@ export default async function SearchPage({
   const q = String(query.q ?? "").slice(0, 100),
     days = String(query.days ?? ""),
     budget = String(query.budget ?? "");
+  // Resolve once: destination names are part of the tour search haystack.
+  const destinationNames = new Map(
+    getDestinations(locale).map((destination) => [
+      destination.id,
+      destination.name,
+    ]),
+  );
   const found = getTourSlugs()
     .map((slug) => getTourBySlug(slug, locale)!)
     .filter(
@@ -29,6 +43,11 @@ export default async function SearchPage({
             tour.summary,
             ...tour.tags,
             ...tour.departurePoints,
+            // A destination attached to the tour is part of what guests search
+            // for ("Kỳ Co", "Cù Lao Xanh"), so include its resolved name.
+            ...tour.destinationIds
+              .map((id) => destinationNames.get(id))
+              .filter((name): name is string => Boolean(name)),
           ].join(" "),
         ).includes(normalized(q)) &&
         (!days ||
@@ -76,7 +95,11 @@ export default async function SearchPage({
   return (
     <section className="py-12 sm:py-20">
       <Container>
-        <p className="eyebrow">SEA TRIP · Explore your next chapter</p>
+        <p className="eyebrow">
+          {en
+            ? "SEA TRIP · Explore your next chapter"
+            : "SEA TRIP · Tìm chuyến đi tiếp theo"}
+        </p>
         <h1 className="text-display-lg font-display mt-3 mb-7">
           {en ? "Find your next journey" : "Một hành trình dành cho bạn"}
         </h1>

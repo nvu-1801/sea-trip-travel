@@ -30,6 +30,10 @@ export const legacyQuyNhonPhuYenTours: readonly TourInput[] = [
         src: "/images/destinations/hon-kho.jpg",
         alt: "Bờ biển làng chài Nhơn Hải trên tuyến Hòn Khô",
       },
+      {
+        src: "/images/destinations/san-ho.jpg",
+        alt: "Lặn ngắm san hô",
+      },
     ],
     overview: [
       "Hòn Khô là đảo nhỏ gần bờ, nước nông và khá lặng, thuận tiện cho hoạt động lặn ống thở trong ngày.",
@@ -113,6 +117,22 @@ export const legacyQuyNhonPhuYenTours: readonly TourInput[] = [
       {
         src: "/images/destinations/mui-dien.jpg",
         alt: "Hải đăng Mũi Đại Lãnh, Phú Yên",
+      },
+      {
+        src: "/images/destinations/quy-nhon-bien.jpg",
+        alt: "Làng chài Nhơn Lý, Quy Nhơn",
+      },
+      {
+        src: "/images/destinations/san-ho.jpg",
+        alt: "Lặn ngắm san hô",
+      },
+      {
+        src: "/images/destinations/phu-yen-bai-xep.jpg",
+        alt: "Bãi Xép, Phú Yên",
+      },
+      {
+        src: "/images/destinations/phu-yen-ganh-da-dia.jpg",
+        alt: "Ghềnh Đá Đĩa, Phú Yên",
       },
     ],
     overview: [
@@ -210,7 +230,7 @@ export const legacyQuyNhonPhuYenTours: readonly TourInput[] = [
     ],
     notes: [
       "Chương trình có nhiều hoạt động trên biển; khách nên sắp xếp sức khoẻ phù hợp.",
-      "Giờ tàu ra đảo có thể thay đổi theo thuỷ triều, ảnh hưởng tới giờ của ngày 3 và ngày 5.",
+      "Giờ tàu ra đảo có thể thay đổi theo thủy triều, ảnh hưởng tới giờ của ngày 3 và ngày 5.",
     ],
     tags: ["5 ngày", "Quy Nhơn", "Phú Yên", "Lặn biển", "Nghỉ dưỡng"],
     contentStatus: "demo",

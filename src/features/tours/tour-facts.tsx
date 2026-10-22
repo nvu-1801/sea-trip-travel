@@ -103,7 +103,7 @@ export function TourPriceBlock({
         <InfoIcon className="mt-px h-3.5 w-3.5 shrink-0" />
         {m.common.noOnlineBooking}
       </p>
-      {tour.pricingOptions.length > 0 ? (
+      {hasPrice && tour.pricingOptions.length > 0 ? (
         <a
           href="#bang-gia"
           className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-primary-strong underline underline-offset-4"
@@ -117,7 +117,10 @@ export function TourPriceBlock({
 
 /** A responsive comparison; no checkout or inferred package entitlements. */
 export function TourPackages({ tour, locale }: { tour: Tour; locale: Locale }) {
-  if (tour.pricingOptions.length === 0) return null;
+  // "Liên hệ tư vấn" hides the table but keeps the packages in the record, so
+  // switching back to a published price never loses pricing data.
+  if (!hasPublishedPrice(tour.priceFrom) || tour.pricingOptions.length === 0)
+    return null;
   const m = getMessages(locale).tour.packages;
   const money = (amount: number) =>
     formatMoney({ amount, currency: "VND" }, locale);

@@ -10,54 +10,61 @@
 */
 
 @theme {
-  /* --- Brand pink ramp ----------------------------------------------------- */
-  --color-brand-50: #fff1f6;
-  --color-brand-100: #ffe3ee;
-  --color-brand-200: #ffc7dd;
-  --color-brand-300: #ff9dc2;
-  --color-brand-400: #ff5c99;
+  /* --- Brand rose ramp -----------------------------------------------------
+     The logo keeps its saturated #FF0366 pink; everything around it shifts to
+     a softer, aged-rose range so large surfaces feel calm rather than candy. */
+  --color-brand-50: #fdf2f5;
+  --color-brand-100: #fbe3e9;
+  --color-brand-200: #f4c9d6;
+  --color-brand-300: #eaa6ba;
+  --color-brand-400: #dd7898;
   --color-brand-500: #ff0366; /* logo pink — decorative / large display only */
-  --color-brand-600: #e0005a; /* AA-safe on white: white text = 4.87:1 */
-  --color-brand-700: #c4004e;
-  --color-brand-800: #9c003f;
-  --color-brand-900: #7a0031;
+  --color-brand-600: #d81b60;
+  --color-brand-700: #b0175a;
+  --color-brand-800: #8c1248;
+  --color-brand-900: #671032;
 
-  /* --- Logo gradient accents (orange → gold) ------------------------------- */
-  --color-sun-300: #ffd166;
-  --color-sun-400: #ffbc0e; /* logo gold */
-  --color-sun-500: #ff9f1c;
-  --color-sun-600: #ff7c2c; /* logo orange */
+  /* --- Logo gradient accents (antique gold → burnt amber) ------------------
+     Desaturated one step from the logo's brightest stops: still the same
+     pink→gold family, but it reads as champagne and brass rather than neon. */
+  --color-sun-300: #f0dcb4;
+  --color-sun-400: #d9b26a; /* antique gold */
+  --color-sun-500: #c68f45;
+  --color-sun-600: #b56f2f;
 
-  /* --- Semantic palette --------------------------------------------------- */
-  --color-background: #fffafc;
-  --color-surface: #ffffff;
-  --color-surface-muted: #fff4f8;
-  --color-surface-sunken: #fdf0f5;
+  /* --- Semantic palette ---------------------------------------------------
+     Warm alabaster and champagne replace the pink-tinted whites. The page
+     reads as paper and linen, which keeps the photography and the pink/gold
+     logo as the only strong colour notes. */
+  --color-background: #faf6f1;
+  --color-surface: #fffdfb;
+  --color-surface-muted: #f6ede4;
+  --color-surface-sunken: #f0e4d8;
 
-  --color-foreground: #211621;
-  --color-foreground-muted: #6e5c68;
-  /* Darkened from #8b7684, which measured 4.18:1 on --color-surface, 3.89:1 on
-     --color-surface-muted and 3.77:1 on --color-surface-sunken — all under the
-     4.5:1 that WCAG AA asks of body-size text. #7b6876 clears it on every light
-     surface in the palette (4.64 / 4.79 / 5.14) while keeping the plum hue. */
-  --color-foreground-subtle: #7b6876;
+  --color-champagne: #f3e5d3;
+  --color-champagne-deep: #e7d2bb;
+  --color-rose-gold: #c98a83;
 
-  --color-border: #f2dde7;
-  --color-border-strong: #e6c6d6;
+  --color-foreground: #2b2125;
+  --color-ink: #2b2125;
+  --color-foreground-muted: #6a575b;
+  /* AA on every light surface in the palette (min 4.74:1 on sunken sand),
+     while staying a warm taupe rather than a cold grey. */
+  --color-foreground-subtle: #756063;
 
-  --color-primary: #ff0366;
-  /* Darkened from #e0005a. That value only cleared AA on pure white (4.86:1);
-     it measured 4.39 on --color-surface-sunken, 4.44 on --color-primary-soft and
-     just 4.05 on the --color-brand-100 hover, all under the 4.5:1 needed for
-     body-size text. #d10053 clears every light surface in the palette:
-     5.47 white / 5.10 surface-muted / 4.94 surface-sunken / 5.00 primary-soft /
-     4.56 brand-100 (the nav hover). */
-  --color-primary-strong: #d10053;
-  --color-primary-strong-hover: #c4004e;
-  --color-primary-soft: #fff1f6;
+  --color-border: #ead9cf;
+  --color-border-strong: #dcc3b5;
 
-  --color-accent: #ffbc0e;
-  --color-accent-strong: #b26a00;
+  --color-primary: #d81b60;
+  /* Deep raspberry clears AA on porcelain, champagne, sand, primary-soft and
+     the brand-100 hover (min 5.91:1). The brighter logo pink stays reserved
+     for large decorative marks. */
+  --color-primary-strong: #a81455;
+  --color-primary-strong-hover: #8c1248;
+  --color-primary-soft: #f8e9ed;
+
+  --color-accent: #d9b26a;
+  --color-accent-strong: #8a5a14;
 
   --color-success: #067647;
   --color-success-soft: #ecfdf3;
@@ -108,14 +115,14 @@
   --radius-2xl: 1.75rem;
   --radius-3xl: 2.25rem;
 
-  /* --- Elevation (soft, pink-tinted, never harsh) -------------------------- */
+  /* --- Elevation (soft cocoa-tinted, never harsh) --------------------------- */
   --shadow-soft:
-    0 1px 2px rgb(122 0 49 / 0.04), 0 4px 12px rgb(122 0 49 / 0.05);
+    0 1px 2px rgb(60 38 28 / 0.04), 0 4px 12px rgb(60 38 28 / 0.05);
   --shadow-card:
-    0 1px 2px rgb(122 0 49 / 0.05), 0 10px 24px -8px rgb(122 0 49 / 0.12);
+    0 1px 2px rgb(60 38 28 / 0.05), 0 10px 24px -8px rgb(60 38 28 / 0.12);
   --shadow-lifted:
-    0 2px 4px rgb(122 0 49 / 0.06), 0 20px 44px -14px rgb(122 0 49 / 0.2);
-  --shadow-focus: 0 0 0 3px rgb(255 3 102 / 0.32);
+    0 2px 4px rgb(60 38 28 / 0.06), 0 20px 44px -14px rgb(60 38 28 / 0.2);
+  --shadow-focus: 0 0 0 3px rgb(168 20 85 / 0.28);
 
   /* --- Motion ------------------------------------------------------------- */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
@@ -163,6 +170,24 @@ html:not([lang="en"]) .nf-lang-en {
 
   body {
     background-color: var(--color-background);
+    /*
+     * Layered "paper and light" canvas: a champagne glow from the top left,
+     * the faintest rose reflection from the top right, then a warm ivory-to-
+     * sand wash. It keeps every flat section from looking like bare white
+     * without tinting the whole page pink.
+     */
+    background-image:
+      radial-gradient(
+        72% 55% at 6% -8%,
+        rgb(217 178 106 / 0.16) 0%,
+        transparent 62%
+      ),
+      radial-gradient(
+        60% 45% at 100% 2%,
+        rgb(216 27 96 / 0.055) 0%,
+        transparent 58%
+      ),
+      linear-gradient(180deg, #fdf9f4 0%, #faf6f1 46%, #f8f1e9 100%);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-synthesis-weight: none;
@@ -305,24 +330,36 @@ html:not([lang="en"]) .nf-lang-en {
  */
 @utility surface-section-muted {
   background-color: var(--color-surface-muted);
-  background-image: linear-gradient(
-    180deg,
-    var(--color-background) 0%,
-    var(--color-surface-muted) 18%,
-    var(--color-surface-muted) 82%,
-    var(--color-background) 100%
-  );
+  background-image:
+    radial-gradient(
+      60% 50% at 100% 0%,
+      rgb(217 178 106 / 0.14) 0%,
+      transparent 62%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-background) 0%,
+      var(--color-surface-muted) 18%,
+      var(--color-surface-muted) 82%,
+      var(--color-background) 100%
+    );
 }
 
 @utility surface-section-sunken {
   background-color: var(--color-surface-sunken);
-  background-image: linear-gradient(
-    180deg,
-    var(--color-background) 0%,
-    var(--color-surface-sunken) 20%,
-    var(--color-surface-sunken) 80%,
-    var(--color-background) 100%
-  );
+  background-image:
+    radial-gradient(
+      55% 45% at 0% 100%,
+      rgb(216 27 96 / 0.06) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-background) 0%,
+      var(--color-surface-sunken) 20%,
+      var(--color-surface-sunken) 80%,
+      var(--color-background) 100%
+    );
 }
 
 /**
@@ -358,11 +395,11 @@ html:not([lang="en"]) .nf-lang-en {
 @keyframes stt-dot-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 0 3px rgba(209, 0, 83, 0.14);
+    box-shadow: 0 0 0 3px rgba(168, 20, 85, 0.14);
   }
   50% {
     transform: scale(1.18);
-    box-shadow: 0 0 0 6px rgba(209, 0, 83, 0.26);
+    box-shadow: 0 0 0 6px rgba(168, 20, 85, 0.26);
   }
 }
 
@@ -435,7 +472,7 @@ html:not([lang="en"]) .nf-lang-en {
   transform: translateX(-50%);
   background: radial-gradient(
     closest-side,
-    rgb(255 3 102 / 0.09),
+    rgb(168 20 85 / 0.09),
     transparent
   );
 }
@@ -850,11 +887,11 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 }
 @keyframes stt-badge-pulse {
   0%, 100% {
-    box-shadow: 0 8px 20px rgb(209 0 83 / 0.4);
+    box-shadow: 0 8px 20px rgb(168 20 85 / 0.4);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 10px 24px rgb(209 0 83 / 0.6), 0 0 0 3px rgb(255 3 102 / 0.18);
+    box-shadow: 0 10px 24px rgb(168 20 85 / 0.6), 0 0 0 3px rgb(168 20 85 / 0.18);
     transform: scale(1.02);
   }
 }
@@ -879,7 +916,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   font-size: 12px;
   font-weight: 800;
   color: #fff;
-  box-shadow: 0 8px 20px rgb(209 0 83 / 0.4);
+  box-shadow: 0 8px 20px rgb(168 20 85 / 0.4);
   animation: stt-badge-pulse 4s ease-in-out infinite;
 }
 .stt-card-price-float {
@@ -892,7 +929,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   font-size: 13px;
   font-weight: 800;
   padding: 7px 14px;
-  box-shadow: 0 12px 26px rgb(209 0 83 / 0.4);
+  box-shadow: 0 12px 26px rgb(168 20 85 / 0.4);
   animation: stt-price-bob 4.5s ease-in-out infinite;
 }
 .stt-card-dest {
@@ -1073,7 +1110,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   .stt-tour-card:hover {
     transform: translateY(-0.35rem) perspective(1000px) rotateX(1.5deg);
     box-shadow:
-      0 20px 44px -10px rgb(122 0 49 / 0.16),
+      0 20px 44px -10px rgb(60 38 28 / 0.16),
       0 6px 16px -4px rgb(33 61 59 / 0.08);
   }
 
@@ -1110,22 +1147,22 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
  */
 @keyframes stt-pulse-ring {
   0% {
-    box-shadow: 0 0 0 0 rgb(255 3 102 / 0.5);
+    box-shadow: 0 0 0 0 rgb(168 20 85 / 0.5);
   }
   70%,
   100% {
-    box-shadow: 0 0 0 0.85rem rgb(255 3 102 / 0);
+    box-shadow: 0 0 0 0.85rem rgb(168 20 85 / 0);
   }
 }
 
 @keyframes stt-wave-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgb(209 0 83 / 0);
+    box-shadow: 0 0 0 0 rgb(168 20 85 / 0);
   }
   50% {
     transform: scale(1.06);
-    box-shadow: 0 0 0 6px rgb(209 0 83 / 0.14);
+    box-shadow: 0 0 0 6px rgb(168 20 85 / 0.14);
   }
 }
 
@@ -1688,6 +1725,54 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 }
 @media (prefers-reduced-motion: reduce) {
   .stt-time-option {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Select popup (components/ui/form-controls.tsx)
+   The native <option> list is drawn by the OS and can't be themed; this is the
+   list we render instead. Same soft pink language as the time menu above, but
+   compact: it may hold long labels and it sits inside forms.
+   ------------------------------------------------------------------------- */
+.stt-select-pop {
+  transform-origin: top center;
+  animation: stt-select-in 0.16s var(--ease-out-soft);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-brand-200) transparent;
+}
+.stt-select-pop[data-drop="up"] {
+  transform-origin: bottom center;
+  animation-name: stt-select-up;
+}
+.stt-select-option:focus-visible {
+  outline: none;
+}
+.stt-select-option[data-active="true"] {
+  box-shadow: inset 0 0 0 1px rgb(168 20 85 / 0.18);
+}
+@keyframes stt-select-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes stt-select-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stt-select-pop {
     animation: none;
   }
 }

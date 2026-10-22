@@ -207,7 +207,7 @@ try {
   check("second admin sees newly created draft without reload", true);
   await observer.getByRole("button", { name: /Chỉnh sửa/ }).first().click();
   await observer
-    .getByLabel("Tiêu đề", { exact: true })
+    .getByLabel(/^Tiêu đề/)
     .first()
     .fill("Nội dung chưa lưu phải được giữ");
   assert.equal(
@@ -225,7 +225,7 @@ try {
   check(
     "remote updates preserve a dirty editor",
     (await observer
-      .getByLabel("Tiêu đề", { exact: true })
+      .getByLabel(/^Tiêu đề/)
       .first()
       .inputValue()) === "Nội dung chưa lưu phải được giữ",
   );
@@ -645,15 +645,105 @@ try {
   await page.screenshot({ path: "verify-screenshots/studio-desktop.png" });
   await page.getByRole("button", { name: /Chỉnh sửa/ }).first().click();
   await page
-    .getByLabel("Tiêu đề", { exact: true })
+    .getByLabel(/^Tiêu đề/)
     .first()
     .fill("Chỉnh sửa bằng form kiểm thử");
+  for (const width of [360, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.waitForTimeout(250);
+    check(
+      `tour form ${width}px has no horizontal overflow`,
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    );
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole("button", { name: "Lưu bản nháp", exact: true }).click();
   await page
     .getByRole("status")
     .filter({ hasText: "Đã lưu thay đổi" })
     .waitFor();
   check("structured editor saves draft via browser", true);
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Điểm đến/ })
+    .click();
+  await page
+    .getByRole("heading", { name: "Điểm đến", exact: true })
+    .waitFor();
+  check(
+    "destination tab explains where a destination appears",
+    (await page
+      .getByText("Điểm đến là địa danh", { exact: false })
+      .count()) > 0,
+  );
+  // Rows load asynchronously after the heading paints; wait for the first
+  // destination card so the status count reads finished content.
+  await page.getByRole("button", { name: /Xem trước thẻ/ }).first().waitFor();
+  check(
+    "destination list exposes the home status",
+    (await page
+      .getByText("Đang hiện ở Khám phá trang chủ", { exact: false })
+      .count()) >= 3,
+  );
+  await page.getByRole("button", { name: /Xem trước thẻ/ }).first().click();
+  const destinationPreview = page.getByRole("dialog", {
+    name: "Xem trước thẻ Khám phá",
+  });
+  await destinationPreview.waitFor();
+  check("destination card preview opens", await destinationPreview.isVisible());
+  await destinationPreview
+    .getByRole("button", { name: "Đóng", exact: true })
+    .click();
+  await page.getByRole("button", { name: /Chỉnh sửa/ }).first().click();
+  await page
+    .getByRole("heading", { name: "Thông tin địa danh", exact: true })
+    .waitFor();
+  check(
+    "destination form groups the fields and names the region",
+    (await page.getByText("Vùng miền & thứ tự", { exact: true }).count()) >
+      0 &&
+      (await page.getByText("Quy Nhơn – Phú Yên", { exact: false }).count()) >
+        0,
+  );
+  check(
+    "destination image has replace and remove actions",
+    (await page.getByRole("button", { name: "Gỡ ảnh", exact: true }).count()) >
+      0,
+  );
+  check(
+    "destination form shows the live home card preview",
+    (await page.getByText("Thẻ sẽ xuất hiện", { exact: false }).count()) > 0,
+  );
+  const actionsBeforeForm = await page.evaluate(() => {
+    const actions = document.querySelector(".adm-edit-actions");
+    const form = document.querySelector(".adm-tour-form");
+    if (!actions || !form) return false;
+    const position = getComputedStyle(actions).position;
+    return (
+      position === "sticky" &&
+      Boolean(
+        actions.compareDocumentPosition(form) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      )
+    );
+  });
+  check(
+    "editor actions sit above the form and stay sticky",
+    actionsBeforeForm,
+  );
+  for (const width of [360, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.waitForTimeout(250);
+    check(
+      `destination form ${width}px has no horizontal overflow`,
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth + 1,
+      ),
+    );
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole("button", { name: "Cẩm nang", exact: false }).click();
   await page.getByRole("button", { name: /Chỉnh sửa/ }).first().click();
   await page

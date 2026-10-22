@@ -120,7 +120,7 @@ export const defaultLanding: LandingSections = landingSchema.parse({
     questions: [
       { q: "Chọn chuyến đi thế nào cho phù hợp?", qEn: "How do I choose the right trip?", a: "Bắt đầu từ số ngày bạn có và nơi muốn đến. Mỗi trang tour có lịch trình và thông tin dịch vụ để bạn so sánh trước khi trao đổi thêm với tư vấn viên.", aEn: "Start with your available days and preferred destination. Each tour page lists its itinerary and included services so you can compare before asking for advice.", tag: "Chọn tour", tagEn: "Choose" },
       { q: "Gia đình hoặc nhóm riêng có thể đi được không?", qEn: "Can I travel with my family or a private group?", a: "Bạn hãy chia sẻ số người, độ tuổi và nhịp đi mong muốn. Đội ngũ tư vấn sẽ trao đổi phương án phù hợp và xác nhận khả năng phục vụ trước khi bạn quyết định.", aEn: "Share your group size, ages and preferred pace. Our team will discuss suitable arrangements and confirm availability before you decide.", tag: "Nhóm riêng", tagEn: "Group" },
-      { q: "Gửi yêu cầu có đồng nghĩa đã đặt tour?", qEn: "Does submitting a request confirm a booking?", a: "Chưa. Biểu mẫu chỉ gửi yêu cầu tư vấn. Ngày khởi hành, tình trạng chỗ, dịch vụ và giá cuối cùng cần được xác nhận lại với đội ngũ tư vấn.", aEn: "No. The form sends a consultation request. Dates, availability, services and the final price need to be confirmed with the team.", tag: "Đặt chỗ", tagEn: "Booking" },
+      { q: "Gửi yêu cầu có đồng nghĩa đã đặt tour?", qEn: "Does submitting a request confirm a booking?", a: "Chưa. Form chỉ gửi yêu cầu tư vấn. Ngày khởi hành, tình trạng chỗ, dịch vụ và giá cuối cùng cần được xác nhận lại với đội ngũ tư vấn.", aEn: "No. The form sends a consultation request. Dates, availability, services and the final price need to be confirmed with the team.", tag: "Đặt chỗ", tagEn: "Booking" },
       { q: "Cần chuẩn bị gì cho chuyến đi biển?", qEn: "What should I check before a coastal trip?", a: "Trao đổi trước về thời tiết và điểm đón. Mang theo đồ chống nắng, giày dép phù hợp; các hoạt động canô hoặc tàu có thể thay đổi theo điều kiện biển.", aEn: "Check the weather and departure arrangements with your advisor. Bring sun protection and suitable footwear; boat activities may change with sea conditions.", tag: "Đi biển", tagEn: "Beach" },
     ],
   },
@@ -158,15 +158,15 @@ export const defaultLanding: LandingSections = landingSchema.parse({
       { title: "Chọn ít điểm, đi sâu hơn", titleEn: "Fewer places, deeper stays", body: "Mỗi hành trình tập trung vào một cụm điểm thay vì chạy qua nhiều nơi. Thời gian di chuyển được tính trước để bạn có thời gian thật ở mỗi điểm.", bodyEn: "Each journey focuses on one cluster of places instead of rushing through many. Travel time is planned up front so you get real time at each stop." },
       { title: "Lịch trình nói rõ bao gồm gì", titleEn: "Itineraries that say what is included", body: "Mỗi tour đều liệt kê dịch vụ bao gồm và không bao gồm. Giá chưa xác nhận sẽ hiển thị “Liên hệ tư vấn”, không hiển thị số 0.", bodyEn: "Every tour lists what is and is not included. A price that is not confirmed shows “Contact us for pricing”, never a zero." },
       { title: "Tư vấn trực tiếp, không ép", titleEn: "Direct advice, no pressure", body: "Website chỉ tiếp nhận yêu cầu. Bạn trao đổi với tư vấn viên, xem giá và điều kiện, rồi mới quyết định.", bodyEn: "This website only takes requests. You talk to an advisor, see the price and the conditions, then decide." },
-      { title: "Nói thật khi chưa chắc", titleEn: "Honest when we are unsure", body: "Những nội dung cần xác nhận như giá, chính sách huỷ hay thời điểm tàu chạy sẽ được kiểm tra lại trước khi gửi cho bạn.", bodyEn: "Anything that needs confirming — prices, cancellation terms, boat schedules — is checked again before we send it to you." },
+      { title: "Nói thật khi chưa chắc", titleEn: "Honest when we are unsure", body: "Những nội dung cần xác nhận như giá, chính sách hủy hay thời điểm tàu chạy sẽ được kiểm tra lại trước khi gửi cho bạn.", bodyEn: "Anything that needs confirming, such as prices, cancellation terms or boat schedules, is checked again before we send it to you." },
     ],
   },
   trust: {
     items: [
       { icon: "calendar", title: "Lịch trình rõ từng ngày", titleEn: "Day-by-day itinerary", body: "Mỗi trang tour ghi rõ ngày nào đi đâu.", bodyEn: "Every tour page lists what happens each day." },
-      { icon: "shield", title: "Giá công khai", titleEn: "Upfront pricing", body: "Niêm yết giá trước khi tư vấn.", bodyEn: "Published prices before you ask for advice." },
+      { icon: "shield", title: "Giá công khai", titleEn: "Prices are listed up front", body: "Niêm yết giá trước khi tư vấn.", bodyEn: "Prices are listed before you ask for advice." },
       { icon: "compass", title: "Tư vấn miễn phí", titleEn: "Free consultation", body: "Gợi ý tuyến và thời điểm, không mất phí.", bodyEn: "Route and timing advice costs nothing." },
-      { icon: "users", title: "Đồng hành suốt chuyến", titleEn: "Support on the road", body: "Đội ngũ thật theo sát hành trình của bạn.", bodyEn: "A real team follows your trip with you." },
+      { icon: "users", title: "Đồng hành suốt chuyến", titleEn: "Our team on the road with you", body: "Đội ngũ thật theo sát hành trình của bạn.", bodyEn: "A real team stays close to your trip from start to finish." },
     ],
   },
   featured: {

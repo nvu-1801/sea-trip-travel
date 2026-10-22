@@ -37,7 +37,7 @@
     "destinationsCount": "Destinations",
     "departurePrefix": "Departs: {place}",
     "departureFallback": "Contact us to confirm",
-    "updating": "Being updated",
+    "updating": "Updating",
     "tourCount": {
       "one": "{count} tour",
       "other": "{count} tours"
@@ -175,7 +175,7 @@
         },
         {
           "title": "Honest when we are unsure",
-          "body": "Anything that needs confirming — prices, cancellation terms, boat schedules — is checked again before we send it to you."
+          "body": "Anything that needs confirming, such as prices, cancellation terms or boat schedules, is checked again before we send it to you."
         }
       ]
     },
@@ -248,7 +248,7 @@
     "asideDescription": "Send a request for advice on price, timing and the right option.",
     "asideCta": "Ask about this tour",
     "consultTitle": "Get advice for this tour",
-    "consultDescription": "Leave your details and SEA TRIP will advise in detail about \"{title}\" — current price: {price}.",
+    "consultDescription": "Leave your details and SEA TRIP will advise you in detail about \"{title}\". Current price: {price}.",
     "dayLabel": "Day {index}:",
     "mealsLabel": "Meals: {meals}",
     "destinationsCountValue": "{count} places",
@@ -263,7 +263,7 @@
       "accommodation": "Package",
       "adult": "Adult",
       "child": "Children aged 5–9",
-      "gift": "Programme extras",
+      "gift": "Gifts included in the programme",
       "returnPoint": "Drop-off",
       "transport": "Transport"
     }
@@ -299,7 +299,7 @@
     "indexTitle": "Travel guides",
     "indexDescription": "Travel advice for Quy Nhon – Phu Yen and routes across Vietnam: timing, transport, food and suggested itineraries.",
     "heroEyebrow": "Travel guides",
-    "heroTitle": "Prepare well to travel light",
+    "heroTitle": "Prepare well for an easier trip",
     "heroDescription": "Short articles focused on the decisions you need to make: which month to go, how to get around, what to eat and how to plan a sensible itinerary.",
     "featuredSr": "Featured article",
     "otherEyebrow": "More articles",
@@ -495,7 +495,7 @@
   },
   "errorPage": {
     "title": "Something went wrong while loading the page",
-    "description": "Please try reloading. If the problem continues, call our hotline for direct help.",
+    "description": "Please reload the page. If the problem continues, call our hotline for direct help.",
     "codeLabel": "Technical error code:",
     "retry": "Try again",
     "home": "Back to home",

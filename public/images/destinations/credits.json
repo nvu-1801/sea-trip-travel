@@ -133,5 +133,266 @@
     "license": "CC0",
     "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
     "description": "Nhơn Hải, Quy Nhơn"
+  },
+  "ha-noi-pho-co": {
+    "file": "/images/destinations/ha-noi-pho-co.jpg",
+    "title": "File:Street vendors in old quarter, Hanoi, Vietnam.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AStreet_vendors_in_old_quarter%2C_Hanoi%2C_Vietnam.jpg",
+    "author": "yeowatzup",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "description": "Phố cổ Hà Nội"
+  },
+  "ha-long-du-thuyen": {
+    "file": "/images/destinations/ha-long-du-thuyen.jpg",
+    "title": "File:Asia cruise in Halong bay Vietnam.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File%3AAsia_cruise_in_Halong_bay_Vietnam.JPG",
+    "author": "Arianos",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Commons:Public_domain",
+    "description": "Du thuyền trên Vịnh Hạ Long"
+  },
+  "ninh-binh-trang-an": {
+    "file": "/images/destinations/ninh-binh-trang-an.jpg",
+    "title": "File:Trang An Landscape Complex, Ninh Binh Province, Vietnam, 20240202 1433 5283.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ATrang_An_Landscape_Complex%2C_Ninh_Binh_Province%2C_Vietnam%2C_20240202_1433_5283.jpg",
+    "author": "Jakub Hałun",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "description": "Thuyền nan ở Tràng An"
+  },
+  "ninh-binh-hang-mua": {
+    "file": "/images/destinations/ninh-binh-hang-mua.jpg",
+    "title": "File:Lying Dragon (Unsplash).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ALying_Dragon_(Unsplash).jpg",
+    "author": "Eila Lifflander 3ilaliff",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "description": "Toàn cảnh Tam Cốc từ Hang Múa"
+  },
+  "ninh-binh-bai-dinh": {
+    "file": "/images/destinations/ninh-binh-bai-dinh.jpg",
+    "title": "File:Bai Dinh Pagoda (36519413585).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ABai_Dinh_Pagoda_(36519413585).jpg",
+    "author": "Felix Nagel (using Albums) from germany",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "description": "Chùa Bái Đính"
+  },
+  "sapa-fansipan": {
+    "file": "/images/destinations/sapa-fansipan.jpg",
+    "title": "File:Fansipan summit pagoda stupa sea of clouds aerial view Sa Pa Vietnam.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AFansipan_summit_pagoda_stupa_sea_of_clouds_aerial_view_Sa_Pa_Vietnam.jpg",
+    "author": "Vivu Vietnam",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "description": "Đỉnh Fansipan trong mây"
+  },
+  "sapa-cat-cat": {
+    "file": "/images/destinations/sapa-cat-cat.jpg",
+    "title": "File:Sapa Boy (42397382).jpeg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ASapa_Boy_(42397382).jpeg",
+    "author": "Diego Angel",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "description": "Bản làng vùng cao Sa Pa"
+  },
+  "can-tho-cho-noi": {
+    "file": "/images/destinations/can-tho-cho-noi.jpg",
+    "title": "File:Can Tho, Vietnam, Floating Market 2.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ACan_Tho%2C_Vietnam%2C_Floating_Market_2.jpg",
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "description": "Chợ nổi Cái Răng buổi sớm"
+  },
+  "mien-tay-thuyen-nho": {
+    "file": "/images/destinations/mien-tay-thuyen-nho.jpg",
+    "title": "File:Vietnam 08 - 148 - life on the Mekong (3185100723).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AVietnam_08_-_148_-_life_on_the_Mekong_(3185100723).jpg",
+    "author": "McKay Savage from London, UK",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "description": "Thuyền nhỏ trên sông Cửu Long"
+  },
+  "mien-tay-vuon-dua": {
+    "file": "/images/destinations/mien-tay-vuon-dua.jpg",
+    "title": "File:20190924 coconut opening-1.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3A20190924_coconut_opening-1.jpg",
+    "author": "Balon Greyjoy",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "description": "Dừa tươi miền Tây"
+  },
+  "phu-quoc-bai-sao": {
+    "file": "/images/destinations/phu-quoc-bai-sao.jpg",
+    "title": "File:Star Beach (Bãi Sao).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AStar_Beach_(B%C3%A3i_Sao).jpg",
+    "author": "Vnecofriendly",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "description": "Bãi biển cát trắng Phú Quốc"
+  },
+  "phu-quoc-cap-treo": {
+    "file": "/images/destinations/phu-quoc-cap-treo.jpg",
+    "title": "File:Hon Thom Cable Car aerial view Phu Quoc Island Vietnam.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AHon_Thom_Cable_Car_aerial_view_Phu_Quoc_Island_Vietnam.jpg",
+    "author": "Vivu Vietnam",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "description": "Cáp treo Hòn Thơm vượt biển"
+  },
+  "phu-quoc-cho-dem": {
+    "file": "/images/destinations/phu-quoc-cho-dem.jpg",
+    "title": "File:Fish for sale in Phu Quoc night market Vietnam.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AFish_for_sale_in_Phu_Quoc_night_market_Vietnam.jpg",
+    "author": "FrogsLegs71",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "description": "Hải sản tại chợ đêm Phú Quốc"
+  },
+  "hue-thien-mu": {
+    "file": "/images/destinations/hue-thien-mu.jpg",
+    "title": "File:Prelude Rivier Thien Mu Pagode Hue (77504).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3APrelude_Rivier_Thien_Mu_Pagode_Hue_(77504).jpg",
+    "author": "Andre Hospers",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "description": "Sông Hương và Chùa Thiên Mụ"
+  },
+  "da-nang-my-khe": {
+    "file": "/images/destinations/da-nang-my-khe.jpg",
+    "title": "File:My Khe Beach Danang Coastline.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AMy_Khe_Beach_Danang_Coastline.jpg",
+    "author": "Jpatokal",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "description": "Bãi biển Mỹ Khê, Đà Nẵng"
+  },
+  "hoi-an-den-long": {
+    "file": "/images/destinations/hoi-an-den-long.jpg",
+    "title": "File:Lanterns in Hoi An 3.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ALanterns_in_Hoi_An_3.jpg",
+    "author": "Christophe95",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "description": "Đèn lồng Hội An"
+  },
+  "da-nang-cau-rong": {
+    "file": "/images/destinations/da-nang-cau-rong.jpg",
+    "title": "File:Da Nang Dragon Bridge (II).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ADa_Nang_Dragon_Bridge_(II).jpg",
+    "author": "Supanut Arunoprayote",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "description": "Cầu Rồng Đà Nẵng về đêm"
+  },
+  "hue-dai-noi": {
+    "file": "/images/destinations/hue-dai-noi.jpg",
+    "title": "File:Vietnam, Hue, Imperial City of Hue, Gate.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AVietnam%2C_Hue%2C_Imperial_City_of_Hue%2C_Gate.jpg",
+    "author": "Vyacheslav Argenberg",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "description": "Đại Nội Huế"
+  },
+  "quy-nhon-bien": {
+    "file": "/images/destinations/quy-nhon-bien.jpg",
+    "title": "File:Nhon Ly, Quy Nhon, Vietnam (53001404016).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ANhon_Ly%2C_Quy_Nhon%2C_Vietnam_(53001404016).jpg",
+    "author": "Pulencio from Tarlac, Philippines",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "description": "Làng chài Nhơn Lý, Quy Nhơn"
+  },
+  "phu-yen-mui-dien": {
+    "file": "/images/destinations/phu-yen-mui-dien.jpg",
+    "title": "File:Mũi Điện (42093374024).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AM%C5%A9i_%C4%90i%E1%BB%87n_(42093374024).jpg",
+    "author": "Tran Anh Khoa (zorrotran)",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "description": "Hải đăng Mũi Điện"
+  },
+  "phu-yen-bai-xep": {
+    "file": "/images/destinations/phu-yen-bai-xep.jpg",
+    "title": "File:Bãi Xép 1.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AB%C3%A3i_X%C3%A9p_1.jpg",
+    "author": "Christophe95",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "description": "Bãi Xép, Phú Yên"
+  },
+  "phu-yen-ganh-da-dia": {
+    "file": "/images/destinations/phu-yen-ganh-da-dia.jpg",
+    "title": "File:Gành Đá Đĩa - Phú Yên.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AG%C3%A0nh_%C4%90%C3%A1_%C4%90%C4%A9a_-_Ph%C3%BA_Y%C3%AAn.jpg",
+    "author": "Đông Hồ",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "description": "Ghềnh Đá Đĩa, Phú Yên"
+  },
+  "dak-lak-thac": {
+    "file": "/images/destinations/dak-lak-thac.jpg",
+    "title": "File:Dray Nur Waterfall (49483462012).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ADray_Nur_Waterfall_(49483462012).jpg",
+    "author": "Sketyl none",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "description": "Thác nước ở Đắk Lắk"
+  },
+  "dak-lak-buon-lang": {
+    "file": "/images/destinations/dak-lak-buon-lang.jpg",
+    "title": "File:Ede longhouse, Museum of Ethnology, Hanoi (37608576475).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AEde_longhouse%2C_Museum_of_Ethnology%2C_Hanoi_(37608576475).jpg",
+    "author": "Richard Mortel from Riyadh, Saudi Arabia",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "description": "Nhà dài Êđê"
+  },
+  "dak-lak-ca-phe": {
+    "file": "/images/destinations/dak-lak-ca-phe.jpg",
+    "title": "File:Vietnam - coffee plantation.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AVietnam_-_coffee_plantation.jpg",
+    "author": "P. Hughes",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "description": "Đồi cà phê ở Đắk Lắk"
+  },
+  "da-lat-doi-thong": {
+    "file": "/images/destinations/da-lat-doi-thong.jpg",
+    "title": "File:Pine forest in Don Duong, Lam Dong, Vietnam.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3APine_forest_in_Don_Duong%2C_Lam_Dong%2C_Vietnam.jpg",
+    "author": "FreemanKi",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "description": "Đồi thông Đà Lạt"
+  },
+  "da-lat-vuon-hoa": {
+    "file": "/images/destinations/da-lat-vuon-hoa.jpg",
+    "title": "File:Da Lat Flower Park 1.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ADa_Lat_Flower_Park_1.jpg",
+    "author": "hector garcia",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "description": "Vườn hoa Đà Lạt"
+  },
+  "san-ho": {
+    "file": "/images/destinations/san-ho.jpg",
+    "title": "File:Thuycung36.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AThuycung36.jpg",
+    "author": "Lê Hải Sơn",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "description": "Rạn san hô"
+  },
+  "da-lat-thac": {
+    "file": "/images/destinations/da-lat-thac.jpg",
+    "title": "File:Datanla Waterfall 2.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3ADatanla_Waterfall_2.jpg",
+    "author": "thalling55",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "description": "Thác Datanla"
   }
 }

@@ -74,11 +74,11 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     key: "explore",
     collection: "landing",
     title: "Khám phá điểm đến",
-    where: "Cụm 3 điểm nổi bật dưới thanh tìm kiếm",
+    where: "Cụm tối đa 3 thẻ điểm đến dưới thanh tìm kiếm",
     illustration: "/images/destinations/hon-kho.jpg",
     icon: "🗺",
     group: "main",
-    tip: "Đổi tiêu đề và 3 điểm đến nổi bật.",
+    tip: "Chỗ này chỉ sửa tiêu đề/mô tả. Chọn thẻ nào và thứ tự ra sao ở tab Điểm đến.",
   },
   {
     key: "featured",

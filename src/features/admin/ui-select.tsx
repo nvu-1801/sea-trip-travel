@@ -14,6 +14,7 @@ export function AdmSelect({
   placeholder = "Chọn một mục…",
   preview,
   onChange,
+  showValues = true,
 }: {
   label: string;
   value: string;
@@ -21,11 +22,29 @@ export function AdmSelect({
   placeholder?: string;
   preview?: (value: string) => string | null;
   onChange: (next: string) => void;
+  /** Hide raw ids/codes in the dropdown; the label is the user-facing name. */
+  showValues?: boolean;
 }) {
   const id = useId();
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const current = options.find((o) => o.value === value);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: PointerEvent) => {
+      if (!wrapRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return options.slice(0, 60);
@@ -38,7 +57,7 @@ export function AdmSelect({
   const img = preview?.(value);
 
   return (
-    <div className="adm-select">
+    <div className="adm-select" ref={wrapRef}>
       <span className="adm-select-label" id={id}>{label}</span>
       <button
         type="button"
@@ -80,7 +99,7 @@ export function AdmSelect({
                 onClick={() => { onChange(o.value); setOpen(false); }}
               >
                 <span>{o.label}</span>
-                <small>{o.value}</small>
+                {showValues ? <small>{o.value}</small> : null}
               </button>
             ))}
             {!filtered.length && <span className="adm-select-empty">Không tìm thấy</span>}
@@ -204,15 +223,34 @@ export function AdmMultiSelect({
   options,
   placeholder = "Thêm mục…",
   onChange,
+  showValues = true,
 }: {
   label: string;
   values: string[];
   options: SelectOption[];
   placeholder?: string;
   onChange: (next: string[]) => void;
+  /** Hide raw ids/slugs in the dropdown; the label is the user-facing name. */
+  showValues?: boolean;
 }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: PointerEvent) => {
+      if (!wrapRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return options
@@ -227,7 +265,7 @@ export function AdmMultiSelect({
   }, [options, values, q]);
 
   return (
-    <div className="adm-multiselect">
+    <div className="adm-multiselect" ref={wrapRef}>
       <span className="adm-select-label">{label} <span className="adm-count">{values.length}</span></span>
       <div className="adm-chips">
         {values.map((v) => {
@@ -259,7 +297,8 @@ export function AdmMultiSelect({
           <div className="adm-select-list">
             {filtered.map((o) => (
               <button key={o.value} type="button" onClick={() => { onChange([...values, o.value]); setQ(""); }}>
-                <span>{o.label}</span><small>{o.value}</small>
+                <span>{o.label}</span>
+                {showValues ? <small>{o.value}</small> : null}
               </button>
             ))}
             {!filtered.length && <span className="adm-select-empty">Hết mục để thêm hoặc không tìm thấy</span>}

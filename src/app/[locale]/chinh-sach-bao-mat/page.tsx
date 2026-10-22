@@ -130,7 +130,7 @@ export default async function PrivacyPage({ params }: PageProps<"/[locale]">) {
             </p>
             <ul>
               <li>
-                <strong>Bắt buộc:</strong> họ tên, số điện thoại, và xác nhận
+                <strong>Bắt buộc:</strong> họ tên, số điện thoại và xác nhận
                 bạn đã đọc chính sách này.
               </li>
               <li>
@@ -161,7 +161,7 @@ export default async function PrivacyPage({ params }: PageProps<"/[locale]">) {
             <ul>
               <li>Liên hệ tư vấn và trả lời yêu cầu bạn đã gửi.</li>
               <li>Lập phương án lịch trình và báo giá theo nhu cầu của bạn.</li>
-              <li>Chống lạm dụng form và bảo đảm an toàn cho hệ thống.</li>
+              <li>Chống lạm dụng form và đảm bảo an toàn cho hệ thống.</li>
             </ul>
             <p>
               Chúng tôi không dùng thông tin này để gửi tin quảng cáo, và không
@@ -193,9 +193,9 @@ export default async function PrivacyPage({ params }: PageProps<"/[locale]">) {
             </p>
             <p>
               Chúng tôi không bán, không trao đổi và không cho thuê thông tin cá
-              nhân của bạn cho bất kỳ bên nào khác. Trường hợp cơ quan nhà nước
-              có thẩm quyền yêu cầu theo quy định pháp luật, chúng tôi thực hiện
-              theo yêu cầu đó.
+              nhân của bạn cho bất kỳ bên nào khác. Nếu cơ quan nhà nước có thẩm
+              quyền yêu cầu theo quy định pháp luật, chúng tôi sẽ cung cấp thông
+              tin theo yêu cầu đó.
             </p>
 
             <h2>7. Bảo mật</h2>

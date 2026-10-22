@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { getDestinationsByRegion } from "@/lib/data/destinations";
+import {
+  getHomeExploreDestinations,
+  homeDestinationHref,
+} from "@/lib/data/destinations";
 import { Container, Section } from "@/components/ui/layout";
 import { Reveal } from "@/components/ui/reveal";
 import { AssetImage } from "@/components/ui/asset-image";
@@ -30,9 +33,11 @@ export function ExploreSection({ locale }: { locale: Locale }) {
   } catch {
     // fallback
   }
-  const destinations = getDestinationsByRegion("quy-nhon-phu-yen", locale)
-    .filter((d) => d.image?.src)
-    .slice(0, 3);
+  // Selection is explicit: the owner enables up to three destinations in
+  // Studio. A missing photo is not a reason to hide a card — AssetImage renders
+  // the branded placeholder instead.
+  const destinations = getHomeExploreDestinations(locale);
+  if (!destinations.length) return null;
   return (
     <Section className="journal-explore">
       <Container>
@@ -47,7 +52,7 @@ export function ExploreSection({ locale }: { locale: Locale }) {
           </div>
           <p>{copy.body}</p>
         </Reveal>
-        <div className="destination-editorial">
+        <div className="destination-editorial" data-count={destinations.length}>
           {destinations.map((destination, index) => (
             <Reveal
               key={destination.id}
@@ -55,7 +60,7 @@ export function ExploreSection({ locale }: { locale: Locale }) {
               className="destination-editorial-item"
             >
               <Link
-                href={`${localizePath(locale, "/tim-tour")}?q=${encodeURIComponent(destination.name.split(" – ")[0])}`}
+                href={homeDestinationHref(destination, locale)}
                 className="destination-editorial-card"
               >
                 <AssetImage

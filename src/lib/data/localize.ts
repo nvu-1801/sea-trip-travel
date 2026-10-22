@@ -107,8 +107,23 @@ export function isTourIndexable(id: string, locale: Locale): boolean {
 
 export function resolveTour(tour: Tour, locale: Locale): Tour {
   if (locale === "vi") return tour;
-  const cms = tour as Tour & { _en?: Partial<Tour> };
-  if (cms._en) return { ...tour, ...cms._en };
+  const cms = tour as Tour & {
+    _en?: Partial<Tour> & { imageAlts?: string[] };
+  };
+  if (cms._en) {
+    const { imageAlts, ...overlay } = cms._en;
+    return {
+      ...tour,
+      ...overlay,
+      ...(overlay.seo ? { seo: { ...tour.seo, ...overlay.seo } } : {}),
+      images: imageAlts
+        ? tour.images.map((image, index) => ({
+            ...image,
+            alt: imageAlts[index] ?? image.alt,
+          }))
+        : (overlay.images ?? tour.images),
+    };
+  }
   if (wasEdited(tour)) return tour;
   const tr = tourTranslations[tour.id];
   if (!tr) return tour;

@@ -42,7 +42,7 @@ export const destinationTranslations: Readonly<
     province: "Gia Lai",
     summary:
       "A peaceful offshore island, notable for its lighthouse and fishing village.",
-    imageAlt: "The Cu Lao Xanh lighthouse",
+    imageAlt: "Cu Lao Xanh island and its lighthouse",
   },
 
   dest_ghenh_da_dia: {
@@ -68,7 +68,7 @@ export const destinationTranslations: Readonly<
     name: "Mui Dien – Dai Lanh",
     province: "Phu Yen",
     summary:
-      "The spot that greets the earliest sunrise on the Vietnamese mainland.",
+      "The point that sees the earliest sunrise on the Vietnamese mainland.",
     imageAlt: "Dai Lanh lighthouse, Phu Yen",
   },
 

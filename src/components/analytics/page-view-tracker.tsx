@@ -42,6 +42,8 @@ export function PageViewTracker() {
 
   useEffect(() => {
     if (!pathname || pathname.startsWith("/admin")) return;
+    // Studio preview renders inside the public layout; never count it as a visit.
+    if (pathname.includes("/xem-truoc/")) return;
     if (last.current === pathname) return;
     last.current = pathname;
     const payload = JSON.stringify({

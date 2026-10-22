@@ -13,7 +13,7 @@ export const articleTranslations: Readonly<
 > = {
   art_kinh_nghiem_qn_py: {
     translationStatus: "draft",
-    title: "Travel tips for Quy Nhon – Phu Yen for first-time visitors",
+    title: "Quy Nhon – Phu Yen travel tips for first-time visitors",
     excerpt:
       "A round-up of what to know before a trip to Quy Nhon – Phu Yen: when to go, how to get around, which places to see, and how to plan your itinerary.",
     tags: ["Quy Nhon", "Phu Yen", "Tips"],
@@ -63,7 +63,7 @@ export const articleTranslations: Readonly<
         text: "If you have four days, add a morning on the island instead of cramming in more mainland stops. A slower pace is more enjoyable.",
       },
     ],
-    coverAlt: "Ghenh Rang coastline, Quy Nhon",
+    coverAlt: "Panoramic view of the islands and bays of Quy Nhon – Phu Yen",
   },
 
   art_thoi_diem_qn: {
@@ -79,6 +79,11 @@ export const articleTranslations: Readonly<
       { text: "If you want to visit the islands and snorkel" },
       {
         text: "Prioritise the calm-sea period. This is the most important factor, because boats and speedboats may be postponed when the sea is rough, no matter how far in advance you booked.",
+      },
+      {
+        alt: "Ky Co beach with clear turquoise water",
+        caption:
+          "Ky Co on a calm day, the best time to head out to the islands.",
       },
       { text: "If you want to avoid the crowds" },
       {
@@ -97,7 +102,7 @@ export const articleTranslations: Readonly<
         ],
       },
     ],
-    coverAlt: "Ghenh Rang coastline, Quy Nhon",
+    coverAlt: "Ky Co beach, Quy Nhon",
   },
 
   art_an_gi_o_qn: {
@@ -119,6 +124,14 @@ export const articleTranslations: Readonly<
       },
       { text: "Lunch and dinner" },
       {
+        text: "Lunch and dinner are the time for fresh seafood, especially the famous blood cockles from O Loan Lagoon.",
+      },
+      {
+        alt: "Nhon Hai fishing village shoreline",
+        caption:
+          "Seaside fishing villages are where you eat seafood landed the same day.",
+      },
+      {
         items: [
           "Grilled seafood at seaside restaurants.",
           "Chicken rice and other local rice dishes.",
@@ -130,7 +143,7 @@ export const articleTranslations: Readonly<
         text: "For seafood sold by weight, ask about the price and weight before it is cooked to avoid unexpected charges.",
       },
     ],
-    coverAlt: "Ghenh Rang coastline, Quy Nhon",
+    coverAlt: "O Loan Lagoon, Phu Yen",
   },
 
   art_di_chuyen_qn: {
@@ -151,6 +164,11 @@ export const articleTranslations: Readonly<
       {
         text: "Dieu Tri station lies on the North–South line. The train suits you if you want to take in the scenery along the way and do not mind a long journey.",
       },
+      {
+        alt: "Dai Lanh lighthouse, Phu Yen",
+        caption:
+          "Mui Dien – Dai Lanh, the earliest sunrise point on the Vietnamese mainland.",
+      },
       { text: "By coach" },
       {
         text: "Flexible in terms of departure times and pick-up points, but the journey is longer. Choose a sleeper coach for the long haul.",
@@ -160,7 +178,7 @@ export const articleTranslations: Readonly<
         text: "If you visit both provinces, decide in advance where you will fly in and out so you do not have to return to your starting point.",
       },
     ],
-    coverAlt: "Ghenh Rang coastline, Quy Nhon",
+    coverAlt: "Quy Nhon Bay seen from above",
   },
 
   art_ghenh_da_dia_bai_xep: {
@@ -176,6 +194,11 @@ export const articleTranslations: Readonly<
       { text: "Morning: Ghenh Da Dia" },
       {
         text: "Arrive early, as the area is quite exposed and the sun climbs quickly. Take care walking on the rocks, since the surface can be slippery.",
+      },
+      {
+        alt: "Layered basalt columns at Ghenh Da Dia",
+        caption:
+          "Ghenh Da Dia in the early morning, with its striking layered basalt columns.",
       },
       { text: "Afternoon: Bai Xep" },
       {

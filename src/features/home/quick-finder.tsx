@@ -87,8 +87,8 @@ export function QuickFinder({ locale }: { locale: Locale }) {
           </h2>
           <p>
             {en
-              ? "Tell us where and how long. Or start from a suggestion — every path leads to a real itinerary."
-              : "Cho biết nơi muốn đến và số ngày bạn có. Hoặc bắt đầu từ một gợi ý — đường nào cũng tới lịch trình cụ thể."}
+              ? "Tell us where you want to go and how long you have. Or start from a suggestion — every path leads to a real itinerary."
+              : "Cho SEA TRIP biết nơi bạn muốn đến và số ngày bạn có. Hoặc bắt đầu từ một gợi ý — đường nào cũng dẫn tới lịch trình cụ thể."}
           </p>
         </Reveal>
 
