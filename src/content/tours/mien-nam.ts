@@ -25,6 +25,18 @@ export const mienNamTours: readonly TourInput[] = [
     ],
     images: [
       { src: "/images/destinations/phu-quoc.jpg", alt: "Bãi biển Phú Quốc" },
+      {
+        src: "/images/destinations/phu-quoc-bai-sao.jpg",
+        alt: "Bãi biển cát trắng Phú Quốc",
+      },
+      {
+        src: "/images/destinations/phu-quoc-cap-treo.jpg",
+        alt: "Cáp treo Hòn Thơm vượt biển",
+      },
+      {
+        src: "/images/destinations/phu-quoc-cho-dem.jpg",
+        alt: "Hải sản tại chợ đêm Phú Quốc",
+      },
     ],
     overview: [
       "Phú Quốc phù hợp cho kỳ nghỉ ngắn với nhịp chậm. Chương trình giữ khoảng trống buổi chiều để khách tự do nghỉ dưỡng.",
@@ -133,9 +145,21 @@ export const mienNamTours: readonly TourInput[] = [
         src: "/images/destinations/mien-tay.jpg",
         alt: "Thuyền hàng trên chợ nổi Cái Răng, Cần Thơ",
       },
+      {
+        src: "/images/destinations/can-tho-cho-noi.jpg",
+        alt: "Chợ nổi Cái Răng buổi sớm",
+      },
+      {
+        src: "/images/destinations/mien-tay-thuyen-nho.jpg",
+        alt: "Thuyền nhỏ trên sông Cửu Long",
+      },
+      {
+        src: "/images/destinations/mien-tay-vuon-dua.jpg",
+        alt: "Dừa tươi miền Tây",
+      },
     ],
     overview: [
-      "Miền Tây là tuyến trải nghiệm văn hoá sông nước. Hoạt động chính diễn ra vào buổi sáng sớm, khi chợ nổi đông nhất.",
+      "Miền Tây là tuyến trải nghiệm văn hóa sông nước. Hoạt động chính diễn ra vào buổi sáng sớm, khi chợ nổi đông nhất.",
     ],
     itinerary: [
       {
@@ -197,7 +221,7 @@ export const mienNamTours: readonly TourInput[] = [
     notes: [
       "Nên dậy sớm để kịp đi chợ nổi; hoạt động kết thúc trước khi trời nắng gắt.",
     ],
-    tags: ["3 ngày", "Miền Nam", "Sông nước", "Văn hoá"],
+    tags: ["3 ngày", "Miền Nam", "Sông nước", "Văn hóa"],
     contentStatus: "demo",
     updatedAt: "2026-01-15T09:00:00+07:00",
   },

@@ -32,6 +32,18 @@ export const mienTrungTours: readonly TourInput[] = [
         alt: "Phố cổ Hội An bên sông Hoài",
       },
       { src: "/images/destinations/hue.jpg", alt: "Ngọ Môn, Hoàng thành Huế" },
+      {
+        src: "/images/destinations/da-nang-cau-rong.jpg",
+        alt: "Cầu Rồng Đà Nẵng về đêm",
+      },
+      {
+        src: "/images/destinations/hoi-an-den-long.jpg",
+        alt: "Phố cổ Hội An với đèn lồng",
+      },
+      {
+        src: "/images/destinations/hue-dai-noi.jpg",
+        alt: "Đại Nội Huế",
+      },
     ],
     overview: [
       "Miền Trung có lợi thế là các điểm chính nằm gần nhau, thuận tiện cho hành trình ngắn. Chương trình bốn ngày chia đều cho Đà Nẵng, Hội An và Huế.",
@@ -111,7 +123,7 @@ export const mienTrungTours: readonly TourInput[] = [
       "Phụ thu phòng đơn và bảo hiểm du lịch",
     ],
     notes: [
-      "Thứ tự Đà Nẵng – Hội An – Huế có thể đảo tuỳ điểm bay về.",
+      "Thứ tự Đà Nẵng – Hội An – Huế có thể đảo tùy điểm bay về.",
       "Buổi tối ở Hội An đông vào mùa cao điểm, nên đi sớm hơn để có chỗ đẹp.",
     ],
     tags: ["4 ngày", "Di sản", "Miền Trung"],
@@ -147,6 +159,18 @@ export const mienTrungTours: readonly TourInput[] = [
       {
         src: "/images/destinations/hoi-an.jpg",
         alt: "Phố cổ Hội An bên sông Hoài",
+      },
+      {
+        src: "/images/destinations/hue-thien-mu.jpg",
+        alt: "Sông Hương và Chùa Thiên Mụ",
+      },
+      {
+        src: "/images/destinations/da-nang-my-khe.jpg",
+        alt: "Bãi biển Mỹ Khê, Đà Nẵng",
+      },
+      {
+        src: "/images/destinations/hoi-an-den-long.jpg",
+        alt: "Đèn lồng Hội An",
       },
     ],
     overview: [

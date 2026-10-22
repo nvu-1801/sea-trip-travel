@@ -48,13 +48,18 @@ export function TourExplorer({
 }) {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>("recommended");
-  const sortId = useId();
+  const sortLabelId = useId();
 
   const sortLabels: Record<SortKey, string> = {
     recommended: labels.sortRecommended,
     "duration-asc": labels.sortDurationAsc,
     "duration-desc": labels.sortDurationDesc,
   };
+
+  const sortOptions = (Object.keys(sortLabels) as SortKey[]).map((key) => ({
+    value: key,
+    label: sortLabels[key],
+  }));
 
   const availableTags = useMemo(
     () => tags.filter((tag) => tours.some((tour) => tour.tags.includes(tag))),
@@ -127,22 +132,17 @@ export function TourExplorer({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex min-w-0 flex-col gap-1.5 sm:w-60">
             <label
-              htmlFor={sortId}
+              id={sortLabelId}
               className="text-xs font-bold uppercase tracking-wider text-foreground-muted"
             >
               {labels.sortLabel}
             </label>
             <Select
-              id={sortId}
+              aria-labelledby={sortLabelId}
               value={sort}
-              onChange={(event) => setSort(event.target.value as SortKey)}
-            >
-              {(Object.keys(sortLabels) as SortKey[]).map((key) => (
-                <option key={key} value={key}>
-                  {sortLabels[key]}
-                </option>
-              ))}
-            </Select>
+              options={sortOptions}
+              onChange={(next) => setSort(next as SortKey)}
+            />
           </div>
 
           <div className="flex items-center gap-3">

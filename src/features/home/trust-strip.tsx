@@ -52,8 +52,8 @@ export function TrustStrip({ locale }: { locale: Locale }) {
         },
         {
           icon: ShieldIcon,
-          title: "Upfront pricing",
-          body: "Published prices before you ask for advice.",
+          title: "Prices are listed up front",
+          body: "Prices are listed before you ask for advice.",
         },
         {
           icon: CompassIcon,
@@ -62,8 +62,8 @@ export function TrustStrip({ locale }: { locale: Locale }) {
         },
         {
           icon: UsersIcon,
-          title: "Support on the road",
-          body: "A real team follows your trip with you.",
+          title: "Our team on the road with you",
+          body: "A real team stays close to your trip from start to finish.",
         },
       ]
     : [

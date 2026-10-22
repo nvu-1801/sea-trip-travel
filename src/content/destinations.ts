@@ -25,6 +25,8 @@ export const destinations: readonly DestinationInput[] = [
       height: 1199,
     },
     order: 1,
+    showOnHome: true,
+    homeOrder: 1,
     contentStatus: "demo",
   },
   {
@@ -42,6 +44,8 @@ export const destinations: readonly DestinationInput[] = [
       height: 336,
     },
     order: 2,
+    showOnHome: true,
+    homeOrder: 2,
     contentStatus: "demo",
   },
   {
@@ -57,6 +61,8 @@ export const destinations: readonly DestinationInput[] = [
       alt: "Bờ biển làng chài Nhơn Hải trên tuyến tham quan Hòn Khô",
     },
     order: 3,
+    showOnHome: true,
+    homeOrder: 3,
     contentStatus: "demo",
   },
   {

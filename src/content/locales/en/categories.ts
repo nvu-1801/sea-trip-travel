@@ -35,7 +35,7 @@ export const categoryTranslations: Readonly<
 
   cat_tour_trong_nuoc: {
     translationStatus: "draft",
-    name: "Domestic Tours",
+    name: "Vietnam Tours",
     tagline: "Curated by four regions",
     description:
       "The domestic tour catalogue is divided by region so it is easy to picture each journey and choose the right season. Each region features popular routes lasting from 2 to 5 days.",

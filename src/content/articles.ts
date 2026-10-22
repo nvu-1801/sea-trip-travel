@@ -77,8 +77,8 @@ export const articles: readonly TravelArticleInput[] = [
         ordered: true,
         items: [
           "Ngày 1: Kỳ Co – Eo Gió, nghỉ đêm tại Quy Nhơn.",
-          "Ngày 2: di chuyển sang Phú Yên, tham quan Ghềnh Đá Đĩa – Bãi Xép – Đầm Ô Loan.",
-          "Ngày 3: đón bình minh ở Mũi Điện rồi quay lại Quy Nhơn.",
+          "Ngày 2: Di chuyển sang Phú Yên, tham quan Ghềnh Đá Đĩa – Bãi Xép – Đầm Ô Loan.",
+          "Ngày 3: Đón bình minh ở Mũi Điện rồi quay lại Quy Nhơn.",
         ],
       },
       {
@@ -92,7 +92,8 @@ export const articles: readonly TravelArticleInput[] = [
   },
   {
     id: "art_thoi_diem_qn",
-    slug: "thoi-diem-dep-nhat-de-di-quy-nhon",    title: "Thời điểm nào đi Quy Nhơn đẹp nhất?",
+    slug: "thoi-diem-dep-nhat-de-di-quy-nhon",
+    title: "Thời điểm nào đi Quy Nhơn đẹp nhất?",
     excerpt:
       "Phân tích ưu và nhược điểm từng giai đoạn trong năm để bạn chọn thời điểm phù hợp với kiểu chuyến đi của mình.",
     destinationIds: ["dest_quy_nhon", "dest_ky_co_eo_gio"],
@@ -139,7 +140,7 @@ export const articles: readonly TravelArticleInput[] = [
         items: [
           "Xem dự báo thời tiết khoảng một tuần trước ngày đi.",
           "Hỏi đơn vị tổ chức về phương án thay thế nếu biển động.",
-          "Chọn khách sạn có chính sách hoàn/huỷ rõ ràng nếu đi mùa mưa.",
+          "Chọn khách sạn có chính sách hoàn/hủy rõ ràng nếu đi mùa mưa.",
         ],
       },
     ],
@@ -164,7 +165,7 @@ export const articles: readonly TravelArticleInput[] = [
     body: [
       {
         type: "paragraph",
-        text: "Ẩm thực Quy Nhơn xoay quanh hải sản tươi và các món ăn kèm đậm vị miền Trung. Giá có thể thay đổi theo mùa và theo điểm bán, nên nên hỏi trước khi gọi.",
+        text: "Ẩm thực Quy Nhơn xoay quanh hải sản tươi và các món ăn kèm đậm vị miền Trung. Giá có thể thay đổi theo mùa và theo điểm bán, nên hỏi trước khi gọi.",
       },
       { type: "heading", level: 2, text: "Buổi sáng" },
       {
@@ -239,7 +240,7 @@ export const articles: readonly TravelArticleInput[] = [
         type: "image",
         alt: "Hải đăng Mũi Đại Lãnh, Phú Yên",
         src: "/images/destinations/mui-dien.jpg",
-        caption: "Càng đi sâu về phía nam, cảnh biển càng đáng để dành thêm thời gian.",
+        caption: "Mũi Điện – Đại Lãnh, nơi đón bình minh sớm nhất trên đất liền Việt Nam.",
       },
       { type: "heading", level: 2, text: "Xe khách" },
       {

@@ -27,6 +27,18 @@ export const tayNguyenTours: readonly TourInput[] = [
         src: "/images/destinations/da-lat.jpg",
         alt: "Hồ Xuân Hương nhìn từ Dalat Palace",
       },
+      {
+        src: "/images/destinations/da-lat-doi-thong.jpg",
+        alt: "Đồi thông Đà Lạt",
+      },
+      {
+        src: "/images/destinations/da-lat-thac.jpg",
+        alt: "Thác Datanla",
+      },
+      {
+        src: "/images/destinations/da-lat-vuon-hoa.jpg",
+        alt: "Vườn hoa Đà Lạt",
+      },
     ],
     overview: [
       "Đà Lạt có nhiều điểm tham quan trong bán kính ngắn. Chương trình bốn ngày chia đều giữa các cụm điểm và để buổi chiều tự do.",
@@ -112,7 +124,7 @@ export const tayNguyenTours: readonly TourInput[] = [
     slug: "buon-ma-thuot-3-ngay-2-dem",
     title: "Buôn Ma Thuột – Thác nước 3 ngày 2 đêm",
     summary:
-      "Khám phá thủ phủ cà phê Đắk Lắk: thác nước, buôn làng và văn hoá cồng chiêng.",
+      "Khám phá thủ phủ cà phê Đắk Lắk: thác nước, buôn làng và văn hóa cồng chiêng.",
     categoryIds: ["cat_tay_nguyen"],
     destinationIds: ["dest_buon_ma_thuot"],
     duration: { days: 3, nights: 2 },
@@ -121,10 +133,10 @@ export const tayNguyenTours: readonly TourInput[] = [
     priceNote: "Giá phụ thuộc số khách và phương tiện di chuyển tới Đắk Lắk.",
     highlights: [
       "Tham quan các thác nước lớn của Đắk Lắk",
-      "Tìm hiểu văn hoá cồng chiêng và đời sống buôn làng",
+      "Tìm hiểu văn hóa cồng chiêng và đời sống buôn làng",
       "Thưởng thức cà phê ngay tại nơi sản xuất",
       "Ghé bảo tàng và quảng trường trung tâm thành phố",
-      "Phù hợp khách thích thiên nhiên và văn hoá bản địa",
+      "Phù hợp khách thích thiên nhiên và văn hóa bản địa",
       "Mua cà phê và đặc sản trực tiếp tại cơ sở rang xay",
     ],
     images: [
@@ -132,9 +144,21 @@ export const tayNguyenTours: readonly TourInput[] = [
         src: "/images/destinations/buon-ma-thuot.jpg",
         alt: "Thác Đray Nur, Đắk Lắk",
       },
+      {
+        src: "/images/destinations/dak-lak-thac.jpg",
+        alt: "Thác nước ở Đắk Lắk",
+      },
+      {
+        src: "/images/destinations/dak-lak-buon-lang.jpg",
+        alt: "Nhà dài Êđê",
+      },
+      {
+        src: "/images/destinations/dak-lak-ca-phe.jpg",
+        alt: "Đồi cà phê ở Đắk Lắk",
+      },
     ],
     overview: [
-      "Buôn Ma Thuột là trung tâm của Đắk Lắk, thuận tiện kết hợp tham quan thác nước và tìm hiểu văn hoá bản địa.",
+      "Buôn Ma Thuột là trung tâm của Đắk Lắk, thuận tiện kết hợp tham quan thác nước và tìm hiểu văn hóa bản địa.",
     ],
     itinerary: [
       {
@@ -159,7 +183,7 @@ export const tayNguyenTours: readonly TourInput[] = [
         activities: [
           "Tham quan thác Dray Nur hoặc Dray Sáp.",
           "Ăn trưa đặc sản địa phương.",
-          "Ghé buôn làng, tìm hiểu văn hoá cồng chiêng.",
+          "Ghé buôn làng, tìm hiểu văn hóa cồng chiêng.",
           "Về khách sạn, tự do buổi tối.",
         ],
         meals: ["Sáng", "Trưa"],
@@ -189,7 +213,7 @@ export const tayNguyenTours: readonly TourInput[] = [
     ],
     excluded: ["Vé máy bay", "Chi phí cá nhân", "Đồ uống ngoài chương trình"],
     notes: ["Đường vào một số thác có đoạn dốc; nên mang giày bám tốt."],
-    tags: ["3 ngày", "Tây Nguyên", "Thiên nhiên", "Văn hoá"],
+    tags: ["3 ngày", "Tây Nguyên", "Thiên nhiên", "Văn hóa"],
     contentStatus: "demo",
     updatedAt: "2026-01-15T09:00:00+07:00",
   },

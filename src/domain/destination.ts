@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { imageAssetSchema, regionSchema } from "./common";
 
+/** The home "Khám phá" block is a three-card mosaic by design. */
+export const MAX_HOME_DESTINATIONS = 3;
+
 /**
  * A place customers recognise — Quy Nhơn, Phú Yên, Đà Nẵng, Hà Nội…
  * Destinations power the quick-explore grid on the home page and the
@@ -18,8 +21,18 @@ export const destinationSchema = z.object({
   /** Province or city, used for grouping. */
   province: z.string().min(1).optional(),
   image: imageAssetSchema.optional(),
-  /** Display order inside its region. */
+  /** Display order inside its region. Never controls the home page. */
   order: z.number().int().nonnegative().default(0),
+  /**
+   * Explicit opt-in for the home page "Khám phá" block.
+   *
+   * Public selection depends on this flag only — never on the region, the
+   * presence of a photo, or the record's position in the list. At most
+   * `MAX_HOME_DESTINATIONS` records may be enabled.
+   */
+  showOnHome: z.boolean().default(false),
+  /** Position inside the home "Khám phá" block. Lower numbers render first. */
+  homeOrder: z.number().int().nonnegative().default(0),
   contentStatus: z.enum(["demo", "verified"]).default("demo"),
 });
 

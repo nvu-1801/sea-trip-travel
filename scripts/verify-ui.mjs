@@ -603,7 +603,7 @@ async function checkDesktopNavHighlight(browser) {
   );
   check(
     "highlighted nav label switches to the dark brand colour",
-    hoverColor === "rgb(209, 0, 83)",
+    hoverColor === "rgb(168, 20, 85)",
     `color=${hoverColor}`,
   );
 

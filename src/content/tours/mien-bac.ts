@@ -20,7 +20,7 @@ export const mienBacTours: readonly TourInput[] = [
       "Chèo kayak và tham quan hang động trên vịnh",
       "Đón bình minh trên boong tàu buổi sáng ngày thứ ba",
       "Thời gian tự do để tự khám phá ẩm thực Hà Nội",
-      "Phù hợp lần đầu ra Bắc: kết hợp văn hoá phố cổ và biển đảo",
+      "Phù hợp lần đầu ra Bắc: kết hợp văn hóa phố cổ và biển đảo",
     ],
     images: [
       { src: "/images/destinations/ha-noi.jpg", alt: "Hồ Hoàn Kiếm, Hà Nội" },
@@ -28,9 +28,17 @@ export const mienBacTours: readonly TourInput[] = [
         src: "/images/destinations/ha-long.jpg",
         alt: "Vịnh Hạ Long nhìn từ đảo Ti Tốp",
       },
+      {
+        src: "/images/destinations/ha-noi-pho-co.jpg",
+        alt: "Phố cổ Hà Nội",
+      },
+      {
+        src: "/images/destinations/ha-long-du-thuyen.jpg",
+        alt: "Du thuyền trên Vịnh Hạ Long",
+      },
     ],
     overview: [
-      "Hành trình bốn ngày cân bằng giữa văn hoá đô thị Hà Nội và cảnh quan biển đảo Hạ Long.",
+      "Hành trình bốn ngày cân bằng giữa văn hóa đô thị Hà Nội và cảnh quan biển đảo Hạ Long.",
       "Đêm trên Vịnh Hạ Long là điểm nhấn; các hoạt động trên tàu phụ thuộc chương trình của từng du thuyền.",
     ],
     itinerary: [
@@ -139,6 +147,14 @@ export const mienBacTours: readonly TourInput[] = [
         src: "/images/destinations/sa-pa.jpg",
         alt: "Ruộng bậc thang và núi ở Sa Pa",
       },
+      {
+        src: "/images/destinations/sapa-fansipan.jpg",
+        alt: "Đỉnh Fansipan trong mây",
+      },
+      {
+        src: "/images/destinations/sapa-cat-cat.jpg",
+        alt: "Bản làng vùng cao Sa Pa",
+      },
     ],
     overview: [
       "Sa Pa có khí hậu mát quanh năm và thay đổi nhanh trong ngày. Chương trình ba ngày phù hợp khách muốn trải nghiệm vùng cao nhưng không trekking quá nặng.",
@@ -231,6 +247,18 @@ export const mienBacTours: readonly TourInput[] = [
       {
         src: "/images/destinations/ninh-binh.jpg",
         alt: "Cảnh quan Tràng An, Ninh Bình",
+      },
+      {
+        src: "/images/destinations/ninh-binh-trang-an.jpg",
+        alt: "Thuyền nan ở Tràng An",
+      },
+      {
+        src: "/images/destinations/ninh-binh-hang-mua.jpg",
+        alt: "Toàn cảnh Tam Cốc từ Hang Múa",
+      },
+      {
+        src: "/images/destinations/ninh-binh-bai-dinh.jpg",
+        alt: "Chùa Bái Đính",
       },
     ],
     overview: [

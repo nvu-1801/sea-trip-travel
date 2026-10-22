@@ -52,7 +52,8 @@ Carousel phủ toàn màn hình đầu và chạy ra sau header trong suốt. Kh
 - Tải ảnh mới tại Thư viện ảnh trước khi chọn. Năm ảnh hero khách cung cấp đã có sẵn, bên cạnh 28 ảnh tour gốc được giữ nguyên.
 - **Lưu bản nháp** giữ giao diện public cũ. **Xuất bản thay đổi** cập nhật trang đang mở trong khoảng 5 giây; không cần rebuild. Mục cấu hình hero không có thao tác xoá/ẩn toàn bộ.
 
-- Tour: thông tin, ảnh, lịch trình, thời lượng, danh mục/điểm đến, gói giá, bao gồm/không bao gồm, chính sách và SEO. Danh mục, điểm đến và ảnh được chọn bằng tên. Giữ giá liên hệ khi chưa có bảng giá chính thức; không dùng 0 để thay cho giá chưa biết.
+- Tour: form chi tiết chia đúng thứ tự các phần trên trang — Thông tin chung, Ảnh & thư viện, Giới thiệu, Điểm nổi bật, Lịch trình, Giá & các gói, Dịch vụ, Lưu ý & chính sách, Di chuyển, SEO, Bản dịch tiếng Anh, Tư vấn và Nâng cao. Mỗi mục nhiều dòng (điểm nổi bật, ngày lịch trình, gói giá, dịch vụ, ảnh) đều thêm/sửa/xoá và đổi thứ tự bằng ↑ ↓. Danh mục, điểm đến và ảnh được chọn bằng tên. Giữ giá liên hệ khi chưa có bảng giá chính thức; không dùng 0 để thay cho giá chưa biết. Lỗi hiện ngay cạnh trường và ở đầu form, kèm nút nhảy tới mục cần sửa.
+- Số ngày tour tự tính từ số ngày lịch trình; “Giá từ” tự khớp giá người lớn thấp nhất trong bảng giá. Ảnh đầu tiên là ảnh bìa. Bản dịch EN giữ đúng số ngày lịch trình với bản VI.
 - Bài viết: tiêu đề, giới thiệu, nội dung bằng khối đoạn văn/tiêu đề/danh sách/trích dẫn/ghi chú/ảnh, ngày đăng, tác giả, nổi bật và SEO. Không nhập HTML hay script.
 - Danh mục/điểm đến: thông tin, thứ tự, hình ảnh và phân nhóm. Danh mục mới có URL `/danh-muc/<slug>`, hoạt động ngay sau xuất bản.
 - Website & footer: tên thương hiệu, hotline, email, địa chỉ, giờ làm việc VI/EN, các liên kết footer VI/EN, mạng xã hội và bật/tắt motion. Các liên kết mạng xã hội được quản lý riêng; kiểm tra lại URL Zalo khi thay hotline.

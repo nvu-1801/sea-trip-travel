@@ -18,6 +18,7 @@ import {
 } from "../src/lib/data/localize";
 import type { TravelArticle } from "../src/domain/article";
 import { defaultSettings } from "../src/server/cms/settings";
+import { MAX_HOME_DESTINATIONS } from "../src/domain/destination";
 test("default CMS social links preserve the hotline-derived Zalo contact", () => {
   assert.ok(
     defaultSettings.socialLinks.some((link) =>
@@ -41,6 +42,7 @@ import {
   schemas,
   purgeExpiredTrash,
   TRASH_RETENTION_DAYS,
+  fillTourImageSources,
 } from "../src/server/cms/store";
 import {
   hashPassword,
@@ -483,6 +485,80 @@ test("landing sections carry admin-editable trust, principles, featured and guid
     false,
   );
 });
+test("destination rows written before the home switch still parse", () => {
+  const parsed = schemas.destinations.parse({
+    id: "dest_legacy",
+    slug: "legacy-destination",
+    name: "Điểm đến cũ",
+    region: "mien-bac",
+    summary: "Bản ghi chưa từng có cờ Khám phá.",
+  });
+  assert.equal(parsed.showOnHome, false);
+  assert.equal(parsed.homeOrder, 0);
+});
+
+test("home explore is capped at three and auto-numbers a new pick", () => {
+  const destinations = list("destinations").filter(
+    (row) => row.state !== "deleted",
+  );
+  const enabled = destinations.filter((row) => row.data.showOnHome === true);
+  assert.equal(enabled.length, MAX_HOME_DESTINATIONS);
+  const off = destinations.find((row) => row.data.showOnHome !== true)!;
+  assert.throws(
+    () =>
+      save(
+        "destinations",
+        { ...off.data, showOnHome: true, homeOrder: 0 },
+        off.revision,
+        "save",
+      ),
+    /tối đa 3/,
+  );
+  const disabled = enabled[0];
+  save(
+    "destinations",
+    { ...disabled.data, showOnHome: false },
+    disabled.revision,
+    "save",
+  );
+  save(
+    "destinations",
+    { ...off.data, showOnHome: true, homeOrder: 0 },
+    off.revision,
+    "save",
+  );
+  const updated = list("destinations").find((row) => row.id === off.id)!;
+  assert.equal(updated.data.showOnHome, true);
+  assert.ok(Number(updated.data.homeOrder) > 0);
+});
+
+test("stale tour rows inherit photo sources from the content files", () => {
+  const id = "tour_mb_sapa_3n2d";
+  const row = list("tours").find((item) => item.id === id)!;
+  const stale = {
+    ...row.data,
+    images: [
+      { alt: "Ruộng bậc thang Sa Pa" },
+      { alt: "Đỉnh Fansipan trong mây" },
+      { alt: "Bản làng vùng cao Lào Cai" },
+    ],
+  };
+  db()
+    .prepare(
+      "UPDATE records SET data=?,published=? WHERE collection='tours' AND id=?",
+    )
+    .run(JSON.stringify(stale), JSON.stringify(stale), id);
+
+  assert.ok(fillTourImageSources() >= 1);
+  const images = list("tours").find((item) => item.id === id)!.data
+    .images as { src?: string; alt?: string }[];
+  assert.ok(images.length >= 3);
+  assert.ok(images.every((image) => image.src?.startsWith("/images/")));
+  assert.equal(images[0].alt, "Ruộng bậc thang Sa Pa");
+  // Idempotent: a second boot must not touch the repaired row.
+  assert.equal(fillTourImageSources(), 0);
+});
+
 test("trash auto-deletes rows older than the retention window", () => {
   const oldDate = new Date(
     Date.now() - (TRASH_RETENTION_DAYS + 5) * 24 * 60 * 60 * 1000,

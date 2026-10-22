@@ -599,7 +599,7 @@ export const tourTranslations: Readonly<Record<string, TourTranslationInput>> =
         "A local guide leads the way on the village sections",
       ],
       overview: [
-        "Sa Pa has a cool climate year-round that can change quickly within a day. The three-day programme suits travellers who want a highland experience without heavy trekking.",
+        "Sa Pa stays cool year-round, though the weather can change quickly within a day. The three-day programme suits travellers who want a highland experience without heavy trekking.",
       ],
       itinerary: [
         {
@@ -741,7 +741,7 @@ export const tourTranslations: Readonly<Record<string, TourTranslationInput>> =
         "The order of the three stops can change to suit your return flight",
       ],
       overview: [
-        "Central Vietnam has the advantage of having its main sights close together, which suits a short trip. The four-day programme divides the time among Da Nang, Hoi An, and Hue.",
+        "Central Vietnam's main sights sit close together, which suits a short trip. The four-day programme divides the time among Da Nang, Hoi An, and Hue.",
         "Road travel between the stops takes about 30–120 minutes, making it suitable for families with young children.",
       ],
       itinerary: [
@@ -934,7 +934,7 @@ export const tourTranslations: Readonly<Record<string, TourTranslationInput>> =
         "Three nights at a single resort, with no mid-trip change of accommodation",
         "Ride the cable car over the sea to Hon Thom",
         "Visit a traditional fish sauce facility and a pepper farm",
-        "Explore the night market and local seafood",
+        "Explore the night market and try the local seafood",
         "Afternoons are left open for guests to rest at their own pace",
         "Ideal for a short, slow-paced holiday",
       ],
@@ -1188,11 +1188,11 @@ export const tourTranslations: Readonly<Record<string, TourTranslationInput>> =
         "Learn about gong culture and village life",
         "Taste coffee right where it is produced",
         "Stop at the museum and the city's central square",
-        "Ideal for travellers who enjoy nature and indigenous culture",
+        "Ideal for travellers who enjoy nature and local culture",
         "Buy coffee and specialities directly at the roasting facility",
       ],
       overview: [
-        "Buon Ma Thuot is the centre of Dak Lak, convenient for combining waterfall visits with learning about indigenous culture.",
+        "Buon Ma Thuot is the centre of Dak Lak, convenient for combining waterfall visits with learning about local culture.",
       ],
       itinerary: [
         {

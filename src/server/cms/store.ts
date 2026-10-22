@@ -1,9 +1,13 @@
 import "server-only";
 import { z } from "zod";
 import { articles, destinations, tourCategories, tours } from "@/content";
-import { tourSchema } from "@/domain/tour";
+import { tourRecordSchema } from "@/domain/tour-cms";
+import { collectTourBusinessIssues } from "@/domain/tour-rules";
 import { travelArticleSchema } from "@/domain/article";
-import { destinationSchema } from "@/domain/destination";
+import {
+  destinationSchema,
+  MAX_HOME_DESTINATIONS,
+} from "@/domain/destination";
 import { tourCategorySchema } from "@/domain/category";
 import { db, audit, transaction } from "./db";
 import { defaultHero, heroSchema } from "@/domain/home-hero";
@@ -30,21 +34,6 @@ export function normalizeHotlineHref(hotline: string): string {
   return `tel:+${normalized}`;
 }
 
-// Strip defaults from overlays: a missing translated itinerary must retain VI.
-const translatedTour = z.object({
-  title: tourSchema.shape.title.optional(),
-  summary: tourSchema.shape.summary.optional(),
-  overview: tourSchema.shape.overview.removeDefault().optional(),
-  itinerary: tourSchema.shape.itinerary.removeDefault().optional(),
-  highlights: tourSchema.shape.highlights.removeDefault().optional(),
-  included: tourSchema.shape.included.removeDefault().optional(),
-  excluded: tourSchema.shape.excluded.removeDefault().optional(),
-  notes: tourSchema.shape.notes.removeDefault().optional(),
-  policies: tourSchema.shape.policies.removeDefault().optional(),
-  tags: tourSchema.shape.tags.removeDefault().optional(),
-  seo: tourSchema.shape.seo,
-  priceNote: tourSchema.shape.priceNote,
-});
 const translatedArticle = z.object({
   title: travelArticleSchema.shape.title.optional(),
   excerpt: travelArticleSchema.shape.excerpt.optional(),
@@ -53,10 +42,7 @@ const translatedArticle = z.object({
   seo: travelArticleSchema.shape.seo,
 });
 export const schemas = {
-  tours: tourSchema.extend({
-    _en: translatedTour.optional(),
-    _enReviewed: z.boolean().optional(),
-  }),
+  tours: tourRecordSchema,
   articles: travelArticleSchema.extend({
     _en: translatedArticle.optional(),
     _enReviewed: z.boolean().optional(),
@@ -99,6 +85,190 @@ export type CmsRecord = {
   revision: number;
   updated_at: string;
 };
+const hasHomeFields = (data: Record<string, unknown>) =>
+  typeof data.showOnHome === "boolean" &&
+  typeof data.homeOrder === "number";
+
+/**
+ * Databases created before the explicit home switch existed have no
+ * `showOnHome`. Backfill it once so an upgrade keeps exactly the cards the old
+ * implicit rule produced (Quy Nhơn – Phú Yên, has a photo, first three by
+ * `order`) instead of emptying the "Khám phá" block.
+ */
+function backfillDestinationHomeFlags() {
+  const rows = db()
+    .prepare(
+      "SELECT id,data,published,state FROM records WHERE collection='destinations'",
+    )
+    .all() as {
+    id: string;
+    data: string;
+    published: string | null;
+    state: string;
+  }[];
+  const parsed = rows.map((row) => ({
+    ...row,
+    data: JSON.parse(row.data) as Record<string, unknown>,
+  }));
+  const missing = parsed.filter((row) => !hasHomeFields(row.data));
+  if (!missing.length) return;
+
+  const enabled = parsed.filter(
+    (row) => row.state !== "deleted" && row.data.showOnHome === true,
+  );
+  let nextOrder = Math.max(
+    0,
+    ...enabled.map((row) => Number(row.data.homeOrder ?? 0)),
+  );
+  const candidates = missing
+    .filter(
+      (row) =>
+        row.state !== "deleted" &&
+        row.data.showOnHome !== true &&
+        row.data.region === "quy-nhon-phu-yen" &&
+        Boolean((row.data.image as { src?: string } | undefined)?.src),
+    )
+    .sort(
+      (a, b) =>
+        Number(a.data.order ?? 0) - Number(b.data.order ?? 0) ||
+        a.id.localeCompare(b.id),
+    );
+
+  const assignments = new Map<string, number>();
+  for (const row of candidates) {
+    if (enabled.length >= MAX_HOME_DESTINATIONS) break;
+    enabled.push(row);
+    nextOrder += 1;
+    assignments.set(row.id, nextOrder);
+  }
+
+  const update = db().prepare(
+    "UPDATE records SET data=?, published=? WHERE collection='destinations' AND id=?",
+  );
+  for (const row of missing) {
+    const homeOrder = assignments.get(row.id);
+    const showOnHome = homeOrder !== undefined;
+    const data = {
+      ...row.data,
+      showOnHome,
+      homeOrder: showOnHome
+        ? homeOrder
+        : Number(row.data.homeOrder ?? 0),
+    };
+    const published = row.published
+      ? JSON.stringify({
+          ...(JSON.parse(row.published) as Record<string, unknown>),
+          showOnHome: data.showOnHome,
+          homeOrder: data.homeOrder,
+        })
+      : null;
+    update.run(JSON.stringify(data), published, row.id);
+  }
+}
+
+type StoredImage = {
+  src?: string;
+  alt?: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+};
+
+/**
+ * A CMS row outlives the content file it was seeded from: `seed()` inserts with
+ * `INSERT OR IGNORE`, so photos added to the TypeScript content later never
+ * reached rows created before them. Tour records written while the media was
+ * still a placeholder therefore kept `images: [{ alt }]` with no `src`, and the
+ * tour detail page rendered the branded gradient instead of the real photo.
+ *
+ * Fill those missing sources from the current content (alt first, then the same
+ * position, then the next unused photo) and append photos the stale row never
+ * had. Rows where every image already has a `src` are left untouched, so an
+ * editor's own media choice is never overwritten.
+ */
+export function fillTourImageSources(): number {
+  const sourceById = new Map(
+    tours.map((tour) => [
+      tour.id,
+      (tour.images ?? []).filter((image) => Boolean(image.src)),
+    ]),
+  );
+  const rows = db()
+    .prepare(
+      "SELECT id,data,published FROM records WHERE collection='tours' AND state!='deleted'",
+    )
+    .all() as { id: string; data: string; published: string | null }[];
+
+  const update = db().prepare(
+    "UPDATE records SET data=?, published=? WHERE collection='tours' AND id=?",
+  );
+
+  let repaired = 0;
+  for (const row of rows) {
+    const source = sourceById.get(row.id);
+    if (!source?.length) continue;
+
+    const data = JSON.parse(row.data) as { images?: StoredImage[] };
+    const published = row.published
+      ? (JSON.parse(row.published) as { images?: StoredImage[] })
+      : null;
+    const current = published?.images ?? data.images ?? [];
+    if (!current.some((image) => !image.src)) continue;
+
+    const used = new Set(
+      current
+        .map((image) => image.src)
+        .filter((src): src is string => Boolean(src)),
+    );
+    const merged: StoredImage[] = [];
+    for (const [index, image] of current.entries()) {
+      if (image.src) {
+        merged.push(image);
+        continue;
+      }
+      const match =
+        source.find(
+          (candidate) =>
+            candidate.src &&
+            candidate.alt === image.alt &&
+            !used.has(candidate.src),
+        ) ??
+        source.find(
+          (candidate, at) =>
+            at === index && candidate.src && !used.has(candidate.src),
+        ) ??
+        source.find(
+          (candidate) => candidate.src && !used.has(candidate.src),
+        );
+      if (!match?.src) continue;
+      used.add(match.src);
+      merged.push({
+        ...match,
+        alt: image.alt || match.alt,
+        ...(image.caption ? { caption: image.caption } : {}),
+      });
+    }
+    // Append photos the stale record never had, so a content refresh also
+    // reaches tours whose media list was shorter than the source.
+    for (const image of source)
+      if (image.src && !used.has(image.src)) {
+        merged.push(image);
+        used.add(image.src);
+      }
+    if (merged.length === 0) continue;
+
+    data.images = merged;
+    if (published) published.images = merged;
+    update.run(
+      JSON.stringify(data),
+      published ? JSON.stringify(published) : null,
+      row.id,
+    );
+    repaired += 1;
+  }
+  return repaired;
+}
+
 let seeded = false;
 export function seed() {
   if (seeded) return;
@@ -118,6 +288,8 @@ export function seed() {
           new Date().toISOString(),
         );
       }
+    backfillDestinationHomeFlags();
+    fillTourImageSources();
   });
   seeded = true;
 }
@@ -245,6 +417,29 @@ export function save(
       throw new Error("Không thể ẩn/xóa cấu hình hệ thống");
     const all = list(collection);
     if (
+      collection === "destinations" &&
+      (data as Record<string, unknown>).showOnHome === true
+    ) {
+      const otherEnabled = all.filter(
+        (row) =>
+          row.id !== data.id &&
+          row.state !== "deleted" &&
+          row.data.showOnHome === true,
+      );
+      if (otherEnabled.length >= MAX_HOME_DESTINATIONS)
+        throw new Error(
+          `Khối Khám phá trang chủ chỉ hiện tối đa ${MAX_HOME_DESTINATIONS} điểm. Hãy tắt một điểm đang bật trước khi bật thêm.`,
+        );
+      const raw = data as Record<string, unknown>;
+      const homeOrder = Number(raw.homeOrder ?? 0);
+      if (!Number.isInteger(homeOrder) || homeOrder <= 0)
+        raw.homeOrder =
+          Math.max(
+            0,
+            ...otherEnabled.map((row) => Number(row.data.homeOrder ?? 0)),
+          ) + 1;
+    }
+    if (
       all.some(
         (row) =>
           row.id !== data.id &&
@@ -264,47 +459,26 @@ export function save(
     )
       throw new Error("Danh mục mới dùng đường dẫn /danh-muc/<slug>");
     if (collection === "tours") {
-      const tour = tourSchema.parse(data);
-      if (tour.priceFrom && tour.priceFrom.amount <= 0)
+      const tour = tourRecordSchema.parse(data);
+      // Business rules live in `domain/tour-rules.ts` so the Studio form can
+      // show the same failures next to the offending field before POSTing.
+      const issues = collectTourBusinessIssues(tour, {
+        categories: new Set(
+          list("categories")
+            .filter((row) => row.state !== "deleted")
+            .map((row) => String(row.data.id)),
+        ),
+        destinations: new Set(
+          list("destinations")
+            .filter((row) => row.state !== "deleted")
+            .map((row) => String(row.data.id)),
+        ),
+      });
+      if (issues.length > 0)
         throw new Error(
-          "Giá từ phải lớn hơn 0; dùng giá liên hệ nếu chưa có giá",
-        );
-      if (tour.duration.days > 90 || tour.duration.nights > tour.duration.days)
-        throw new Error("Thời lượng tour không hợp lệ");
-      if (
-        new Set(tour.itinerary.map((day) => day.id)).size !==
-          tour.itinerary.length ||
-        new Set(tour.pricingOptions.map((option) => option.id)).size !==
-          tour.pricingOptions.length
-      )
-        throw new Error("Mã ngày hoặc mã gói giá bị trùng");
-      if (
-        tour.itinerary.length !== tour.duration.days ||
-        tour.itinerary.some((day, i) => day.index !== i + 1)
-      )
-        throw new Error(
-          "Số ngày lịch trình phải khớp thời lượng và đúng thứ tự",
-        );
-      if (
-        tour.categoryIds.some((id) => !present("categories", id)) ||
-        tour.destinationIds.some((id) => !present("destinations", id))
-      )
-        throw new Error("Danh mục/điểm đến không tồn tại");
-      if (
-        tour.pricingOptions.length &&
-        tour.priceFrom?.amount !==
-          Math.min(...tour.pricingOptions.map((p) => p.adultPrice))
-      )
-        throw new Error("Giá từ phải khớp giá thấp nhất trong bảng giá");
-      const translated = raw._en as
-        { itinerary?: { index: number }[] } | undefined;
-      if (
-        translated?.itinerary &&
-        (translated.itinerary.length !== tour.duration.days ||
-          translated.itinerary.some((day, i) => day.index !== i + 1))
-      )
-        throw new Error(
-          "Lịch trình tiếng Anh phải khớp số ngày và đúng thứ tự",
+          [...new Set(issues.map((issue) => issue.message))]
+            .slice(0, 4)
+            .join(" · "),
         );
     }
     if (collection === "articles") {

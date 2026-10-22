@@ -5,7 +5,11 @@ import { ROUTES } from "@/config/navigation";
 import { getRelatedTours, getTourBySlug } from "@/lib/data/tours";
 import { getCategoryById, getCategoryTrail } from "@/lib/data/categories";
 import { getDestinationsByIds } from "@/lib/data/destinations";
-import { formatDuration, formatPriceFrom } from "@/lib/format";
+import {
+  formatDuration,
+  formatPriceFrom,
+  hasPublishedPrice,
+} from "@/lib/format";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd, touristTripJsonLd } from "@/lib/json-ld";
 import { Breadcrumbs, type Crumb } from "@/components/layout/breadcrumbs";
@@ -17,6 +21,7 @@ import { ClockIcon, MapPinIcon, UsersIcon } from "@/components/ui/icons";
 import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { isIndexable } from "@/domain/localization";
+import type { Tour } from "@/domain/tour";
 import { tourTranslationStatus } from "@/lib/data/localize";
 import type { Locale } from "@/i18n/config";
 import { format, getMessages } from "@/i18n/server";
@@ -36,27 +41,24 @@ import {
 } from "./tour-facts";
 import { MobileConsultBar } from "./mobile-consult-bar";
 
-function crumbsFor(slug: string, tourTitle: string, locale: Locale): Crumb[] {
+function crumbsFor(tour: Tour, locale: Locale): Crumb[] {
   const m = getMessages(locale);
-  const tour = getTourBySlug(slug, locale);
   const crumbs: Crumb[] = [
     { label: m.common.home, href: localizePath(locale, ROUTES.home) },
   ];
 
-  if (tour) {
-    const category = getCategoryById(tour.categoryIds[0], locale);
-    if (category) {
-      const trail = getCategoryTrail(category.id, locale);
-      trail.forEach((item) =>
-        crumbs.push({
-          label: item.name,
-          href: localizePath(locale, item.path),
-        }),
-      );
-    }
+  const category = getCategoryById(tour.categoryIds[0], locale);
+  if (category) {
+    const trail = getCategoryTrail(category.id, locale);
+    trail.forEach((item) =>
+      crumbs.push({
+        label: item.name,
+        href: localizePath(locale, item.path),
+      }),
+    );
   }
 
-  crumbs.push({ label: tourTitle });
+  crumbs.push({ label: tour.title });
   return crumbs;
 }
 
@@ -88,29 +90,31 @@ export function buildTourMetadata(slug: string, locale: Locale): Metadata {
   });
 }
 
-export function TourDetailView({
-  slug,
+export function TourDetailContent({
+  tour,
   locale,
+  preview = false,
 }: {
-  slug: string;
+  tour: Tour;
   locale: Locale;
+  /** Draft preview: skip JSON-LD, leave the consult form inert, no indexable flags. */
+  preview?: boolean;
 }) {
   const m = getMessages(locale);
-  const tour = getTourBySlug(slug, locale);
-  if (!tour) notFound();
-
   const destinations = getDestinationsByIds(tour.destinationIds, locale);
   const related = getRelatedTours(tour.slug, 3, locale).map((item) =>
     toTourCard(item, locale),
   );
-  const crumbs = crumbsFor(tour.slug, tour.title, locale);
+  const crumbs = crumbsFor(tour, locale);
   const primaryCategory = getCategoryById(tour.categoryIds[0], locale);
   const cover = tour.images[0]?.src ?? "/opengraph-image.png";
-  const indexable = isIndexable(tourTranslationStatus(tour.id, locale), locale);
+  const indexable = preview
+    ? false
+    : isIndexable(tourTranslationStatus(tour.id, locale), locale);
 
   const sections = [
     { id: "tong-quan", label: m.tour.sections.overview },
-    ...(tour.pricingOptions.length > 0
+    ...(hasPublishedPrice(tour.priceFrom) && tour.pricingOptions.length > 0
       ? [{ id: "bang-gia", label: m.tour.packages.title }]
       : []),
     ...(tour.highlights.length > 0
@@ -128,33 +132,37 @@ export function TourDetailView({
 
   return (
     <>
-      <JsonLd
-        id="ld-trip"
-        data={touristTripJsonLd({
-          title: tour.title,
-          summary: tour.summary,
-          url: absoluteUrl(localizePath(locale, `/tour/${tour.slug}`)),
-          destinations,
-          itinerary: tour.itinerary.map((day) => ({
-            title: day.title,
-            summary: day.summary,
-          })),
-          price: tour.priceFrom,
-          image: cover,
-          locale,
-        })}
-      />
-      <JsonLd
-        id="ld-breadcrumb"
-        data={breadcrumbJsonLd(
-          crumbs.map((crumb) => ({
-            label: crumb.label,
-            path: crumb.href ?? localizePath(locale, `/tour/${tour.slug}`),
-          })),
-        )}
-      />
+      {preview ? null : (
+        <>
+          <JsonLd
+            id="ld-trip"
+            data={touristTripJsonLd({
+              title: tour.title,
+              summary: tour.summary,
+              url: absoluteUrl(localizePath(locale, `/tour/${tour.slug}`)),
+              destinations,
+              itinerary: tour.itinerary.map((day) => ({
+                title: day.title,
+                summary: day.summary,
+              })),
+              price: tour.priceFrom,
+              image: cover,
+              locale,
+            })}
+          />
+          <JsonLd
+            id="ld-breadcrumb"
+            data={breadcrumbJsonLd(
+              crumbs.map((crumb) => ({
+                label: crumb.label,
+                path: crumb.href ?? localizePath(locale, `/tour/${tour.slug}`),
+              })),
+            )}
+          />
+        </>
+      )}
 
-      {indexable ? null : <TranslationNotice locale={locale} />}
+      {preview || indexable ? null : <TranslationNotice locale={locale} />}
 
       <Breadcrumbs items={crumbs} ariaLabel={m.common.breadcrumbAria} />
 
@@ -320,7 +328,7 @@ export function TourDetailView({
           </nav>
         </Container>
 
-        {tour.pricingOptions.length > 0 ? (
+        {hasPublishedPrice(tour.priceFrom) && tour.pricingOptions.length > 0 ? (
           <Section tone="muted" spacing="default">
             <Container>
               <TourPackages tour={tour} locale={locale} />
@@ -444,28 +452,60 @@ export function TourDetailView({
         ) : null}
       </div>
 
-      <ConsultSection
-        locale={locale}
-        id="tu-van"
-        tourSlug={tour.slug}
-        defaultInterest={tour.title}
-        tone="default"
-        spacing="loose"
-        title={m.tour.consultTitle}
-        description={format(m.tour.consultDescription, {
-          title: tour.title,
-          price: formatPriceFrom(tour.priceFrom, locale),
-        })}
-      />
+      {preview ? (
+        <Section id="tu-van" tone="default" spacing="loose">
+          <Container>
+            <div className="rounded-3xl border border-dashed border-border-strong bg-surface px-6 py-10 text-center">
+              <p className="text-sm font-bold uppercase tracking-wider text-primary-strong">
+                Bản xem trước
+              </p>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-foreground-muted">
+                Biểu mẫu tư vấn không hoạt động trong bản xem trước để tránh
+                tạo yêu cầu thật. Khối tư vấn trên trang công khai sẽ dùng
+                tiêu đề tour và giá hiện tại.
+              </p>
+            </div>
+          </Container>
+        </Section>
+      ) : (
+        <ConsultSection
+          locale={locale}
+          id="tu-van"
+          tourSlug={tour.slug}
+          defaultInterest={tour.title}
+          tone="default"
+          spacing="loose"
+          title={m.tour.consultTitle}
+          description={format(m.tour.consultDescription, {
+            title: tour.title,
+            price: formatPriceFrom(tour.priceFrom, locale),
+          })}
+        />
+      )}
 
-      <MobileConsultBar
-        tourTitle={tour.title}
-        priceLabel={formatPriceFrom(tour.priceFrom, locale)}
-        labels={{
-          consult: m.common.requestConsultation,
-          callHotlineAria: m.common.callHotlineAria,
-        }}
-      />
+      {preview ? null : (
+        <MobileConsultBar
+          tourTitle={tour.title}
+          priceLabel={formatPriceFrom(tour.priceFrom, locale)}
+          labels={{
+            consult: m.common.requestConsultation,
+            callHotlineAria: m.common.callHotlineAria,
+          }}
+        />
+      )}
     </>
   );
+}
+
+/** Public page: resolves the published tour and renders it. */
+export function TourDetailView({
+  slug,
+  locale,
+}: {
+  slug: string;
+  locale: Locale;
+}) {
+  const tour = getTourBySlug(slug, locale);
+  if (!tour) notFound();
+  return <TourDetailContent tour={tour} locale={locale} />;
 }

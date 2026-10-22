@@ -16,7 +16,11 @@ import {
   getToursByCategoryId,
 } from "@/lib/data/tours";
 import { getArticleBySlug, getArticles } from "@/lib/data/articles";
-import { getDestinationsByRegion } from "@/lib/data/destinations";
+import {
+  getDestinationsByRegion,
+  getHomeExploreDestinations,
+  homeDestinationHref,
+} from "@/lib/data/destinations";
 import { formatDuration, formatPriceFrom, formatMoney, hasPublishedPrice } from "@/lib/format";
 import { ROUTES, primaryNav } from "@/config/navigation";
 import { getMessages } from "@/i18n/messages";
@@ -236,6 +240,32 @@ describe("destination and article repository", () => {
     const focus = getDestinationsByRegion("quy-nhon-phu-yen", VI);
     assert.ok(focus.length >= 4);
     assert.ok(focus.some((destination) => destination.name === "Quy Nhơn"));
+  });
+
+  it("selects home cards explicitly, in homeOrder, capped at three", () => {
+    const home = getHomeExploreDestinations(VI);
+    assert.deepEqual(
+      home.map((destination) => destination.slug),
+      ["quy-nhon", "ky-co-eo-gio", "hon-kho"],
+    );
+    assert.ok(home.every((destination) => destination.showOnHome === true));
+    // Region membership alone no longer earns a card: Cù Lao Xanh is in the
+    // focus region but is explicitly opted out.
+    const focus = getDestinationsByRegion("quy-nhon-phu-yen", VI);
+    assert.ok(focus.some((destination) => destination.showOnHome === false));
+    assert.ok(!home.some((destination) => destination.slug === "cu-lao-xanh"));
+  });
+
+  it("links a home card to tour search using the destination name", () => {
+    const [first] = getHomeExploreDestinations(VI);
+    assert.equal(
+      homeDestinationHref(first, VI),
+      "/tim-tour?q=Quy%20Nh%C6%A1n",
+    );
+    assert.equal(
+      homeDestinationHref({ name: "Kỳ Co – Eo Gió" }, "en"),
+      "/en/tim-tour?q=K%E1%BB%B3%20Co",
+    );
   });
 
   it("resolves an article by slug and links it to real tours", () => {

@@ -3,6 +3,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
+import { TourEditor, type TourEditorHandle } from "./tour-editor";
+import {
+  DestinationEditor,
+  type DestinationEditorHandle,
+} from "./destination-editor";
 import { useContentUpdates } from "@/lib/use-content-updates";
 import { HeroEditor } from "./hero-editor";
 import { Overview } from "./overview";
@@ -34,6 +39,9 @@ import {
   trashElapsedRatio,
 } from "@/lib/admin-tour-groups";
 import type { HeroConfig } from "@/domain/home-hero";
+import { AssetImage } from "@/components/ui/asset-image";
+/** Mirrors `MAX_HOME_DESTINATIONS`; kept local so the client bundle skips zod. */
+const HOME_DESTINATION_LIMIT = 3;
 type RecordRow = {
   id: string;
   data: Record<string, EditorValue>;
@@ -174,18 +182,19 @@ const GUIDES: Record<string, Guide> = {
   },
   destinations: {
     purpose:
-      "Điểm đến = địa danh (Kỳ Co, Hòn Khô...) để gắn vào tour và hiện ở khối Khám phá trang chủ. Tour nào đi qua đâu thì tick điểm đó.",
+      "Điểm đến là địa danh như Quy Nhơn, Kỳ Co – Eo Gió, Cù Lao Xanh. Đây không phải mục “Điểm nổi bật” trong nội dung riêng của một tour.",
     steps: [
-      "Nhìn 5 nhóm vùng miền bên dưới: Quy Nhơn – Phú Yên lên khối Khám phá trang chủ; 4 miền còn lại dùng trong trang tour và tìm kiếm.",
-      "Bấm Chỉnh sửa để đổi tên, tỉnh/thành, tóm tắt, ảnh, thứ tự hiển thị.",
-      "Muốn tour hiện điểm đến: mở tab Tour du lịch → form tour → mục Điểm đến → tick chọn.",
-      "Muốn bài cẩm nang gợi ý tour: mở bài viết → mục tour liên quan.",
+      "Bật “Hiển thị trong khối Khám phá trên trang chủ” cho tối đa 3 điểm; đặt “Thứ tự trong khối Khám phá” (1 = hiện đầu tiên).",
+      "Bấm Xem trước thẻ để kiểm tra đúng ảnh, tên, tóm tắt và liên kết trước khi xuất bản.",
+      "Muốn tour đi qua điểm nào: mở tab Tour du lịch → form tour → mục Điểm đến → tick chọn.",
+      "Lưu bản nháp để giữ thay đổi; Xuất bản để thẻ và thứ tự mới lên website.",
     ],
-    required: "Tên, tóm tắt; ảnh nên có mô tả (alt) rõ ràng.",
+    required:
+      "Tên, tóm tắt; ảnh nên có mô tả (alt) rõ ràng. Tối đa 3 điểm được bật Khám phá.",
     result:
-      "Điểm đến xuất bản hiện ngay ở trang chủ (nhóm QN–PY), trang chi tiết tour và kết quả tìm kiếm; số tour đang dùng hiện ngay trên từng thẻ.",
+      "Điểm đang bật và đã xuất bản hiện thành thẻ Khám phá theo thứ tự bạn đặt. Điểm gắn vào tour vẫn hiện trên thẻ tour, thông tin tour và tìm kiếm dù đang tắt Khám phá.",
     pitfalls:
-      "Không xóa điểm đến đang được tour hoặc bài viết tham chiếu — số tour đang dùng = 0 mới xóa được.",
+      "Đã đủ 3/3 thì không bật thêm được — tắt bớt một điểm trước. Không xóa điểm đang được tour hoặc bài viết tham chiếu.",
   },
   media: {
     purpose:
@@ -335,6 +344,8 @@ export function Dashboard({
   const loadSerial = useRef(0);
   const activitySerial = useRef(0);
   const dirtyFields = useRef(new Set<string>());
+  const tourEditorRef = useRef<TourEditorHandle>(null);
+  const destinationEditorRef = useRef<DestinationEditorHandle>(null);
   const helpButtonRef = useRef<HTMLButtonElement>(null);
   const [leads, setLeads] = useState<Lead[]>([]),
     [media, setMedia] = useState<
@@ -352,6 +363,7 @@ export function Dashboard({
     [remember, setRemember] = useState(false),
     [helpOpen, setHelpOpen] = useState(false),
     [trashOpen, setTrashOpen] = useState(false),
+    [homePreview, setHomePreview] = useState<RecordRow | null>(null),
     [current, setCurrent] = useState(""),
     [showCurrentPw, setShowCurrentPw] = useState(false),
     [showNewPw, setShowNewPw] = useState(false);
@@ -631,11 +643,36 @@ export function Dashboard({
     setLeadStatusFilter("all");
     setHelpOpen(false);
     setTrashOpen(false);
+    setHomePreview(null);
     setTab(next);
     setNotice("");
   }
   async function save(action: string, collection: string = tab): Promise<boolean> {
     if (!selected) return false;
+    if (
+      collection === "tours" &&
+      tab === "tours" &&
+      (action === "save" || action === "publish") &&
+      tourEditorRef.current &&
+      !tourEditorRef.current.validate()
+    ) {
+      setNotice(
+        "Còn mục chưa hợp lệ. Kiểm tra danh sách lỗi phía trên form trước khi lưu.",
+      );
+      return false;
+    }
+    if (
+      collection === "destinations" &&
+      tab === "destinations" &&
+      (action === "save" || action === "publish") &&
+      destinationEditorRef.current &&
+      !destinationEditorRef.current.validate()
+    ) {
+      setNotice(
+        "Còn mục chưa hợp lệ. Kiểm tra danh sách lỗi phía trên form trước khi lưu.",
+      );
+      return false;
+    }
     let ok = false;
     await run(async () => {
       await api(`content/${collection}`, {
@@ -663,6 +700,60 @@ export function Dashboard({
       ok = true;
     });
     return ok;
+  }
+  /**
+   * Single sticky action bar for the record editor. It sits above the form and
+   * stays in view while scrolling, so it never covers the last field.
+   */
+  function editorActions() {
+    return (
+      <div className="adm-savebar adm-edit-actions">
+        <span className="adm-edit-status" aria-live="polite">
+          {busy
+            ? "Đang lưu thay đổi…"
+            : dirty
+              ? "Có thay đổi chưa lưu"
+              : "Chưa có thay đổi"}
+        </span>
+        <div className="adm-edit-buttons">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void save("save")}
+          >
+            Lưu bản nháp
+          </button>
+          <button
+            type="button"
+            className="adm-primary"
+            disabled={busy}
+            onClick={() => void save("publish")}
+          >
+            {busy ? "Đang lưu…" : "Xuất bản thay đổi ↗"}
+          </button>
+          {!["settings", "messages", "hero", "landing"].includes(tab) && (
+            <button
+              type="button"
+              className="adm-hide-action"
+              disabled={busy}
+              onClick={() => {
+                void (async () => {
+                  const ok = await requestConfirm({
+                    title: "Ẩn nội dung khỏi website?",
+                    body: "Nội dung sẽ gỡ khỏi trang public nhưng bản nháp vẫn được giữ lại.",
+                    confirmLabel: "Ẩn khỏi website",
+                    danger: false,
+                  });
+                  if (ok) void save("unpublish");
+                })();
+              }}
+            >
+              Ẩn khỏi website
+            </button>
+          )}
+        </div>
+      </div>
+    );
   }
   function openHomeEditor(meta: HomeSectionMeta) {
     const record = meta.key === "hero" ? homeData.hero : homeData.landing;
@@ -777,6 +868,12 @@ export function Dashboard({
       data.pricingOptions = [];
       data.sourceDocuments = [];
       data.images = [];
+    }
+    // A new destination must start opted out of the home block: copying the
+    // template row would otherwise consume one of the three public slots.
+    if (tab === "destinations") {
+      data.showOnHome = false;
+      data.homeOrder = 0;
     }
     if ("contentStatus" in data) data.contentStatus = "demo";
     if (tab === "articles")
@@ -1055,19 +1152,69 @@ export function Dashboard({
             .filter((section) => section.items.length > 0);
         })()
       : null;
-  // Điểm đến: nhóm theo 5 vùng miền để biết điểm nào lên trang chủ, điểm nào ở tuyến nào.
+  const homeEnabledCount = rows.filter(
+    (row) => row.state !== "deleted" && row.data.showOnHome === true,
+  ).length;
+  const homeSlotsFull = homeEnabledCount >= HOME_DESTINATION_LIMIT;
+  const homeOrderOf = (row: RecordRow) => {
+    const value = row.data.homeOrder;
+    return typeof value === "number" && value > 0
+      ? value
+      : Number.MAX_SAFE_INTEGER;
+  };
+  const regionOrderOf = (row: RecordRow) =>
+    typeof row.data.order === "number" ? row.data.order : 0;
+  // Điểm đến: một nhóm riêng cho các thẻ đang bật Khám phá (theo thứ tự hiển
+  // thị), sau đó là các vùng miền với những điểm chưa bật.
   const destinationSections =
     tab === "destinations" && filter !== "deleted" && !search
-      ? ["quy-nhon-phu-yen", "mien-bac", "mien-trung", "mien-nam", "tay-nguyen"]
-          .map((region) => ({
-            key: region,
-            title:
-              region === "quy-nhon-phu-yen"
-                ? "◎ Quy Nhơn – Phú Yên · lên khối Khám phá trang chủ"
-                : `◎ ${REGION_LABELS[region] ?? region} · dùng trong tour + tìm kiếm`,
-            items: visibleRows.filter((row) => row.data.region === region),
-          }))
-          .filter((section) => section.items.length > 0)
+      ? (() => {
+          const enabled = visibleRows
+            .filter((row) => row.data.showOnHome === true)
+            .sort(
+              (a, b) =>
+                homeOrderOf(a) - homeOrderOf(b) ||
+                regionOrderOf(a) - regionOrderOf(b) ||
+                String(a.data.name ?? a.id).localeCompare(
+                  String(b.data.name ?? b.id),
+                  "vi",
+                ),
+            );
+          const rest = visibleRows.filter(
+            (row) => row.data.showOnHome !== true,
+          );
+          const sections: {
+            key: string;
+            title: string;
+            hint?: string;
+            items: RecordRow[];
+          }[] = [];
+          if (enabled.length)
+            sections.push({
+              key: "home",
+              title: `★ Khám phá trang chủ · ${enabled.length}/${HOME_DESTINATION_LIMIT} điểm đang bật`,
+              hint:
+                "Đúng thứ tự thẻ trên landing page. Điểm phải được xuất bản mới lên web.",
+              items: enabled,
+            });
+          for (const region of [
+            "quy-nhon-phu-yen",
+            "mien-bac",
+            "mien-trung",
+            "mien-nam",
+            "tay-nguyen",
+          ] as const) {
+            const items = rest.filter((row) => row.data.region === region);
+            if (items.length)
+              sections.push({
+                key: region,
+                title: `◎ ${REGION_LABELS[region] ?? region} · dùng trong tour + tìm kiếm`,
+                hint: "Chưa bật Khám phá — vẫn gắn được vào tour và hiện ở trang tour.",
+                items,
+              });
+          }
+          return sections;
+        })()
       : null;
   function tourUsageOf(id: string, kind: "category" | "destination") {
     return tourLinks.filter((t) =>
@@ -1097,6 +1244,25 @@ export function Dashboard({
         ? (REGION_LABELS[data.region] ?? data.region)
         : "";
     const province = typeof data.province === "string" ? data.province : "";
+    const showOnHome = data.showOnHome === true;
+    const homeLive = showOnHome && row.state === "published";
+    const homeOrder =
+      typeof data.homeOrder === "number" && data.homeOrder > 0
+        ? data.homeOrder
+        : null;
+    const hasImage = Boolean(cover);
+    const homeReason =
+      row.state === "deleted"
+        ? "đang ở Thùng rác — khôi phục và xuất bản trước khi lên trang chủ"
+        : showOnHome
+          ? row.state === "published"
+            ? "đang là một trong các thẻ Khám phá"
+            : "đang bật nhưng mới là bản nháp — xuất bản để lên trang chủ"
+          : row.state !== "published"
+            ? "bản nháp — xuất bản rồi bật Khám phá nếu muốn lên trang chủ"
+            : homeSlotsFull
+              ? `đã đủ ${HOME_DESTINATION_LIMIT}/${HOME_DESTINATION_LIMIT} điểm trên Khám phá — tắt một điểm khác để bật điểm này`
+              : "đang tắt cho khối Khám phá";
     const viewHref =
       kind === "category" && path
         ? `/vi${path}`
@@ -1117,14 +1283,37 @@ export function Dashboard({
               {row.state === "published" ? "Đang xuất bản" : "Bản nháp"}
             </span>
             {kind === "category" ? (
-              <span className="adm-tour-line">
-                {parentName ? `↳ Con của ${parentName}` : "★ Danh mục Gốc"}
-              </span>
+              <>
+                <span className="adm-tour-line">
+                  {parentName ? `↳ Con của ${parentName}` : "★ Danh mục Gốc"}
+                </span>
+                {order !== null && (
+                  <span className="adm-tour-dur">Thứ tự {order}</span>
+                )}
+              </>
             ) : (
-              region && <span className="adm-tour-line">{region}</span>
-            )}
-            {order !== null && (
-              <span className="adm-tour-dur">Thứ tự {order}</span>
+              <>
+                <span className={`adm-home-pill ${homeLive ? "on" : "off"}`}>
+                  {homeLive
+                    ? "Đang hiện ở Khám phá trang chủ"
+                    : "Không hiện ở trang chủ"}
+                </span>
+                {showOnHome && !homeLive && row.state !== "deleted" && (
+                  <span className="adm-home-pill warn">
+                    Đã bật · chờ xuất bản
+                  </span>
+                )}
+                {region && <span className="adm-tour-line">{region}</span>}
+                {showOnHome && homeOrder !== null && (
+                  <span className="adm-tour-dur">Khám phá #{homeOrder}</span>
+                )}
+                {!showOnHome && order !== null && (
+                  <span className="adm-tour-dur">Thứ tự vùng {order}</span>
+                )}
+                <span className={`adm-img-pill ${hasImage ? "on" : "off"}`}>
+                  {hasImage ? "Có ảnh" : "Chưa có ảnh — dùng nền"}
+                </span>
+              </>
             )}
           </div>
           <h2>{name}</h2>
@@ -1143,9 +1332,7 @@ export function Dashboard({
               <>
                 📍 {province ? `${province} · ` : ""}
                 {using} tour đang dùng ·{" "}
-                {data.region === "quy-nhon-phu-yen"
-                  ? "lên Khám phá trang chủ"
-                  : "dùng trong tour + tìm kiếm"}
+                <span className="adm-home-reason">{homeReason}</span>
               </>
             )}
           </p>
@@ -1163,6 +1350,9 @@ export function Dashboard({
           >
             ✎ Chỉnh sửa
           </button>
+          {kind === "destination" && (
+            <button onClick={() => setHomePreview(row)}>👁 Xem trước thẻ</button>
+          )}
           <a
             className="adm-ghost-link"
             href={viewHref}
@@ -2291,15 +2481,24 @@ export function Dashboard({
               </div>
               {["tours", "articles"].includes(tab) && (
                 <Link
-                  href={`/admin/preview/${tab}/${selected.id}`}
+                  href={
+                    tab === "tours"
+                      ? `/vi/xem-truoc/tour/${selected.id}`
+                      : `/admin/preview/${tab}/${selected.id}`
+                  }
                   target="_blank"
                   rel="noreferrer"
+                  title={
+                    tab === "tours"
+                      ? "Xem bản nháp đã lưu trong giao diện thật (chỉ tài khoản quản trị)"
+                      : undefined
+                  }
                 >
                   Xem bản nháp ↗
                 </Link>
               )}
             </div>
-            {tab !== "hero" && (
+            {tab !== "hero" && tab !== "tours" && tab !== "destinations" && (
               <div className="adm-optional">
                 <p>Thêm phần nội dung cần dùng:</p>
                 {Object.entries(
@@ -2397,6 +2596,7 @@ export function Dashboard({
                 )}
               </div>
             )}
+            {editorActions()}
             {tab === "hero" ? (
               <HeroEditor
                 value={selected.data as unknown as HeroConfig}
@@ -2406,6 +2606,45 @@ export function Dashboard({
                   setSelected({
                     ...selected,
                     data: data as unknown as Record<string, EditorValue>,
+                  });
+                  setDirty(true);
+                }}
+              />
+            ) : tab === "tours" ? (
+              <TourEditor
+                ref={tourEditorRef}
+                value={selected.data as unknown as Record<string, unknown>}
+                references={references}
+                onUploadImage={uploadImage}
+                onNavigateTab={(next) => void switchTab(next)}
+                locked={selected.revision > 0}
+                onChange={(data) => {
+                  setSelected({
+                    ...selected,
+                    data: data as Record<string, EditorValue>,
+                  });
+                  setDirty(true);
+                }}
+              />
+            ) : tab === "destinations" ? (
+              <DestinationEditor
+                ref={destinationEditorRef}
+                value={selected.data as unknown as Record<string, unknown>}
+                media={references.media ?? []}
+                onUploadImage={uploadImage}
+                siblings={
+                  rows as unknown as {
+                    id: string;
+                    data: Record<string, unknown>;
+                    state?: string;
+                  }[]
+                }
+                recordState={selected.state}
+                locked={selected.revision > 0}
+                onChange={(data) => {
+                  setSelected({
+                    ...selected,
+                    data: data as Record<string, EditorValue>,
                   });
                   setDirty(true);
                 }}
@@ -2425,36 +2664,6 @@ export function Dashboard({
                 }}
               />
             )}
-            <div className="adm-savebar">
-              <button disabled={busy} onClick={() => void save("save")}>
-                Lưu bản nháp
-              </button>
-              <button
-                className="adm-primary"
-                disabled={busy}
-                onClick={() => void save("publish")}
-              >
-                {busy ? "Đang lưu…" : "Xuất bản thay đổi ↗"}
-              </button>
-              {!["settings", "messages", "hero", "landing"].includes(tab) && (
-                <button
-                  disabled={busy}
-                  onClick={() => {
-                    void (async () => {
-                      const ok = await requestConfirm({
-                        title: "Ẩn nội dung khỏi website?",
-                        body: "Nội dung sẽ gỡ khỏi trang public nhưng bản nháp vẫn được giữ lại.",
-                        confirmLabel: "Ẩn khỏi website",
-                        danger: false,
-                      });
-                      if (ok) void save("unpublish");
-                    })();
-                  }}
-                >
-                  Ẩn khỏi website
-                </button>
-              )}
-            </div>
           </section>
         ) : (
           <>
@@ -2668,55 +2877,85 @@ export function Dashboard({
                         : "◎ Điểm đến dùng để làm gì?"}
                     </h3>
                     <p className="adm-where-lead">
-                      {tab === "categories"
-                        ? "Danh mục là kệ xếp tour. Muốn tour hiện ở tuyến nào → mở form tour → tick danh mục đó."
-                        : "Điểm đến là địa danh gắn vào tour. Muốn tour đi qua đâu → mở form tour → tick điểm đó."}
-                    </p>
-                    <ul>
                       {tab === "categories" ? (
-                        <>
-                          <li>
-                            <strong>Menu + footer</strong>
-                            <span>2 danh mục Gốc hiện ở menu và footer.</span>
-                            <a href="/vi" target="_blank" rel="noreferrer">Xem menu ↗</a>
-                          </li>
-                          <li>
-                            <strong>Trang tuyến</strong>
-                            <span>Mỗi danh mục là 1 trang /tour-... liệt kê tour con.</span>
-                            <a href="/vi/tour-quy-nhon-phu-yen" target="_blank" rel="noreferrer">Xem trang tuyến ↗</a>
-                          </li>
-                          <li>
-                            <strong>Trong form tour</strong>
-                            <span>Mục “Danh mục” — tick chọn, không gõ tay mã.</span>
-                          </li>
-                          <li>
-                            <strong>Breadcrumb + sitemap</strong>
-                            <span>Tự sinh từ cây cha → con; đổi tên không đổi link.</span>
-                          </li>
-                        </>
+                        "Danh mục là kệ xếp tour. Muốn tour hiện ở tuyến nào → mở form tour → tick danh mục đó."
                       ) : (
                         <>
-                          <li>
-                            <strong>Khối Khám phá trang chủ</strong>
-                            <span>Nhóm Quy Nhơn – Phú Yên hiện ảnh + tóm tắt.</span>
-                            <a href="/vi" target="_blank" rel="noreferrer">Xem trang chủ ↗</a>
-                          </li>
-                          <li>
-                            <strong>Trang chi tiết tour</strong>
-                            <span>Mục điểm đến + số điểm trong tour-facts.</span>
-                          </li>
-                          <li>
-                            <strong>Tìm kiếm</strong>
-                            <span>Gõ tên điểm đến ở /tim-tour ra tour liên quan.</span>
-                            <a href="/vi/tim-tour" target="_blank" rel="noreferrer">Thử tìm kiếm ↗</a>
-                          </li>
-                          <li>
-                            <strong>Cách gắn</strong>
-                            <span>Mở form tour → mục “Điểm đến” → tick chọn.</span>
-                          </li>
+                          <strong>Điểm đến là địa danh</strong> như Quy Nhơn, Kỳ
+                          Co – Eo Gió, Cù Lao Xanh. Đây không phải mục “Điểm nổi
+                          bật” trong nội dung riêng của một tour.
                         </>
                       )}
-                    </ul>
+                    </p>
+                    {tab === "destinations" ? (
+                      <>
+                        <ul>
+                          <li>
+                            <strong>Khối “Khám phá” trên trang chủ</strong>
+                            <span>
+                              Bật “Hiển thị trong khối Khám phá trên trang chủ”
+                              để điểm được phép thành thẻ. Tối đa{" "}
+                              {HOME_DESTINATION_LIMIT} điểm; thứ tự do bạn chọn.
+                            </span>
+                            <a href="/vi" target="_blank" rel="noreferrer">
+                              Xem trang chủ ↗
+                            </a>
+                          </li>
+                          <li>
+                            <strong>Thẻ tour + thông tin tour</strong>
+                            <span>
+                              Gắn điểm trong form tour → tên điểm hiện trên thẻ
+                              tour và khối thông tin chi tiết.
+                            </span>
+                          </li>
+                          <li>
+                            <strong>Tìm tour</strong>
+                            <span>
+                              Tên điểm được dùng khi khách gõ ở /tim-tour; thẻ
+                              Khám phá mở sẵn đúng từ khóa này.
+                            </span>
+                            <a href="/vi/tim-tour" target="_blank" rel="noreferrer">
+                              Thử tìm kiếm ↗
+                            </a>
+                          </li>
+                          <li>
+                            <strong>Không phải “Điểm nổi bật” của tour</strong>
+                            <span>
+                              Mục đó nằm trong nội dung riêng của từng tour và
+                              không liên quan đến danh sách này.
+                            </span>
+                          </li>
+                        </ul>
+                        <p className="adm-home-count" role="status">
+                          Đang bật <strong>{homeEnabledCount}/{HOME_DESTINATION_LIMIT}</strong>{" "}
+                          điểm cho khối Khám phá.{" "}
+                          {homeSlotsFull
+                            ? "Đã đủ 3 điểm — tắt một điểm trước khi bật thêm."
+                            : `Còn ${HOME_DESTINATION_LIMIT - homeEnabledCount} chỗ trống.`}
+                        </p>
+                      </>
+                    ) : (
+                      <ul>
+                        <li>
+                          <strong>Menu + footer</strong>
+                          <span>2 danh mục Gốc hiện ở menu và footer.</span>
+                          <a href="/vi" target="_blank" rel="noreferrer">Xem menu ↗</a>
+                        </li>
+                        <li>
+                          <strong>Trang tuyến</strong>
+                          <span>Mỗi danh mục là 1 trang /tour-... liệt kê tour con.</span>
+                          <a href="/vi/tour-quy-nhon-phu-yen" target="_blank" rel="noreferrer">Xem trang tuyến ↗</a>
+                        </li>
+                        <li>
+                          <strong>Trong form tour</strong>
+                          <span>Mục “Danh mục” — tick chọn, không gõ tay mã.</span>
+                        </li>
+                        <li>
+                          <strong>Breadcrumb + sitemap</strong>
+                          <span>Tự sinh từ cây cha → con; đổi tên không đổi link.</span>
+                        </li>
+                      </ul>
+                    )}
                   </div>
                 )}
               {filter === "deleted" && (
@@ -2798,11 +3037,7 @@ export function Dashboard({
                       <header className="adm-tour-group-head adm-article-group-head">
                         <div>
                           <h3>{section.title}</h3>
-                          <p>
-                            {section.key === "quy-nhon-phu-yen"
-                              ? "Ảnh + tóm tắt hiện ở khối Khám phá trang chủ."
-                              : "Gắn vào form tour để tour hiện ở tuyến này và tìm kiếm."}
-                          </p>
+                          <p>{section.hint}</p>
                         </div>
                         <span className="adm-tour-group-count">
                           {section.items.length} điểm
@@ -2909,8 +3144,10 @@ export function Dashboard({
                                       <>
                                         Trang <code>{path}</code> ·{" "}
                                       </>
-                                    ) : (
+                                    ) : row.data.showOnHome === true ? (
                                       <>Khám phá trang chủ · </>
+                                    ) : (
+                                      <>Không hiện Khám phá · </>
                                     )}
                                     {using} tour đang dùng
                                   </span>
@@ -3125,6 +3362,142 @@ export function Dashboard({
             </section>
           </div>
         )}
+        {homePreview &&
+          (() => {
+            const d = homePreview.data;
+            const name = String(d.name ?? homePreview.id);
+            const summary = String(d.summary ?? "");
+            const province = String(d.province ?? "");
+            const showOnHome = d.showOnHome === true;
+            const homeOrder =
+              typeof d.homeOrder === "number" && d.homeOrder > 0
+                ? d.homeOrder
+                : null;
+            const rawImage =
+              d.image && typeof d.image === "object" && !Array.isArray(d.image)
+                ? (d.image as { src?: unknown; alt?: unknown })
+                : undefined;
+            const imageAsset = rawImage
+              ? {
+                  src:
+                    typeof rawImage.src === "string" ? rawImage.src : undefined,
+                  alt:
+                    typeof rawImage.alt === "string" && rawImage.alt
+                      ? rawImage.alt
+                      : name,
+                }
+              : undefined;
+            const hasImage = Boolean(imageAsset?.src);
+            const query = name.split(" – ")[0].split(" - ")[0];
+            const href = `/vi/tim-tour?q=${encodeURIComponent(query)}`;
+            return (
+              <div
+                className="adm-home-preview-veil"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Xem trước thẻ Khám phá"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setHomePreview(null);
+                }}
+              >
+                <section className="adm-home-preview">
+                  <header>
+                    <div>
+                      <p className="adm-eyebrow">SEA TRIP · Xem trước</p>
+                      <h2>Thẻ Khám phá trên trang chủ</h2>
+                      <p>
+                        Đúng nội dung sẽ render trên landing page. Ảnh thiếu
+                        được thay bằng nền thương hiệu, không bị ẩn.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="adm-trash-close"
+                      aria-label="Đóng xem trước"
+                      onClick={() => setHomePreview(null)}
+                    >
+                      ×
+                    </button>
+                  </header>
+                  <div className="adm-home-preview-stage">
+                    <div className="adm-home-preview-card">
+                      <AssetImage
+                        image={imageAsset}
+                        altFallback={name}
+                        className="adm-home-preview-photo"
+                        sizes="(max-width: 700px) 100vw, 560px"
+                      />
+                      <div className="adm-home-preview-copy">
+                        <span>
+                          {showOnHome && homeOrder
+                            ? `0${homeOrder} / KHÁM PHÁ`
+                            : "CHƯA BẬT KHÁM PHÁ"}
+                        </span>
+                        <h3>{name}</h3>
+                        {province ? (
+                          <small className="adm-home-preview-province">
+                            {province}
+                          </small>
+                        ) : null}
+                        <p>{summary || "Chưa có tóm tắt."}</p>
+                        <span
+                          className="adm-home-preview-arrow"
+                          aria-hidden="true"
+                        >
+                          ↗
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <dl className="adm-home-preview-facts">
+                    <div>
+                      <dt>Trạng thái</dt>
+                      <dd>
+                        {showOnHome
+                          ? "Đang bật Khám phá"
+                          : "Không hiện ở Khám phá"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Thứ tự</dt>
+                      <dd>{homeOrder ? `#${homeOrder}` : "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>Ảnh</dt>
+                      <dd>{hasImage ? "Có ảnh thật" : "Chưa có ảnh — dùng nền"}</dd>
+                    </div>
+                    <div>
+                      <dt>Liên kết</dt>
+                      <dd>
+                        <code>{href}</code>
+                      </dd>
+                    </div>
+                  </dl>
+                  <footer>
+                    <span>
+                      {homePreview.state === "published"
+                        ? "Điểm đã xuất bản."
+                        : "Điểm là bản nháp — chưa lên website."}
+                    </span>
+                    <a
+                      className="adm-ghost-link"
+                      href={href}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Mở liên kết thẻ ↗
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setHomePreview(null)}
+                    >
+                      Đóng
+                    </button>
+                  </footer>
+                </section>
+              </div>
+            );
+          })()}
         <ToastStack items={toasts} onClose={dismissToast} />
         <ConfirmModal
           request={confirmReq}

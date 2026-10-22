@@ -1,6 +1,18 @@
-import type { ComponentPropsWithRef, ReactNode } from "react";
+"use client";
+
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ComponentPropsWithRef,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from "react";
 import { cn } from "@/lib/utils";
-import { AlertIcon, ChevronDownIcon } from "./icons";
+import { AlertIcon, CheckIcon, ChevronDownIcon } from "./icons";
 
 /**
  * Form primitives.
@@ -156,39 +168,344 @@ export function Textarea({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* Select                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export type SelectOption = {
+  value: string;
+  label: string;
+};
+
+/** Server render / no-JS snapshot: show the native control. */
+const subscribeHydration = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 /**
- * Select with a custom chevron.
+ * Brand-styled select.
  *
- * The native control is kept on purpose — on phones the OS picker is far better
- * than anything we could build, and it stays keyboard- and screen-reader-native.
- * What changes is the shell: `appearance-none`, the shared 44px box, the shared
- * border/hover/focus treatment, and our own chevron.
+ * Why not a native `<select>`: the option popup is drawn by the operating
+ * system, so it ignores every token we have — square corners, system font and
+ * that blue Windows highlight (see the old screenshot). Custom options are the
+ * only way to make the list match the rest of the site.
+ *
+ * What we keep from the native control:
+ * - it is what server render and no-JS visitors get (`useSyncExternalStore`
+ *   gives `false` until hydration), so the field still works without JS;
+ * - it stays the value source for plain forms, via a hidden input after
+ *   hydration;
+ * - the popup follows the ARIA combobox/listbox pattern: focus stays on the
+ *   trigger, arrow/Home/End move the active option, Enter/Space commit,
+ *   Escape closes, letters jump (type-ahead), and `aria-activedescendant`
+ *   tells screen readers which option is current.
  */
 export function Select({
-  className,
+  id,
+  name,
+  value,
+  options,
+  onChange,
   invalid = false,
-  children,
-  ...props
-}: ComponentPropsWithRef<"select"> & { invalid?: boolean }) {
+  disabled = false,
+  placeholder,
+  className,
+  "aria-labelledby": ariaLabelledBy,
+  "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedBy,
+}: {
+  id?: string;
+  name?: string;
+  value: string;
+  options: readonly SelectOption[];
+  onChange: (value: string) => void;
+  invalid?: boolean;
+  disabled?: boolean;
+  /** Shown when `value` matches no option. */
+  placeholder?: string;
+  className?: string;
+  "aria-labelledby"?: string;
+  "aria-label"?: string;
+  "aria-describedby"?: string;
+}) {
+  const enhanced = useSyncExternalStore(
+    subscribeHydration,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
+  const baseId = useId().replace(/:/g, "");
+  const listId = `${baseId}-list`;
+  const optionId = (index: number) => `${baseId}-option-${index}`;
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const typeahead = useRef({ text: "", at: 0 });
+
+  const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const selectedIndex = options.findIndex((option) => option.value === value);
+  const selected = selectedIndex >= 0 ? options[selectedIndex] : undefined;
+
+  /** Follow the trigger while the page scrolls, so the list never hangs off-screen. */
+  const syncPlacement = useCallback(() => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    // Flip upwards only when there is clearly more room above than below.
+    setDropUp(
+      window.innerHeight - rect.bottom < 260 &&
+        rect.top > window.innerHeight - rect.bottom,
+    );
+  }, []);
+
+  const openList = (index = selectedIndex >= 0 ? selectedIndex : 0) => {
+    syncPlacement();
+    setActiveIndex(index);
+    setOpen(true);
+  };
+
+  const choose = (index: number) => {
+    const option = options[index];
+    if (!option) return;
+    if (option.value !== value) onChange(option.value);
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const typeaheadIndex = (key: string, from: number): number | null => {
+    const now = Date.now();
+    const previous = typeahead.current;
+    const text = now - previous.at > 600 ? key : previous.text + key;
+    typeahead.current = { text, at: now };
+    const needle = text.toLocaleLowerCase();
+    for (let step = 1; step <= options.length; step += 1) {
+      const index = (from + step) % options.length;
+      if (options[index].label.toLocaleLowerCase().startsWith(needle)) {
+        return index;
+      }
+    }
+    return null;
+  };
+
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+    const last = options.length - 1;
+
+    if (event.key === "Escape") {
+      if (open) {
+        event.preventDefault();
+        setOpen(false);
+      }
+      return;
+    }
+
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!open) {
+        openList();
+        return;
+      }
+      setActiveIndex((current) => {
+        if (event.key === "ArrowDown") return current >= last ? 0 : current + 1;
+        return current <= 0 ? last : current - 1;
+      });
+      return;
+    }
+
+    if (open && (event.key === "Home" || event.key === "End")) {
+      event.preventDefault();
+      setActiveIndex(event.key === "Home" ? 0 : last);
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      if (open) choose(activeIndex);
+      else openList();
+      return;
+    }
+
+    if (event.key === "Tab") {
+      setOpen(false);
+      return;
+    }
+
+    if (
+      event.key.length === 1 &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
+      const match = typeaheadIndex(event.key, open ? activeIndex : selectedIndex);
+      if (match === null) return;
+      event.preventDefault();
+      if (open) setActiveIndex(match);
+      else openList(match);
+    }
+  };
+
+  // Close on an outside pointer press — no blur handler, so a press on an
+  // option is never swallowed before its click fires.
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const root = triggerRef.current?.parentElement;
+      if (root && !root.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  // Keep the keyboard-active option in view inside the scrollable list.
+  useEffect(() => {
+    if (!open) return;
+    optionRefs.current[activeIndex]?.scrollIntoView({ block: "nearest" });
+  }, [open, activeIndex]);
+
+  // The anchor can move while the list is open (page scroll / viewport resize),
+  // so re-evaluate the drop direction instead of leaving it stuck.
+  useEffect(() => {
+    if (!open) return;
+    const onScroll = () => syncPlacement();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [open, syncPlacement]);
+
   return (
     <span className="relative block">
-      <select
-        data-focus-ring=""
-        aria-invalid={invalid || undefined}
-        className={cn(
-          controlBase,
-          controlSize,
-          "cursor-pointer appearance-none pr-10",
-          stateClasses(invalid),
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </select>
+      {enhanced ? (
+        <>
+          <button
+            ref={triggerRef}
+            id={id}
+            type="button"
+            role="combobox"
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            aria-controls={listId}
+            aria-activedescendant={open ? optionId(activeIndex) : undefined}
+            aria-labelledby={ariaLabelledBy}
+            aria-label={ariaLabel}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={invalid || undefined}
+            data-focus-ring=""
+            disabled={disabled}
+            onClick={() => {
+              if (open) setOpen(false);
+              else openList();
+            }}
+            onKeyDown={onKeyDown}
+            className={cn(
+              controlBase,
+              controlSize,
+              "flex cursor-pointer items-center gap-2 pr-10 text-left",
+              stateClasses(invalid),
+              open && "border-primary-strong shadow-[var(--shadow-focus)]",
+              className,
+            )}
+          >
+            <span
+              className={cn(
+                "min-w-0 flex-1 truncate",
+                selected ? undefined : "text-foreground-subtle/80",
+              )}
+            >
+              {selected?.label ?? placeholder ?? ""}
+            </span>
+          </button>
+
+          {open ? (
+            <div
+              id={listId}
+              role="listbox"
+              aria-labelledby={ariaLabelledBy}
+              aria-label={ariaLabel}
+              data-drop={dropUp ? "up" : "down"}
+              className={cn(
+                "stt-select-pop absolute inset-x-0 z-50 max-h-72 overflow-y-auto rounded-xl border border-border bg-surface p-1.5 shadow-lifted",
+                dropUp ? "bottom-full mb-2" : "top-full mt-2",
+              )}
+            >
+              {options.map((option, index) => {
+                const isSelected = option.value === value;
+                return (
+                  <button
+                    key={option.value}
+                    ref={(node) => {
+                      optionRefs.current[index] = node;
+                    }}
+                    id={optionId(index)}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    tabIndex={-1}
+                    data-active={index === activeIndex ? "true" : undefined}
+                    onClick={() => choose(index)}
+                    className={cn(
+                      "stt-select-option flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                      index === activeIndex
+                        ? "bg-primary-soft text-primary-strong"
+                        : "text-foreground hover:bg-surface-muted",
+                      isSelected && "font-semibold",
+                    )}
+                  >
+                    <span className="min-w-0 truncate">{option.label}</span>
+                    {isSelected ? (
+                      <CheckIcon
+                        className="h-4 w-4 shrink-0 text-primary-strong"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
+          {name ? <input type="hidden" name={name} value={value} /> : null}
+        </>
+      ) : (
+        <select
+          id={id}
+          name={name}
+          value={value}
+          disabled={disabled}
+          aria-invalid={invalid || undefined}
+          aria-labelledby={ariaLabelledBy}
+          aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
+          onChange={(event) => onChange(event.target.value)}
+          className={cn(
+            controlBase,
+            controlSize,
+            "cursor-pointer appearance-none pr-10",
+            stateClasses(invalid),
+            className,
+          )}
+        >
+          {placeholder ? (
+            <option value="" disabled>
+              {placeholder}
+            </option>
+          ) : null}
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      )}
       <ChevronDownIcon
         aria-hidden="true"
-        className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-subtle"
+        className={cn(
+          "pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-subtle transition-transform duration-200",
+          open && "rotate-180 text-primary-strong",
+        )}
       />
     </span>
   );
