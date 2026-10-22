@@ -1038,7 +1038,10 @@ try {
     .waitFor();
   check("login after logout returns to the Studio", true);
 
-  await page.getByRole("button", { name: "Bảo mật", exact: false }).click();
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: "Bảo mật", exact: true })
+    .click();
   await page.getByLabel("Mật khẩu hiện tại").fill(password);
   await page.getByLabel("Mật khẩu mới").fill(password + "-new");
   await page.getByRole("button", { name: "Cập nhật mật khẩu" }).click();

@@ -22,11 +22,11 @@ export function ValuesSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
   const en = locale === "en";
   let visual = {
-    src: "/images/hero/island-panorama.webp" as string,
+    src: "/images/hero/blue-bay.webp" as string,
     alt:
       locale === "en"
-        ? "Panoramic view of Quy Nhon bay islands"
-        : "Toàn cảnh vịnh biển và đảo Quy Nhơn",
+        ? "Panoramic view of a turquoise bay with a pier and rocky shoreline"
+        : "Toàn cảnh vịnh biển xanh trong với cầu tàu và bãi đá ven bờ",
     badge:
       locale === "en"
         ? "Handpicked, unhurried journeys"

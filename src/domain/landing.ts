@@ -73,7 +73,7 @@ export const landingSchema = z.object({
     moodsEn: z.array(z.string().max(60)).max(8).default([]),
   }),
   values: z.object({
-    photoSrc: z.string().startsWith("/").max(300).default("/images/hero/island-panorama.webp"),
+    photoSrc: z.string().startsWith("/").max(300).default("/images/hero/blue-bay.webp"),
     photoAlt: z.string().max(300).default("Toàn cảnh vịnh biển và đảo Quy Nhơn"),
     photoAltEn: z.string().max(300).default("Panoramic view of Quy Nhon bay islands"),
     badge: z.string().max(120).default("Đi chậm, chọn kỹ, nhớ lâu"),
@@ -149,9 +149,9 @@ export const defaultLanding: LandingSections = landingSchema.parse({
     moodsEn: ["Mountains & heritage", "Coast & ancient towns", "Islands & waterways", "Pines & highland mornings"],
   },
   values: {
-    photoSrc: "/images/hero/island-panorama.webp",
-    photoAlt: "Toàn cảnh vịnh biển và đảo Quy Nhơn",
-    photoAltEn: "Panoramic view of Quy Nhon bay islands",
+    photoSrc: "/images/hero/blue-bay.webp",
+    photoAlt: "Toàn cảnh vịnh biển xanh trong với cầu tàu và bãi đá ven bờ",
+    photoAltEn: "Panoramic view of a turquoise bay with a pier and rocky shoreline",
     badge: "Đi chậm, chọn kỹ, nhớ lâu",
     badgeEn: "Handpicked, unhurried journeys",
     principles: [

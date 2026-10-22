@@ -735,9 +735,6 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 .home-editorial .journey-story .section-eyebrow-number {
   color: var(--theme-on-dark-accent);
 }
-.home-editorial .journey-story .section-eyebrow-rule {
-  background: linear-gradient(90deg, transparent, var(--color-accent));
-}
 .journey-story-heading > p:last-child {
   max-width: 620px;
   margin-top: 28px;

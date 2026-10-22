@@ -5,7 +5,12 @@ import { contentVersion } from "@/server/cms/db";
 import { LiveContent } from "@/components/layout/live-content";
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties } from "react";
-import { Be_Vietnam_Pro, Fraunces } from "next/font/google";
+import {
+  Be_Vietnam_Pro,
+  Cormorant_Garamond,
+  Lora,
+  Manrope,
+} from "next/font/google";
 import "../globals.css";
 import { siteConfig } from "@/config/runtime-site";
 import { SkipLink, SiteHeader } from "@/components/layout/site-header";
@@ -38,17 +43,39 @@ const beVietnamPro = Be_Vietnam_Pro({
 });
 
 /**
- * Fraunces — display serif for headings only (H1/H2, `text-display*`). Its
- * `SOFT` axis lets the terminals read gentler, which is the "softer, more
- * editorial" tone the brand wants. Body and UI stay on Be Vietnam Pro.
- * Variable font, so every weight is available without enumerating them;
- * the `vietnamese` subset is required for correct diacritic stacking.
+ * Display faces.
+ *
+ * Vietnamese uses Lora: a warm, low-contrast serif with full Vietnamese
+ * diacritic support and a gentler rhythm than the previous Fraunces. English
+ * uses Cormorant Garamond, which is more calligraphic and editorial. Both are
+ * self-hosted by `next/font` (no layout shift, no request to Google at runtime).
  */
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const lora = Lora({
+  variable: "--font-lora",
   subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
-  axes: ["opsz", "SOFT"],
+});
+
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+/**
+ * English body face. Manrope is soft, modern and has Vietnamese support too,
+ * but it is only selected for `html[lang="en"]`; Vietnamese keeps Be Vietnam
+ * Pro, which is optimised for Vietnamese diacritics.
+ */
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 /** Both locales are prerendered; the proxy maps the URL prefix onto this segment. */
@@ -120,7 +147,7 @@ export default async function LocaleLayout({
       data-theme={activeTheme.id}
       style={activeTheme.vars as CSSProperties}
       lang={localeMeta[locale].htmlLang}
-      className={`${beVietnamPro.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${beVietnamPro.variable} ${lora.variable} ${cormorant.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <noscript>

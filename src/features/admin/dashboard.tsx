@@ -448,6 +448,7 @@ export function Dashboard({
         original: boolean;
       }[]
     >([]);
+  const [mediaQuery, setMediaQuery] = useState("");
   const [username, setUsername] = useState(""),
     [password, setPassword] = useState(""),
     [showPassword, setShowPassword] = useState(false),
@@ -1236,6 +1237,13 @@ export function Dashboard({
     return left !== null && left <= 7;
   }).length;
   const tabLabel = tabs.find((t) => t[0] === tab)?.[1] ?? tab;
+  const filteredMedia = (() => {
+    const needle = mediaQuery.trim().toLowerCase();
+    if (!needle) return media;
+    return media.filter((item) =>
+      `${item.alt} ${item.name} ${item.src}`.toLowerCase().includes(needle),
+    );
+  })();
   const tabPosition = tabs.findIndex((entry) => entry[0] === tab);
   const tabGroup =
     TAB_GROUPS.find((group) => group.keys.includes(tab))?.label ?? "Studio";
@@ -1955,15 +1963,91 @@ export function Dashboard({
         </button>
       </aside>
       <main className="adm-main">
+        <header className="adm-topbar">
+          <div className="adm-topbar-lead">
+            <span className="adm-topbar-brand">
+              SEA TRIP <b>STUDIO</b>
+            </span>
+            <span className="adm-topbar-slash" aria-hidden="true">
+              /
+            </span>
+            <span className="adm-topbar-section">{tabLabel}</span>
+          </div>
+          <div className="adm-topbar-actions">
+            {!selected &&
+            ["tours", "articles", "categories", "destinations"].includes(
+              tab,
+            ) ? (
+              <button
+                type="button"
+                className="adm-topbar-new"
+                onClick={create}
+                disabled={busy || loading}
+              >
+                <AdminIcon name="plus" size={15} />
+                <span>Tạo mới</span>
+              </button>
+            ) : null}
+            <button
+              type="button"
+              ref={quickButtonRef}
+              className="adm-search"
+              aria-haspopup="dialog"
+              aria-expanded={quickOpen}
+              aria-keyshortcuts="Control+K Meta+K"
+              aria-label="Tìm kiếm nhanh trong Studio"
+              onClick={() => void openQuickSearch()}
+            >
+              <SearchIcon className="adm-search-icon" />
+              <span className="adm-search-text">
+                Tìm tour, bài viết, điểm đến…
+              </span>
+              <kbd>Ctrl K</kbd>
+            </button>
+            <button
+              type="button"
+              ref={helpButtonRef}
+              className="adm-topbar-icon"
+              aria-expanded={helpOpen}
+              aria-controls="adm-help-panel"
+              aria-label={
+                helpOpen
+                  ? "Đóng hướng dẫn sử dụng"
+                  : "Mở hướng dẫn sử dụng trang này"
+              }
+              title="Hướng dẫn sử dụng trang này"
+              onClick={() => setHelpOpen((value) => !value)}
+            >
+              ?
+            </button>
+            <button
+              type="button"
+              className="adm-topbar-icon"
+              aria-label="Mở website trong tab mới"
+              title="Mở website"
+              onClick={leaveToWebsite}
+            >
+              ↗
+            </button>
+            <button
+              type="button"
+              className="adm-avatar adm-topbar-user"
+              aria-label="Bảo mật tài khoản"
+              title="Bảo mật tài khoản"
+              onClick={() => void navigateTo("account")}
+            >
+              ST
+            </button>
+          </div>
+        </header>
         <header className="adm-masthead">
           <div className="adm-masthead-copy">
             <p className="adm-masthead-kicker">
-              <span className="adm-masthead-rule" aria-hidden="true" />
-              SEA TRIP
+              <span className="adm-masthead-brand">SEA TRIP</span>
               <span className="adm-masthead-sep" aria-hidden="true">
                 ·
               </span>
-              Content &amp; sales
+              <span className="adm-masthead-label">Content &amp; sales</span>
             </p>
             <h1>{tabLabel}</h1>
             <p className="adm-masthead-deck">
@@ -1973,40 +2057,6 @@ export function Dashboard({
             </p>
           </div>
           <div className="adm-masthead-side">
-            <div className="adm-header-side">
-              <button
-                type="button"
-                ref={quickButtonRef}
-                className="adm-quick-open"
-                aria-haspopup="dialog"
-                aria-expanded={quickOpen}
-                aria-keyshortcuts="Control+K Meta+K"
-                aria-label="Tìm kiếm nhanh trong Studio"
-                onClick={() => void openQuickSearch()}
-              >
-                <SearchIcon className="adm-quick-open-icon" />
-                <span className="adm-quick-open-text">Tìm nhanh…</span>
-                <kbd>Ctrl K</kbd>
-              </button>
-              <button
-                type="button"
-                ref={helpButtonRef}
-                className="adm-help-btn"
-                aria-expanded={helpOpen}
-                aria-controls="adm-help-panel"
-                aria-label={
-                  helpOpen
-                    ? "Đóng hướng dẫn sử dụng"
-                    : "Mở hướng dẫn sử dụng trang này"
-                }
-                onClick={() => setHelpOpen((value) => !value)}
-              >
-                ?
-              </button>
-              <div className="adm-avatar" aria-label="Chủ quản trị">
-                ST
-              </div>
-            </div>
             <p className="adm-masthead-chapter">
               <span className="adm-masthead-chapter-no" aria-hidden="true">
                 {String(tabPosition + 1).padStart(2, "0")}
@@ -2543,140 +2593,236 @@ export function Dashboard({
             </section>
           </>
         ) : tab === "media" ? (
-          <section className="adm-panel">
-            <h2>Khoảnh khắc cho những hành trình</h2>
-            <p>
-              JPEG, PNG hoặc WebP · tối đa 10 MB. Ảnh được tối ưu, bỏ metadata
-              và không phóng lớn ảnh nhỏ.
-            </p>
-            <label className="adm-upload">
-              + Tải ảnh lên
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                disabled={busy}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file)
-                    void run(async () => {
-                      if (file.size > 10485760)
-                        throw new Error("Ảnh vượt quá 10 MB");
-                      await api("media", {
-                        method: "POST",
-                        headers: {
-                          "content-type": file.type,
-                          "x-image-alt": encodeURIComponent(file.name),
-                        },
-                        body: file,
-                      });
-                      await load();
-                      pushToast(
-                        "success",
-                        "Đã tải ảnh. Sao chép đường dẫn để dùng trong nội dung.",
-                      );
-                    });
-                }}
-              />
-            </label>
+          <section className="adm-panel adm-media">
+            <header className="adm-media-head">
+              <div>
+                <p className="adm-eyebrow">Thư viện ảnh</p>
+                <h2>Khoảnh khắc cho những hành trình</h2>
+                <p>
+                  JPEG, PNG hoặc WebP · tối đa 10 MB. Ảnh được tối ưu, bỏ
+                  metadata và không phóng lớn ảnh nhỏ.
+                </p>
+              </div>
+              <span className="adm-media-count">{media.length} ảnh</span>
+            </header>
+
+            <div className="adm-media-toolbar">
+              <label className="adm-media-search">
+                <SearchIcon className="h-4 w-4" aria-hidden="true" />
+                <input
+                  value={mediaQuery}
+                  onChange={(event) => setMediaQuery(event.target.value)}
+                  placeholder="Tìm theo mô tả, tên tệp hoặc đường dẫn…"
+                  aria-label="Tìm ảnh trong thư viện"
+                />
+                {mediaQuery ? (
+                  <button
+                    type="button"
+                    className="adm-media-search-clear"
+                    aria-label="Xóa tìm kiếm"
+                    onClick={() => setMediaQuery("")}
+                  >
+                    ×
+                  </button>
+                ) : null}
+              </label>
+              {mediaQuery ? (
+                <span className="adm-media-filter-count">
+                  {filteredMedia.length}/{media.length} ảnh
+                </span>
+              ) : null}
+            </div>
+
             <div className="adm-media-grid">
-              {media.map((item) => (
-                <article key={item.id} data-live-editor={`media:${item.id}`}>
-                  <Image
-                    unoptimized
-                    width={300}
-                    height={180}
-                    src={item.src}
-                    alt={item.alt}
+              {!mediaQuery ? (
+                <label className="adm-media-upload-card">
+                  <span className="adm-media-upload-icon">
+                    <AdminIcon name="image" size={28} />
+                  </span>
+                  <strong>Thêm ảnh mới</strong>
+                  <span>JPEG, PNG, WebP · tối đa 10 MB</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={busy}
+                    aria-label="Tải ảnh mới lên thư viện"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file)
+                        void run(async () => {
+                          if (file.size > 10485760)
+                            throw new Error("Ảnh vượt quá 10 MB");
+                          await api("media", {
+                            method: "POST",
+                            headers: {
+                              "content-type": file.type,
+                              "x-image-alt": encodeURIComponent(file.name),
+                            },
+                            body: file,
+                          });
+                          await load();
+                          pushToast(
+                            "success",
+                            "Đã tải ảnh. Sao chép đường dẫn để dùng trong nội dung.",
+                          );
+                        });
+                    }}
                   />
-                  <p>{item.alt}</p>
-                  {!item.original && (
-                    <>
-                      <label>
-                        Mô tả ảnh
+                </label>
+              ) : null}
+
+              {filteredMedia.map((item) => (
+                <article
+                  key={item.id}
+                  className="adm-media-card"
+                  data-live-editor={`media:${item.id}`}
+                >
+                  <div className="adm-media-thumb">
+                    <Image
+                      unoptimized
+                      width={640}
+                      height={440}
+                      src={item.src}
+                      alt={item.alt}
+                      className="adm-media-photo"
+                    />
+                    <span
+                      className="adm-media-origin"
+                      data-original={item.original ? "true" : undefined}
+                    >
+                      {item.original ? "Ảnh gốc" : "Tải lên"}
+                    </span>
+                  </div>
+
+                  <div className="adm-media-body">
+                    <p className="adm-media-name" title={item.src}>
+                      {item.name}
+                    </p>
+
+                    {item.original ? (
+                      <p className="adm-media-alt-readonly">{item.alt}</p>
+                    ) : (
+                      <label className="adm-media-alt">
+                        <span>
+                          Mô tả ảnh <em>{(item.alt ?? "").length}/300</em>
+                        </span>
                         <input
                           value={item.alt}
                           maxLength={300}
-                          onChange={(e) =>
+                          placeholder="Mô tả ảnh để tìm kiếm và dùng cho trợ năng…"
+                          onChange={(e) => {
                             setMedia(
                               media.map((asset) =>
                                 asset.id === item.id
                                   ? { ...asset, alt: e.target.value }
                                   : asset,
                               ),
-                            )
-                          }
+                            );
+                            dirtyFields.current.add(`media:${item.id}`);
+                            setDirty(true);
+                          }}
                         />
                       </label>
+                    )}
+
+                    <div className="adm-media-actions">
+                      {!item.original ? (
+                        <button
+                          type="button"
+                          className="adm-media-save"
+                          disabled={busy}
+                          onClick={() =>
+                            void run(async () => {
+                              await api("media", {
+                                method: "PATCH",
+                                body: JSON.stringify({
+                                  id: item.id,
+                                  alt: item.alt,
+                                }),
+                              });
+                              dirtyFields.current.delete(`media:${item.id}`);
+                              setDirty(dirtyFields.current.size > 0);
+                              pushToast(
+                                "success",
+                                "Đã lưu mô tả ảnh trong thư viện.",
+                              );
+                            })
+                          }
+                        >
+                          Lưu mô tả
+                        </button>
+                      ) : null}
                       <button
-                        disabled={busy}
-                        onClick={() =>
-                          void run(async () => {
-                            await api("media", {
-                              method: "PATCH",
-                              body: JSON.stringify({
-                                id: item.id,
-                                alt: item.alt,
-                              }),
-                            });
-                            dirtyFields.current.delete(`media:${item.id}`);
-                            setDirty(dirtyFields.current.size > 0);
-                            pushToast("success", "Đã lưu mô tả ảnh trong thư viện.");
-                          })
-                        }
+                        type="button"
+                        className="adm-media-copy"
+                        onClick={() => {
+                          void navigator.clipboard
+                            .writeText(item.src)
+                            .then(() =>
+                              pushToast("success", "Đã sao chép đường dẫn ảnh."),
+                            )
+                            .catch(() =>
+                              setNotice(
+                                "Không sao chép được. Trình duyệt đã chặn clipboard.",
+                              ),
+                            );
+                        }}
                       >
-                        Lưu mô tả
+                        Sao chép đường dẫn
                       </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => {
-                      void navigator.clipboard
-                        .writeText(item.src)
-                        .then(() =>
-                          pushToast("success", "Đã sao chép đường dẫn ảnh."),
-                        )
-                        .catch(() =>
-                          setNotice(
-                            "Không sao chép được. Trình duyệt đã chặn clipboard.",
-                          ),
-                        );
-                    }}
-                  >
-                    Sao chép đường dẫn
-                  </button>
-                  <button
-                    disabled={item.original}
-                    onClick={() => {
-                      void (async () => {
-                        const ok = await requestConfirm({
-                          title: "Xóa ảnh khỏi thư viện?",
-                          body: `Xóa "${item.alt || item.src}". Chỉ xóa được ảnh chưa dùng ở tour/bài viết.`,
-                          confirmLabel: "Xóa ảnh",
-                          danger: true,
-                        });
-                        if (!ok) return;
-                        void run(async () => {
-                          await api("media", {
-                            method: "DELETE",
-                            body: JSON.stringify({ id: item.id }),
-                          });
-                          await load();
-                          pushToast("success", "Đã xóa ảnh khỏi thư viện.");
-                        });
-                      })();
-                    }}
-                  >
-                    Xóa ảnh
-                  </button>
+                      {item.original ? (
+                        <span
+                          className="adm-media-locked"
+                          title="Ảnh gốc được giữ để bảo toàn dữ liệu"
+                        >
+                          Ảnh gốc được giữ
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="adm-media-delete"
+                          onClick={() => {
+                            void (async () => {
+                              const ok = await requestConfirm({
+                                title: "Xóa ảnh khỏi thư viện?",
+                                body: `Xóa "${item.alt || item.src}". Chỉ xóa được ảnh chưa dùng ở tour/bài viết.`,
+                                confirmLabel: "Xóa ảnh",
+                                danger: true,
+                              });
+                              if (!ok) return;
+                              void run(async () => {
+                                await api("media", {
+                                  method: "DELETE",
+                                  body: JSON.stringify({ id: item.id }),
+                                });
+                                await load();
+                                pushToast(
+                                  "success",
+                                  "Đã xóa ảnh khỏi thư viện.",
+                                );
+                              });
+                            })();
+                          }}
+                        >
+                          Xóa ảnh
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </article>
               ))}
             </div>
-            {!media.length && (
-              <p className="adm-empty">
+
+            {!media.length ? (
+              <p className="adm-media-empty">
                 Thêm ảnh mới để kể câu chuyện của bạn. 28 ảnh gốc vẫn được giữ
                 trong thư viện tour.
               </p>
-            )}
+            ) : filteredMedia.length === 0 ? (
+              <p className="adm-media-empty">
+                Không tìm thấy ảnh phù hợp. Thử từ khóa khác.
+              </p>
+            ) : null}
           </section>
         ) : tab === "home" ? (
           <>
@@ -3553,7 +3699,12 @@ export function Dashboard({
                   visibleRows.map((row) => (
                     <article key={row.id}>
                       <div className="adm-record-mark">
-                        {tabs.find((t) => t[0] === tab)?.[2]}
+                        {(() => {
+                          const icon = tabs.find((t) => t[0] === tab)?.[2];
+                          return icon ? (
+                            <AdminIcon name={icon as AdminIconName} size={25} />
+                          ) : null;
+                        })()}
                       </div>
                       <div className="adm-record-copy">
                         <span className={`adm-badge ${row.state}`}>
