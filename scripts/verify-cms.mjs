@@ -961,6 +961,19 @@ try {
   for (const width of [360, 390, 768]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`${base}/admin`);
+    if (width <= 760) {
+      const menu = page.getByRole("button", { name: "Mở menu quản trị" });
+      await menu.waitFor();
+      check(`admin ${width}px shows the drawer trigger`, await menu.isVisible());
+      await menu.click();
+      await page
+        .getByRole("button", { name: "Đóng menu quản trị" })
+        .waitFor();
+      check(
+        `admin ${width}px opens the navigation drawer`,
+        (await menu.getAttribute("aria-expanded")) === "true",
+      );
+    }
     await page.getByRole("navigation", { name: "Quản trị" })
       .getByRole("button", { name: /Tour du lịch/ }).click();
     await page.getByRole("button", { name: /Chỉnh sửa/ }).first().waitFor();
