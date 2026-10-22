@@ -3,7 +3,9 @@ import { PhoneIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { getMessages } from "@/i18n/server";
 import type { Locale } from "@/i18n/config";
+import { getDestinationSearchIndex } from "@/lib/data/destination-search";
 import { DesktopNav } from "./desktop-nav";
+import { HeaderSearch } from "./header-search";
 import { HeaderShell } from "./header-shell";
 import { LocaleSwitcher } from "./locale-switcher";
 import { LogoLink } from "./logo";
@@ -25,7 +27,7 @@ export function HeaderContainer({
   return (
     <div
       className={cn(
-        "mx-auto w-full max-w-[88rem] px-5 sm:px-7 lg:px-10",
+        "stt-header-container mx-auto w-full max-w-[88rem] px-5 sm:px-7 lg:px-10",
         className,
       )}
     >
@@ -45,17 +47,24 @@ export function HeaderContainer({
 export function SiteHeader({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
   const navLabels = { nav: m.nav, header: m.header, allOf: m.common.allOf };
+  const searchItems = getDestinationSearchIndex(locale, m.regions);
   return (
     <HeaderShell>
       <div className="stt-header-brandline brand-gradient h-px w-full" aria-hidden="true" />
 
       <HeaderContainer>
         <div className="flex h-16 items-center justify-between gap-4 transition-[height] duration-300 ease-out sm:h-18 sm:gap-6 sm:group-data-[condensed=true]:h-16 xl:gap-4">
-          <LogoLink locale={locale} priority />
+          <LogoLink locale={locale} priority className="stt-header-logo" />
 
           <DesktopNav locale={locale} labels={navLabels} />
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="stt-header-actions flex shrink-0 items-center gap-2">
+            <HeaderSearch
+              locale={locale}
+              items={searchItems}
+              labels={m.header.search}
+            />
+
             <a
               href={siteConfig.contact.hotlineHref}
               className="stt-header-hotline hidden shrink-0 items-center gap-2 rounded-full py-2 pl-2.5 pr-3 transition-colors hover:bg-primary-soft 2xl:inline-flex"

@@ -1,4 +1,3 @@
-import { REGION_LABELS, type Region } from "@/domain/common";
 import { requireSession } from "@/server/cms/auth";
 import { list } from "@/server/cms/store";
 import { handle, reply } from "@/server/cms/http";
@@ -31,31 +30,34 @@ export async function GET(request: Request) {
 
     return reply(
       Object.fromEntries(
-        (["categories", "destinations", "tours"] as const).map((kind) => [
-          kind,
-          list(kind)
-            .filter((row) => row.state !== "deleted")
-            .map((row) => {
-              if (kind === "tours")
-                return {
-                  value: String(row.data.slug),
-                  label: String(row.data.title ?? row.data.slug ?? row.id),
-                };
-              if (kind === "destinations") {
-                const region = String(row.data.region ?? "") as Region;
+        (["categories", "destinations", "tours", "articles"] as const).map(
+          (kind) => [
+            kind,
+            list(kind)
+              .filter((row) => row.state !== "deleted")
+              .map((row) => {
+                if (kind === "tours" || kind === "articles")
+                  return {
+                    value: String(row.data.slug),
+                    label: String(
+                      row.data.title ??
+                        row.data.name ??
+                        row.data.slug ??
+                        row.id,
+                    ),
+                  };
+                if (kind === "destinations")
+                  return {
+                    value: row.id,
+                    label: String(row.data.name ?? row.id),
+                  };
                 return {
                   value: row.id,
-                  label: `${String(row.data.name ?? row.id)}${
-                    REGION_LABELS[region] ? ` · ${REGION_LABELS[region]}` : ""
-                  }`,
+                  label: categoryLabel(row.id),
                 };
-              }
-              return {
-                value: row.id,
-                label: categoryLabel(row.id),
-              };
-            }),
-        ]),
+              }),
+          ],
+        ),
       ),
     );
   });

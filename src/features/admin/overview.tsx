@@ -302,7 +302,7 @@ export function Overview({ csrf }: { csrf: string }) {
               .finally(() => setLoading(false));
           }}
         >
-          {loading ? "Đang tải…" : "↻ Làm mới"}
+          {loading ? "Đang tải…" : "Làm mới"}
         </button>
       </div>
 
@@ -310,25 +310,25 @@ export function Overview({ csrf }: { csrf: string }) {
 
       <div className="adm-kpis">
         <div className="adm-kpi">
-          <span>👁 Lượt xem hôm nay</span>
+          <span>Lượt xem hôm nay</span>
           <strong>{loading && !stats ? "—" : fmt.format(stats?.today.views ?? 0)}</strong>
           <Sparkline values={trend.map((t) => t.views)} stroke="#e0005a" />
           <small>Tổng {days} ngày: {fmt.format(stats?.totals.views ?? 0)}</small>
         </div>
         <div className="adm-kpi">
-          <span>🧭 Người vào web hôm nay</span>
+          <span>Người vào web hôm nay</span>
           <strong>{loading && !stats ? "—" : fmt.format(stats?.today.visitors ?? 0)}</strong>
           <Sparkline values={trend.map((t) => t.visitors)} stroke="#0e7a5f" />
           <small>Tổng khách: {fmt.format(stats?.totals.visitors ?? 0)}</small>
         </div>
         <div className="adm-kpi">
-          <span>✉ Leads hôm nay</span>
+          <span>Leads hôm nay</span>
           <strong>{loading && !stats ? "—" : fmt.format(stats?.today.leads ?? 0)}</strong>
           <StatusStack byStatus={byStatus} />
           <small>Tổng: {fmt.format(stats?.totals.leads ?? 0)} · Chốt: {fmt.format(byStatus.won ?? 0)}</small>
         </div>
         <div className="adm-kpi">
-          <span>🏆 Tỉ lệ chốt</span>
+          <span>Tỉ lệ chốt</span>
           <strong>{`${stats?.totals.conversion ?? 0}%`}</strong>
           <div className="adm-gauge" role="img" aria-label={`Tỉ lệ chốt ${stats?.totals.conversion ?? 0} phần trăm`}>
             <span style={{ width: `${Math.min(100, (stats?.totals.conversion ?? 0) * 10)}%` }} />
@@ -339,7 +339,7 @@ export function Overview({ csrf }: { csrf: string }) {
 
       <div className="adm-grid-2">
         <section className="adm-panel">
-          <h2>📈 Xu hướng truy cập</h2>
+          <h2>Xu hướng truy cập</h2>
           <p>Số lượt xem và người vào web mỗi ngày (giờ Việt Nam).</p>
           {stats ? <AreaChart data={stats.trend} /> : <p className="adm-empty">Đang tải…</p>}
           {stats && (
@@ -351,7 +351,7 @@ export function Overview({ csrf }: { csrf: string }) {
           )}
         </section>
         <section className="adm-panel">
-          <h2>🔻 Phễu chuyển đổi</h2>
+          <h2>Phễu chuyển đổi</h2>
           <p>Từ lượt xem đến chốt đơn trong {days} ngày.</p>
           {stats ? (
             <FunnelDiagram
@@ -368,12 +368,12 @@ export function Overview({ csrf }: { csrf: string }) {
 
       <div className="adm-grid-2">
         <section className="adm-panel">
-          <h2>🏅 Trang được xem nhiều</h2>
+          <h2>Trang được xem nhiều</h2>
           <p>Top đường dẫn trong {days} ngày.</p>
           {stats ? <RankedPages data={stats.topPages} /> : <p className="adm-empty">Đang tải…</p>}
         </section>
         <section className="adm-panel">
-          <h2>🆕 Yêu cầu mới nhất</h2>
+          <h2>Yêu cầu mới nhất</h2>
           <p>6 yêu cầu gần đây theo thời gian.</p>
           {stats?.recentLeads?.length ? (
             <ol className="adm-timeline">
@@ -391,12 +391,12 @@ export function Overview({ csrf }: { csrf: string }) {
 
       <div className="adm-grid-3">
         <section className="adm-panel">
-          <h2>🌐 Kênh đến</h2>
+          <h2>Kênh đến</h2>
           <p>Khách biết tới web từ đâu.</p>
           {stats ? <Donut data={stats.sources} labelOf={(n) => SOURCE_VI[n] ?? n} /> : <p className="adm-empty">Đang tải…</p>}
         </section>
         <section className="adm-panel">
-          <h2>📱 Thiết bị</h2>
+          <h2>Thiết bị</h2>
           <p>Tỉ lệ điện thoại / máy tính.</p>
           {stats ? (
             <Donut
@@ -408,7 +408,7 @@ export function Overview({ csrf }: { csrf: string }) {
           ) : <p className="adm-empty">Đang tải…</p>}
         </section>
         <section className="adm-panel">
-          <h2>🌍 Ngôn ngữ</h2>
+          <h2>Ngôn ngữ</h2>
           <p>Tỉ lệ khách Việt / Anh.</p>
           {stats ? <Donut data={stats.locales} labelOf={(n) => LOCALE_VI[n] ?? n} /> : <p className="adm-empty">Đang tải…</p>}
         </section>
@@ -416,12 +416,12 @@ export function Overview({ csrf }: { csrf: string }) {
 
       <div className="adm-grid-2">
         <section className="adm-panel">
-          <h2>💼 Pipeline chăm sóc</h2>
+          <h2>Pipeline chăm sóc</h2>
           <p>Số yêu cầu theo từng trạng thái (500 yêu cầu gần nhất).</p>
           {stats ? <Bars data={["new", "contacted", "qualified", "won", "lost"].map((k) => ({ name: STATUS_VI[k], value: byStatus[k] ?? 0 }))} /> : <p className="adm-empty">Đang tải…</p>}
         </section>
         <section className="adm-panel">
-          <h2>💰 Kinh doanh</h2>
+          <h2>Kinh doanh</h2>
           <ul className="adm-funnel">
             {Object.entries(byStatus).map(([k, v]) => (
               <li key={k}><span><i className="adm-dot" style={{ background: STATUS_COLORS[k] ?? "#98a2b3" }} />{STATUS_VI[k] ?? k}</span><strong>{fmt.format(v)}</strong></li>

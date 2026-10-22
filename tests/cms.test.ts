@@ -19,6 +19,7 @@ import {
 import type { TravelArticle } from "../src/domain/article";
 import { defaultSettings } from "../src/server/cms/settings";
 import { MAX_HOME_DESTINATIONS } from "../src/domain/destination";
+import { getFeaturedTours } from "../src/lib/data/tours";
 test("default CMS social links preserve the hotline-derived Zalo contact", () => {
   assert.ok(
     defaultSettings.socialLinks.some((link) =>
@@ -557,6 +558,211 @@ test("stale tour rows inherit photo sources from the content files", () => {
   assert.equal(images[0].alt, "Ruộng bậc thang Sa Pa");
   // Idempotent: a second boot must not touch the repaired row.
   assert.equal(fillTourImageSources(), 0);
+});
+
+test("destination CRUD round-trips draft, publish, unpublish, delete and restore", () => {
+  const seed = list("destinations")[0];
+  const draft = {
+    ...seed.data,
+    id: "dest_crud_check",
+    slug: "diem-crud-check",
+    name: "Điểm CRUD",
+    summary: "Bản ghi dùng cho kiểm thử CRUD.",
+    order: 99,
+    showOnHome: false,
+    homeOrder: 0,
+  };
+  const created = save("destinations", draft, 0, "save");
+  assert.equal(created.revision, 1);
+  assert.ok(
+    !published<{ id: string }>("destinations", []).some(
+      (row) => row.id === "dest_crud_check",
+    ),
+  );
+
+  const updated = save(
+    "destinations",
+    { ...draft, name: "Điểm CRUD đã sửa" },
+    created.revision,
+    "publish",
+  );
+  const live = published<{ id: string; name: string }>("destinations", []);
+  assert.equal(
+    live.find((row) => row.id === "dest_crud_check")?.name,
+    "Điểm CRUD đã sửa",
+  );
+
+  const hidden = save(
+    "destinations",
+    { ...draft, name: "Điểm CRUD đã sửa" },
+    updated.revision,
+    "unpublish",
+  );
+  assert.ok(
+    !published<{ id: string }>("destinations", []).some(
+      (row) => row.id === "dest_crud_check",
+    ),
+  );
+  assert.equal(
+    list("destinations").find((row) => row.id === "dest_crud_check")?.state,
+    "draft",
+  );
+
+  const trashed = save(
+    "destinations",
+    { ...draft, name: "Điểm CRUD đã sửa" },
+    hidden.revision,
+    "delete",
+  );
+  assert.equal(
+    list("destinations").find((row) => row.id === "dest_crud_check")?.state,
+    "deleted",
+  );
+
+  save(
+    "destinations",
+    { ...draft, name: "Điểm CRUD đã sửa" },
+    trashed.revision,
+    "restore",
+  );
+  assert.equal(
+    list("destinations").find((row) => row.id === "dest_crud_check")?.state,
+    "draft",
+  );
+});
+
+test("category CRUD keeps its path stable and can be restored", () => {
+  const seed = list("categories")[0];
+  const draft = {
+    ...seed.data,
+    id: "cat_crud_check",
+    slug: "danh-muc-crud-check",
+    path: "/danh-muc/danh-muc-crud-check",
+    name: "Danh mục CRUD",
+    parentId: null,
+    order: 99,
+  };
+  const created = save("categories", draft, 0, "save");
+  assert.equal(created.revision, 1);
+  const renamed = save(
+    "categories",
+    { ...draft, name: "Danh mục CRUD đã sửa" },
+    created.revision,
+    "publish",
+  );
+  assert.equal(
+    published<{ id: string; name: string }>("categories", []).find(
+      (row) => row.id === "cat_crud_check",
+    )?.name,
+    "Danh mục CRUD đã sửa",
+  );
+  const trashed = save(
+    "categories",
+    { ...draft, name: "Danh mục CRUD đã sửa" },
+    renamed.revision,
+    "delete",
+  );
+  assert.equal(
+    list("categories").find((row) => row.id === "cat_crud_check")?.state,
+    "deleted",
+  );
+  save(
+    "categories",
+    { ...draft, name: "Danh mục CRUD đã sửa" },
+    trashed.revision,
+    "restore",
+  );
+  assert.equal(
+    list("categories").find((row) => row.id === "cat_crud_check")?.state,
+    "draft",
+  );
+});
+
+test("article CRUD publishes, hides and restores without losing the display date", () => {
+  const seed = list("articles")[0];
+  const draft = {
+    ...seed.data,
+    id: "art_crud_check",
+    slug: "bai-viet-crud-check",
+    title: "Bài viết CRUD",
+    publishedAt: "2026-01-02",
+  };
+  const created = save("articles", draft, 0, "save");
+  const live = save(
+    "articles",
+    { ...draft, title: "Bài viết CRUD đã sửa" },
+    created.revision,
+    "publish",
+  );
+  assert.equal(
+    published<{ id: string; title: string }>("articles", []).find(
+      (row) => row.id === "art_crud_check",
+    )?.title,
+    "Bài viết CRUD đã sửa",
+  );
+  const hidden = save(
+    "articles",
+    { ...draft, title: "Bài viết CRUD đã sửa" },
+    live.revision,
+    "unpublish",
+  );
+  assert.ok(
+    !published<{ id: string }>("articles", []).some(
+      (row) => row.id === "art_crud_check",
+    ),
+  );
+  const trashed = save(
+    "articles",
+    { ...draft, title: "Bài viết CRUD đã sửa" },
+    hidden.revision,
+    "delete",
+  );
+  assert.equal(
+    list("articles").find((row) => row.id === "art_crud_check")?.state,
+    "deleted",
+  );
+  save(
+    "articles",
+    { ...draft, title: "Bài viết CRUD đã sửa" },
+    trashed.revision,
+    "restore",
+  );
+  const restored = list("articles").find((row) => row.id === "art_crud_check")!;
+  assert.equal(restored.state, "draft");
+  assert.equal(restored.data.publishedAt, "2026-01-02");
+});
+
+test("home featured tours follow the pinned order and stop at the selection", () => {
+  const landing = list("landing")[0];
+  const automatic = getFeaturedTours(6, "vi").map((tour) => tour.slug);
+  assert.ok(automatic.length >= 2);
+  const pinned = [automatic[1], automatic[0]];
+  save(
+    "landing",
+    { ...landing.data, featured: { tourIds: pinned } },
+    landing.revision,
+    "publish",
+  );
+  const selected = getFeaturedTours(6, "vi");
+  assert.deepEqual(
+    selected.map((tour) => tour.slug),
+    pinned,
+  );
+  // An unknown key is ignored; a slug and an id both resolve.
+  save(
+    "landing",
+    {
+      ...landing.data,
+      featured: { tourIds: [automatic[0], "missing-tour", pinned[0]] },
+    },
+    landing.revision + 1,
+    "publish",
+  );
+  assert.deepEqual(
+    getFeaturedTours(6, "vi").map((tour) => tour.slug),
+    [automatic[0], pinned[0]],
+  );
+  save("landing", landing.data, landing.revision + 2, "publish");
 });
 
 test("trash auto-deletes rows older than the retention window", () => {

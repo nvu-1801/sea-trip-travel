@@ -55,7 +55,7 @@ export function HeaderShell({ children }: { children: ReactNode }) {
         home ? "fixed inset-x-0" : "sticky",
         "transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out",
         solid
-          ? "border-border bg-surface/95 backdrop-blur-md shadow-[0_8px_28px_-18px_rgba(122,0,49,0.4)]"
+          ? "border-border bg-surface/95 backdrop-blur-md shadow-[0_8px_28px_-18px_rgba(60,38,28,0.35)]"
           : "border-transparent bg-transparent",
         hidden ? "-translate-y-full" : "translate-y-0",
       )}

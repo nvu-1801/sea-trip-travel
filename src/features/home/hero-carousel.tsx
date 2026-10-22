@@ -152,10 +152,7 @@ export function HeroCarousel({
         ))}
         <div className="stt-cinema-shade" aria-hidden="true" />
         <div className="stt-cinema-copy" key={active.id}>
-          <p className="stt-cinema-eyebrow">
-            <span />
-            {copy.badge}
-          </p>
+          <p className="stt-cinema-eyebrow">{copy.badge}</p>
           <h1>
             {title}
             <span>{copy.titleLine2}</span>

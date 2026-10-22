@@ -7,6 +7,7 @@ import { resolveLocaleFromParams } from "@/i18n/params";
 import { Container } from "@/components/ui/layout";
 import { searchKey as normalized } from "@/lib/search";
 import { TimeSelect, type TimeOption } from "@/features/home/time-select";
+import { getMessages } from "@/i18n/server";
 export async function generateMetadata({
   params,
 }: PageProps<"/[locale]/tim-tour">): Promise<Metadata> {
@@ -25,18 +26,34 @@ export default async function SearchPage({
     query = await searchParams;
   const q = String(query.q ?? "").slice(0, 100),
     days = String(query.days ?? ""),
-    budget = String(query.budget ?? "");
-  // Resolve once: destination names are part of the tour search haystack.
+    budget = String(query.budget ?? ""),
+    destinationParam = String(query.destination ?? "").slice(0, 80);
+  const m = getMessages(locale);
+  // Resolve once: destination names are part of the tour search haystack and
+  // the header search passes a stable destination id.
   const destinationNames = new Map(
     getDestinations(locale).map((destination) => [
       destination.id,
       destination.name,
     ]),
   );
+  const activeDestination = destinationParam
+    ? destinationNames.get(destinationParam)
+    : undefined;
+  const destinationFilter = activeDestination ? destinationParam : "";
+  const clearDestinationParams = new URLSearchParams();
+  if (q) clearDestinationParams.set("q", q);
+  if (days) clearDestinationParams.set("days", days);
+  if (budget) clearDestinationParams.set("budget", budget);
+  const clearDestinationHref = `${locale === "en" ? "/en/tim-tour" : "/tim-tour"}${
+    clearDestinationParams.size ? `?${clearDestinationParams.toString()}` : ""
+  }`;
   const found = getTourSlugs()
     .map((slug) => getTourBySlug(slug, locale)!)
     .filter(
       (tour) =>
+        (!destinationFilter ||
+          tour.destinationIds.includes(destinationFilter)) &&
         normalized(
           [
             tour.title,
@@ -103,6 +120,20 @@ export default async function SearchPage({
         <h1 className="text-display-lg font-display mt-3 mb-7">
           {en ? "Find your next journey" : "Một hành trình dành cho bạn"}
         </h1>
+        {activeDestination ? (
+          <p className="mb-5 inline-flex flex-wrap items-center gap-2 rounded-full border border-border-strong bg-primary-soft px-4 py-2 text-sm text-foreground">
+            <span className="font-semibold text-primary-strong">
+              {m.header.search.filterLabel}:
+            </span>
+            <strong>{activeDestination}</strong>
+            <a
+              href={clearDestinationHref}
+              className="font-semibold text-primary-strong underline underline-offset-4"
+            >
+              {m.header.search.clearDestination}
+            </a>
+          </p>
+        ) : null}
         <form className="stt-search-form" method="get">
           <label>
             {en ? "Destination or tour" : "Điểm đến hoặc tên tour"}
@@ -136,7 +167,7 @@ export default async function SearchPage({
             {en ? "Find a journey →" : "Tìm hành trình →"}
           </button>
         </form>
-        <div className="my-8 flex justify-between gap-4">
+        <div className="my-8 flex flex-wrap justify-between gap-4">
           <p role="status">
             {found.length} {en ? "journeys for you" : "hành trình phù hợp"}
           </p>

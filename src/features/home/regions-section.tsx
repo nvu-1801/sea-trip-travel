@@ -6,6 +6,7 @@ import {
   getCategoryTourCount,
 } from "@/lib/data/categories";
 import { Container, Section } from "@/components/ui/layout";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { AssetImage } from "@/components/ui/asset-image";
 import { Reveal } from "@/components/ui/reveal";
 import type { Locale } from "@/i18n/config";
@@ -47,7 +48,7 @@ export function RegionsSection({ locale }: { locale: Locale }) {
       <Container>
         <div className="regions-editorial">
           <Reveal className="regions-heading">
-            <p className="journal-eyebrow">{copy.eyebrow}</p>
+            <SectionEyebrow className="journal-eyebrow">{copy.eyebrow}</SectionEyebrow>
             <h2>
               {copy.titleA}
               <br />

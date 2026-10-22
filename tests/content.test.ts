@@ -21,6 +21,7 @@ import {
   getHomeExploreDestinations,
   homeDestinationHref,
 } from "@/lib/data/destinations";
+import { getDestinationSearchIndex } from "@/lib/data/destination-search";
 import { formatDuration, formatPriceFrom, formatMoney, hasPublishedPrice } from "@/lib/format";
 import { ROUTES, primaryNav } from "@/config/navigation";
 import { getMessages } from "@/i18n/messages";
@@ -265,6 +266,26 @@ describe("destination and article repository", () => {
     assert.equal(
       homeDestinationHref({ name: "Kỳ Co – Eo Gió" }, "en"),
       "/en/tim-tour?q=K%E1%BB%B3%20Co",
+    );
+  });
+
+  it("builds a header search index with only bookable destinations", () => {
+    const index = getDestinationSearchIndex(VI);
+    assert.ok(index.length > 0);
+    assert.ok(index.every((item) => item.tourCount > 0));
+    const used = new Set(tours.flatMap((tour) => tour.destinationIds));
+    assert.ok(index.every((item) => used.has(item.id)));
+
+    const kyCo = index.find((item) => item.id === "dest_ky_co_eo_gio");
+    assert.ok(kyCo);
+    assert.equal(kyCo.href, "/tim-tour?destination=dest_ky_co_eo_gio");
+    assert.ok(kyCo.searchText.includes("ky co"));
+
+    const english = getDestinationSearchIndex("en");
+    assert.ok(
+      english.every((item) =>
+        item.href.startsWith("/en/tim-tour?destination="),
+      ),
     );
   });
 

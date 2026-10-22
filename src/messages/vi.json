@@ -87,7 +87,25 @@
     "primaryNavMobileAria": "Điều hướng chính (di động)",
     "menuLabel": "Menu",
     "openMenu": "Mở menu",
-    "closeMenu": "Đóng menu"
+    "closeMenu": "Đóng menu",
+    "search": {
+      "open": "Tìm điểm đến",
+      "title": "Bạn muốn đi đâu?",
+      "placeholder": "Quy Nhơn, Kỳ Co, Phú Yên…",
+      "popular": "Điểm đến đang có tour",
+      "results": "{count} điểm đến phù hợp",
+      "noResults": "Không tìm thấy điểm đến phù hợp",
+      "viewAll": "Xem tất cả tour",
+      "emptyTitle": "“{q}” chưa có trong những hành trình đang mở.",
+      "emptyBody": "Nhưng một chuyến đi đẹp có thể bắt đầu từ đúng câu hỏi này — để lại số điện thoại, SEA TRIP sẽ thiết kế riêng cho bạn.",
+      "consult": "Nhận tư vấn riêng",
+      "tryPopular": "Xem các điểm đang có tour",
+      "close": "Đóng tìm kiếm",
+      "shortcut": "Nhấn / để tìm nhanh",
+      "clear": "Xóa từ khóa",
+      "filterLabel": "Đang lọc theo điểm đến",
+      "clearDestination": "Bỏ lọc điểm đến"
+    }
   },
   "footer": {
     "categoriesTitle": "Danh mục tour",
@@ -114,7 +132,7 @@
   },
   "home": {
     "hero": {
-      "badge": "Du lịch trong nước · Chọn lọc",
+      "badge": "Du lịch trong nước — Chọn lọc",
       "titleLine1": "Chọn lọc điểm đến",
       "titleLine2": "nâng tầm trải nghiệm",
       "lead": "Đi đúng mùa, ở đúng nơi và đi với nhịp độ của riêng bạn.",

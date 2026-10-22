@@ -87,7 +87,25 @@
     "primaryNavMobileAria": "Primary navigation (mobile)",
     "menuLabel": "Menu",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "search": {
+      "open": "Find a destination",
+      "title": "Where would you like to go?",
+      "placeholder": "Quy Nhon, Ky Co, Phu Yen…",
+      "popular": "Destinations with tours",
+      "results": "{count} matching destinations",
+      "noResults": "No matching destinations",
+      "viewAll": "View all tours",
+      "emptyTitle": "“{q}” isn’t in our current itineraries yet.",
+      "emptyBody": "But a beautiful trip can start with exactly this question — leave your number and SEA TRIP will design something just for you.",
+      "consult": "Plan a private trip",
+      "tryPopular": "See destinations with tours",
+      "close": "Close search",
+      "shortcut": "Press / to search quickly",
+      "clear": "Clear search",
+      "filterLabel": "Filtering by destination",
+      "clearDestination": "Clear destination filter"
+    }
   },
   "footer": {
     "categoriesTitle": "Tour categories",
@@ -114,7 +132,7 @@
   },
   "home": {
     "hero": {
-      "badge": "Vietnam travel · Curated",
+      "badge": "Vietnam travel — Curated",
       "titleLine1": "Curated destinations",
       "titleLine2": "elevated experiences",
       "lead": "Right season, right place, and a pace that is entirely your own.",

@@ -4,6 +4,7 @@ import {
   homeDestinationHref,
 } from "@/lib/data/destinations";
 import { Container, Section } from "@/components/ui/layout";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { Reveal } from "@/components/ui/reveal";
 import { AssetImage } from "@/components/ui/asset-image";
 import type { Locale } from "@/i18n/config";
@@ -43,7 +44,7 @@ export function ExploreSection({ locale }: { locale: Locale }) {
       <Container>
         <Reveal className="journal-heading">
           <div>
-            <p className="journal-eyebrow">{copy.eyebrow}</p>
+            <SectionEyebrow className="journal-eyebrow">{copy.eyebrow}</SectionEyebrow>
             <h2>
               {copy.titleA}
               <br />
