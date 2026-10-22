@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
@@ -23,6 +23,13 @@ import {
 } from "./notify";
 import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
 import { mediaSelectOptions } from "@/lib/admin-media-options";
+import { searchKey } from "@/lib/search";
+import {
+  ADMIN_SEARCH_GROUP_LABELS,
+  rankAdminSearch,
+  type AdminSearchItem,
+  type AdminSearchKind,
+} from "@/lib/admin-search";
 import {
   TRASH_RETENTION_DAYS,
   articleCoverSrcOf,
@@ -57,6 +64,37 @@ type Lead = {
   created_at: string;
   data: Record<string, string>;
 };
+
+/** One row in the header quick-search palette. */
+type QuickEntry = {
+  key: string;
+  kind: "nav" | AdminSearchKind;
+  tab: string;
+  id?: string;
+  slug?: string;
+  title: string;
+  subtitle: string;
+  status?: string;
+};
+
+function QuickSearchIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.6-3.6" />
+    </svg>
+  );
+}
 const tabs = [
   ["overview", "Tổng quan", "◉"],
   ["home", "Trang chủ", "⌂"],
@@ -343,10 +381,25 @@ export function Dashboard({
   >(null);
   const loadSerial = useRef(0);
   const activitySerial = useRef(0);
+  /** Record to open after switching tabs from the quick-search palette. */
+  const pendingOpen = useRef<{
+    tab: string;
+    id: string;
+    slug?: string;
+  } | null>(null);
   const dirtyFields = useRef(new Set<string>());
   const tourEditorRef = useRef<TourEditorHandle>(null);
   const destinationEditorRef = useRef<DestinationEditorHandle>(null);
   const helpButtonRef = useRef<HTMLButtonElement>(null);
+  const quickButtonRef = useRef<HTMLButtonElement>(null);
+  const quickInputRef = useRef<HTMLInputElement>(null);
+  const quickDialogRef = useRef<HTMLDivElement>(null);
+  const quickFetchedAt = useRef(0);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickQuery, setQuickQuery] = useState("");
+  const [quickItems, setQuickItems] = useState<AdminSearchItem[] | null>(null);
+  const [quickLoading, setQuickLoading] = useState(false);
+  const [quickActive, setQuickActive] = useState(0);
   const [leads, setLeads] = useState<Lead[]>([]),
     [media, setMedia] = useState<
       {
@@ -401,6 +454,45 @@ export function Dashboard({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [homeModal]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === "k"
+      ) {
+        event.preventDefault();
+        if (quickOpen) {
+          setQuickOpen(false);
+          setQuickQuery("");
+          setQuickActive(0);
+        } else {
+          void openQuickSearch();
+        }
+        return;
+      }
+      if (event.key === "Escape" && quickOpen) {
+        event.preventDefault();
+        setQuickOpen(false);
+        setQuickQuery("");
+        setQuickActive(0);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  });
+  useEffect(() => {
+    if (!quickOpen) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const trigger = quickButtonRef.current;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    quickInputRef.current?.focus();
+    return () => {
+      document.body.style.overflow = overflow;
+      const target = previous && previous.isConnected ? previous : trigger;
+      target?.focus();
+    };
+  }, [quickOpen]);
   async function api(url: string, options: RequestInit = {}) {
     const response = await fetch(`/api/admin/${url}`, {
       ...options,
@@ -514,6 +606,20 @@ export function Dashboard({
       if (next === "leads") setLeads(result);
       else if (next === "media") setMedia(library);
       else if (next !== "account") setRows(result);
+      // Quick search: open the chosen record once its tab has loaded.
+      const pending = pendingOpen.current;
+      if (pending && pending.tab === next) {
+        pendingOpen.current = null;
+        const row = (result as RecordRow[]).find(
+          (item) =>
+            item.id === pending.id ||
+            String(item.data.slug ?? "") === pending.id ||
+            (pending.slug
+              ? String(item.data.slug ?? "") === pending.slug
+              : false),
+        );
+        if (row) setSelected(row);
+      }
       setQnpyIds(next === "tours" ? qnpyCategoryIds(categoryTree) : new Set());
       setTourLinks(
         next === "categories" || next === "destinations" ? links : [],
@@ -620,7 +726,10 @@ export function Dashboard({
       return null;
     });
   }
-  async function switchTab(next: string) {
+  async function switchTab(
+    next: string,
+    open?: { id: string; slug?: string },
+  ) {
     if (
       dirty &&
       !(await requestConfirm({
@@ -632,6 +741,7 @@ export function Dashboard({
     )
       return;
     loadSerial.current++;
+    pendingOpen.current = open ? { tab: next, ...open } : null;
     setSelected(null);
     setHomeModal(null);
     setDirty(false);
@@ -646,6 +756,55 @@ export function Dashboard({
     setHomePreview(null);
     setTab(next);
     setNotice("");
+  }
+  function closeQuickSearch() {
+    setQuickOpen(false);
+    setQuickQuery("");
+    setQuickActive(0);
+  }
+  async function openQuickSearch() {
+    setQuickOpen(true);
+    setQuickQuery("");
+    setQuickActive(0);
+    if (quickItems && Date.now() - quickFetchedAt.current < 30_000) return;
+    setQuickLoading(true);
+    try {
+      const payload = (await api("search-index")) as {
+        items?: AdminSearchItem[];
+      };
+      setQuickItems(Array.isArray(payload.items) ? payload.items : []);
+      quickFetchedAt.current = Date.now();
+    } catch (error) {
+      setQuickItems([]);
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Không tải được dữ liệu tìm kiếm.",
+      );
+    } finally {
+      setQuickLoading(false);
+    }
+  }
+  function chooseQuick(entry: QuickEntry) {
+    closeQuickSearch();
+    if (entry.kind === "nav") {
+      void switchTab(entry.tab);
+      return;
+    }
+    if (tab === entry.tab) {
+      const row = rows.find(
+        (item) =>
+          item.id === entry.id ||
+          (entry.slug
+            ? String(item.data.slug ?? "") === entry.slug
+            : false),
+      );
+      if (row) {
+        setSelected(row);
+        return;
+      }
+    }
+    void switchTab(entry.tab, { id: entry.id ?? "", slug: entry.slug });
   }
   async function save(action: string, collection: string = tab): Promise<boolean> {
     if (!selected) return false;
@@ -897,6 +1056,45 @@ export function Dashboard({
     return left !== null && left <= 7;
   }).length;
   const tabLabel = tabs.find((t) => t[0] === tab)?.[1] ?? tab;
+
+  /* --- Quick search palette --------------------------------------------- */
+  const quickNeedle = quickQuery.trim();
+  const quickNav: QuickEntry[] = tabs
+    .filter(([key, label]) => {
+      if (!quickNeedle) return true;
+      const needle = searchKey(quickNeedle).replace(/\s+/g, "");
+      return searchKey(`${label} ${key}`)
+        .replace(/\s+/g, "")
+        .includes(needle);
+    })
+    .map(([key, label]) => ({
+      key: `nav:${key}`,
+      kind: "nav" as const,
+      tab: key,
+      title: label,
+      subtitle: "Trang quản trị",
+    }))
+    .slice(0, quickNeedle ? 6 : tabs.length);
+  const quickGroups = rankAdminSearch(quickItems ?? [], quickNeedle);
+  const quickEntries: QuickEntry[] = [
+    ...quickNav,
+    ...quickGroups.flatMap((group) =>
+      group.items.map((item) => ({
+        key: `${item.kind}:${item.id}`,
+        kind: item.kind,
+        tab: item.kind,
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        subtitle: item.subtitle,
+        status: item.status,
+      })),
+    ),
+  ];
+  const quickCursor = Math.min(
+    quickActive,
+    Math.max(0, quickEntries.length - 1),
+  );
   function trashMetaOf(row: RecordRow) {
     const left = trashDaysLeft(row.updated_at);
     const deleteAtMs = trashDeleteAtMs(row.updated_at);
@@ -1572,6 +1770,20 @@ export function Dashboard({
             <p>Một nơi để chăm chút nội dung và những hành trình tiếp theo.</p>
           </div>
           <div className="adm-header-side">
+            <button
+              type="button"
+              ref={quickButtonRef}
+              className="adm-quick-open"
+              aria-haspopup="dialog"
+              aria-expanded={quickOpen}
+              aria-keyshortcuts="Control+K Meta+K"
+              aria-label="Tìm kiếm nhanh trong Studio"
+              onClick={() => void openQuickSearch()}
+            >
+              <QuickSearchIcon className="adm-quick-open-icon" />
+              <span className="adm-quick-open-text">Tìm nhanh…</span>
+              <kbd>Ctrl K</kbd>
+            </button>
             <button
               type="button"
               ref={helpButtonRef}
@@ -3505,6 +3717,212 @@ export function Dashboard({
           onCancel={() => settleConfirm(false)}
           onConfirm={() => settleConfirm(true)}
         />
+        {quickOpen ? (
+          <div
+            className="adm-palette-backdrop"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) closeQuickSearch();
+            }}
+          >
+            <div
+              ref={quickDialogRef}
+              className="adm-palette"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Tìm kiếm nhanh trong Studio"
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  setQuickActive((current) =>
+                    Math.min(current + 1, quickEntries.length - 1),
+                  );
+                  return;
+                }
+                if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setQuickActive((current) => Math.max(current - 1, 0));
+                  return;
+                }
+                if (event.key === "Enter") {
+                  if (event.target instanceof HTMLButtonElement) return;
+                  event.preventDefault();
+                  const entry = quickEntries[quickCursor];
+                  if (entry) chooseQuick(entry);
+                  return;
+                }
+                if (event.key === "Tab") {
+                  const focusables =
+                    quickDialogRef.current?.querySelectorAll<HTMLElement>(
+                      "button, input",
+                    );
+                  if (!focusables?.length) return;
+                  const first = focusables[0];
+                  const last = focusables[focusables.length - 1];
+                  if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                  } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                  }
+                }
+              }}
+            >
+              <div className="adm-palette-head">
+                <QuickSearchIcon className="adm-palette-icon" />
+                <input
+                  ref={quickInputRef}
+                  role="combobox"
+                  aria-expanded="true"
+                  aria-controls="adm-palette-list"
+                  aria-autocomplete="list"
+                  aria-label="Tìm nhanh trong Studio"
+                  aria-activedescendant={
+                    quickEntries[quickCursor]
+                      ? `adm-palette-option-${quickCursor}`
+                      : undefined
+                  }
+                  placeholder="Tìm tour, bài viết, điểm đến, danh mục hoặc trang…"
+                  value={quickQuery}
+                  onChange={(event) => {
+                    setQuickQuery(event.target.value);
+                    setQuickActive(0);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="adm-palette-close"
+                  aria-label="Đóng tìm kiếm nhanh"
+                  onClick={closeQuickSearch}
+                >
+                  Esc
+                </button>
+              </div>
+              <div
+                id="adm-palette-list"
+                role="listbox"
+                aria-label="Kết quả tìm kiếm nhanh"
+                className="adm-palette-list"
+              >
+                {quickLoading ? (
+                  <p className="adm-palette-note">Đang tải dữ liệu…</p>
+                ) : null}
+                {!quickLoading && quickNeedle && !quickEntries.length ? (
+                  <p className="adm-palette-note">
+                    Không tìm thấy “{quickNeedle}”. Thử tên khác hoặc gõ không
+                    dấu.
+                  </p>
+                ) : null}
+                {quickNav.length ? (
+                  <div
+                    className="adm-palette-group"
+                    role="group"
+                    aria-label="Trang quản trị"
+                  >
+                    <p className="adm-palette-group-label" aria-hidden="true">
+                      Trang quản trị
+                    </p>
+                    {quickNav.map((entry, index) => (
+                      <button
+                        key={entry.key}
+                        type="button"
+                        id={`adm-palette-option-${index}`}
+                        role="option"
+                        aria-selected={quickCursor === index}
+                        className="adm-palette-option"
+                        onMouseEnter={() => setQuickActive(index)}
+                        onClick={() => chooseQuick(entry)}
+                      >
+                        <span className="adm-palette-option-main">
+                          <span className="adm-palette-option-title">
+                            {entry.title}
+                          </span>
+                          <span className="adm-palette-option-sub">
+                            {entry.subtitle}
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {(() => {
+                  let offset = quickNav.length;
+                  return quickGroups.map((group) => {
+                    const start = offset;
+                    offset += group.items.length;
+                    return (
+                      <div
+                        key={group.kind}
+                        className="adm-palette-group"
+                        role="group"
+                        aria-label={ADMIN_SEARCH_GROUP_LABELS[group.kind]}
+                      >
+                        <p
+                          className="adm-palette-group-label"
+                          aria-hidden="true"
+                        >
+                          {ADMIN_SEARCH_GROUP_LABELS[group.kind]}
+                        </p>
+                        {group.items.map((item, index) => {
+                          const cursor = start + index;
+                          return (
+                            <button
+                              key={`${item.kind}:${item.id}`}
+                              type="button"
+                              id={`adm-palette-option-${cursor}`}
+                              role="option"
+                              aria-selected={quickCursor === cursor}
+                              className="adm-palette-option"
+                              onMouseEnter={() => setQuickActive(cursor)}
+                              onClick={() =>
+                                chooseQuick({
+                                  key: `${item.kind}:${item.id}`,
+                                  kind: item.kind,
+                                  tab: item.kind,
+                                  id: item.id,
+                                  slug: item.slug,
+                                  title: item.title,
+                                  subtitle: item.subtitle,
+                                  status: item.status,
+                                })
+                              }
+                            >
+                              <span className="adm-palette-option-main">
+                                <span className="adm-palette-option-title">
+                                  {item.title}
+                                </span>
+                                {item.subtitle ? (
+                                  <span className="adm-palette-option-sub">
+                                    {item.subtitle}
+                                  </span>
+                                ) : null}
+                              </span>
+                              {item.status && item.status !== "unknown" ? (
+                                <span
+                                  className="adm-palette-badge"
+                                  data-status={item.status}
+                                >
+                                  {item.status === "published"
+                                    ? "Đang xuất bản"
+                                    : "Bản nháp"}
+                                </span>
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+              <footer className="adm-palette-foot" aria-hidden="true">
+                <span>↑ ↓ chọn</span>
+                <span>↵ mở</span>
+                <span>Esc đóng</span>
+              </footer>
+            </div>
+          </div>
+        ) : null}
         <footer className="adm-footnote">
           SEA TRIP STUDIO · Nội dung tốt tạo nên những kết nối đẹp.
         </footer>

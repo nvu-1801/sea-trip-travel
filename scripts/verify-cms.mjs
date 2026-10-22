@@ -779,6 +779,45 @@ try {
   }
   await page.setViewportSize({ width: 390, height: 900 });
   await page.screenshot({ path: "verify-screenshots/studio-mobile.png" });
+
+  // Header quick search: shortcut, accent-free query, opens the matching form.
+  await page.getByRole("button", { name: "Tìm kiếm nhanh trong Studio" }).click();
+  const quick = page.getByRole("dialog", {
+    name: "Tìm kiếm nhanh trong Studio",
+  });
+  await quick.waitFor();
+  check("header quick search opens", await quick.isVisible());
+  check(
+    "quick search fits a 390px viewport",
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+  );
+  await quick.getByRole("combobox").fill("sapa");
+  await quick.getByRole("option", { name: /Sa Pa – Fansipan/ }).waitFor();
+  await page.keyboard.press("Enter");
+  await page.getByLabel(/^Tiêu đề/).first().waitFor();
+  check(
+    "quick search opens the matching tour form without diacritics",
+    (await page.getByLabel(/^Tiêu đề/).first().inputValue()).includes("Sa Pa"),
+  );
+
+  await page.keyboard.press("Control+k");
+  const quickAgain = page.getByRole("dialog", {
+    name: "Tìm kiếm nhanh trong Studio",
+  });
+  await quickAgain.getByRole("combobox").fill("thu vien anh");
+  await quickAgain.getByRole("option", { name: /Thư viện ảnh/ }).click();
+  await page
+    .getByRole("heading", { name: "Thư viện ảnh", exact: true })
+    .waitFor();
+  check("quick search switches admin tabs", true);
+  await page.keyboard.press("Control+k");
+  await quickAgain.waitFor();
+  await page.keyboard.press("Escape");
+  await quickAgain.waitFor({ state: "hidden" });
+  check("Escape closes quick search", true);
+
   await page.getByRole("button", { name: "Bảo mật", exact: false }).click();
   await page.getByLabel("Mật khẩu hiện tại").fill(password);
   await page.getByLabel("Mật khẩu mới").fill(password + "-new");
