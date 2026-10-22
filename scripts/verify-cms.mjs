@@ -87,9 +87,19 @@ try {
   await page.goto(`${base}/admin`);
   await page.getByLabel("Tên đăng nhập", { exact: true }).fill("qa-owner");
   await page.getByLabel("Mật khẩu", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Vào SEA TRIP Studio" }).click();
-  await page.getByRole("navigation", { name: "Quản trị" })
-    .getByRole("button", { name: /Tour du lịch/ }).click();
+  const signIn = page.getByRole("button", { name: "Vào SEA TRIP Studio" });
+  const adminNav = page.getByRole("navigation", { name: "Quản trị" });
+  await signIn.click();
+  // The form is client-rendered: a click that lands before hydration is a
+  // no-op. Retry once instead of failing the whole gate on that race.
+  try {
+    await adminNav.waitFor({ timeout: 12000 });
+  } catch (error) {
+    if (!(await signIn.isVisible().catch(() => false))) throw error;
+    await signIn.click();
+    await adminNav.waitFor({ timeout: 20000 });
+  }
+  await adminNav.getByRole("button", { name: /Tour du lịch/ }).click();
   await page
     .getByRole("heading", { name: "Tour du lịch", exact: true })
     .waitFor();
