@@ -56,6 +56,7 @@ export function Field({
   hint,
   error,
   required = false,
+  counter,
   children,
 }: {
   id?: string;
@@ -63,6 +64,7 @@ export function Field({
   hint?: string;
   error?: string;
   required?: boolean;
+  counter?: string;
   children: ReactNode;
 }) {
   return (
@@ -95,6 +97,9 @@ export function Field({
         </p>
       ) : hint ? (
         <small className="adm-hint">{hint}</small>
+      ) : null}
+      {counter ? (
+        <small className="adm-hint adm-counter">{counter}</small>
       ) : null}
     </div>
   );
@@ -144,7 +149,16 @@ export function TextField({
     placeholder,
   };
   return (
-    <Field id={id} label={label} hint={hint} error={error} required={required}>
+    <Field
+      id={id}
+      label={label}
+      hint={hint}
+      error={error}
+      required={required}
+      counter={
+        maxLength ? `${value.length}/${maxLength} ký tự` : undefined
+      }
+    >
       {multiline ? (
         <textarea
           {...common}
@@ -160,11 +174,6 @@ export function TextField({
           onChange={(event) => onChange(event.target.value)}
         />
       )}
-      {maxLength ? (
-        <small className="adm-hint adm-counter">
-          {value.length}/{maxLength} ký tự
-        </small>
-      ) : null}
     </Field>
   );
 }
@@ -377,7 +386,7 @@ export function StringListEditor({
         className="adm-add-row"
         onClick={() => onChange([...values, ""])}
       >
-        ＋ {addLabel ?? `Thêm ${itemLabel}`}
+        + {addLabel ?? `Thêm ${itemLabel}`}
       </button>
     </div>
   );
@@ -496,7 +505,7 @@ export function ImageListEditor({
               </div>
             </div>
             <ImageField
-              label={`Ảnh ${index + 1}`}
+              label={index === 0 ? "Ảnh bìa đang dùng" : "Ảnh đang dùng"}
               value={textOf(image.src)}
               previewAlt={textOf(image.alt)}
               media={[...media]}
@@ -540,7 +549,7 @@ export function ImageListEditor({
         className="adm-add-row"
         onClick={() => onChange([...images, { alt: "", caption: "" }])}
       >
-        ＋ Thêm ảnh
+        + Thêm ảnh
       </button>
     </div>
   );

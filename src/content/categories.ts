@@ -1,4 +1,5 @@
 import type { TourCategoryInput } from "@/domain/category";
+import { CATEGORY_SEO } from "./seo";
 
 /**
  * Category tree. `path` values are the canonical URLs and must not change
@@ -19,6 +20,7 @@ export const tourCategories: readonly TourCategoryInput[] = [
     tagline: "Tuyến trọng tâm được SEA TRIP chọn lọc kỹ",
     description:
       "Quy Nhơn – Phú Yên là tuyến trọng tâm của SEA TRIP TRAVEL: biển xanh, đá bazan, hải đăng và hải sản miền Trung. Nhóm tour dưới đây chia theo thời lượng để bạn chọn nhanh theo quỹ thời gian.",
+    seo: CATEGORY_SEO.cat_quy_nhon_phu_yen,
     order: 1,
     contentStatus: "demo",
   },
@@ -36,6 +38,7 @@ export const tourCategories: readonly TourCategoryInput[] = [
     tagline: "Phù hợp lịch trình ngắn, khởi hành trong ngày",
     description:
       "Các tour trong ngày dành cho khách có ít thời gian: tập trung vào một cụm điểm chính như Kỳ Co – Eo Gió, Hòn Khô hoặc Cù Lao Xanh, khởi hành và kết thúc trong ngày.",
+    seo: CATEGORY_SEO.cat_quy_nhon_1_ngay,
     order: 1,
     contentStatus: "demo",
   },
@@ -53,6 +56,7 @@ export const tourCategories: readonly TourCategoryInput[] = [
     tagline: "Ghép Quy Nhơn với Phú Yên trong 2–5 ngày",
     description:
       "Các tour dài ngày kết hợp Quy Nhơn với Phú Yên trong cùng một hành trình, có nghỉ đêm và thời gian tham quan thoải mái hơn.",
+    seo: CATEGORY_SEO.cat_quy_nhon_dai_ngay,
     order: 2,
     contentStatus: "demo",
   },
@@ -70,6 +74,7 @@ export const tourCategories: readonly TourCategoryInput[] = [
     tagline: "Chọn lọc theo bốn vùng miền",
     description:
       "Danh mục tour trong nước được chia theo vùng miền để bạn dễ hình dung hành trình và chọn đúng mùa. Mỗi vùng gồm các tuyến phổ biến với thời lượng từ 2 đến 5 ngày.",
+    seo: CATEGORY_SEO.cat_tour_trong_nuoc,
     order: 2,
     contentStatus: "demo",
   },
@@ -104,6 +109,7 @@ export const tourCategories: readonly TourCategoryInput[] = [
     tagline: "Đà Nẵng, Hội An, Huế",
     description:
       "Miền Trung là tuyến di sản: Đà Nẵng – Hội An – Huế kết nối thuận tiện bằng đường bộ, phù hợp cả nghỉ dưỡng lẫn khám phá văn hóa.",
+    seo: CATEGORY_SEO.cat_mien_trung,
     order: 2,
     contentStatus: "demo",
   },

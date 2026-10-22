@@ -1,6 +1,7 @@
 import { ROUTES } from "@/config/navigation";
 import { Container } from "@/components/ui/layout";
-import { Reveal } from "@/components/ui/reveal";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
+import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import {
   ArrowRightIcon,
   ClockIcon,
@@ -69,11 +70,10 @@ export function QuickFinder({ locale }: { locale: Locale }) {
       aria-labelledby="finder-title"
     >
       <Container>
-        <Reveal className="intro-centered">
-          <p className="eyebrow-pill">
-            <span aria-hidden="true" />
+        <RevealGroup className="intro-centered">
+          <SectionEyebrow className="eyebrow-pill">
             {en ? "PLAN YOUR TRIP" : "LÊN KẾ HOẠCH"}
-          </p>
+          </SectionEyebrow>
           <h2 id="finder-title">
             {en ? (
               <>
@@ -90,7 +90,7 @@ export function QuickFinder({ locale }: { locale: Locale }) {
               ? "Tell us where you want to go and how long you have. Or start from a suggestion — every path leads to a real itinerary."
               : "Cho SEA TRIP biết nơi bạn muốn đến và số ngày bạn có. Hoặc bắt đầu từ một gợi ý — đường nào cũng dẫn tới lịch trình cụ thể."}
           </p>
-        </Reveal>
+        </RevealGroup>
 
         <Reveal variant="zoom" className="finder-search-card">
           <form action={action} className="journey-finder-form">

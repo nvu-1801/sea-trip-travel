@@ -120,7 +120,7 @@ export function DesktopNav({
       "group/item relative inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2",
       "text-[0.8125rem] font-semibold transition-all duration-200 hover:bg-primary-soft/70",
       expanded &&
-        "bg-primary-soft/70 shadow-[0_4px_16px_rgba(224,0,90,0.12)] backdrop-blur-xl",
+        "bg-primary-soft/70 shadow-[var(--shadow-soft)] backdrop-blur-xl",
       active || expanded
         ? "text-primary-strong"
         : "text-foreground hover:text-primary-strong",
@@ -221,7 +221,7 @@ export function DesktopNav({
                 <div
                   className={cn(
                     "absolute left-0 top-[calc(100%+0.65rem)] z-50 w-[19rem] origin-top overflow-hidden",
-                    "rounded-[1.5rem] border border-white/60 bg-white/70 p-3 shadow-[0_24px_70px_-12px_rgba(120,10,50,0.35)] backdrop-blur-2xl backdrop-saturate-150",
+                    "rounded-[1.5rem] border border-border/60 bg-surface/80 p-3 shadow-[var(--shadow-lifted)] backdrop-blur-2xl backdrop-saturate-150",
                     "transition-[opacity,transform,filter,visibility] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
                     expanded
                       ? "visible translate-y-0 scale-100 opacity-100 blur-0"
@@ -240,7 +240,7 @@ export function DesktopNav({
                 >
                   <span
                     aria-hidden="true"
-                    className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#ff7ab8]/30 blur-2xl"
+                    className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-brand-300/30 blur-2xl"
                   />
                   <span
                     aria-hidden="true"
@@ -251,13 +251,13 @@ export function DesktopNav({
                     data-nav-panel-link=""
                     tabIndex={expanded ? 0 : -1}
                     onClick={() => applyOpen(null)}
-                    className="group/overview relative block overflow-hidden rounded-2xl border border-white/60 bg-gradient-to-r from-[#e0005a]/[0.08] via-[#ff5c99]/[0.10] to-[#ffd166]/[0.18] px-3.5 py-3 text-sm font-bold whitespace-nowrap text-primary-strong shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl transition-all duration-200 hover:shadow-[0_10px_28px_rgba(224,0,90,0.20)]"
+                    className="group/overview relative block overflow-hidden rounded-2xl border border-white/60 bg-gradient-to-r from-brand-600/[0.08] via-brand-400/[0.10] to-sun-400/[0.18] px-3.5 py-3 text-sm font-bold whitespace-nowrap text-primary-strong shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl transition-all duration-200 hover:shadow-[var(--shadow-card)]"
                   >
                     <span className="flex items-center justify-between gap-2">
                       {allOf}
                       <span
                         aria-hidden="true"
-                        className="h-1.5 w-1.5 rounded-full bg-brand-400 shadow-[0_0_10px_2px_rgba(255,3,102,0.45)] transition-transform duration-300 group-hover/overview:scale-150"
+                        className="h-1.5 w-1.5 rounded-full bg-brand-400 shadow-[0_0_10px_2px_var(--color-brand-400)] transition-transform duration-300 group-hover/overview:scale-150"
                       />
                     </span>
                   </Link>
@@ -282,8 +282,8 @@ export function DesktopNav({
                           className={cn(
                             "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-semibold whitespace-nowrap backdrop-blur-xl transition-all duration-200 hover:-translate-y-px",
                             currentPath === child.href
-                              ? "border-primary-strong/40 bg-white/80 text-primary-strong shadow-[0_8px_20px_rgba(224,0,90,0.22)]"
-                              : "border-white/70 bg-white/55 text-foreground-muted shadow-[0_2px_10px_rgba(120,10,50,0.08)] hover:border-primary-strong/40 hover:bg-white/90 hover:text-primary-strong hover:shadow-[0_10px_24px_rgba(224,0,90,0.22)]",
+                              ? "border-primary-strong/40 bg-surface/80 text-primary-strong shadow-[var(--shadow-soft)]"
+                              : "border-border/60 bg-surface/60 text-foreground-muted shadow-[var(--shadow-soft)] hover:border-primary-strong/40 hover:bg-surface hover:text-primary-strong hover:shadow-[var(--shadow-card)]",
                           )}
                         >
                           {labels.nav[child.labelKey]}

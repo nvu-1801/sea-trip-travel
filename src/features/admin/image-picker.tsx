@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState, type CSSProperties } from "react";
 import { AdmSelect } from "./ui-select";
+import { AdminIcon } from "./admin-icons";
 
 export type UploadedImage = { src: string; alt: string };
 
@@ -57,6 +58,7 @@ export function ImageField({
   const altHelpId = useId();
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [fit, setFit] = useState<"contain" | "cover">("contain");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const dragCount = useRef(0);
@@ -103,6 +105,7 @@ export function ImageField({
       <span className="adm-select-label">{label}</span>
       <div
         className={`adm-dropzone${compact ? " adm-dropzone--compact" : ""}`}
+        data-fit={fit}
         data-dragging={dragging || undefined}
         data-uploading={uploading || undefined}
         role={onUpload ? "button" : undefined}
@@ -158,7 +161,7 @@ export function ImageField({
           />
         ) : (
           <span className="adm-dropzone-empty" aria-hidden="true">
-            <span>🖼</span>
+            <AdminIcon name="image" size={30} />
             <span>Chưa có ảnh</span>
           </span>
         )}
@@ -210,12 +213,41 @@ export function ImageField({
             Gỡ ảnh
           </button>
         )}
+        {value && (
+          <button
+            type="button"
+            className="adm-image-action"
+            onClick={() =>
+              setFit((current) =>
+                current === "contain" ? "cover" : "contain",
+              )
+            }
+            title={
+              fit === "contain"
+                ? "Cắt ảnh theo khung để xem bố cục thực tế"
+                : "Xem toàn bộ ảnh, không cắt"
+            }
+          >
+            {fit === "contain" ? "Xem vừa khung" : "Xem đầy đủ"}
+          </button>
+        )}
+        {value && (
+          <a
+            className="adm-image-action"
+            href={value}
+            target="_blank"
+            rel="noreferrer"
+            title="Mở ảnh ở kích thước gốc trong tab mới"
+          >
+            Xem ảnh gốc ↗
+          </a>
+        )}
         <span className="adm-image-format">JPEG, PNG, WebP · tối đa 10 MB</span>
       </div>
 
       {whereUsed ? (
         <p className="adm-image-where">
-          <span aria-hidden="true">◎</span> {whereUsed}
+          {whereUsed}
         </p>
       ) : null}
 

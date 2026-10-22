@@ -30,6 +30,7 @@ export async function generateMetadata({
     description: m.contact.metaDescription,
     path: ROUTES.contact,
     locale,
+    enIndexable: true,
   });
 }
 

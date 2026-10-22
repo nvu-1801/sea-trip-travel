@@ -2,6 +2,7 @@ import { z } from "zod";
 import vi from "@/messages/vi.json";
 import en from "@/messages/en.json";
 import { siteConfig } from "@/config/site";
+import { HOME_SEO } from "@/content/seo";
 import {
   primarySocialLinks,
   secondarySocialLinks,
@@ -45,6 +46,23 @@ export const settingsSchema = z.object({
     )
     .max(10),
   motion: z.boolean(),
+  /**
+   * Home-page metadata. Defaults live in `content/seo.ts`; the owner can edit
+   * them in Website & footer → SEO and publish without a rebuild.
+   */
+  seo: z
+    .object({
+      homeTitle: z.string().min(1).max(90),
+      homeDescription: z.string().min(1).max(220),
+      homeTitleEn: z.string().min(1).max(90),
+      homeDescriptionEn: z.string().min(1).max(220),
+    })
+    .default({
+      homeTitle: HOME_SEO.vi.title,
+      homeDescription: HOME_SEO.vi.description,
+      homeTitleEn: HOME_SEO.en.title,
+      homeDescriptionEn: HOME_SEO.en.description,
+    }),
 });
 export const defaultSettings = settingsSchema.parse({
   id: "site",
@@ -68,6 +86,12 @@ export const defaultSettings = settingsSchema.parse({
     href: item.url,
   })),
   motion: true,
+  seo: {
+    homeTitle: HOME_SEO.vi.title,
+    homeDescription: HOME_SEO.vi.description,
+    homeTitleEn: HOME_SEO.en.title,
+    homeDescriptionEn: HOME_SEO.en.description,
+  },
 });
 
 // Derive a strict catalog schema from the supplied copy: every text is editable,

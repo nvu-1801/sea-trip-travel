@@ -2,7 +2,8 @@ import { ROUTES } from "@/config/navigation";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { getFeaturedTours } from "@/lib/data/tours";
 import { Container, Section } from "@/components/ui/layout";
-import { Reveal } from "@/components/ui/reveal";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
+import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { TourGrid } from "@/features/tours/tour-grid";
@@ -25,11 +26,10 @@ export function FeaturedToursSection({ locale }: { locale: Locale }) {
   return (
     <Section tone="muted" spacing="loose" className="journal-featured">
       <Container>
-        <Reveal className="intro-centered">
-          <p className="eyebrow-pill">
-            <span aria-hidden="true" />
+        <RevealGroup className="intro-centered">
+          <SectionEyebrow className="eyebrow-pill">
             {m.home.featured.eyebrow}
-          </p>
+          </SectionEyebrow>
           <h2>
             <HeadingAccent
               text={m.home.featured.title}
@@ -49,7 +49,7 @@ export function FeaturedToursSection({ locale }: { locale: Locale }) {
               <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </ButtonLink>
           </div>
-        </Reveal>
+        </RevealGroup>
 
         <div className="mt-10 grid gap-6">
           {tours[0] ? (

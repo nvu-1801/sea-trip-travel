@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Container, Section } from "@/components/ui/layout";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { AssetImage } from "@/components/ui/asset-image";
-import { Reveal } from "@/components/ui/reveal";
+import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import {
   ArrowRightIcon,
   CalendarIcon,
@@ -51,12 +52,12 @@ export function JourneyStory({ locale }: { locale: Locale }) {
         sizes="100vw"
       />
       <Container>
-        <Reveal className="journey-story-heading">
-          <p className="journal-eyebrow">
+        <RevealGroup className="journey-story-heading">
+          <SectionEyebrow className="journal-eyebrow">
             {en
               ? "MAKE TIME FOR A JOURNEY"
               : "DÀNH THỜI GIAN CHO MỘT CHUYẾN ĐI"}
-          </p>
+          </SectionEyebrow>
           <h2>
             {en ? "No need to go far." : "Không cần đi thật xa."}
             <br />
@@ -71,7 +72,7 @@ export function JourneyStory({ locale }: { locale: Locale }) {
               ? "Start with the time you have. We will help you find a journey that fits."
               : "Bắt đầu từ số ngày bạn có. Tìm một hành trình vừa vặn, đủ để nghỉ ngơi và mang về những câu chuyện mới."}
           </p>
-        </Reveal>
+        </RevealGroup>
         <div className="journey-duration-grid">
           {trips.map(([days, title, description], i) => (
             <Reveal key={days} delay={(i % 3) as 0 | 1 | 2}>
@@ -130,11 +131,10 @@ export function PlanningSection({ locale }: { locale: Locale }) {
     <Section className="journal-planning">
       <Container>
         <div className="planning-layout">
-          <Reveal>
-            <p className="journal-eyebrow planning-eyebrow">
-              <span className="planning-eyebrow-dot" aria-hidden="true" />
+          <RevealGroup>
+            <SectionEyebrow className="journal-eyebrow planning-eyebrow">
               {en ? "BEFORE YOU GO" : "TRƯỚC KHI LÊN ĐƯỜNG"}
-            </p>
+            </SectionEyebrow>
             <h2>
               {en ? "A little planning." : "Chuẩn bị một chút."}
               <br />
@@ -177,7 +177,7 @@ export function PlanningSection({ locale }: { locale: Locale }) {
                 <ArrowRightIcon className="h-4 w-4" />
               </span>
             </Link>
-          </Reveal>
+          </RevealGroup>
           <div className="planning-questions">
             {questions.map(([q, a], i) => {
               const Icon = icons[i % icons.length];

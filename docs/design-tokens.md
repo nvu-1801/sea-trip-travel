@@ -14,48 +14,63 @@ Logo được cung cấp dưới dạng PNG nền trong. Màu được trích tr
 | Cam (điểm dừng gradient) | `#FF7C2C` | |
 | Vàng gold (điểm dừng gradient) | `#FFBC0E` | đầu cánh lông |
 
-Gradient `#FF0366 → #FF7C2C → #FFBC0E` là chữ ký thị giác, dùng ở: thanh 1px trên
-header, chỉ dấu eyebrow, đường ray lịch trình, hairline khi hover card, và chữ
-gradient ở H1 trang chủ. **Không** dùng làm nền toàn trang.
+Logo vẫn giữ nguyên dải gốc `#FF0366 → #FF7C2C → #FFBC0E`. Trên giao diện, dải
+trang trí được hạ bão hoà một bước thành `#FF0366 → #B56F2F → #D9B26A` (hồng logo
+→ hổ phách → champagne gold). Dải này chỉ dùng ở thanh 1px trên header, chỉ dấu
+eyebrow, đường ray lịch trình, hairline khi hover card và chữ gradient ở H1.
+**Không** dùng làm nền toàn trang.
 
 ## 2. Vì sao không dùng `#FF0366` cho chữ và nút
 
-Đo tương phản trên nền trắng:
+`#FF0366` chỉ đạt tương phản **3.84:1** trên trắng — đủ cho chữ lớn nhưng không
+đủ cho body. Vì vậy giao diện dùng một gam raspberry sâu hơn cho chữ và nút:
 
-| Màu | Tương phản với `#FFFFFF` | Đạt WCAG AA (4.5:1) |
+| Màu | Tương phản thấp nhất trên nền sáng | Đạt WCAG AA (4.5:1) |
 | --- | --- | --- |
-| `#FF0366` (hồng logo) | **3.84:1** | ❌ — chỉ đạt AA cho chữ lớn (≥ 3:1) |
-| `#E0005A` (`brand-600`) | **4.87:1** | ✅ |
-| `#C4004E` (`brand-700`) | 6.4:1 | ✅ |
+| `#FF0366` (hồng logo) | **3.84:1** trên trắng | ❌ — chỉ đạt AA cho chữ lớn (≥ 3:1) |
+| `#D81B60` (`--color-primary`) | 4.03:1 trên nền sand | ❌ cho body — chỉ dùng trang trí |
+| `#A81455` (`--color-primary-strong`) | **5.91:1** trên nền sand | ✅ |
+| `#8C1248` (`--color-primary-strong-hover`) | 6.94:1 trên nền sand | ✅ |
 
 Nên:
 
-- `--color-primary` = `#FF0366` → **trang trí, icon, chữ tiêu đề lớn, logotype**.
-- `--color-primary-strong` = `#E0005A` → **nền nút, link, chữ cần đọc**.
-- `--color-primary-strong-hover` = `#C4004E`.
-
-Đây là lệch màu rất nhỏ so với logo nhưng là điều kiện để đạt WCAG AA.
+- `--color-primary` = `#D81B60` → **trang trí, icon, chữ tiêu đề lớn, logotype**.
+- `--color-primary-strong` = `#A81455` → **nền nút, link, chữ cần đọc**.
+- `--color-primary-strong-hover` = `#8C1248`.
+- `--color-brand-500` vẫn là `#FF0366` để wordmark và các dấu nhỏ giữ đúng màu logo.
 
 ## 3. Bảng màu semantic
 
+Bảng màu chuyển từ "trắng phảng hồng" sang **rose-ivory – champagne – espresso**:
+giấy ấm làm nền, hồng logo và gold chỉ còn là điểm nhấn. Cách này giữ được tinh
+thần logo nhưng bớt "kẹo", phù hợp cả nam lẫn nữ và dễ đọc với khách lớn tuổi.
+
 | Token | Giá trị | Dùng ở đâu |
 | --- | --- | --- |
-| `--color-background` | `#FFFAFC` | Nền trang — trắng ấm, chỉ phảng hồng |
-| `--color-surface` | `#FFFFFF` | Card, panel, form |
-| `--color-surface-muted` | `#FFF4F8` | Section xen kẽ |
-| `--color-surface-sunken` | `#FDF0F5` | Footer, vùng lõm |
-| `--color-foreground` | `#211621` | Chữ chính (tương phản ~16:1) |
-| `--color-foreground-muted` | `#6E5C68` | Chữ phụ (6.19:1 ✅) |
-| `--color-foreground-subtle` | `#8B7684` | Nhãn nhỏ, ghi chú |
-| `--color-border` | `#F2DDE7` | Viền mặc định |
-| `--color-border-strong` | `#E6C6D6` | Viền input, nút secondary |
-| `--color-primary` | `#FF0366` | Nhấn thương hiệu |
-| `--color-primary-strong` | `#E0005A` | Hành động (đạt AA) |
-| `--color-primary-soft` | `#FFF1F6` | Nền chip/nút ghost |
-| `--color-accent` | `#FFBC0E` | Gold, dấu bullet, cảnh báo nhẹ |
+| `--color-background` | `#F8F4F1` | Nền trang — rose-ivory, có glow champagne rất nhẹ |
+| `--color-surface` | `#FFFDFC` | Card, panel, form — sứ ấm |
+| `--color-surface-muted` | `#F5ECE8` | Section xen kẽ — rose-taupe |
+| `--color-surface-sunken` | `#EEE2DD` | Footer, vùng lõm — taupe sâu |
+| `--color-champagne` | `#F2E3D2` | Nền nhấn, badge gold |
+| `--color-champagne-deep` | `#E4CDB7` | Viền/khối gold đậm hơn |
+| `--color-rose-gold` | `#C08A84` | Chi tiết trang trí, hover card |
+| `--color-foreground` | `#241A20` | Chữ chính (15.4:1 trên nền trang ✅) |
+| `--color-foreground-muted` | `#6B5A60` | Chữ phụ (5.9:1 ✅) |
+| `--color-foreground-subtle` | `#6F5D64` | Nhãn nhỏ, ghi chú (4.83:1 ✅ trên nền tối nhất) |
+| `--color-border` | `#E8D8D2` | Viền mặc định |
+| `--color-border-strong` | `#D7C2BB` | Viền input, nút secondary |
+| `--color-primary` | `#D81B60` | Nhấn thương hiệu (trang trí/chữ lớn) |
+| `--color-primary-strong` | `#A81455` | Hành động, link (đạt AA, min 5.72:1) |
+| `--color-primary-soft` | `#F7E8ED` | Nền chip/nút ghost — hồng phấn |
+| `--color-accent` | `#D9B26A` | Gold trang trí |
+| `--color-accent-strong` | `#7D5316` | Gold cho chữ (min 5.31:1 ✅) |
 | `--color-success` | `#067647` | Trạng thái thành công (5.69:1 ✅) |
 | `--color-danger` | `#D92D20` | Lỗi (4.81:1 ✅) |
 | `--color-warning` | `#B54708` | Lưu ý |
+
+Các khối tối (hero, “câu chuyện hành trình”, ảnh destination) dùng **espresso
+plum** `#241A20` thay cho teal cũ, để toàn trang chỉ còn một họ màu: hồng logo –
+gold – nâu mận ấm.
 
 Dải `brand-50…900` có sẵn cho trường hợp cần sắc độ trung gian.
 
@@ -103,11 +118,11 @@ mobile hơn 16px.
   trang. Vẫn cuộn được bằng bàn phím/lăn chuột, chỉ ẩn thanh cuộn.
 - **Bo góc**: `xs 6px` · `sm 8px` · `md 12px` · `lg 16px` · `xl 20px` ·
   `2xl 28px` · `3xl 36px`. Card dùng `2xl`, panel lớn dùng `3xl`.
-- **Đổ bóng**: luôn phảng hồng (`rgb(122 0 49 / …)`), không dùng bóng đen.
+- **Đổ bóng**: phảng cocoa ấm (`rgb(60 38 28 / …)`), không dùng bóng đen.
   - `soft` — card nghỉ
   - `card` — card nổi nhẹ
   - `lifted` — card hover, panel sticky
-  - `focus` — vòng focus (`0 0 0 3px` hồng 32%)
+  - `focus` — vòng focus (`0 0 0 3px` raspberry 28%)
 - **Vùng chạm trên mobile**: tối thiểu `min-h-10` (40px) cho chip/anchor, `h-11`
   (44px) cho nút tròn. Chip lọc co về `min-h-9` từ `sm` trở lên để gọn hơn.
 
@@ -115,7 +130,7 @@ mobile hơn 16px.
 
 | Component | Đặc điểm |
 | --- | --- |
-| **Button** | `primary` (nền `#E0005A`, chữ trắng), `secondary` (viền, hover hoá hồng), `ghost`, `inverse`. Bo tròn hoàn toàn. Cao 36/44/52px. Nhấc 1px khi active. |
+| **Button** | `primary` (nền `#A81455`, chữ trắng), `secondary` (viền, hover hoá hồng), `ghost`, `inverse`. Bo tròn hoàn toàn. Cao 36/44/52px. Nhấc 1px khi active. |
 | **Input / Textarea** | **Mọi control cao đúng `h-11` (44px) với `line-height` cố định** — đây là điều kiện để ô trống, ô đã nhập, `select` và ô ngày tháng trùng khít nhau. Viền `border-strong`, hover hoá `brand-200`, focus hoá `primary-strong` + vòng focus. Trạng thái lỗi: viền `danger` + nền `danger-soft` 40%. Textarea giữ cùng padding/line-height, chỉ khác chiều cao (`min-h-28`). |
 | **Select** | Giữ `<select>` gốc (trên điện thoại trình chọn của hệ điều hành tốt hơn nhiều so với tự dựng), nhưng thay vỏ: `appearance-none` + cùng hộp 44px + cùng viền/hover/focus + **chevron riêng** đặt tuyệt đối. Không dựng listbox tuỳ biến. |
 | **Chọn ngày** | Component riêng (`components/ui/date-picker.tsx`), **không** dùng `<input type="date">`. Popup lịch của trình duyệt nằm trong shadow DOM nên không thể tô màu: Chrome luôn vẽ ngày được chọn bằng màu xanh của nó bất kể `accent-color`. Popup tự dựng dùng token thương hiệu: ngày chọn = viền tròn hồng đậm, hôm nay = viền `brand-300`, ngày ngoài tháng mờ 55%, hover = `primary-soft`. Nhãn tháng/ngày bằng tiếng Việt (tuần bắt đầu Thứ Hai). Có nút nhanh **Xoá / Hôm nay / Ngày mai**. Bàn phím: `←→↑↓` theo ngày/tuần, `PageUp/PageDown` theo tháng, `Home/End` đầu/cuối tuần, `Enter`/`Space` chọn, `Esc` đóng, `Tab` lặp trong popup. Giá trị vẫn là chuỗi ISO `YYYY-MM-DD` hoặc `""` — không đổi hợp đồng dữ liệu. |

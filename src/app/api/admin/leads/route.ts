@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requireSession } from "@/server/cms/auth";
-import { db, audit } from "@/server/cms/db";
+import { db } from "@/server/cms/db";
+import { auditFailure, auditRequest } from "@/server/cms/audit";
 import { listLeads, encrypt, decrypt, markMail } from "@/server/cms/leads";
 import { consumeLimit } from "@/server/cms/store";
 import { getMailer } from "@/server/email/mailer";
@@ -29,38 +30,62 @@ export async function PATCH(request: Request) {
         note: z.string().max(2000),
       })
       .parse(await jsonBody(request, 10000));
+    const before = db()
+      .prepare("SELECT status FROM leads WHERE id=?")
+      .get(input.id) as { status: string } | undefined;
+    if (!before) {
+      auditFailure(request, "lead-update", input.id, "Không tìm thấy yêu cầu tư vấn");
+      return reply({ error: "Không có yêu cầu này" }, 404);
+    }
     db()
       .prepare("UPDATE leads SET status=?,note=? WHERE id=?")
       .run(input.status, encrypt(input.note), input.id);
-    audit("lead-update", input.id);
+    auditRequest(request, "lead-update", input.id, {
+      details: {
+        leadId: input.id,
+        before: { status: before.status },
+        after: { status: input.status },
+      },
+    });
     return reply({ ok: true });
   });
 }
 export async function POST(request: Request) {
   return handle(async () => {
     await requireSession(request);
-    if (!consumeLimit("retry-mail", 20, 3600000))
+    if (!consumeLimit("retry-mail", 20, 3600000)) {
+      auditFailure(request, "lead-mail-retry", "rate-limit", "Đã đạt giới hạn gửi lại trong giờ");
       return reply({ error: "Đã đạt giới hạn gửi lại trong giờ" }, 429);
+    }
     const { id } = z
       .object({ id: z.string().max(100) })
       .parse(await jsonBody(request, 1000));
     const row = db()
       .prepare("SELECT data,mail_status FROM leads WHERE id=?")
       .get(id) as { data: string; mail_status: string } | undefined;
-    if (!row) return reply({ error: "Không có yêu cầu này" }, 404);
-    if (row.mail_status === "sent")
+    if (!row) {
+      auditFailure(request, "lead-mail-retry", id, "Không tìm thấy yêu cầu tư vấn");
+      return reply({ error: "Không có yêu cầu này" }, 404);
+    }
+    if (row.mail_status === "sent") {
+      auditFailure(request, "lead-mail-retry", id, "Email đã gửi thành công trước đó");
       return reply({ error: "Email đã gửi thành công" }, 409);
+    }
     const lead = contactLeadSchema.parse(decrypt(row.data)),
       mailer = getMailer();
-    if (!mailer.isConfigured())
+    if (!mailer.isConfigured()) {
+      auditFailure(request, "lead-mail-retry", id, "Chưa cấu hình SMTP");
       return reply({ error: "Cấu hình SMTP trước khi gửi lại" }, 503);
+    }
     const lock = db()
       .prepare(
         "UPDATE leads SET mail_status='sending' WHERE id=? AND mail_status NOT IN ('sent','sending')",
       )
       .run(id);
-    if (!lock.changes)
+    if (!lock.changes) {
+      auditFailure(request, "lead-mail-retry", id, "Email đang gửi hoặc đã gửi");
       return reply({ error: "Email đang gửi hoặc đã gửi" }, 409);
+    }
     const context = {
       lead,
       tourTitle: lead.tourSlug
@@ -85,13 +110,26 @@ export async function POST(request: Request) {
       });
     } catch {
       markMail(id, "failed");
+      auditFailure(request, "lead-mail-retry", id, "Lỗi khi gửi email", {
+        leadId: id,
+        mailStatus: "failed",
+      });
       return reply(
         { error: "Chưa gửi được email. Yêu cầu vẫn được lưu." },
         502,
       );
     }
     markMail(id, result.ok ? "sent" : "failed");
-    audit("lead-mail-retry", id);
+    if (result.ok) {
+      auditRequest(request, "lead-mail-retry", id, {
+        details: { leadId: id, mailStatus: "sent" },
+      });
+    } else {
+      auditFailure(request, "lead-mail-retry", id, "Nhà cung cấp email từ chối gửi", {
+        leadId: id,
+        mailStatus: "failed",
+      });
+    }
     return reply(
       result.ok
         ? { ok: true }
@@ -106,8 +144,20 @@ export async function DELETE(request: Request) {
     const { id } = z
       .object({ id: z.string().max(100) })
       .parse(await jsonBody(request, 1000));
-    db().prepare("DELETE FROM leads WHERE id=?").run(id);
-    audit("lead-delete", id);
+    const before = db()
+      .prepare("SELECT status FROM leads WHERE id=?")
+      .get(id) as { status: string } | undefined;
+    const result = db().prepare("DELETE FROM leads WHERE id=?").run(id);
+    if (!result.changes) {
+      auditFailure(request, "lead-delete", id, "Không tìm thấy yêu cầu tư vấn");
+      return reply({ error: "Không có yêu cầu này" }, 404);
+    }
+    auditRequest(request, "lead-delete", id, {
+      details: {
+        leadId: id,
+        ...(before ? { before: { status: before.status } } : {}),
+      },
+    });
     return reply({ ok: true });
   });
 }

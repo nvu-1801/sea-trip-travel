@@ -1,5 +1,6 @@
 import type { ElementType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { SectionEyebrow } from "./section-eyebrow";
 
 /**
  * Layout primitives.
@@ -82,12 +83,7 @@ export function SectionHeading({
       )}
     >
       <div className={cn("flex flex-col gap-3", align === "center" ? "max-w-2xl" : "max-w-2xl")}>
-        {eyebrow ? (
-          <p className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.18em] text-primary-strong">
-            <span aria-hidden="true" className="brand-gradient h-0.5 w-6 rounded-full" />
-            {eyebrow}
-          </p>
-        ) : null}
+        {eyebrow ? <SectionEyebrow>{eyebrow}</SectionEyebrow> : null}
         <Tag className="text-display-sm font-display font-semibold text-foreground">{title}</Tag>
         {description ? (
           <p className="text-[1.0625rem] leading-relaxed text-foreground-muted">{description}</p>

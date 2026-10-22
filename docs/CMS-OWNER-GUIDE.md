@@ -63,6 +63,18 @@ Carousel phủ toàn màn hình đầu và chạy ra sau header trong suốt. Kh
 
 `Lưu bản nháp` giữ bản public trước đó nếu nội dung đã xuất bản; `Xuất bản thay đổi` cập nhật public ngay. Xem bản nháp đã lưu bằng liên kết xem trước. `Ẩn` gỡ khỏi website; `Thùng rác` cho phép khôi phục thành nháp. Slug/path và mã nội dung được giữ ổn định sau khi tạo để bảo toàn liên kết. Khi hai phiên cùng sửa, phiên cũ bị từ chối để tránh lưu đè.
 
+### Gợi ý nội dung tour với ChatGPT
+
+Đầu form chi tiết tour có khối **Gợi ý nội dung với ChatGPT** (mở lại bằng nút cùng tên ở cột mục lục bên trái). Khối này gửi nội dung tour đang sửa sang ChatGPT để xin gợi ý cho phần còn thiếu.
+
+1. Chọn các phần cần gợi ý — mặc định Giới thiệu, Điểm nổi bật, Lịch trình, Dịch vụ, Lưu ý & chính sách; có thể bật thêm SEO.
+2. Bấm **Copy nội dung & mở ChatGPT**. Nội dung đang sửa (kể cả phần chưa lưu) được copy và ChatGPT mở ở tab mới. Ở tab đó: ô nhập đã có sẵn chữ thì bấm `Enter`; nếu ô trống thì dán bằng `Ctrl + V` (Mac `Cmd + V`) rồi `Enter`.
+3. Đọc gợi ý, copy phần muốn dùng, dán lại vào đúng ô trong form (Giới thiệu, Điểm nổi bật, Lịch trình…) rồi bấm **Lưu**.
+
+Không mở được ChatGPT (chặn tab mới, mạng hạn chế): bấm **Chỉ copy nội dung**, tự mở chatgpt.com (hoặc Gemini, Copilot — dán ở đâu cũng được) rồi dán và `Enter`. Không copy tự động được thì mở **Xem nội dung sẽ gửi** → **Chọn tất cả** → `Ctrl + C` để copy tay. Nội dung dài hơn giới hạn của link sẽ không điền sẵn được — hệ thống copy thay thế và báo rõ trong dòng trạng thái.
+
+Chỉ phần chữ trong form được gửi đi: không gửi ảnh, không gửi giá nội bộ, không gửi dữ liệu khách. AI có thể viết đúng văn phong nhưng sai số liệu — chỗ nào ghi `[cần xác nhận: …]` là chỗ phải điền thông tin thật, và luôn kiểm tra lại giá, giờ, chính sách trước khi Xuất bản.
+
 ## Đồng bộ giữa các trang đang mở
 
 Khi CMS được bật, trang public và admin tự kiểm tra thay đổi khoảng 5 giây/lần khi tab đang hiển thị. Xuất bản/ẩn/xóa bản public cập nhật các trang đang mở mà không cần F5; lưu nháp chỉ đồng bộ trong admin. Nếu đang sửa nội dung, ghi chú khách hoặc mô tả ảnh, hệ thống giữ phần chưa lưu và báo có cập nhật mới. Chỉ chọn **Tải cập nhật** khi muốn lấy bản trên server; bỏ thay đổi chưa lưu cần xác nhận. Đổi trạng thái/khôi phục vẫn tuân theo vòng đời nội dung ở trên.
@@ -79,6 +91,21 @@ Yêu cầu tư vấn được lưu trước gửi email; SMTP lỗi vẫn giữ 
 
 Danh sách hiện tải 500 lead gần nhất; khi vận hành lượng lớn cần bổ sung phân trang/xuất dữ liệu theo bộ lọc. SQLite lưu toàn bộ bản ghi trong volume/backup, không xóa các lead cũ ngoài danh sách. Xóa dữ liệu khách là thao tác vĩnh viễn có xác nhận.
 
+## Kiểm tra hoạt động
+
+Mở **Kiểm tra hoạt động** ở nhóm đầu tiên của menu Studio. Trang này chỉ đọc audit log, không sửa hay xóa log.
+
+- Thẻ trạng thái phía trên cho biết **Hoạt động bình thường**, **Có hoạt động cần xem lại** hoặc **Chưa đủ dữ liệu để đánh giá**.
+- Các chỉ số đếm thao tác, admin, thành công, thất bại và số sự kiện cần xem lại trong khoảng thời gian đã chọn.
+- Bộ lọc gồm khoảng thời gian, admin, loại thao tác, kết quả và ô tìm theo tên admin/đối tượng. Bấm một dòng để xem người thực hiện, thời gian, IP, lý do đánh dấu và thông tin trước/sau nếu có.
+- Quy tắc đánh dấu chỉ dựa trên bằng chứng trong log: thao tác thất bại, xóa dữ liệu, thay đổi mật khẩu/quyền, hoặc từ 3 lần đăng nhập thất bại từ cùng IP trong 15 phút. Trang không kết luận admin có ý định xấu.
+- Log trống, thiếu người thực hiện/IP hoặc tải lỗi đều hiện **Chưa đủ dữ liệu để đánh giá**; không coi thiếu log là hệ thống bình thường.
+- Bản ghi tạo trước khi nâng cấp có thể thiếu người thực hiện/IP. Thao tác chạy trực tiếp trên máy chủ (script quản trị) và khung giờ làm việc của admin chưa được cấu hình nên chưa được đánh giá. Thời gian hiển thị theo giờ Việt Nam.
+
 ## Trước phát hành
 
 Kiểm tra trên mobile, VI/EN, giá/chính sách và ảnh; xem lại tìm kiếm, form tư vấn, email và footer. Backup SQLite + uploads + lưu khóa mã hóa ở nơi riêng. Không đưa mật khẩu, khóa mã hóa, `.env.production` hoặc SSH key vào Git/chat.
+
+## SEO
+
+Xem `docs/SEO-QNPY.md` d? bi?t b?n d? t? kh�a ? URL, c�ch �p d?ng SEO v�o DB production b?ng `npm run seo:apply` (dry-run m?c d?nh) v� quy t?c hreflang/sitemap. Home SEO s?a trong **Website & footer ? SEO**; category/tour SEO s?a trong form tuong ?ng.

@@ -29,6 +29,7 @@ export async function generateMetadata({
     // must be approved by the owner before it is indexed in English.
     noIndex: locale !== defaultLocale,
     hreflang: locale === defaultLocale,
+    enIndexable: false,
   });
 }
 

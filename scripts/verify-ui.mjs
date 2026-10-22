@@ -282,10 +282,15 @@ async function checkReducedMotion(browser) {
 
     const audit = await page.evaluate(() => {
       const revealNodes = Array.from(
-        document.querySelectorAll("[data-reveal], [data-reveal-3d]"),
+        document.querySelectorAll(
+          "[data-reveal], [data-reveal-3d], .stt-seq > *",
+        ),
       );
       const parallaxNodes = Array.from(
         document.querySelectorAll("[data-parallax]"),
+      );
+      const unveilNodes = Array.from(
+        document.querySelectorAll("[data-unveil]"),
       );
 
       const invisible = [...revealNodes, ...parallaxNodes].filter((node) => {
@@ -302,6 +307,10 @@ async function checkReducedMotion(browser) {
       return {
         revealCount: revealNodes.length,
         parallaxCount: parallaxNodes.length,
+        unveilCount: unveilNodes.length,
+        unveilVisible: unveilNodes.filter(
+          (node) => getComputedStyle(node, "::after").content !== "none",
+        ).length,
         invisible: invisible.length,
         bodyHeight: document.body.getBoundingClientRect().height,
       };
@@ -318,6 +327,11 @@ async function checkReducedMotion(browser) {
       audit.invisible
         ? `${audit.invisible} element(s) hidden or collapsed`
         : "",
+    );
+    check(
+      `reduced-motion ${route} — image curtains are not rendered`,
+      audit.unveilVisible === 0,
+      `${audit.unveilVisible}/${audit.unveilCount} curtain(s) visible`,
     );
     check(`reduced-motion ${route} — page has height`, audit.bodyHeight > 1000);
   }
@@ -396,7 +410,7 @@ async function checkAnimationGating(browser) {
 
         if (
           rule.selectorText &&
-          /\[data-(reveal|parallax)\]/.test(rule.selectorText)
+          /\[data-(reveal|parallax|unveil)\]/.test(rule.selectorText)
         ) {
           found.push({
             selector: rule.selectorText.slice(0, 60),
@@ -1049,6 +1063,110 @@ async function checkContactDetails(browser) {
  * inline links in a sentence (WCAG "inline" exception), and a checkbox whose
  * wrapping label is itself ≥44 (the label is the target).
  */
+async function checkHeaderSearch(browser) {
+  section("8b. Header search — compact icon, destination results, empty state");
+
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
+  const page = await context.newPage();
+  await page.goto(BASE, { waitUntil: "load" });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(700);
+
+  const trigger = page.getByRole("button", {
+    name: "Tìm điểm đến",
+    exact: true,
+  });
+  check("header search icon is visible", await trigger.isVisible());
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", {
+    name: "Tìm điểm đến",
+    exact: true,
+  });
+  await dialog.waitFor();
+  check("header search panel opens", await dialog.isVisible());
+
+  const input = dialog.getByRole("combobox", {
+    name: "Tìm điểm đến",
+    exact: true,
+  });
+  check(
+    "search input receives focus",
+    await input.evaluate((el) => el === document.activeElement),
+  );
+
+  await input.fill("ky co");
+  await page.waitForTimeout(250);
+  check(
+    "accent-insensitive search finds Kỳ Co",
+    (await dialog.getByRole("option").count()) > 0,
+  );
+  check(
+    "result row shows the tour count",
+    /tour/.test(await dialog.getByRole("option").first().innerText()),
+  );
+
+  await dialog.getByRole("option").first().click();
+  await page.waitForURL(/destination=dest_ky_co_eo_gio/, { timeout: 20_000 });
+  check(
+    "selecting a result exact-filters the tour search",
+    page.url().includes("destination=dest_ky_co_eo_gio"),
+  );
+  check(
+    "filtered search shows matching tours",
+    (await page.locator(".stt-tour-card").count()) > 0,
+  );
+  check(
+    "active destination filter is announced",
+    (await page
+      .getByText("Đang lọc theo điểm đến", { exact: false })
+      .count()) > 0,
+  );
+
+  await trigger.click();
+  await dialog.waitFor();
+  await dialog
+    .getByRole("combobox", { name: "Tìm điểm đến", exact: true })
+    .fill("abcxyz");
+  await page.waitForTimeout(250);
+  check(
+    "unknown destination shows the concierge message",
+    (await dialog
+      .getByText("chưa có trong những hành trình đang mở", { exact: false })
+      .count()) > 0,
+  );
+  check(
+    "empty state offers a private consultation",
+    (await dialog
+      .getByRole("link", { name: "Nhận tư vấn riêng", exact: true })
+      .count()) > 0,
+  );
+
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  check("Escape closes header search", !(await dialog.isVisible()));
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(BASE, { waitUntil: "load" });
+  await page.waitForTimeout(500);
+  await trigger.click();
+  await dialog.waitFor();
+  check(
+    "mobile search opens without horizontal overflow",
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+  );
+  check(
+    "mobile search input is at least 44px tall",
+    (await input.boundingBox()).height >= 44,
+  );
+
+  await context.close();
+}
+
 async function checkTapTargets(browser) {
   section("10. Tap targets — 24px everywhere, 44px for primary controls");
 
@@ -1498,8 +1616,11 @@ async function checkPrint(browser) {
   const m = await page.evaluate(() => {
     const animated = Array.from(
       document.querySelectorAll(
-        "[data-reveal],[data-reveal-3d],[data-parallax],[data-entrance]",
+        "[data-reveal],[data-reveal-3d],[data-parallax],[data-entrance],.stt-seq > *",
       ),
+    );
+    const unveilOverlays = Array.from(
+      document.querySelectorAll("[data-unveil]"),
     );
     const printHidden = Array.from(
       document.querySelectorAll("[data-print-hidden]"),
@@ -1517,6 +1638,10 @@ async function checkPrint(browser) {
       ).length,
       collapsed: animated.filter((n) => n.getBoundingClientRect().height < 1)
         .length,
+      unveilOverlays: unveilOverlays.length,
+      unveilStillVisible: unveilOverlays.filter(
+        (n) => getComputedStyle(n, "::after").content !== "none",
+      ).length,
       printHiddenStillVisible: printHidden.filter(
         (n) => getComputedStyle(n).display !== "none",
       ).length,
@@ -1557,6 +1682,11 @@ async function checkPrint(browser) {
     `${m.collapsed}/${m.animated}`,
   );
   check(
+    "print — image curtains are removed",
+    m.unveilStillVisible === 0,
+    `${m.unveilStillVisible}/${m.unveilOverlays} still visible`,
+  );
+  check(
     "print — content far below the fold still lays out",
     m.deepHeight > 200 && m.deepHeadingHeight > 10,
     `#tu-van=${m.deepHeight}px, heading=${m.deepHeadingHeight}px`,
@@ -1583,6 +1713,26 @@ async function checkPrint(browser) {
     `${Math.round(pdf.length / 1024)} KB`,
   );
   console.log(`  saved ${path.relative(process.cwd(), pdfPath)}`);
+
+  // The tour page has no image curtain; the home page does. Print the home page
+  // too, so the check proves the overlay is really removed rather than passing
+  // on an empty set.
+  await page.goto(BASE, { waitUntil: "load" });
+  await page.waitForTimeout(250);
+  const homeUnveil = await page.evaluate(() => {
+    const nodes = Array.from(document.querySelectorAll("[data-unveil]"));
+    return {
+      count: nodes.length,
+      visible: nodes.filter(
+        (node) => getComputedStyle(node, "::after").content !== "none",
+      ).length,
+    };
+  });
+  check(
+    "print — home image curtains are removed",
+    homeUnveil.count > 0 && homeUnveil.visible === 0,
+    `${homeUnveil.visible}/${homeUnveil.count} still visible`,
+  );
 
   await page.emulateMedia({ media: "screen" });
   await context.close();
@@ -1621,13 +1771,20 @@ async function captureScreenshots(browser) {
     const page = await context.newPage();
     await page.goto(`${BASE}${shot.route}`, { waitUntil: "load" });
     // Scroll through so scroll-driven animations reach their end state.
+    // `scroll-behavior: smooth` turns each step into a queued animation, so the
+    // loop can finish before the page reaches the lower sections and the
+    // full-page capture is blank. Force instant scrolling for the traversal.
     await page.evaluate(async () => {
+      const html = document.documentElement;
+      const previous = html.style.scrollBehavior;
+      html.style.scrollBehavior = "auto";
       const step = window.innerHeight * 0.8;
       for (let y = 0; y < document.body.scrollHeight; y += step) {
         window.scrollTo(0, y);
-        await new Promise((resolve) => setTimeout(resolve, 60));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
       window.scrollTo(0, 0);
+      html.style.scrollBehavior = previous;
     });
     await page.waitForTimeout(300);
     await page.screenshot({
@@ -1841,6 +1998,7 @@ async function main() {
     await checkDatePicker(browser);
     await checkConsultationFlow(browser, sink);
     await checkContactDetails(browser);
+    await checkHeaderSearch(browser);
     await checkTapTargets(browser);
     await checkFloatingRail(browser);
     await checkAnchorNav(browser);

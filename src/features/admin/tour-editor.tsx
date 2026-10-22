@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { ImageField, type UploadedImage } from "./image-picker";
+import { TourChatGptHelper } from "./tour-chatgpt-helper";
 import { AdmMultiSelect, AdmSelect } from "./ui-select";
 import {
   ErrorSummary,
@@ -460,6 +461,17 @@ export const TourEditor = forwardRef<
             type="button"
             className="adm-ghost-link"
             onClick={() => {
+              document
+                .getElementById("tour-ai-helper")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          >
+            Gợi ý nội dung với ChatGPT
+          </button>
+          <button
+            type="button"
+            className="adm-ghost-link"
+            onClick={() => {
               setAttempted(true);
               if (issues.length > 0) jumpTo(issues[0]);
             }}
@@ -471,6 +483,7 @@ export const TourEditor = forwardRef<
 
       <div className="adm-tour-form">
         <ErrorSummary issues={issues} onJump={jumpTo} />
+        <TourChatGptHelper data={data} references={references} />
 
         {/* 1 — General --------------------------------------------------- */}
         <Section

@@ -4,9 +4,25 @@
   isolation: isolate;
   /* Clip the fixed decorative layer to the landing page, before the footer. */
   clip-path: inset(0);
-  background: #fff4f8;
-  --journal-ink: #213d3b;
-  --journal-muted: #677572;
+  background:
+    radial-gradient(
+      70% 55% at 8% 0%,
+      color-mix(in srgb, var(--color-accent) 11%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      55% 45% at 100% 6%,
+      color-mix(in srgb, var(--color-primary) 5%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-background) 45%,
+      var(--color-surface-muted) 100%
+    );
+  --journal-ink: var(--color-foreground);
+  --journal-muted: var(--color-foreground-muted);
   --journal-title-size: clamp(32px, 3.4vw, 52px);
   --journal-title-weight: 600;
 }
@@ -30,7 +46,7 @@
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.065em;
-  color: #ffe2ec;
+  color: var(--theme-wordmark);
   transform-origin: center;
   animation: home-brand-drift 20s ease-in-out infinite alternate;
 }
@@ -39,7 +55,7 @@
   background: transparent;
 }
 .home-editorial > [data-hero-mode] {
-  background-color: #fff4f8;
+  background-color: var(--color-background);
 }
 @keyframes home-brand-drift {
   from {
@@ -68,38 +84,10 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 }
 .home-editorial .journal-eyebrow,
 .home-editorial .intro-centered .eyebrow-pill {
-  display: inline-flex;
-  align-items: center;
   justify-self: start;
   width: fit-content;
   max-width: 100%;
-  gap: 10px;
-  padding: 8px 14px;
   margin: 0;
-  border: 1px solid #f5dce7;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: none;
-  font-size: 11px;
-  font-weight: 650;
-  line-height: 1.6;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-primary-strong);
-}
-.home-editorial .journal-eyebrow::before,
-.home-editorial .intro-centered .eyebrow-pill::before {
-  content: "";
-  flex: 0 0 8px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #e60060;
-  box-shadow: 0 0 0 4px #e6006014;
-}
-.home-editorial .journal-eyebrow > span,
-.home-editorial .intro-centered .eyebrow-pill > span {
-  display: none;
 }
 .journal-heading {
   display: flex;
@@ -140,7 +128,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   max-width: none;
   margin: 0 0 38px;
   padding-bottom: 28px;
-  border-bottom: 1px solid #213d3b20;
+  border-bottom: 1px solid #241a2020;
   text-align: left;
   align-items: end;
 }
@@ -179,7 +167,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   min-height: 44px;
   padding: 8px 0;
   border: 0;
-  border-bottom: 1px solid #213d3b40;
+  border-bottom: 1px solid #241a2040;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -214,10 +202,16 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   padding: 56px 0 44px;
 }
 .finder-search-card {
-  background: var(--color-surface);
+  background: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-surface-muted) 100%
+  );
   border: 1px solid var(--color-border);
   border-radius: 22px;
-  box-shadow: 0 18px 48px -10px rgba(168, 20, 85, 0.12), 0 4px 14px rgba(33, 61, 59, 0.06);
+  box-shadow:
+    0 18px 48px -10px rgb(168 20 85 / 0.1),
+    0 4px 14px rgb(60 38 28 / 0.06);
   padding: 14px;
   transform-style: preserve-3d;
   /* Nâng cả thẻ (kèm menu dropdown) lên trên các panels bên dưới.
@@ -288,17 +282,21 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   color: var(--journal-muted);
 }
 .finder-panel-help {
-  background: linear-gradient(135deg, var(--color-brand-800), #4d0a26);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-800),
+    var(--color-brand-900)
+  );
   border-color: transparent;
-  color: #ffe3ee;
+  color: var(--color-brand-50);
 }
 .finder-panel-help .finder-panel-title {
-  color: #ffd166;
+  color: var(--color-sun-300);
 }
 .finder-panel-help > p {
   font-size: 14px;
   line-height: 1.75;
-  color: #ffd9e6;
+  color: var(--color-brand-100);
 }
 .finder-panel-help > div {
   display: grid;
@@ -313,7 +311,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   gap: 10px;
   min-height: 50px;
   border-radius: 14px;
-  background: #fff;
+  background: var(--color-surface);
   color: var(--color-primary-strong);
   font-weight: 800;
   font-size: 14px;
@@ -331,7 +329,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   justify-content: center;
   gap: 8px;
   min-height: 44px;
-  color: #ffe3ee;
+  color: var(--color-brand-50);
   font-weight: 600;
   font-size: 14px;
   text-decoration: underline;
@@ -349,8 +347,8 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   padding: 10px;
   background: var(--color-surface);
   box-shadow:
-    0 18px 50px #d1005312,
-    0 2px 8px #213d3b0d;
+    0 18px 50px color-mix(in srgb, var(--color-primary) 7%, transparent),
+    0 2px 8px #241a200d;
 }
 .finder-field {
   display: grid;
@@ -364,8 +362,21 @@ html[data-motion-paused="true"] .home-brand-wordmark {
     box-shadow 0.25s;
 }
 .finder-field + .finder-field {
-  border-left: 1px solid var(--color-border);
-  border-radius: 0 20px 20px 0;
+  position: relative;
+  border-left: 0;
+  border-radius: 20px;
+}
+/* Inset hairline instead of a full-height border: both fields can keep their
+   rounded corners without a square divider cutting through them. */
+.finder-field + .finder-field::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 16px;
+  bottom: 16px;
+  width: 1px;
+  background: var(--color-border);
+  pointer-events: none;
 }
 .finder-field:hover {
   background: var(--color-primary-soft);
@@ -486,13 +497,13 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   min-height: 58px;
   border-radius: 20px;
   padding: 12px 28px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
   cursor: pointer;
-  box-shadow: 0 10px 24px #d1005330;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-primary) 19%, transparent);
   transition:
     transform 0.25s,
     box-shadow 0.25s,
@@ -501,13 +512,13 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 .journey-finder-form > button:hover {
   filter: brightness(1.05);
   transform: translateY(-1px);
-  box-shadow: 0 14px 30px #d1005345;
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--color-primary) 27%, transparent);
 }
 .journey-finder-form > button:active {
   transform: translateY(0);
 }
 .journey-finder-form input::placeholder {
-  color: #71807b;
+  color: var(--color-foreground-subtle);
   opacity: 1;
 }
 .journey-finder :is(button, a):focus-visible {
@@ -545,7 +556,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   height: 100%;
   overflow: hidden;
   border-radius: 14px;
-  background: #244846;
+  background: var(--theme-dark);
   transform-style: preserve-3d;
   transition:
     transform 500ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -556,17 +567,25 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   inset: 0;
   transition: transform 1s cubic-bezier(0.2, 0.65, 0.3, 1);
 }
+/* The curtain must read as the section surface, not a white card. */
+.destination-editorial-item:first-child .destination-editorial-photo {
+  --unveil-color: var(--color-background);
+}
 .destination-editorial-card::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 15%, #082826c7 100%);
+  background: linear-gradient(
+    180deg,
+    transparent 15%,
+    color-mix(in srgb, var(--theme-dark) 78%, transparent) 100%
+  );
 }
 .destination-editorial-copy {
   position: absolute;
   inset: auto 28px 26px;
   z-index: 1;
-  color: white;
+  color: var(--theme-on-dark);
   transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .destination-number {
@@ -586,7 +605,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   font-size: 13px;
   line-height: 1.65;
   margin-top: 8px;
-  color: #ffffffdf;
+  color: color-mix(in srgb, var(--theme-on-dark) 84%, transparent);
 }
 .destination-arrow {
   position: absolute;
@@ -638,20 +657,43 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 }
 .journal-featured {
   background:
-    radial-gradient(55% 45% at 95% 8%, #ff03660e 0%, transparent 60%),
-    radial-gradient(45% 40% at 5% 95%, #0e5a5612 0%, transparent 60%), #f5f5ed;
-  border-block: 1px solid #e6e7df;
+    radial-gradient(
+      55% 45% at 95% 8%,
+      color-mix(in srgb, var(--color-accent) 14%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      45% 40% at 5% 95%,
+      color-mix(in srgb, var(--color-rose-gold) 8%, transparent) 0%,
+      transparent 60%
+    ),
+    var(--color-surface-muted);
+  border-block: 1px solid var(--color-border);
 }
 .journal-featured .stt-tour-grid {
   gap: 22px;
 }
+/**
+ * Journey story — full-height editorial chapter.
+ *
+ * The owner asked for a fixed 900px stage: enough room for the heading and the
+ * three duration cards to breathe, without the section collapsing to the height
+ * of its text on a large screen. Content is centred vertically; if it grows
+ * (mobile, longer CMS copy) the section grows with it.
+ */
 .journey-story {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: #143e3b;
-  padding: clamp(56px, 6vw, 90px) 0;
-  color: white;
+  display: flex;
+  align-items: center;
+  /* A full-height chapter on a 900px stage; taller screens get a true
+     viewport-height section rather than a band of empty background. */
+  min-height: 900px;
+  min-height: max(900px, 100svh);
+  background: var(--theme-dark);
+  padding: clamp(72px, 7vw, 112px) 0;
+  color: var(--theme-on-dark);
 }
 .journey-story-image {
   position: absolute;
@@ -663,48 +705,69 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(100deg, #092e30ed, #092e3094);
+  background:
+    radial-gradient(
+      55% 65% at 88% 10%,
+      color-mix(in srgb, var(--color-accent) 22%, transparent) 0%,
+      transparent 62%
+    ),
+    linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--theme-dark) 94%, transparent),
+      color-mix(in srgb, var(--theme-dark) 56%, transparent)
+    );
 }
 .journey-story-heading {
-  max-width: 850px;
+  max-width: 920px;
 }
 .journey-story h2 {
-  color: #fff8e9;
+  color: var(--theme-on-dark);
+  font-size: clamp(38px, 4.4vw, 64px);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
 }
 .home-editorial .journey-story h2 em {
-  color: #ffbad4;
+  color: var(--theme-on-dark-accent);
 }
-.home-editorial .journey-story .journal-eyebrow {
-  color: #ffdaea;
-  background: #ffffff12;
-  border-color: #ffffff35;
+.home-editorial .journey-story .section-eyebrow {
+  color: var(--theme-on-dark);
 }
-.home-editorial .journey-story .journal-eyebrow::before {
-  background: #ffbad4;
-  box-shadow: 0 0 0 4px #ffbad41a;
+.home-editorial .journey-story .section-eyebrow-number {
+  color: var(--theme-on-dark-accent);
+}
+.home-editorial .journey-story .section-eyebrow-rule {
+  background: linear-gradient(90deg, transparent, var(--color-accent));
 }
 .journey-story-heading > p:last-child {
-  max-width: 530px;
-  margin-top: 24px;
-  font-size: 15px;
-  line-height: 1.85;
-  color: #e1e9e5;
+  max-width: 620px;
+  margin-top: 28px;
+  font-size: 17px;
+  line-height: 1.9;
+  color: color-mix(in srgb, var(--theme-on-dark) 88%, transparent);
 }
 .journey-duration-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-top: 44px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(18px, 2vw, 26px);
+  margin-top: clamp(48px, 5vw, 72px);
+  counter-reset: journey-card;
+}
+.journey-duration-grid > * {
+  counter-increment: journey-card;
 }
 .journey-duration-grid a {
   position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: clamp(22px, 2.5vw, 32px);
-  border: 1px solid #ffffff35;
-  border-radius: 20px;
-  background: linear-gradient(160deg, #ffffff14 0%, #ffffff06 100%);
+  min-height: clamp(300px, 28vw, 360px);
+  padding: clamp(28px, 3vw, 44px);
+  border: 1px solid #ffffff3d;
+  border-radius: 26px;
+  background:
+    radial-gradient(90% 70% at 100% 0%, #ffffff14 0%, transparent 60%),
+    linear-gradient(160deg, #ffffff1a 0%, #ffffff08 62%, #ffffff04 100%);
+  box-shadow: inset 0 1px 0 #ffffff1f;
   overflow: hidden;
   transition:
     background 0.3s,
@@ -712,14 +775,36 @@ html[data-motion-paused="true"] .home-brand-wordmark {
     transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.35s ease;
 }
+/* Keep every real child above the decorative index. */
+.journey-duration-grid a > * {
+  position: relative;
+  z-index: 1;
+}
 .journey-duration-grid a::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
   height: 3px;
-  background: linear-gradient(90deg, #ff0366, #ffd166);
+  background: linear-gradient(90deg, var(--color-brand-600), var(--color-sun-400));
   opacity: 0;
   transition: opacity 0.3s ease;
+}
+/* A large ghost chapter number gives the empty upper-right corner a purpose. */
+.journey-duration-grid a::after {
+  content: "0" counter(journey-card);
+  position: absolute;
+  top: clamp(18px, 2vw, 26px);
+  right: clamp(20px, 2vw, 28px);
+  z-index: 0;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(56px, 5vw, 76px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #ffffff12;
+  pointer-events: none;
+  user-select: none;
+  transition: color 0.3s ease;
 }
 .journey-duration-grid a:hover {
   background: #ffffff18;
@@ -730,48 +815,70 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 .journey-duration-grid a:hover::before {
   opacity: 1;
 }
+.journey-duration-grid a:hover::after {
+  color: #ffffff1f;
+}
 .journey-duration-grid a:focus-visible {
-  outline: 2px solid #fff8e9;
+  outline: 2px solid var(--theme-on-dark);
   outline-offset: 4px;
 }
 .journey-duration {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  font-family: Georgia, serif;
-  font-size: 52px;
-  line-height: 1;
-  letter-spacing: -0.02em;
+  gap: 14px;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(60px, 6vw, 84px);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: #fff8e9;
   text-shadow: 0 2px 18px rgb(0 0 0 / 0.3);
 }
 .journey-duration small {
   font-family: var(--font-sans), sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.15em;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--theme-on-dark);
+  opacity: 0.88;
 }
 .journey-duration-grid h3 {
-  font-size: 19px;
-  margin: 12px 0 8px;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(22px, 2.1vw, 28px);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #fff8e9;
+  margin: 22px 0 10px;
 }
 .journey-duration-grid p {
-  font-size: 13px;
-  color: #dde5df;
-  line-height: 1.75;
-  max-width: 270px;
+  font-size: 14.5px;
+  color: color-mix(in srgb, var(--theme-on-dark) 86%, transparent);
+  line-height: 1.85;
+  max-width: 300px;
+  margin-bottom: 28px;
 }
 .journey-duration-cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 24px;
-  padding: 10px 18px;
+  margin-top: auto;
+  min-height: 44px;
+  padding: 11px 20px;
   width: fit-content;
   border-radius: 999px;
-  border: 1px solid #ffffff45;
-  background: #ffffff10;
-  font-size: 12px;
+  border: 1px solid #ffffff55;
+  background: #ffffff12;
+  font-size: 12.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
+  transition:
+    background 0.25s,
+    border-color 0.25s;
+}
+.journey-duration-grid a:hover .journey-duration-cta {
+  background: #ffffff1f;
+  border-color: #ffffff85;
 }
 /* Four image-led postcards, each a direct route into its region. */
 .regions-editorial {
@@ -829,9 +936,9 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   padding: 22px;
   border-radius: 24px;
   overflow: hidden;
-  color: #fff;
-  background: #234844;
-  box-shadow: 0 12px 30px #163b3410;
+  color: var(--theme-on-dark);
+  background: var(--theme-dark);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--theme-dark) 12%, transparent);
   transform-style: preserve-3d;
   transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 500ms ease;
 }
@@ -848,10 +955,10 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   z-index: -1;
   background: linear-gradient(
     180deg,
-    #08252166,
+    color-mix(in srgb, var(--theme-dark) 40%, transparent),
     transparent 30%,
-    #092720a6 60%,
-    #082720f2
+    color-mix(in srgb, var(--theme-dark) 65%, transparent) 60%,
+    color-mix(in srgb, var(--theme-dark) 95%, transparent)
   );
 }
 .region-postcard-top {
@@ -866,14 +973,14 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   padding: 6px 9px;
   border: 1px solid #ffffff70;
   border-radius: 99px;
-  background: #163d3955;
+  background: color-mix(in srgb, var(--theme-dark) 34%, transparent);
   white-space: nowrap;
   letter-spacing: 0;
 }
 .region-postcard-mood {
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: #fff0dc;
+  color: var(--theme-on-dark);
   margin-bottom: 8px;
 }
 .region-postcard h3 {
@@ -885,7 +992,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
 .region-postcard-copy > p:not(.region-postcard-mood) {
   font-size: 13px;
   line-height: 1.75;
-  color: #f0f4ed;
+  color: color-mix(in srgb, var(--theme-on-dark) 88%, transparent);
   margin-top: 13px;
   min-height: 46px;
 }
@@ -966,8 +1073,17 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
 }
 .journal-values {
   background:
-    radial-gradient(60% 50% at 8% 12%, #ff03660d 0%, transparent 60%),
-    radial-gradient(50% 40% at 95% 90%, #0e5a5610 0%, transparent 60%), #f4f4ea;
+    radial-gradient(
+      60% 50% at 8% 12%,
+      color-mix(in srgb, var(--color-primary) 6%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      50% 40% at 95% 90%,
+      color-mix(in srgb, var(--color-accent) 16%, transparent) 0%,
+      transparent 60%
+    ),
+    var(--color-surface-muted);
 }
 .values-premium {
   position: relative;
@@ -994,15 +1110,20 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   border-radius: 32px;
   border: 1px solid #ffffffcc;
   box-shadow:
-    0 32px 70px #213d3b2b,
-    0 4px 14px #213d3b1a;
+    0 32px 70px #241a202b,
+    0 4px 14px #241a201a;
   object-fit: cover;
+  --unveil-color: var(--color-surface-sunken);
 }
 .values-photo-glow {
   position: absolute;
   inset: 12% -8% -6% 12%;
   z-index: -1;
-  background: linear-gradient(135deg, #ff036633, #0e5a5633);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-primary) 18%, transparent),
+    color-mix(in srgb, var(--color-accent) 20%, transparent)
+  );
   filter: blur(46px);
   border-radius: 40px;
 }
@@ -1010,9 +1131,9 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   position: absolute;
   border-radius: 20px;
   border: 1px solid #ffffffd9;
-  background: #ffffffee;
+  background: rgb(255 253 252 / 0.94);
   backdrop-filter: blur(12px);
-  box-shadow: 0 18px 44px #213d3b26;
+  box-shadow: 0 18px 44px #241a2026;
   padding: 14px 16px;
   transform-style: preserve-3d;
 }
@@ -1028,7 +1149,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   width: fit-content;
   padding: 4px 10px;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
   font-size: 10px;
   font-weight: 800;
@@ -1076,11 +1197,11 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   width: 48px;
   height: 48px;
   border-radius: 16px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
   font-size: 17px;
   font-weight: 800;
-  box-shadow: 0 12px 26px #d1005338;
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--color-primary) 22%, transparent);
   position: relative;
   z-index: 1;
 }
@@ -1091,14 +1212,14 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   bottom: -22px;
   width: 2px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #d1005340, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 25%, transparent), transparent);
 }
 .values-item-card {
   border: 1px solid var(--color-border);
   border-radius: 20px;
-  background: #fffffff2;
+  background: rgb(255 253 252 / 0.95);
   padding: 18px 20px;
-  box-shadow: 0 10px 28px #213d3b0f;
+  box-shadow: 0 10px 28px #241a200f;
   transition:
     transform 0.3s,
     box-shadow 0.3s,
@@ -1107,7 +1228,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
 .values-item-card:hover {
   transform: translateY(-2px);
   border-color: var(--color-primary-strong);
-  box-shadow: 0 18px 40px #d100531c;
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--color-primary) 11%, transparent);
 }
 .values-item-card h3 {
   font-size: 16px;
@@ -1126,7 +1247,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   padding-inline: 28px;
   border-radius: 999px;
   font-size: 15px;
-  box-shadow: 0 16px 34px #d1005340;
+  box-shadow: 0 16px 34px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 .planning-layout {
   display: grid;
@@ -1150,13 +1271,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   border-radius: 999px;
   background: white;
 }
-.planning-eyebrow-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
-  box-shadow: 0 0 0 4px #d1005318;
-}
+
 .planning-steps {
   display: flex;
   flex-wrap: wrap;
@@ -1195,18 +1310,26 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   padding: 18px 18px 18px 20px;
   border-radius: 22px;
   background:
-    radial-gradient(120% 140% at 100% 0%, #ff036655 0%, transparent 50%),
-    linear-gradient(135deg, #213d3b 0%, #2f5a56 100%);
-  color: white;
+    radial-gradient(
+      120% 140% at 100% 0%,
+      color-mix(in srgb, var(--color-accent) 28%, transparent) 0%,
+      transparent 52%
+    ),
+    linear-gradient(
+      135deg,
+      var(--theme-dark) 0%,
+      var(--theme-dark-2) 100%
+    );
+  color: var(--theme-on-dark);
   text-decoration: none;
-  box-shadow: 0 16px 40px #213d3b2e;
+  box-shadow: 0 16px 40px #241a202e;
   transition:
     transform 0.25s,
     box-shadow 0.25s;
 }
 .planning-assist:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 48px #213d3b38;
+  box-shadow: 0 20px 48px #241a2038;
 }
 .planning-assist-copy {
   display: grid;
@@ -1218,7 +1341,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
 .planning-assist-copy span span,
 .planning-assist-copy > span {
   font-size: 13px;
-  color: #ffffffc9;
+  color: color-mix(in srgb, var(--theme-on-dark) 80%, transparent);
 }
 .planning-assist-arrow {
   display: grid;
@@ -1227,7 +1350,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
   height: 44px;
   flex: none;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
 }
 .planning-questions details {
@@ -1248,7 +1371,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
 .planning-questions details[open] {
   border-color: var(--color-primary-strong);
   background: linear-gradient(180deg, var(--color-primary-soft), white 70%);
-  box-shadow: 0 14px 34px #d1005314;
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 .planning-questions summary {
   display: flex;
@@ -1281,7 +1404,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
     transform 0.25s;
 }
 .planning-questions details[open] .planning-q-icon {
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   color: white;
 }
 .planning-q-text {
@@ -1447,26 +1570,39 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
     min-height: 44px;
   }
   .journey-story {
-    padding: 55px 0;
+    min-height: 900px;
+    min-height: max(900px, 100svh);
+    padding: 64px 0;
+  }
+  .journey-story-heading > p:last-child {
+    margin-top: 22px;
+    font-size: 15.5px;
   }
   .journey-duration-grid {
     grid-template-columns: 1fr;
-    margin-top: 30px;
+    gap: 18px;
+    margin-top: 36px;
   }
   .journey-duration-grid a {
-    padding: 24px;
+    min-height: 260px;
+    padding: 28px;
+    border-radius: 22px;
+  }
+  .journey-duration-grid a::after {
+    top: 20px;
+    right: 22px;
+    font-size: 56px;
   }
   .journey-duration {
-    font-size: 40px;
+    font-size: clamp(52px, 12vw, 64px);
   }
   .journey-duration-grid h3 {
-    margin-top: 12px;
+    font-size: 24px;
+    margin-top: 18px;
   }
   .journey-duration-grid p {
     max-width: 100%;
-  }
-  .journey-duration-cta {
-    margin-top: 16px;
+    margin-bottom: 22px;
   }
   .regions-editorial,
   .planning-layout {
@@ -1513,6 +1649,9 @@ html[data-motion-paused="true"] .journey-story-image {
 }
 /* AssetImage owns the <img> without a transition, so the zoom cue lives here.
    Global reduced-motion rules already neutralise transitions. */
+.guide-zoom {
+  --unveil-color: var(--color-surface-muted);
+}
 .guide-zoom img {
   transition: transform 700ms var(--ease-out-soft);
 }
@@ -1526,210 +1665,4 @@ a:focus-visible .guide-zoom img {
   color: var(--color-surface);
   -webkit-text-stroke: 1.5px var(--color-brand-300);
   text-shadow: 0 2px 12px rgb(60 38 28 / 0.18);
-  animation: stt-num-glow 6s ease-in-out infinite;
-}
-
-/* =============================================================================
-   SEA TRIP Editorial Idle & Ambient Motions (Mềm mại, Tự nhiên, 60fps)
-   ============================================================================= */
-
-@keyframes stt-dot-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 3px rgba(230, 0, 96, 0.14);
-  }
-  50% {
-    transform: scale(1.18);
-    box-shadow: 0 0 0 6px rgba(230, 0, 96, 0.26);
-  }
-}
-
-.home-editorial .journal-eyebrow::before,
-.home-editorial .intro-centered .eyebrow-pill::before,
-.planning-eyebrow-dot {
-  animation: stt-dot-pulse 3.5s ease-in-out infinite;
-}
-
-/* QuickFinder Idle Motion */
-@keyframes stt-beacon-glow {
-  0%, 100% {
-    box-shadow: 0 10px 30px #4d0a2622, inset 0 0 0 1px rgba(255, 209, 102, 0.15);
-  }
-  50% {
-    box-shadow: 0 16px 42px #ff03662d, inset 0 0 0 1px rgba(255, 209, 102, 0.45);
-  }
-}
-@keyframes stt-glow-breathe {
-  0%, 100% {
-    box-shadow: 0 10px 24px #d1005330;
-  }
-  50% {
-    box-shadow: 0 14px 34px #d1005355;
-  }
-}
-.finder-panel-help {
-  animation: stt-beacon-glow 6s ease-in-out infinite;
-}
-.journey-finder-form > button {
-  animation: stt-glow-breathe 4.5s ease-in-out infinite;
-}
-
-/* Explore Destination Arrow Micro-float */
-@keyframes stt-arrow-gentle {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(2px, -2px, 0);
-  }
-}
-.destination-arrow {
-  animation: stt-arrow-gentle 3.8s ease-in-out infinite;
-}
-
-/* Journey Story Ambient Night Atmosphere */
-@keyframes stt-gold-shimmer {
-  0%, 100% {
-    text-shadow: 0 0 10px rgba(255, 230, 180, 0.08);
-  }
-  50% {
-    text-shadow: 0 0 22px rgba(255, 200, 120, 0.4);
-  }
-}
-@keyframes stt-card-border-breathe {
-  0%, 100% {
-    border-color: #ffffff30;
-    background: #ffffff08;
-  }
-  50% {
-    border-color: #ffffff55;
-    background: #ffffff14;
-  }
-}
-.journey-duration {
-  animation: stt-gold-shimmer 5s ease-in-out infinite;
-}
-.journey-duration-grid a {
-  animation: stt-card-border-breathe 7s ease-in-out infinite;
-}
-.journey-duration-grid > div:nth-child(2) a {
-  animation-delay: 2.3s;
-}
-.journey-duration-grid > div:nth-child(3) a {
-  animation-delay: 4.6s;
-}
-
-/* Region Postcards "Floating Boats" Rhythm */
-@keyframes stt-boat-float-odd {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -5px, 0);
-  }
-}
-@keyframes stt-boat-float-even {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, 5px, 0);
-  }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .region-postcards > li:nth-child(odd) .region-postcard {
-    animation: stt-boat-float-odd 7s ease-in-out infinite;
-  }
-  .region-postcards > li:nth-child(even) .region-postcard {
-    animation: stt-boat-float-even 7s ease-in-out infinite;
-    animation-delay: 1.5s;
-  }
-}
-
-/* Values Section Editorial Float & Glow */
-@keyframes stt-float-diagonal-a {
-  0%, 100% {
-    transform: translate3d(0, 0, 24px);
-  }
-  50% {
-    transform: translate3d(3px, -5px, 28px);
-  }
-}
-@keyframes stt-float-diagonal-b {
-  0%, 100% {
-    transform: translate3d(0, 0, 32px);
-  }
-  50% {
-    transform: translate3d(-3px, 4px, 36px);
-  }
-}
-@keyframes stt-glow-morph {
-  0%, 100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 0.55;
-    filter: blur(46px);
-  }
-  50% {
-    transform: scale(1.08) rotate(3deg);
-    opacity: 0.8;
-    filter: blur(52px);
-  }
-}
-.values-float-top {
-  animation: stt-float-diagonal-a 6s ease-in-out infinite;
-}
-.values-float-bottom {
-  animation: stt-float-diagonal-b 7s ease-in-out infinite;
-}
-.values-photo-glow {
-  animation: stt-glow-morph 8s ease-in-out infinite;
-}
-
-/* Planning FAQ Assist Nudge */
-@keyframes stt-arrow-nudge {
-  0%, 82%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  86% {
-    transform: translate3d(4px, 0, 0);
-  }
-  90% {
-    transform: translate3d(1px, 0, 0);
-  }
-  94% {
-    transform: translate3d(3px, 0, 0);
-  }
-}
-.planning-assist-arrow {
-  animation: stt-arrow-nudge 6.5s ease-in-out infinite;
-}
-
-/* Guide Magazine Number Shimmer */
-@keyframes stt-num-glow {
-  0%, 100% {
-    opacity: 0.88;
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    opacity: 1;
-    transform: translate3d(0, -3px, 0);
-  }
-}
-
-/* Paused State for Editorial Motions */
-html[data-motion-paused="true"] .values-float,
-html[data-motion-paused="true"] .values-photo-glow,
-html[data-motion-paused="true"] .destination-arrow,
-html[data-motion-paused="true"] .region-postcard,
-html[data-motion-paused="true"] .planning-assist-arrow,
-html[data-motion-paused="true"] .finder-panel-help,
-html[data-motion-paused="true"] .journey-duration,
-html[data-motion-paused="true"] .journey-duration-grid a,
-html[data-motion-paused="true"] .journey-finder-form > button,
-html[data-motion-paused="true"] .home-editorial .journal-eyebrow::before,
-html[data-motion-paused="true"] .home-editorial .intro-centered .eyebrow-pill::before,
-html[data-motion-paused="true"] .planning-eyebrow-dot,
-html[data-motion-paused="true"] .guide-index-num {
-  animation: none !important;
-  transform: none !important;
 }

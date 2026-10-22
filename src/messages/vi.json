@@ -1,7 +1,7 @@
 {
   "site": {
     "description": "SEA TRIP TRAVEL chọn lọc điểm đến và thiết kế trải nghiệm du lịch trong nước, tập trung vào Quy Nhơn – Phú Yên và các tuyến Miền Bắc, Miền Trung, Miền Nam, Tây Nguyên.",
-    "tagline": "Chọn lọc điểm đến – Nâng tầm trải nghiệm",
+    "tagline": "Du lịch Quy Nhơn – Nâng tầm trải nghiệm",
     "workingHours": "Thứ 2 – Thứ 7, 08:00 – 18:00"
   },
   "common": {
@@ -87,7 +87,25 @@
     "primaryNavMobileAria": "Điều hướng chính (di động)",
     "menuLabel": "Menu",
     "openMenu": "Mở menu",
-    "closeMenu": "Đóng menu"
+    "closeMenu": "Đóng menu",
+    "search": {
+      "open": "Tìm điểm đến",
+      "title": "Bạn muốn đi đâu?",
+      "placeholder": "Quy Nhơn, Kỳ Co, Phú Yên…",
+      "popular": "Điểm đến đang có tour",
+      "results": "{count} điểm đến phù hợp",
+      "noResults": "Không tìm thấy điểm đến phù hợp",
+      "viewAll": "Xem tất cả tour",
+      "emptyTitle": "“{q}” chưa có trong những hành trình đang mở.",
+      "emptyBody": "Nhưng một chuyến đi đẹp có thể bắt đầu từ đúng câu hỏi này — để lại số điện thoại, SEA TRIP sẽ thiết kế riêng cho bạn.",
+      "consult": "Nhận tư vấn riêng",
+      "tryPopular": "Xem các điểm đang có tour",
+      "close": "Đóng tìm kiếm",
+      "shortcut": "Nhấn / để tìm nhanh",
+      "clear": "Xóa từ khóa",
+      "filterLabel": "Đang lọc theo điểm đến",
+      "clearDestination": "Bỏ lọc điểm đến"
+    }
   },
   "footer": {
     "categoriesTitle": "Danh mục tour",
@@ -114,11 +132,11 @@
   },
   "home": {
     "hero": {
-      "badge": "Du lịch trong nước · Chọn lọc",
-      "titleLine1": "Chọn lọc điểm đến",
-      "titleLine2": "nâng tầm trải nghiệm",
-      "lead": "Đi đúng mùa, ở đúng nơi và đi với nhịp độ của riêng bạn.",
-      "bodyA": "SEA TRIP TRAVEL thiết kế hành trình trong nước theo cách chậm rãi và kỹ lưỡng, bắt đầu từ tuyến trọng tâm",
+      "badge": "Du lịch Quy Nhơn – Phú Yên · Chọn lọc",
+      "titleLine1": "Du lịch Quy Nhơn",
+      "titleLine2": "Phú Yên, đi chậm và kỹ",
+      "lead": "Tour biển Quy Nhơn – Phú Yên, lịch trình rõ ràng và tư vấn theo thời gian của bạn.",
+      "bodyA": "SEA TRIP TRAVEL chọn lọc điểm đến và thiết kế hành trình trong nước, bắt đầu từ tuyến trọng tâm",
       "bodyB": "— nơi biển xanh gặp đá bazan và những ngọn hải đăng.",
       "ctaTours": "Xem tour Quy Nhơn – Phú Yên",
       "ctaConsult": "Nhận tư vấn miễn phí",

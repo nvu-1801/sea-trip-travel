@@ -98,7 +98,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
   }));
 
   return (
-    <footer className="relative overflow-hidden bg-surface-sunken">
+    <footer className="stt-footer relative overflow-hidden">
       {/* Mirrors the identity rule at the top of the header. */}
       <div className="brand-gradient h-px w-full" aria-hidden="true" />
       <span aria-hidden="true" className="footer-glow" />

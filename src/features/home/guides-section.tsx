@@ -7,7 +7,8 @@ import {
   getNonFeaturedArticles,
 } from "@/lib/data/articles";
 import { Container, Section } from "@/components/ui/layout";
-import { Reveal } from "@/components/ui/reveal";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
+import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon, ClockIcon } from "@/components/ui/icons";
 import { AssetImage } from "@/components/ui/asset-image";
@@ -65,11 +66,10 @@ export function GuidesSection({ locale }: { locale: Locale }) {
   return (
     <Section tone="muted" spacing="loose">
       <Container>
-        <Reveal className="intro-centered">
-          <p className="eyebrow-pill">
-            <span aria-hidden="true" />
+        <RevealGroup className="intro-centered">
+          <SectionEyebrow className="eyebrow-pill">
             {m.home.guides.eyebrow}
-          </p>
+          </SectionEyebrow>
           <h2>
             <HeadingAccent
               text={m.home.guides.title}
@@ -87,7 +87,7 @@ export function GuidesSection({ locale }: { locale: Locale }) {
               <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </ButtonLink>
           </div>
-        </Reveal>
+        </RevealGroup>
 
         <Reveal className="mt-10" variant="zoom">
           <Link
@@ -100,6 +100,7 @@ export function GuidesSection({ locale }: { locale: Locale }) {
               sizes="(max-width: 768px) 100vw, 80vw"
               className="guide-zoom aspect-[16/11] w-full sm:aspect-[21/9]"
               parallax
+              unveil
             />
             <span aria-hidden="true" className="guide-spotlight-scrim" />
             <div className="absolute inset-0 flex flex-col justify-end gap-3 p-6 sm:gap-4 sm:p-10">

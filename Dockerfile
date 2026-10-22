@@ -16,6 +16,11 @@ COPY --from=build --chown=seatrip:seatrip /app/.next/standalone ./
 COPY --from=build --chown=seatrip:seatrip /app/.next/static ./.next/static
 COPY --from=build --chown=seatrip:seatrip /app/public ./public
 COPY --chown=seatrip:seatrip scripts/admin.mjs ./scripts/admin.mjs
+# Email thông báo deploy chạy bằng node thuần trong container này.
+COPY --chown=seatrip:seatrip scripts/release-notice.mjs ./scripts/release-notice.mjs
+COPY --chown=seatrip:seatrip scripts/lib/release-notice.mjs ./scripts/lib/release-notice.mjs
+# Nodemailer được Next đóng gói cho phần web, nhưng script CLI cần package thật.
+COPY --from=dependencies --chown=seatrip:seatrip /app/node_modules/nodemailer ./node_modules/nodemailer
 ARG APP_SHA=local
 ENV APP_SHA=$APP_SHA
 USER seatrip

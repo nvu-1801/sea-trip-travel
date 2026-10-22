@@ -8,6 +8,9 @@ import {
   safeSiteUrl,
   safeTelHref,
 } from "@/lib/sanitize";
+import { siteConfig } from "@/config/site";
+
+const origin = siteConfig.url.replace(/\/+$/, "");
 
 /**
  * Output-safety tests.
@@ -73,7 +76,10 @@ describe("safeMailtoHref", () => {
 
 describe("safeSiteUrl", () => {
   it("resolves a site-relative path to an absolute same-origin URL", () => {
-    assert.equal(safeSiteUrl("/tour/quy-nhon-3-ngay"), "http://localhost:3000/tour/quy-nhon-3-ngay");
+    assert.equal(
+      safeSiteUrl("/tour/quy-nhon-3-ngay"),
+      `${origin}/tour/quy-nhon-3-ngay`,
+    );
   });
 
   it("rejects protocol-relative and absolute off-site URLs", () => {
@@ -97,7 +103,7 @@ describe("safeSiteUrl", () => {
 
 describe("isSafeSiteHref", () => {
   it("accepts absolute same-origin URLs", () => {
-    assert.equal(isSafeSiteHref("http://localhost:3000/tour/x"), true);
+    assert.equal(isSafeSiteHref(`${origin}/tour/x`), true);
   });
 
   it("rejects off-origin and non-http values", () => {

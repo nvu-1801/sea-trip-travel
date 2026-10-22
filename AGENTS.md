@@ -26,3 +26,16 @@ npm run verify:preflight -- --full   # adds verify:ui, verify:tour-import, verif
 
 `scripts/deploy/deploy.sh` is piped into `bash -s` over SSH. Any command that reads stdin can swallow the remainder of the script, so the remote shell exits 0 early and the deploy silently does nothing. Keep `</dev/null` on commands that may consume stdin and verify the health SHA after deploying.
 
+## Push to `main` is a release
+
+`main` is not a scratch branch: every push runs `.github/workflows/ci-deploy.yml`, and once `check` is green the `deploy` job ships that exact commit to production. Follow `docs/CI-CD.md`; the short version:
+
+1. Branch from `origin/main`, never commit to `main` directly (revert commits are the only exception).
+2. `npm run verify:preflight -- --full` must be green before the branch is pushed.
+3. Open a PR and wait for the `check` job: `gh pr checks --watch`.
+4. Merge only when `check` is green, then watch the run on `main`:
+   `gh run list --branch main --limit 1` and `gh run watch <id>`.
+5. If CI fails, fix the failing step on a branch and push again — never loosen, skip or `continue-on-error` the red step.
+6. Deploy is only done when `https://sea-trip-travel.duckdns.org/api/health` reports the merged SHA with `status: "ok"` and `database: "connected"`.
+7. Log the result in the PR/commit notes when the deploy needed a retry, so the next release knows why.
+

@@ -1,7 +1,7 @@
 {
   "site": {
     "description": "SEA TRIP TRAVEL curates destinations and designs domestic travel experiences, focused on Quy Nhon – Phu Yen and routes across the North, Central, South and Central Highlands of Vietnam.",
-    "tagline": "Curated destinations – Elevated experiences",
+    "tagline": "Quy Nhon & Phu Yen – Elevated experiences",
     "workingHours": "Mon – Sat, 08:00 – 18:00"
   },
   "common": {
@@ -87,7 +87,25 @@
     "primaryNavMobileAria": "Primary navigation (mobile)",
     "menuLabel": "Menu",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "search": {
+      "open": "Find a destination",
+      "title": "Where would you like to go?",
+      "placeholder": "Quy Nhon, Ky Co, Phu Yen…",
+      "popular": "Destinations with tours",
+      "results": "{count} matching destinations",
+      "noResults": "No matching destinations",
+      "viewAll": "View all tours",
+      "emptyTitle": "“{q}” isn’t in our current itineraries yet.",
+      "emptyBody": "But a beautiful trip can start with exactly this question — leave your number and SEA TRIP will design something just for you.",
+      "consult": "Plan a private trip",
+      "tryPopular": "See destinations with tours",
+      "close": "Close search",
+      "shortcut": "Press / to search quickly",
+      "clear": "Clear search",
+      "filterLabel": "Filtering by destination",
+      "clearDestination": "Clear destination filter"
+    }
   },
   "footer": {
     "categoriesTitle": "Tour categories",
@@ -114,11 +132,11 @@
   },
   "home": {
     "hero": {
-      "badge": "Vietnam travel · Curated",
-      "titleLine1": "Curated destinations",
-      "titleLine2": "elevated experiences",
-      "lead": "Right season, right place, and a pace that is entirely your own.",
-      "bodyA": "SEA TRIP TRAVEL designs domestic journeys slowly and carefully, starting from our focus route",
+      "badge": "Quy Nhon – Phu Yen travel · Curated",
+      "titleLine1": "Quy Nhon & Phu Yen",
+      "titleLine2": "the coast, at your pace",
+      "lead": "Selected coastal tours and clear itineraries, with advice around your time.",
+      "bodyA": "SEA TRIP TRAVEL curates places and designs domestic journeys, starting from our focus route",
       "bodyB": "— where clear seas meet basalt rock and lighthouses.",
       "ctaTours": "See Quy Nhon – Phu Yen tours",
       "ctaConsult": "Free consultation",
