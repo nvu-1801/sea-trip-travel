@@ -1,9 +1,10 @@
 export const dynamic = "force-dynamic";
 import { SiteContactProvider } from "@/components/layout/site-context";
-import { settings } from "@/server/cms/store";
+import { settings, siteTheme } from "@/server/cms/store";
 import { contentVersion } from "@/server/cms/db";
 import { LiveContent } from "@/components/layout/live-content";
 import type { Metadata, Viewport } from "next";
+import type { CSSProperties } from "react";
 import { Be_Vietnam_Pro, Fraunces } from "next/font/google";
 import "../globals.css";
 import { siteConfig } from "@/config/runtime-site";
@@ -22,6 +23,7 @@ import {
   type Locale,
 } from "@/i18n/config";
 import { getMessages } from "@/i18n/server";
+import { themeById } from "@/config/themes";
 
 /**
  * Be Vietnam Pro — designed for Vietnamese. Full diacritic coverage at every
@@ -87,13 +89,18 @@ export async function generateMetadata({
   };
 }
 
-export const viewport: Viewport = {
-  themeColor: "#ff0366",
-  width: "device-width",
-  initialScale: 1,
-  /* Light-only design: tells browsers not to force-darken the page. */
-  colorScheme: "light",
-};
+export async function generateViewport(): Promise<Viewport> {
+  const theme = themeById(siteTheme());
+  return {
+    // Browser chrome follows the active theme; the rest of the palette is
+    // applied as inline custom properties on <html> below.
+    themeColor: theme.vars["--color-primary-strong"],
+    width: "device-width",
+    initialScale: 1,
+    /* Light-only design: tells browsers not to force-darken the page. */
+    colorScheme: "light",
+  };
+}
 
 export default async function LocaleLayout({
   children,
@@ -104,22 +111,26 @@ export default async function LocaleLayout({
   const { locale: raw } = await params;
   const locale: Locale = isLocale(raw) ? raw : defaultLocale;
   const m = getMessages(locale);
+  const siteSettings = settings();
+  const activeTheme = themeById(siteTheme());
 
   return (
     <html
-      data-motion-paused={!settings().motion}
+      data-motion-paused={!siteSettings.motion}
+      data-theme={activeTheme.id}
+      style={activeTheme.vars as CSSProperties}
       lang={localeMeta[locale].htmlLang}
       className={`${beVietnamPro.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <noscript>
-          <style>{`.stt-reveal-3d{opacity:1!important;transform:none!important;transition:none!important}`}</style>
+          <style>{`.stt-reveal-3d,.stt-seq>*{opacity:1!important;transform:none!important;transition:none!important}`}</style>
         </noscript>
         <SiteContactProvider
           value={{
             ...siteConfig.contact,
             name: siteConfig.name,
-            socialLinks: settings().socialLinks,
+            socialLinks: siteSettings.socialLinks,
           }}
         >
           <JsonLd id="ld-agency" data={travelAgencyJsonLd(locale)} />

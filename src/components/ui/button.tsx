@@ -5,10 +5,11 @@ import { cn } from "@/lib/utils";
 /**
  * Button system.
  *
- * `primary` uses `--color-primary-strong` (#E0005A), not the logo pink
+ * `primary` uses `--color-primary-strong` (#A81455), not the logo pink
  * (#FF0366): white-on-#FF0366 is 3.84:1 and fails WCAG AA for normal text,
- * while #E0005A reaches 4.87:1 at the same hue. The logo pink is reserved for
- * decoration and large display type. See docs/design-tokens.md.
+ * while white-on-#A81455 reaches 7.25:1. The logo pink is reserved for
+ * decoration and large display type.
+ * See docs/design-tokens.md.
  */
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "inverse";
@@ -19,11 +20,11 @@ const base =
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary-strong text-white shadow-soft hover:bg-primary-strong-hover hover:shadow-card hover:-translate-y-0.5 active:translate-y-0",
+    "stt-btn-primary text-white hover:-translate-y-0.5 active:translate-y-0",
   secondary:
-    "border border-border-strong bg-surface text-foreground hover:border-primary hover:text-primary-strong hover:bg-primary-soft",
+    "stt-btn-secondary border border-border-strong text-foreground hover:-translate-y-0.5 active:translate-y-0",
   ghost: "text-foreground hover:bg-primary-soft hover:text-primary-strong",
-  inverse: "bg-white text-primary-strong hover:bg-brand-50 shadow-soft",
+  inverse: "stt-btn-inverse shadow-soft hover:-translate-y-0.5 active:translate-y-0",
 };
 
 /**

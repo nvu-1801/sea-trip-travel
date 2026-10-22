@@ -24,6 +24,21 @@ export function getTourSlugs(): readonly string[] {
   return current_tours().map((tour) => tour.slug);
 }
 
+/**
+ * How many published tours reference each destination.
+ *
+ * The header search only offers places the business can actually sell, so a
+ * destination with zero tours never becomes a suggestion.
+ */
+export function getDestinationTourCounts(): ReadonlyMap<string, number> {
+  const counts = new Map<string, number>();
+  for (const tour of current_tours()) {
+    for (const id of tour.destinationIds)
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
+}
+
 /** Tours filed under `categoryId` or any of its child categories. */
 export function getToursByCategoryId(
   categoryId: string,
@@ -36,12 +51,13 @@ export function getToursByCategoryId(
 }
 
 /**
- * Home-page feature set. Prefers the Quy Nhơn – Phú Yên line-up (the site's
- * focus) and tops up with other regions so the section never looks empty.
+ * Home-page feature set. When the admin pins tours in
+ * `landing.featured.tourIds`, exactly those tours are shown, in the chosen
+ * order. The field accepts both a tour id and a slug (the Studio picker stores
+ * slugs), and unknown keys are ignored.
  *
- * When the admin pins tour IDs in `landing.featured.tourIds`, those tours
- * come first (unknown IDs are ignored); the automatic line-up only tops up
- * the remainder so the section never looks empty.
+ * With no valid pin, the automatic line-up prefers the Quy Nhơn – Phú Yên
+ * focus route and tops up with other regions so the section never looks thin.
  */
 export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
   const all = current_tours();
@@ -49,12 +65,21 @@ export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
   try {
     const ids = landingSections().featured.tourIds;
     if (ids.length > 0) {
-      const byId = new Map(all.map((tour) => [tour.id, tour]));
-      pinned = ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+      const byKey = new Map<string, (typeof all)[number]>();
+      for (const tour of all) {
+        byKey.set(tour.id, tour);
+        byKey.set(tour.slug, tour);
+      }
+      pinned = ids.flatMap((key) => {
+        const tour = byKey.get(key);
+        return tour ? [tour] : [];
+      });
     }
   } catch {
     // fall through to the automatic line-up
   }
+  if (pinned.length > 0)
+    return pinned.slice(0, limit).map((tour) => resolveTour(tour, locale));
   const focus = new Set(getAllDescendantCategoryIds("cat_quy_nhon_phu_yen"));
   const inFocus = current_tours().filter((tour) =>
     tour.categoryIds.some((id) => focus.has(id)),

@@ -113,7 +113,7 @@ export function CollageHero({
               style={{ animationDelay: "80ms" }}
               className="mt-6 text-display-xl font-display font-semibold text-foreground"
             >
-              <span className="block">{copy.titleLine1}</span>
+              <span className="block">{copy.titleLine1}</span>{" "}
               <span className="mt-1 block text-primary-strong font-medium">
                 {copy.titleLine2}
               </span>

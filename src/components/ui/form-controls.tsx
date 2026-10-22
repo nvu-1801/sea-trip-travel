@@ -102,7 +102,7 @@ export function Field({
 /* -------------------------------------------------------------------------- */
 
 const controlBase =
-  "block w-full min-w-0 rounded-md border bg-surface text-[0.9375rem] leading-6 text-foreground transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-foreground-subtle/80 focus:outline-none disabled:cursor-not-allowed disabled:bg-surface-sunken";
+  "stt-control block w-full min-w-0 rounded-md border bg-surface text-[0.9375rem] leading-6 text-foreground transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-foreground-subtle/80 focus:outline-none disabled:cursor-not-allowed disabled:bg-surface-sunken";
 
 /** One height for every control — inputs, selects and date fields line up. */
 const controlSize = "h-11 px-3.5";

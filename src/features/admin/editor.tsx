@@ -7,10 +7,19 @@ type Value =
 export type EditorValue = Value;
 export type ReferenceOptions = Partial<
   Record<
-    "categories" | "destinations" | "tours" | "media",
+    "categories" | "destinations" | "tours" | "articles" | "media",
     { value: string; label: string }[]
   >
 >;
+/** Small closed vocabularies rendered as a select instead of free text. */
+const enumOptions: Record<string, { value: string; label: string }[]> = {
+  icon: [
+    { value: "calendar", label: "Lịch trình" },
+    { value: "shield", label: "Bảo vệ / an tâm" },
+    { value: "compass", label: "Khám phá / chỉ đường" },
+    { value: "users", label: "Nhóm / gia đình" },
+  ],
+};
 const blocks: Record<string, Value> = {
   paragraph: { type: "paragraph", text: "" },
   heading: { type: "heading", level: 2, text: "" },
@@ -87,6 +96,10 @@ const labels: Record<string, string> = {
   href: "Liên kết",
   categoryIds: "Danh mục của tour",
   destinationIds: "Điểm đến",
+  tourIds: "Tour ghim trên trang chủ",
+  featuredSlug: "Bài viết tiêu điểm",
+  picks: "Bài viết phụ",
+  icon: "Biểu tượng",
   departurePoints: "Điểm khởi hành",
   returnPoints: "Điểm kết thúc",
   transport: "Phương tiện",
@@ -126,6 +139,10 @@ const labels: Record<string, string> = {
   footerLinks: "Liên kết footer",
   socialLinks: "Mạng xã hội",
   motion: "Cho phép chuyển động nền",
+  homeTitle: "Tiêu đề trang chủ (SEO)",
+  homeDescription: "Mô tả trang chủ (SEO)",
+  homeTitleEn: "Tiêu đề trang chủ tiếng Anh (SEO)",
+  homeDescriptionEn: "Mô tả trang chủ tiếng Anh (SEO)",
   gifts: "Quà tặng",
   sourceDocuments: "Nguồn tư liệu",
   priceNote: "Ghi chú giá",
@@ -201,19 +218,34 @@ export function Editor({
 }) {
   const id = useId();
   const title = labels[name] ?? name;
+  if (enumOptions[name] && typeof value === "string")
+    return (
+      <div className="adm-field">
+        <AdmSelect
+          label={title}
+          value={value}
+          options={enumOptions[name]}
+          onChange={(next) => onChange(next)}
+        />
+      </div>
+    );
   const singleKind: keyof ReferenceOptions | undefined = ["parentId"].includes(name)
     ? "categories"
-    : ["src", "ogImage", "photoSrc"].includes(name)
-      ? "media"
-      : undefined;
+    : name === "featuredSlug"
+      ? "articles"
+      : ["src", "ogImage", "photoSrc"].includes(name)
+        ? "media"
+        : undefined;
   const multiKind: keyof ReferenceOptions | undefined =
     name === "categoryIds"
       ? "categories"
       : name === "destinationIds"
         ? "destinations"
-        : name === "relatedTourSlugs"
+        : name === "relatedTourSlugs" || name === "tourIds"
           ? "tours"
-          : undefined;
+          : name === "picks"
+            ? "articles"
+            : undefined;
   if (multiKind && Array.isArray(value) && references[multiKind]) {
     const strings = value.filter((v): v is string => typeof v === "string");
     // Multi-select đẹp dạng chip cho các liên kết nhiều-một.
@@ -274,7 +306,7 @@ export function Editor({
             : item,
         )
       : items;
-  if (value === null)
+  if (value === null || value === undefined)
     return (
       <div className="adm-field">
         <label>
@@ -283,7 +315,19 @@ export function Editor({
         <button
           type="button"
           onClick={() =>
-            onChange(name === "priceFrom" ? { amount: 0, currency: "VND" } : "")
+            onChange(
+              name === "priceFrom"
+                ? { amount: 0, currency: "VND" }
+                : [
+                      "duration",
+                      "seo",
+                      "image",
+                      "contact",
+                      "socialLinks",
+                    ].includes(name)
+                  ? {}
+                  : "",
+            )
           }
         >
           Bổ sung
@@ -348,7 +392,7 @@ export function Editor({
             onChange([...value, next]);
           }}
         >
-          ＋ Thêm {title.toLowerCase()}
+          + Thêm {title.toLowerCase()}
         </button>
       </fieldset>
     );
@@ -465,7 +509,7 @@ export function Editor({
           disabled={locked}
           onChange={(e) => onChange(Number(e.target.value))}
         />
-      ) : value.length > 90 ||
+      ) : (typeof value === "string" ? value.length > 90 : false) ||
         [
           "summary",
           "description",

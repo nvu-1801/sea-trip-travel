@@ -8,7 +8,7 @@ import { useEffect } from "react";
  * CSS and print rules keep working unchanged. No animation library involved.
  */
 const TARGETS =
-  ".stt-idle-waves svg, .stt-hero-bloom, .stt-coastal-lines, .home-brand-wordmark, [data-idle-animate], .stt-idle-float, .stt-idle-pulse, .stt-idle-glow, .stt-hero-badge, .stt-card-badge, .stt-card-price-float, .destination-arrow, .values-float, .values-photo-glow, .region-postcard, .planning-assist-arrow, .stt-trust-icon, .stt-phone-buzz, .finder-panel-help, .eyebrow-pill > span, .journey-duration";
+  ".stt-idle-waves svg, .stt-hero-bloom, .stt-coastal-lines, .home-brand-wordmark, [data-idle-animate], .stt-idle-float, .stt-idle-pulse, .stt-idle-glow, .stt-hero-badge, .stt-card-badge, .stt-card-price-float, .destination-arrow, .values-float, .values-photo-glow, .region-postcard, .planning-assist-arrow, .stt-trust-icon, .stt-phone-buzz, .finder-panel-help, .journey-duration";
 
 export function IdleMotionManager() {
   useEffect(() => {

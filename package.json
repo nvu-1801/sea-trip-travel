@@ -11,12 +11,14 @@
     "verify:ui": "node scripts/verify-ui.mjs",
     "verify:preflight": "node scripts/preflight.mjs",
     "content:report": "node --env-file-if-exists=.env.local --import tsx scripts/content-report.ts",
-    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/lead-store.test.ts tests/content.test.ts tests/mail-transport.test.ts tests/i18n.test.ts tests/admin-groups.test.ts tests/home-sections.test.ts tests/admin-media-options.test.ts tests/tour-rules.test.ts tests/slugify.test.ts",
+    "seo:apply": "node --env-file-if-exists=.env.local --import tsx scripts/apply-seo-content.ts",
+    "test": "node --import tsx --conditions=react-server --test tests/sanitize.test.ts tests/date.test.ts tests/lead-schema.test.ts tests/lead-service.test.ts tests/lead-store.test.ts tests/content.test.ts tests/mail-transport.test.ts tests/i18n.test.ts tests/admin-groups.test.ts tests/home-sections.test.ts tests/admin-media-options.test.ts tests/tour-rules.test.ts tests/slugify.test.ts tests/seo-content.test.ts tests/admin-home-draft.test.ts tests/admin-search.test.ts tests/tour-chatgpt-prompt.test.ts tests/release-notice.test.ts tests/release-notice-delivery.test.ts tests/audit-activity.test.ts tests/audit-store.test.ts tests/themes.test.ts",
     "verify:tour-import": "node scripts/verify-tour-import.mjs",
     "admin": "node --env-file-if-exists=.env.local scripts/admin.mjs",
     "test:cms": "node --import tsx --conditions=react-server --test tests/cms.test.ts",
     "verify:cms": "node scripts/verify-cms.mjs",
-    "verify:hero": "node scripts/verify-hero.mjs"
+    "verify:hero": "node scripts/verify-hero.mjs",
+    "verify:seo": "node scripts/verify-seo.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

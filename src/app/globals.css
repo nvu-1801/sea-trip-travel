@@ -13,11 +13,11 @@
   /* --- Brand rose ramp -----------------------------------------------------
      The logo keeps its saturated #FF0366 pink; everything around it shifts to
      a softer, aged-rose range so large surfaces feel calm rather than candy. */
-  --color-brand-50: #fdf2f5;
-  --color-brand-100: #fbe3e9;
-  --color-brand-200: #f4c9d6;
-  --color-brand-300: #eaa6ba;
-  --color-brand-400: #dd7898;
+  --color-brand-50: #fdf5f7;
+  --color-brand-100: #f8e4ea;
+  --color-brand-200: #efccd7;
+  --color-brand-300: #dfa9b9;
+  --color-brand-400: #d17f97;
   --color-brand-500: #ff0366; /* logo pink — decorative / large display only */
   --color-brand-600: #d81b60;
   --color-brand-700: #b0175a;
@@ -33,38 +33,40 @@
   --color-sun-600: #b56f2f;
 
   /* --- Semantic palette ---------------------------------------------------
-     Warm alabaster and champagne replace the pink-tinted whites. The page
-     reads as paper and linen, which keeps the photography and the pink/gold
-     logo as the only strong colour notes. */
-  --color-background: #faf6f1;
-  --color-surface: #fffdfb;
-  --color-surface-muted: #f6ede4;
-  --color-surface-sunken: #f0e4d8;
+     A quieter, more expensive canvas: rose-ivory paper, porcelain cards and a
+     rose-taupe recess. The pink/gold logo stays the only saturated note, so
+     the page reads warm and refined rather than candy-pink. The balance of
+     rose, ivory and deep ink is deliberately unisex. */
+  --color-background: #f8f4f1;
+  --color-surface: #fffdfc;
+  --color-surface-muted: #f5ece8;
+  --color-surface-sunken: #eee2dd;
 
-  --color-champagne: #f3e5d3;
-  --color-champagne-deep: #e7d2bb;
-  --color-rose-gold: #c98a83;
+  --color-champagne: #f2e3d2;
+  --color-champagne-deep: #e4cdb7;
+  --color-rose-gold: #c08a84;
 
-  --color-foreground: #2b2125;
-  --color-ink: #2b2125;
-  --color-foreground-muted: #6a575b;
-  /* AA on every light surface in the palette (min 4.74:1 on sunken sand),
-     while staying a warm taupe rather than a cold grey. */
-  --color-foreground-subtle: #756063;
+  --color-foreground: #241a20;
+  --color-ink: #241a20;
+  --color-muted: #6b5a60;
+  --color-foreground-muted: #6b5a60;
+  /* AA on every light surface in the palette (min 4.83:1 on the deepest
+     rose-taupe), while staying a warm taupe rather than a cold grey. */
+  --color-foreground-subtle: #6f5d64;
 
-  --color-border: #ead9cf;
-  --color-border-strong: #dcc3b5;
+  --color-border: #e8d8d2;
+  --color-border-strong: #d7c2bb;
 
   --color-primary: #d81b60;
-  /* Deep raspberry clears AA on porcelain, champagne, sand, primary-soft and
-     the brand-100 hover (min 5.91:1). The brighter logo pink stays reserved
-     for large decorative marks. */
+  /* Deep raspberry clears AA on porcelain, champagne, rose-taupe and
+     primary-soft (min 5.72:1). The brighter logo pink stays reserved for
+     large decorative marks. */
   --color-primary-strong: #a81455;
   --color-primary-strong-hover: #8c1248;
-  --color-primary-soft: #f8e9ed;
+  --color-primary-soft: #f7e8ed;
 
   --color-accent: #d9b26a;
-  --color-accent-strong: #8a5a14;
+  --color-accent-strong: #7d5316;
 
   --color-success: #067647;
   --color-success-soft: #ecfdf3;
@@ -115,17 +117,44 @@
   --radius-2xl: 1.75rem;
   --radius-3xl: 2.25rem;
 
-  /* --- Elevation (soft cocoa-tinted, never harsh) --------------------------- */
+  /* --- Elevation (soft plum-tinted, never harsh) --------------------------- */
   --shadow-soft:
-    0 1px 2px rgb(60 38 28 / 0.04), 0 4px 12px rgb(60 38 28 / 0.05);
+    0 1px 2px rgb(52 28 38 / 0.04), 0 4px 12px rgb(52 28 38 / 0.05);
   --shadow-card:
-    0 1px 2px rgb(60 38 28 / 0.05), 0 10px 24px -8px rgb(60 38 28 / 0.12);
+    0 1px 2px rgb(52 28 38 / 0.05), 0 10px 24px -8px rgb(52 28 38 / 0.12);
   --shadow-lifted:
-    0 2px 4px rgb(60 38 28 / 0.06), 0 20px 44px -14px rgb(60 38 28 / 0.2);
+    0 2px 4px rgb(52 28 38 / 0.06), 0 20px 44px -14px rgb(52 28 38 / 0.2);
   --shadow-focus: 0 0 0 3px rgb(168 20 85 / 0.28);
 
   /* --- Motion ------------------------------------------------------------- */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * Decorative dark panels and editorial accents. Themes override these via the
+ * inline token set in `src/config/themes.ts`; the values here are the "current"
+ * fallback for CSS that renders before/without a theme attribute.
+ */
+:root {
+  --theme-dark: #241a20;
+  --theme-dark-2: #4a2a36;
+  --theme-on-dark: #f0dcc6;
+  --theme-on-dark-accent: #dfa9b9;
+  --theme-wordmark: #ecddd5;
+
+  /* --- Scroll choreography ------------------------------------------------
+     One rhythm for every entrance on the site. The CTA is never more than
+     four steps behind the eyebrow, so nothing waits on motion to become
+     useful. Phones drop the stagger entirely. */
+  --stt-reveal-duration: 620ms;
+  --stt-reveal-distance: 1.125rem;
+  --stt-stagger: 64ms;
+}
+
+@media (max-width: 639px) {
+  :root {
+    --stt-reveal-duration: 480ms;
+  }
 }
 
 /**
@@ -171,23 +200,33 @@ html:not([lang="en"]) .nf-lang-en {
   body {
     background-color: var(--color-background);
     /*
-     * Layered "paper and light" canvas: a champagne glow from the top left,
-     * the faintest rose reflection from the top right, then a warm ivory-to-
-     * sand wash. It keeps every flat section from looking like bare white
-     * without tinting the whole page pink.
+     * Layered "silk paper" canvas: a champagne glow from the top left, the
+     * faintest rose reflection from the top right, a rose-gold breath at the
+     * bottom, then a porcelain-to-rose-ivory wash. It keeps flat sections from
+     * looking like bare white without tinting the whole page pink.
      */
     background-image:
       radial-gradient(
         72% 55% at 6% -8%,
-        rgb(217 178 106 / 0.16) 0%,
+        color-mix(in srgb, var(--color-accent) 14%, transparent) 0%,
         transparent 62%
       ),
       radial-gradient(
         60% 45% at 100% 2%,
-        rgb(216 27 96 / 0.055) 0%,
+        color-mix(in srgb, var(--color-primary) 5%, transparent) 0%,
         transparent 58%
       ),
-      linear-gradient(180deg, #fdf9f4 0%, #faf6f1 46%, #f8f1e9 100%);
+      radial-gradient(
+        42% 32% at 50% 108%,
+        color-mix(in srgb, var(--color-rose-gold) 9%, transparent) 0%,
+        transparent 62%
+      ),
+      linear-gradient(
+        180deg,
+        var(--color-surface) 0%,
+        var(--color-background) 46%,
+        var(--color-surface-muted) 100%
+      );
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-synthesis-weight: none;
@@ -219,8 +258,8 @@ html:not([lang="en"]) .nf-lang-en {
   }
 
   ::selection {
-    background-color: var(--color-brand-100);
-    color: var(--color-brand-900);
+    background-color: var(--color-champagne);
+    color: var(--color-foreground);
   }
 
   /* Slim, brand-tinted scrollbar where the browser supports it. Purely
@@ -228,7 +267,7 @@ html:not([lang="en"]) .nf-lang-en {
   @supports (scrollbar-width: thin) {
     html {
       scrollbar-width: thin;
-      scrollbar-color: var(--color-brand-200) transparent;
+      scrollbar-color: var(--color-border-strong) transparent;
     }
   }
 
@@ -242,13 +281,13 @@ html:not([lang="en"]) .nf-lang-en {
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: var(--color-brand-200);
+    background-color: var(--color-border-strong);
     border: 3px solid var(--color-background);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-brand-300);
+    background-color: var(--color-rose-gold);
   }
 
   /* Only show focus rings for keyboard users when a custom ring is applied. */
@@ -301,6 +340,78 @@ html:not([lang="en"]) .nf-lang-en {
   margin-bottom: -0.16em;
 }
 
+/* --- Component polish: raspberry lacquer + champagne paper ---------------- */
+.stt-btn-primary {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background-image: linear-gradient(
+    135deg,
+    var(--color-brand-700) 0%,
+    var(--color-primary-strong) 52%,
+    var(--color-brand-900) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 10px 24px -14px rgb(60 38 28 / 0.55);
+}
+
+.stt-btn-primary:hover {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-brand-800) 0%,
+    var(--color-primary-strong-hover) 48%,
+    var(--color-brand-900) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 16px 32px -16px rgb(60 38 28 / 0.6);
+}
+
+.stt-btn-secondary {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-surface-muted) 100%
+  );
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85);
+}
+
+.stt-btn-secondary:hover {
+  border-color: var(--color-sun-400);
+  background-image: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-champagne) 100%
+  );
+  color: var(--color-primary-strong);
+}
+
+.stt-btn-inverse {
+  border: 1px solid rgb(255 255 255 / 0.5);
+  background-image: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-surface-muted) 100%
+  );
+  color: var(--color-primary-strong);
+}
+
+.stt-btn-inverse:hover {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-champagne) 100%
+  );
+}
+
+/* Porcelain fields catch the light like the cards around them. */
+.stt-control {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-surface-muted) 100%
+  );
+}
+
 /* Page container: one source of truth for horizontal rhythm. */
 @utility container-page {
   width: 100%;
@@ -333,8 +444,13 @@ html:not([lang="en"]) .nf-lang-en {
   background-image:
     radial-gradient(
       60% 50% at 100% 0%,
-      rgb(217 178 106 / 0.14) 0%,
+      color-mix(in srgb, var(--color-accent) 12%, transparent) 0%,
       transparent 62%
+    ),
+    radial-gradient(
+      50% 42% at 0% 100%,
+      color-mix(in srgb, var(--color-rose-gold) 7%, transparent) 0%,
+      transparent 60%
     ),
     linear-gradient(
       180deg,
@@ -350,8 +466,13 @@ html:not([lang="en"]) .nf-lang-en {
   background-image:
     radial-gradient(
       55% 45% at 0% 100%,
-      rgb(216 27 96 / 0.06) 0%,
+      color-mix(in srgb, var(--color-rose-gold) 10%, transparent) 0%,
       transparent 60%
+    ),
+    radial-gradient(
+      45% 38% at 100% 0%,
+      color-mix(in srgb, var(--color-accent) 8%, transparent) 0%,
+      transparent 58%
     ),
     linear-gradient(
       180deg,
@@ -383,36 +504,69 @@ html:not([lang="en"]) .nf-lang-en {
   gap: 8px;
   border: 1px solid var(--color-border-strong);
   border-radius: 999px;
-  background: var(--color-surface);
+  background: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-champagne) 190%
+  );
   padding: 8px 16px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.16em;
   color: var(--color-primary-strong);
-  box-shadow: var(--shadow-soft);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    0 8px 20px -16px rgb(52 28 38 / 0.55);
 }
 
-@keyframes stt-dot-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 3px rgba(168, 20, 85, 0.14);
-  }
-  50% {
-    transform: scale(1.18);
-    box-shadow: 0 0 0 6px rgba(168, 20, 85, 0.26);
-  }
+
+
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-primary-strong);
 }
 
-.eyebrow-pill > span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+.section-eyebrow-number {
+  flex: none;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-accent-strong);
+}
+
+.section-eyebrow-rule {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 1px;
   background: linear-gradient(
-    135deg,
-    var(--color-primary-strong),
+    90deg,
+    var(--color-rose-gold),
     var(--color-sun-400)
   );
-  animation: stt-dot-pulse 3.5s ease-in-out infinite;
+}
+
+.section-eyebrow-text {
+  min-width: 0;
 }
 
 .intro-centered h2 {
@@ -462,6 +616,27 @@ html:not([lang="en"]) .nf-lang-en {
   }
 }
 
+.stt-footer {
+  background-color: var(--color-surface-sunken);
+  background-image:
+    radial-gradient(
+      70% 55% at 50% 0%,
+      rgb(217 178 106 / 0.18) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      45% 40% at 100% 100%,
+      rgb(168 20 85 / 0.05) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      #f2e6dc 0%,
+      var(--color-surface-sunken) 52%,
+      #eadbd0 100%
+    );
+}
+
 .footer-glow {
   pointer-events: none;
   position: absolute;
@@ -472,7 +647,8 @@ html:not([lang="en"]) .nf-lang-en {
   transform: translateX(-50%);
   background: radial-gradient(
     closest-side,
-    rgb(168 20 85 / 0.09),
+    color-mix(in srgb, var(--color-accent) 20%, transparent),
+    color-mix(in srgb, var(--color-primary) 4%, transparent) 58%,
     transparent
   );
 }
@@ -487,7 +663,7 @@ html:not([lang="en"]) .nf-lang-en {
   font-size: clamp(72px, 17vw, 210px);
   line-height: 0.78;
   letter-spacing: -0.02em;
-  color: var(--color-brand-100);
+  color: var(--color-champagne-deep);
   margin-bottom: -0.12em;
 }
 
@@ -694,7 +870,7 @@ select option {
 
 @keyframes stt-reveal-zoom {
   from {
-    transform: translate3d(0, 0.5rem, 0) scale(0.96);
+    transform: translate3d(0, 0.5rem, 0);
   }
   to {
     transform: none;
@@ -709,63 +885,98 @@ select option {
   backface-visibility: hidden;
   -webkit-font-smoothing: subpixel-antialiased;
   transform-origin: center bottom;
-  will-change: opacity, transform;
+  /* No permanent `will-change`: the browser promotes the layer for the
+     duration of the transition. Keeping it on every reveal promoted dozens of
+     large layers for the whole session. */
 }
 
 /* Base transitions */
 .stt-reveal-3d[data-revealed="false"],
 .stt-reveal-3d[data-revealed="true"] {
   transition:
-    opacity 820ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 820ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--stt-reveal-duration, 620ms) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--stt-reveal-duration, 620ms) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Rise (Default). Keep the motion two-dimensional so controls inside a reveal
    retain their real tap-target size while the section enters. */
 .stt-reveal-3d[data-reveal-3d="rise"][data-revealed="false"] {
-  opacity: 0;
   transform: translateY(24px);
 }
 .stt-reveal-3d[data-reveal-3d="rise"][data-revealed="true"] {
-  opacity: 1;
   transform: translateY(0);
 }
 
 /* Side entrances rise vertically so an off-canvas reveal cannot add page scroll. */
 .stt-reveal-3d[data-reveal-3d="left"][data-revealed="false"] {
-  opacity: 0;
   transform: translateY(24px);
 }
 .stt-reveal-3d[data-reveal-3d="left"][data-revealed="true"] {
-  opacity: 1;
   transform: translateY(0);
 }
 
 /* Right */
 .stt-reveal-3d[data-reveal-3d="right"][data-revealed="false"] {
-  opacity: 0;
   transform: translateY(24px);
 }
 .stt-reveal-3d[data-reveal-3d="right"][data-revealed="true"] {
-  opacity: 1;
   transform: translateY(0);
 }
 
 /* Zoom is a short rise; scaling a tall form or filter panel shrinks its controls. */
 .stt-reveal-3d[data-reveal-3d="zoom"][data-revealed="false"] {
-  opacity: 0;
   transform: translateY(16px);
 }
 .stt-reveal-3d[data-reveal-3d="zoom"][data-revealed="true"] {
-  opacity: 1;
   transform: translateY(0);
+}
+
+/**
+ * Sequenced section heading (`RevealGroup`).
+ *
+ * The wrapper is watched once; the direct children arrive in reading order.
+ * Only opacity + transform move, and the delay is capped at four steps so the
+ * CTA is never held back by decorative choreography. Phones have no stagger.
+ */
+.stt-seq > * {
+  transition:
+    opacity var(--stt-reveal-duration, 620ms) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--stt-reveal-duration, 620ms) cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stt-seq[data-revealed="false"] > * {
+  opacity: 0;
+  transform: translate3d(0, var(--stt-reveal-distance, 1.125rem), 0);
+}
+.stt-seq[data-revealed="true"] > * {
+  opacity: 1;
+  transform: none;
+}
+.stt-seq > :nth-child(2) {
+  transition-delay: calc(var(--stt-stagger, 64ms) * 1);
+}
+.stt-seq > :nth-child(3) {
+  transition-delay: calc(var(--stt-stagger, 64ms) * 2);
+}
+.stt-seq > :nth-child(4) {
+  transition-delay: calc(var(--stt-stagger, 64ms) * 3);
+}
+.stt-seq > :nth-child(5) {
+  transition-delay: calc(var(--stt-stagger, 64ms) * 4);
+}
+@media (max-width: 639px) {
+  .stt-seq > :nth-child(n) {
+    transition-delay: 0ms;
+  }
 }
 
 /* Reduced motion, paused & print overrides */
 @media (prefers-reduced-motion: reduce) {
   .stt-reveal-3d,
   .stt-reveal-3d[data-revealed="false"],
-  .stt-reveal-3d[data-revealed="true"] {
+  .stt-reveal-3d[data-revealed="true"],
+  .stt-seq > *,
+  .stt-seq[data-revealed="false"] > *,
+  .stt-seq[data-revealed="true"] > * {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
@@ -773,7 +984,10 @@ select option {
 }
 html[data-motion-paused="true"] .stt-reveal-3d,
 html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="false"],
-html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
+html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"],
+html[data-motion-paused="true"] .stt-seq > *,
+html[data-motion-paused="true"] .stt-seq[data-revealed="false"] > *,
+html[data-motion-paused="true"] .stt-seq[data-revealed="true"] > * {
   opacity: 1 !important;
   transform: none !important;
   transition: none !important;
@@ -781,7 +995,10 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 @media print {
   .stt-reveal-3d,
   .stt-reveal-3d[data-revealed="false"],
-  .stt-reveal-3d[data-revealed="true"] {
+  .stt-reveal-3d[data-revealed="true"],
+  .stt-seq > *,
+  .stt-seq[data-revealed="false"] > *,
+  .stt-seq[data-revealed="true"] > * {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
@@ -828,12 +1045,19 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   }
 }
 
-@keyframes stt-mask-in {
+/**
+ * Image curtain.
+ *
+ * A transform-only cover instead of an animated `clip-path`: the overlay is
+ * painted once and then composited, so a full-width photo never repaints while
+ * it is uncovered. It also leaves the image's own shadow/border intact.
+ */
+@keyframes stt-unveil {
   from {
-    clip-path: inset(0 0 0 100%);
+    transform: translate3d(0, 0, 0);
   }
   to {
-    clip-path: inset(0 0 0 0);
+    transform: translate3d(0, -101%, 0);
   }
 }
 
@@ -848,7 +1072,11 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 
 .stt-tour-card {
   border-radius: 24px;
-  background: linear-gradient(180deg, #ffffff 0%, #fffbfd 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-surface) 0%,
+    var(--color-surface-muted) 100%
+  );
   transition:
     border-color 280ms ease,
     box-shadow 360ms ease,
@@ -856,7 +1084,11 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 }
 .stt-card-media {
   border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(135deg, #234844 0%, #0e5a56 100%);
+  background: linear-gradient(
+    135deg,
+    var(--theme-dark) 0%,
+    var(--theme-dark-2) 100%
+  );
 }
 /* Horizontal spotlight: photo column gets a right rule instead of a bottom
    one on sm and up. */
@@ -870,67 +1102,68 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(9 46 48 / 0.06) 0%, transparent 40%, rgb(9 46 48 / 0.42) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-dark) 8%, transparent) 0%,
+    transparent 40%,
+    color-mix(in srgb, var(--theme-dark) 42%, transparent) 100%
+  );
 }
 .stt-card-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.94);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 700;
   color: var(--color-ink);
-  box-shadow: 0 8px 20px rgb(33 61 59 / 0.16);
+  box-shadow: 0 8px 20px
+    color-mix(in srgb, var(--theme-dark) 18%, transparent);
   backdrop-filter: blur(8px);
 }
-@keyframes stt-badge-pulse {
-  0%, 100% {
-    box-shadow: 0 8px 20px rgb(168 20 85 / 0.4);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 10px 24px rgb(168 20 85 / 0.6), 0 0 0 3px rgb(168 20 85 / 0.18);
-    transform: scale(1.02);
-  }
-}
-@keyframes stt-price-bob {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -3px, 0);
-  }
-}
-
 /* Editorial pick (Bestseller/Honeymoon-style badge). Rendered only when the
    owner sets `badge` on the tour — never auto-derived. */
 .stt-card-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  border: 1px solid rgb(255 255 255 / 0.18);
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(
+    135deg,
+    #8c1248 0%,
+    var(--color-primary-strong) 54%,
+    #6f0f3a 100%
+  );
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 800;
   color: #fff;
-  box-shadow: 0 8px 20px rgb(168 20 85 / 0.4);
-  animation: stt-badge-pulse 4s ease-in-out infinite;
+  box-shadow:
+    inset 0 1px 0 rgb(255 209 102 / 0.35),
+    0 8px 20px rgb(60 38 28 / 0.32);
 }
 .stt-card-price-float {
   position: absolute;
   right: 12px;
   bottom: 12px;
+  border: 1px solid rgb(255 255 255 / 0.2);
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(
+    135deg,
+    #8c1248 0%,
+    var(--color-primary-strong) 54%,
+    #6f0f3a 100%
+  );
   color: white;
   font-size: 13px;
   font-weight: 800;
   padding: 7px 14px;
-  box-shadow: 0 12px 26px rgb(168 20 85 / 0.4);
-  animation: stt-price-bob 4.5s ease-in-out infinite;
+  box-shadow:
+    inset 0 1px 0 rgb(255 209 102 / 0.38),
+    0 12px 26px rgb(60 38 28 / 0.34);
 }
 .stt-card-dest {
   display: flex;
@@ -1019,25 +1252,35 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   align-items: center;
   gap: 8px;
   border-radius: 999px;
-  background: var(--color-primary-soft);
-  border: 1px solid var(--color-brand-200);
+  background: linear-gradient(180deg, #fffdfb 0%, #fff5e9 100%);
+  border: 1px solid var(--color-champagne-deep);
   color: var(--color-primary-strong);
   font-size: 13px;
   font-weight: 800;
   padding: 10px 16px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85);
   transition:
     background 0.25s,
     color 0.25s,
-    border-color 0.25s;
+    border-color 0.25s,
+    box-shadow 0.25s;
 }
 .stt-tour-card:hover .stt-card-cta {
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-700) 0%,
+    var(--color-primary-strong) 52%,
+    var(--color-brand-900) 100%
+  );
   border-color: transparent;
   color: white;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 8px 18px -10px rgb(60 38 28 / 0.5);
 }
 
 .stt-tour-card:focus-within {
-  border-color: var(--color-brand-300);
+  border-color: var(--color-rose-gold);
   box-shadow:
     0 0 0 3px var(--color-brand-100),
     var(--shadow-lifted);
@@ -1059,7 +1302,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 
 @media (hover: hover) and (pointer: fine) {
   .stt-tour-card:hover {
-    border-color: var(--color-brand-200);
+    border-color: var(--color-rose-gold);
     box-shadow: var(--shadow-lifted);
   }
 
@@ -1110,8 +1353,8 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   .stt-tour-card:hover {
     transform: translateY(-0.35rem) perspective(1000px) rotateX(1.5deg);
     box-shadow:
-      0 20px 44px -10px rgb(60 38 28 / 0.16),
-      0 6px 16px -4px rgb(33 61 59 / 0.08);
+      0 20px 44px -10px rgb(52 28 38 / 0.16),
+      0 6px 16px -4px rgb(52 28 38 / 0.1);
   }
 
   .stt-tour-card:hover .stt-card-photo {
@@ -1155,41 +1398,11 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   }
 }
 
-@keyframes stt-wave-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgb(168 20 85 / 0);
-  }
-  50% {
-    transform: scale(1.06);
-    box-shadow: 0 0 0 6px rgb(168 20 85 / 0.14);
-  }
-}
-
 .stt-trust-icon {
-  animation: stt-wave-pulse 6s ease-in-out infinite;
-}
-
-@keyframes stt-phone-buzz {
-  0%, 84%, 100% {
-    transform: scale(1) rotate(0deg);
-  }
-  87% {
-    transform: scale(1.15) rotate(-10deg);
-  }
-  90% {
-    transform: scale(1.15) rotate(10deg);
-  }
-  93% {
-    transform: scale(1.15) rotate(-6deg);
-  }
-  96% {
-    transform: scale(1.08) rotate(0deg);
-  }
+  transform-origin: center;
 }
 
 .stt-phone-buzz {
-  animation: stt-phone-buzz 7s ease-in-out infinite;
   transform-origin: center;
   display: inline-block;
 }
@@ -1222,31 +1435,31 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   @media (prefers-reduced-motion: no-preference) {
     /* Rise into place as the element enters. Transform only — see the note on
        `stt-rise` for why there is no opacity here. */
-    [data-reveal] {
+    .home-editorial [data-reveal] {
       animation: stt-rise linear both;
       animation-timeline: view();
       animation-range: entry 0% cover 30%;
     }
 
-    [data-reveal="left"] {
+    .home-editorial [data-reveal="left"] {
       animation-name: stt-reveal-left;
     }
 
-    [data-reveal="right"] {
+    .home-editorial [data-reveal="right"] {
       animation-name: stt-reveal-right;
     }
 
-    [data-reveal="zoom"] {
+    .home-editorial [data-reveal="zoom"] {
       animation-name: stt-reveal-zoom;
     }
 
-    /* Explicit stagger for siblings (60ms steps, capped at 120ms). */
-    [data-reveal-delay="1"] {
-      animation-delay: 60ms;
+    /* A small range offset staggers siblings without delaying scroll-driven motion. */
+    .home-editorial [data-reveal-delay="1"] {
+      animation-range: entry 2% cover 30%;
     }
 
-    [data-reveal-delay="2"] {
-      animation-delay: 120ms;
+    .home-editorial [data-reveal-delay="2"] {
+      animation-range: entry 4% cover 30%;
     }
 
     /* Continuous drift for hero imagery — the "motion follows the scroll" feel.
@@ -1257,23 +1470,27 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
       animation-range: cover;
     }
 
-    /* Tour grid stagger: row-mates arrive as a short cascade, capped at 120ms
-       so nothing ever waits on motion. */
-    .stt-tour-grid > :nth-child(3n + 2) {
-      animation-delay: 60ms;
-    }
-    .stt-tour-grid > :nth-child(3n) {
-      animation-delay: 120ms;
-    }
   }
 
-  /* Values spotlight: a one-way mask wipe on desktop only. Mobile keeps the
-     static image; reduced motion, manual pause and print ignore it. */
-  @media (prefers-reduced-motion: no-preference) and (min-width: 1024px) {
-    .stt-mask-reveal {
-      animation: stt-mask-in linear both;
+  /* Large-photo curtain. Only the wrapper's ::after moves; the photo itself
+     stays static, so this is compositor work on one layer.
+     Browsers without view() never render the overlay at all. */
+  @media (prefers-reduced-motion: no-preference) {
+    [data-unveil] {
+      position: relative;
+      overflow: hidden;
+    }
+
+    [data-unveil]::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: var(--unveil-color, var(--color-surface));
+      animation: stt-unveil linear both;
       animation-timeline: view();
-      animation-range: entry 0% cover 35%;
+      animation-range: entry 0% cover 34%;
     }
   }
 }
@@ -1302,11 +1519,16 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   .stt-hero-bloom,
   .stt-coastal-lines,
   .stt-hero-badge,
-  .stt-mask-reveal {
+  [data-unveil] {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;
     clip-path: none !important;
+  }
+
+  [data-unveil]::after {
+    content: none !important;
+    animation: none !important;
   }
 
   header[data-hidden="true"] {
@@ -1344,7 +1566,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   .stt-card-arrow,
   .stt-hero-bloom,
   .stt-coastal-lines,
-  .stt-mask-reveal,
+  [data-unveil],
   .stt-hero-badge {
     animation: none !important;
     transform: none !important;
@@ -1352,10 +1574,20 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
     clip-path: none !important;
   }
 
+  [data-unveil]::after {
+    content: none !important;
+    animation: none !important;
+  }
+
   /* The header may still condense, but it must not slide out of reach. */
   header[data-hidden="true"] {
     transform: none !important;
   }
+}
+
+html[data-motion-paused="true"] [data-unveil]::after {
+  content: none !important;
+  animation: none !important;
 }
 /* Coastal Studio: quiet, controllable motion and a practical discovery path. */
 .stt-finder-section {
@@ -1382,8 +1614,16 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   overflow: hidden;
   pointer-events: none;
   background:
-    radial-gradient(120% 100% at 6% 0%, #ffe4ef 0%, transparent 52%),
-    radial-gradient(90% 80% at 100% 100%, #fff6e8 0%, transparent 50%);
+    radial-gradient(
+      120% 100% at 6% 0%,
+      color-mix(in srgb, var(--color-primary) 10%, transparent) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      90% 80% at 100% 100%,
+      color-mix(in srgb, var(--color-accent) 12%, transparent) 0%,
+      transparent 50%
+    );
 }
 .stt-finder-glow:before {
   content: "";
@@ -1414,7 +1654,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   height: 52px;
   flex-shrink: 0;
   border-radius: 17px;
-  background: linear-gradient(140deg, #ff0366, #ff7c2c);
+  background: linear-gradient(145deg, var(--color-brand-700), var(--color-sun-500));
   color: #fff;
   box-shadow:
     0 8px 22px #e0005a30,
@@ -1534,7 +1774,8 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   border-color: var(--color-primary-strong);
   background: var(--color-primary-soft);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px #e0005a18;
+  box-shadow: 0 6px 16px
+    color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 .stt-time-button > svg:first-child {
   color: var(--color-primary-strong);
@@ -1566,7 +1807,9 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 }
 .stt-time-button[aria-expanded="true"] {
   border-color: var(--color-primary-strong);
-  box-shadow: 0 0 0 4px #e0005a14, 0 6px 16px #e0005a18;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--color-primary) 8%, transparent),
+    0 6px 16px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 .stt-finder-fields .stt-time-option {
   justify-content: flex-start;
@@ -1581,12 +1824,12 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   z-index: 30;
   display: grid;
   gap: 8px;
-  background: rgb(255 253 253 / 0.86);
-  border: 1px solid rgb(255 255 255 / 0.65);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
   border-radius: 22px;
   box-shadow:
-    0 24px 70px -12px rgb(120 10 50 / 0.35),
-    inset 0 1px 0 #fff;
+    0 24px 70px -12px color-mix(in srgb, var(--theme-dark) 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-surface) 90%, transparent);
   -webkit-backdrop-filter: blur(22px) saturate(1.5);
   backdrop-filter: blur(22px) saturate(1.5);
   padding: 12px;
@@ -1599,7 +1842,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   position: absolute;
   inset: 0 0 auto 0;
   height: 3px;
-  background: linear-gradient(90deg, #e0005a, #ff5c99 55%, #ffd166);
+  background: linear-gradient(90deg, var(--color-brand-700), var(--color-brand-300) 55%, var(--color-sun-400));
 }
 @keyframes stt-time-in {
   from {
@@ -1617,10 +1860,11 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   align-items: center;
   gap: 12px;
   width: 100%;
-  border: 1px solid rgb(240 220 230 / 0.9);
+  border: 1px solid color-mix(in srgb, var(--color-border) 90%, transparent);
   border-radius: 16px;
-  background: rgb(255 255 255 / 0.7);
-  box-shadow: 0 2px 10px rgb(120 10 50 / 0.06);
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  box-shadow: 0 2px 10px
+    color-mix(in srgb, var(--theme-dark) 8%, transparent);
   padding: 10px 12px 10px 16px;
   min-height: 56px;
   text-align: left;
@@ -1663,34 +1907,36 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   bottom: 12px;
   width: 3px;
   border-radius: 3px;
-  background: var(--stt-accent, #e0005a);
+  background: var(--stt-accent, var(--color-primary-strong));
   opacity: 0.55;
 }
 .stt-time-option:nth-child(1) {
-  --stt-accent: #ff0366;
+  --stt-accent: var(--color-primary);
 }
 .stt-time-option:nth-child(2) {
-  --stt-accent: #ff7c2c;
+  --stt-accent: var(--color-primary-strong);
 }
 .stt-time-option:nth-child(3) {
-  --stt-accent: #ff9f1c;
+  --stt-accent: var(--color-accent);
 }
 .stt-time-option:nth-child(4) {
-  --stt-accent: #0e9f8a;
+  --stt-accent: var(--color-rose-gold);
 }
 .stt-time-option:nth-child(5) {
-  --stt-accent: #c4004e;
+  --stt-accent: var(--color-brand-600);
 }
 .stt-time-option:hover {
   transform: translateX(3px);
-  border-color: #f0a8c4;
-  box-shadow: 0 8px 22px rgb(224 0 90 / 0.14);
+  border-color: var(--color-border-strong);
+  box-shadow: 0 8px 22px
+    color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 .stt-time-option[data-active="true"] {
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 12px 28px rgb(224 0 90 / 0.35);
+  box-shadow: 0 12px 28px
+    color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 .stt-time-option[data-active="true"]::after {
   background: #fff;
@@ -1788,7 +2034,7 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   color: white;
   font-size: 14px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(135deg, var(--color-primary-strong), var(--color-brand-400));
   box-shadow:
     0 8px 22px #d6005030,
     inset 0 1px 0 #ffffff33;
@@ -1841,7 +2087,8 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   background: var(--color-primary-soft);
   color: var(--color-primary-strong);
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px #e0005a18;
+  box-shadow: 0 6px 16px
+    color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 @media (max-width: 640px) {
   .stt-finder-island {
@@ -1955,8 +2202,8 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
   background-size: 18px 18px;
 }
 .stt-search-form select option {
-  background: white;
-  color: #213d3b;
+  background: var(--color-surface);
+  color: var(--color-ink);
   font-size: 14px;
 }
 .stt-search-form input:hover,
@@ -1968,26 +2215,37 @@ html[data-motion-paused="true"] .stt-reveal-3d[data-revealed="true"] {
 .stt-search-form select:focus {
   outline: none;
   border-color: var(--color-primary-strong);
-  box-shadow: 0 0 0 3px #d1005322;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
   background: white;
 }
 .stt-search-form button {
   min-height: 48px;
+  border: 1px solid rgb(255 255 255 / 0.12);
   border-radius: 14px;
   padding: 12px 22px;
-  background: linear-gradient(135deg, var(--color-primary-strong), #ff0366);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-700) 0%,
+    var(--color-primary-strong) 52%,
+    var(--color-brand-900) 100%
+  );
   color: white;
   font-size: 13px;
   font-weight: 700;
-  box-shadow: 0 10px 24px #d1005330;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 10px 24px rgb(60 38 28 / 0.16);
   transition:
     transform 0.25s,
     filter 0.25s,
     box-shadow 0.25s;
 }
 .stt-search-form button:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.06);
   transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.24),
+    0 14px 28px rgb(60 38 28 / 0.2);
 }
 @keyframes stt-ocean-breathe {
   0%,
@@ -2009,13 +2267,7 @@ html[data-motion-paused="true"] [data-entrance],
 html[data-motion-paused="true"] [data-reveal],
 html[data-motion-paused="true"] [data-parallax],
 html[data-motion-paused="true"] .stt-hero-bloom,
-html[data-motion-paused="true"] .stt-mask-reveal,
-html[data-motion-paused="true"] .stt-coastal-lines,
-html[data-motion-paused="true"] .stt-trust-icon,
-html[data-motion-paused="true"] .stt-phone-buzz,
-html[data-motion-paused="true"] .stt-card-badge,
-html[data-motion-paused="true"] .stt-card-price-float,
-html[data-motion-paused="true"] .eyebrow-pill > span {
+html[data-motion-paused="true"] .stt-coastal-lines {
   animation: none !important;
   transform: none !important;
   opacity: 1 !important;

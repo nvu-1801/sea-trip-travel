@@ -6,7 +6,8 @@ import {
   hashPassword,
   verifyPassword,
 } from "@/server/cms/auth";
-import { db, audit } from "@/server/cms/db";
+import { db } from "@/server/cms/db";
+import { auditFailure, auditRequest } from "@/server/cms/audit";
 import { handle, jsonBody, reply } from "@/server/cms/http";
 export async function GET() {
   return handle(async () => {
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   return handle(async () => {
     await requireSession(request);
+    auditRequest(request, "logout", "admin");
     await logout();
     return reply({ ok: true });
   });
@@ -47,13 +49,20 @@ export async function PATCH(request: Request) {
     const user = db()
       .prepare("SELECT password FROM admin WHERE id=1")
       .get() as { password: string };
-    if (!verifyPassword(data.current, user.password))
+    if (!verifyPassword(data.current, user.password)) {
+      auditFailure(
+        request,
+        "password-change",
+        "admin",
+        "Mật khẩu hiện tại không đúng",
+      );
       return reply({ error: "Mật khẩu hiện tại không đúng" }, 400);
+    }
     db()
       .prepare("UPDATE admin SET password=? WHERE id=1")
       .run(hashPassword(data.password));
     db().exec("DELETE FROM sessions");
-    audit("password-change", "admin");
+    auditRequest(request, "password-change", "admin");
     await logout();
     return reply({ ok: true });
   });

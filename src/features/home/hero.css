@@ -8,8 +8,8 @@
   isolation: isolate;
   overflow: hidden;
   min-height: 100svh;
-  background: #173b42;
-  color: #fff;
+  background: var(--theme-dark);
+  color: var(--theme-on-dark);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -50,12 +50,20 @@
   background:
     linear-gradient(
       90deg,
-      rgb(7 30 34 / 0.76),
-      rgb(7 30 34 / 0.3) 52%,
+      color-mix(in srgb, var(--theme-dark) 78%, transparent),
+      color-mix(in srgb, var(--theme-dark) 32%, transparent) 52%,
       transparent 85%
     ),
-    linear-gradient(0deg, rgb(9 28 33 / 0.7), transparent 42%),
-    linear-gradient(180deg, rgb(9 28 33 / 0.55), transparent 24%);
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--theme-dark) 72%, transparent),
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--theme-dark) 58%, transparent),
+      transparent 24%
+    );
 }
 .stt-cinema-copy {
   max-width: 850px;
@@ -79,21 +87,28 @@
   animation: none;
 }
 .stt-cinema-eyebrow {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  gap: 12px;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 15px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.4;
+  letter-spacing: 0.005em;
+  color: var(--theme-on-dark);
+  text-shadow: 0 1px 12px
+    color-mix(in srgb, var(--theme-dark) 45%, transparent);
   margin-bottom: 22px;
 }
-.stt-cinema-eyebrow > span {
-  width: 7px;
-  height: 7px;
+/* A fine gold rule replaces the old pink dot: quieter, more editorial. */
+.stt-cinema-eyebrow::before {
+  content: "";
+  width: 30px;
+  height: 1px;
   flex-shrink: 0;
-  background: #ffb5ce;
-  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, var(--color-sun-400));
+  opacity: 0.95;
 }
 .stt-cinema-copy h1 {
   font-family: var(--font-fraunces), Georgia, serif;
@@ -105,7 +120,7 @@
 }
 .stt-cinema-copy h1 > span {
   display: block;
-  color: #ffd6e4;
+  color: var(--theme-on-dark-accent);
   margin-top: 6px;
   font-style: italic;
 }
@@ -114,7 +129,7 @@
   margin-top: 24px;
   font-size: 16px;
   line-height: 1.8;
-  color: #fff;
+  color: color-mix(in srgb, var(--theme-on-dark) 90%, transparent);
   text-wrap: pretty;
 }
 .stt-cinema-actions {
@@ -138,25 +153,44 @@
     background-color 180ms;
 }
 .stt-cinema-primary {
-  background: #d90057;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background-color: var(--color-primary-strong);
+  background-image: linear-gradient(
+    135deg,
+    var(--color-brand-700) 0%,
+    var(--color-primary-strong) 52%,
+    var(--color-brand-900) 100%
+  );
   color: #fff;
   padding: 16px 26px;
   border-radius: 50px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 12px 28px -14px rgb(0 0 0 / 0.5);
 }
 .stt-cinema-primary:hover {
-  background: #bc004b;
+  background-image: linear-gradient(
+    135deg,
+    var(--color-brand-800) 0%,
+    var(--color-primary-strong-hover) 48%,
+    var(--color-brand-900) 100%
+  );
   transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 18px 34px -16px rgb(0 0 0 / 0.55);
 }
 .stt-cinema-secondary {
-  color: #fff;
-  border-bottom: 1px solid #ffffff80;
+  color: var(--theme-on-dark);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--theme-on-dark) 55%, transparent);
 }
 .stt-cinema-secondary:hover {
-  border-color: #fff;
+  border-color: var(--theme-on-dark);
 }
 .stt-cinema-stage a:focus-visible,
 .stt-cinema-stage button:focus-visible {
-  outline: 3px solid #fff;
+  outline: 3px solid var(--theme-on-dark);
   outline-offset: 4px;
 }
 .stt-cinema-bottom {
@@ -247,42 +281,10 @@
 }
 .stt-hero-editorial .stt-hero-badge {
   border-radius: 4px 20px 20px 20px;
-  animation: stt-hero-badge-float 5.5s ease-in-out infinite;
 }
-@media (prefers-reduced-motion: no-preference) {
-  .stt-hero-bloom {
-    animation: stt-bloom-breathe 9s ease-in-out infinite alternate;
-  }
-  .stt-hero-editorial p[data-entrance] svg {
-    animation: stt-sparkle-spin 7s ease-in-out infinite;
-  }
-}
-@keyframes stt-hero-badge-float {
-  0%, 100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -6px, 0);
-  }
-}
-@keyframes stt-bloom-breathe {
-  0%, 100% {
-    transform: scale(1) translate3d(0, 0, 0);
-    opacity: 0.45;
-  }
-  50% {
-    transform: scale(1.08) translate3d(10px, -14px, 0);
-    opacity: 0.65;
-  }
-}
-@keyframes stt-sparkle-spin {
-  0%, 100% {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.15);
-  }
-}
+/* The bloom keeps its one-shot arrival from globals.css. The old infinite
+   "breathe" loop was removed so the hero does not compete with the first
+   scroll entrance below it. */
 .stt-hero-editorial [data-parallax] img {
   object-position: var(--hero-position, 50% 50%);
 }
@@ -290,9 +292,9 @@
   margin-top: 16px;
 }
 .stt-finder-island {
-  background: #fff;
+  background: var(--color-surface);
   box-shadow: none;
-  border: 1px solid #eddee4;
+  border: 1px solid var(--color-border);
   padding: 24px 28px;
 }
 .stt-finder-island::before {
@@ -306,7 +308,7 @@
   width: 28px;
   height: 28px;
   background: transparent;
-  color: #d90057;
+  color: var(--color-primary-strong);
   box-shadow: none;
 }
 .stt-finder-intro h2 {
@@ -320,7 +322,7 @@
 }
 .stt-finder-fields button {
   border-radius: 10px;
-  background: #d90057;
+  background: var(--color-primary-strong);
 }
 @keyframes stt-cinema-enter {
   from {
@@ -341,7 +343,12 @@
     padding: 128px 22px 22px;
   }
   .stt-cinema-shade {
-    background: linear-gradient(0deg, #091c21f0, #091c217a 65%, #091c2166);
+    background: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--theme-dark) 94%, transparent),
+      color-mix(in srgb, var(--theme-dark) 48%, transparent) 65%,
+      color-mix(in srgb, var(--theme-dark) 40%, transparent)
+    );
   }
   .stt-cinema-copy {
     max-width: 500px;
@@ -353,9 +360,13 @@
     line-height: 1.12;
   }
   .stt-cinema-eyebrow {
-    font-size: 9px;
-    letter-spacing: 0.09em;
+    gap: 10px;
+    font-size: 13px;
+    letter-spacing: 0;
     margin-bottom: 16px;
+  }
+  .stt-cinema-eyebrow::before {
+    width: 22px;
   }
   .stt-cinema-description {
     font-size: 14px;

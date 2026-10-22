@@ -6,8 +6,9 @@ import {
   getCategoryTourCount,
 } from "@/lib/data/categories";
 import { Container, Section } from "@/components/ui/layout";
+import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { AssetImage } from "@/components/ui/asset-image";
-import { Reveal } from "@/components/ui/reveal";
+import { Reveal, RevealGroup } from "@/components/ui/reveal";
 import type { Locale } from "@/i18n/config";
 import { landingSections } from "@/server/cms/store";
 import { localizePath } from "@/i18n/routing";
@@ -46,8 +47,8 @@ export function RegionsSection({ locale }: { locale: Locale }) {
     <Section id="kham-pha-vung-mien" className="journal-regions">
       <Container>
         <div className="regions-editorial">
-          <Reveal className="regions-heading">
-            <p className="journal-eyebrow">{copy.eyebrow}</p>
+          <RevealGroup className="regions-heading">
+            <SectionEyebrow className="journal-eyebrow">{copy.eyebrow}</SectionEyebrow>
             <h2>
               {copy.titleA}
               <br />
@@ -60,7 +61,7 @@ export function RegionsSection({ locale }: { locale: Locale }) {
             >
               {en ? "All domestic journeys" : "Xem hành trình trong nước"} ↗
             </Link>
-          </Reveal>
+          </RevealGroup>
           <ol className="region-postcards">
             {getChildCategories(domestic.id, locale).map((region, i) => (
               <Reveal as="li" key={region.id} delay={i}>

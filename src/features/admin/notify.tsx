@@ -7,7 +7,7 @@ export type ToastItem = { id: number; kind: ToastKind; text: string };
 
 const ICON: Record<ToastKind, string> = {
   success: "✓",
-  info: "◉",
+  info: "i",
   error: "!",
 };
 

@@ -3,7 +3,8 @@ import { mkdir, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { requireSession } from "@/server/cms/auth";
-import { cmsDataDir, db, audit } from "@/server/cms/db";
+import { cmsDataDir, db } from "@/server/cms/db";
+import { auditFailure, auditRequest } from "@/server/cms/audit";
 import { handle, jsonBody, reply } from "@/server/cms/http";
 import { z } from "zod";
 import { tours } from "@/content";
@@ -117,7 +118,14 @@ export async function POST(request: Request) {
         output.info.height,
         new Date().toISOString(),
       );
-    audit("upload", id);
+    auditRequest(request, "upload", id, {
+      details: {
+        name,
+        alt,
+        width: output.info.width,
+        height: output.info.height,
+      },
+    });
     return reply({ id, name, alt, src: `/api/media/${name}` }, 201);
   });
 }
@@ -127,9 +135,13 @@ export async function DELETE(request: Request) {
     const { id } = z
       .object({ id: z.uuid() })
       .parse(await jsonBody(request, 1000));
-    const media = db().prepare("SELECT name FROM media WHERE id=?").get(id) as
-      { name: string } | undefined;
-    if (!media) return reply({ error: "Không tìm thấy ảnh" }, 404);
+    const media = db()
+      .prepare("SELECT name, alt FROM media WHERE id=?")
+      .get(id) as { name: string; alt: string } | undefined;
+    if (!media) {
+      auditFailure(request, "media-delete", id, "Không tìm thấy ảnh");
+      return reply({ error: "Không tìm thấy ảnh" }, 404);
+    }
     const reference = `/api/media/${media.name}`;
     if (
       db()
@@ -137,13 +149,21 @@ export async function DELETE(request: Request) {
           "SELECT id FROM records WHERE instr(data,?)>0 OR instr(coalesce(published,''),?)>0 LIMIT 1",
         )
         .get(reference, reference)
-    )
+    ) {
+      auditFailure(
+        request,
+        "media-delete",
+        id,
+        "Ảnh còn được tham chiếu trong nội dung hoặc bản đã xuất bản",
+        { name: media.name, alt: media.alt },
+      );
       return reply(
         {
           error: "Ảnh còn được tham chiếu trong nội dung hoặc bản đã xuất bản",
         },
         409,
       );
+    }
     await unlink(
       /* turbopackIgnore: true */ path.join(
         /* turbopackIgnore: true */ directory(),
@@ -151,7 +171,9 @@ export async function DELETE(request: Request) {
       ),
     );
     db().prepare("DELETE FROM media WHERE id=?").run(id);
-    audit("media-delete", id);
+    auditRequest(request, "media-delete", id, {
+      details: { name: media.name, alt: media.alt },
+    });
     return reply({ ok: true });
   });
 }
@@ -161,12 +183,23 @@ export async function PATCH(request: Request) {
     const input = z
       .object({ id: z.uuid(), alt: z.string().trim().min(1).max(300) })
       .parse(await jsonBody(request, 2000));
+    const previous = db()
+      .prepare("SELECT name, alt FROM media WHERE id=?")
+      .get(input.id) as { name: string; alt: string } | undefined;
     const result = db()
       .prepare("UPDATE media SET alt=? WHERE id=?")
       .run(input.alt, input.id);
-    if (!result.changes)
+    if (!result.changes) {
+      auditFailure(request, "media-update", input.id, "Không tìm thấy ảnh tải lên");
       return reply({ error: "Không tìm thấy ảnh tải lên" }, 404);
-    audit("media-update", input.id);
+    }
+    auditRequest(request, "media-update", input.id, {
+      details: {
+        name: previous?.name ?? null,
+        before: { alt: previous?.alt ?? null },
+        after: { alt: input.alt },
+      },
+    });
     return reply({ ok: true });
   });
 }

@@ -21,6 +21,9 @@ export APP_ENV_FILE="$app_dir/.env.production" APP_SHA="$sha" APP_IMAGE="sea-tri
 compose=(docker compose --env-file "$APP_ENV_FILE" -f "$release/compose.yml")
 previous=''
 if test -f "$app_dir/current-image"; then previous=$(cat "$app_dir/current-image"); fi
+previous_sha=''
+if test -f "$app_dir/current-sha"; then previous_sha=$(cat "$app_dir/current-sha"); fi
+[[ "$previous_sha" =~ ^[a-f0-9]{40}$ ]] || previous_sha=''
 if test -n "$previous"; then
   backup="/app/data/backups/pre-$sha.sqlite"
   "${compose[@]}" exec -T -e BACKUP_PATH="$backup" app node scripts/admin.mjs backup </dev/null
@@ -47,6 +50,7 @@ for attempt in $(seq 1 30); do
 done
 test -n "$body" || rollback
 "${compose[@]}" exec -T app node -e 'const body=JSON.parse(process.argv[1]);if(body.status!=="ok"||body.sha!==process.argv[2]||body.database!=="connected")process.exit(1)' "$body" "$sha" </dev/null || rollback
+printf '%s\n' "$previous_sha" > "$app_dir/previous-sha"
 printf '%s\n' "$APP_IMAGE" > "$app_dir/current-image"
 printf '%s\n' "$sha" > "$app_dir/current-sha"
 ln -sfn "$release" "$app_dir/current"

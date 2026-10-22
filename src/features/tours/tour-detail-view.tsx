@@ -40,6 +40,7 @@ import {
   TourServices,
 } from "./tour-facts";
 import { MobileConsultBar } from "./mobile-consult-bar";
+import { TOUR_SEO } from "@/content/seo";
 
 function crumbsFor(tour: Tour, locale: Locale): Crumb[] {
   const m = getMessages(locale);
@@ -77,16 +78,19 @@ export function buildTourMetadata(slug: string, locale: Locale): Metadata {
   }
 
   const indexable = isIndexable(tourTranslationStatus(tour.id, locale), locale);
+  const seoDefault = locale === "vi" ? TOUR_SEO[tour.slug] : undefined;
 
   return buildMetadata({
-    title: tour.seo?.title ?? tour.title,
-    description: tour.seo?.description ?? tour.summary,
+    title: tour.seo?.title ?? seoDefault?.title ?? tour.title,
+    description:
+      tour.seo?.description ?? seoDefault?.description ?? tour.summary,
     path: `/tour/${tour.slug}`,
     locale,
     keywords: tour.tags,
     image: tour.seo?.ogImage ?? tour.images[0]?.src,
     noIndex: !indexable,
-    hreflang: indexable && tourTranslationStatus(tour.id, "en") === "reviewed",
+    hreflang: indexable,
+    enIndexable: isIndexable(tourTranslationStatus(tour.id, "en"), "en"),
   });
 }
 
