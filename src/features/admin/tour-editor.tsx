@@ -320,10 +320,10 @@ export const TourEditor = forwardRef<
 
   const writePackages = (nextPackages: AdminRecord[]) => {
     const amounts = nextPackages.map((option) => numberOf(option.adultPrice));
-    const nextPrice = nextPackages.length
-      ? { amount: Math.min(...amounts), currency: "VND" }
-      : isContact
-        ? null
+    const nextPrice = isContact
+      ? null
+      : nextPackages.length
+        ? { amount: Math.min(...amounts), currency: "VND" }
         : data.priceFrom;
     update({ pricingOptions: nextPackages, priceFrom: nextPrice });
   };
@@ -409,7 +409,7 @@ export const TourEditor = forwardRef<
       ["overview", "Giới thiệu", overview.length],
       ["highlights", "Điểm nổi bật", highlights.length],
       ["itinerary", "Lịch trình", viDays.length],
-      ["pricing", "Giá & các gói", packages.length],
+      ["pricing", "Các gói giá", packages.length],
       ["services", "Dịch vụ", included.length + excluded.length],
       ["notes", "Lưu ý & chính sách", notes.length + policies.length],
       [
@@ -555,6 +555,79 @@ export const TourEditor = forwardRef<
               )}
             </div>
           </div>
+          <h4 className="adm-subhead">Giá tour</h4>
+          <div className="adm-mode-switch" role="group" aria-label="Cách hiển thị giá">
+            <label>
+              <input
+                type="radio"
+                name="tour-price-mode"
+                checked={!isContact}
+                onChange={() => setContactMode(false)}
+              />
+              Có giá công khai
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="tour-price-mode"
+                checked={isContact}
+                onChange={() => setContactMode(true)}
+              />
+              Liên hệ tư vấn
+            </label>
+          </div>
+          {isContact ? (
+            <p className="adm-hint">
+              Trang sẽ hiển thị “Liên hệ tư vấn” và tạm ẩn giá. Các gói ở phần
+              “Các gói giá” vẫn được giữ nguyên — chuyển lại “Có giá công khai”
+              để dùng tiếp, không phải nhập lại.
+            </p>
+          ) : (
+            <div className="adm-tour-grid-2">
+              <NumberField
+                path="priceFrom.amount"
+                label="Giá từ (VND)"
+                value={priceAmount}
+                min={0}
+                suffix="₫"
+                disabled={packages.length > 0}
+                error={showError("priceFrom.amount")}
+                hint={
+                  packages.length > 0
+                    ? "Tự động bằng giá người lớn thấp nhất trong bảng giá."
+                    : "Hiển thị trên thẻ tour và khối giá."
+                }
+                onBlur={() => markTouched("priceFrom.amount")}
+                onChange={(next) =>
+                  update({
+                    priceFrom:
+                      next > 0
+                        ? { amount: next, currency: "VND" }
+                        : { amount: 0, currency: "VND" },
+                  })
+                }
+              />
+              <TextField
+                path="priceNote"
+                label="Ghi chú giá (tuỳ chọn)"
+                value={textOf(data.priceNote)}
+                multiline
+                rows={2}
+                hint="Ví dụ: giá đã gồm VAT, chưa gồm vé tham quan…"
+                onBlur={() => markTouched("priceNote")}
+                onChange={(next) => {
+                  const nextValue = { ...data };
+                  if (next.trim()) nextValue.priceNote = next;
+                  else delete nextValue.priceNote;
+                  onChange(nextValue);
+                }}
+              />
+            </div>
+          )}
+          <p className="adm-hint">
+            Giá chi tiết theo từng gói nằm ở phần “Các gói giá” bên dưới. Giá
+            người lớn thấp nhất sẽ tự động trở thành “Giá từ”.
+          </p>
           <h4 className="adm-subhead">Danh mục & điểm đến</h4>
           <div className={`adm-field${showError("categoryIds") ? " adm-field--invalid" : ""}`}>
             <AdmMultiSelect
@@ -593,7 +666,6 @@ export const TourEditor = forwardRef<
               </p>
             ) : null}
           </div>
-          <h4 className="adm-subhead">Nhãn lọc</h4>
           <StringListEditor
             idPrefix="tags"
             label="Nhãn lọc"
@@ -830,83 +902,18 @@ export const TourEditor = forwardRef<
             </div>
           ))}
           <button type="button" className="adm-add-row" onClick={addDay}>
-            ＋ Thêm ngày
+            + Thêm ngày
           </button>
         </Section>
 
-        {/* 6 — Pricing --------------------------------------------------- */}
+        {/* 6 — Pricing packages ------------------------------------------- */}
         <Section
           id="pricing"
           number={6}
-          title="Giá & các gói"
-          where="thẻ giá, bảng giá và dữ liệu giá trong JSON-LD"
+          title="Các gói giá"
+          where="bảng giá chi tiết trên trang tour và dữ liệu giá trong JSON-LD"
           errors={sectionIssues("pricing").length}
         >
-          <div className="adm-mode-switch" role="group" aria-label="Cách hiển thị giá">
-            <label>
-              <input
-                type="radio"
-                name="tour-price-mode"
-                checked={!isContact}
-                onChange={() => setContactMode(false)}
-              />
-              Có giá công khai
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="tour-price-mode"
-                checked={isContact}
-                onChange={() => setContactMode(true)}
-              />
-              Liên hệ tư vấn
-            </label>
-          </div>
-          {isContact ? (
-            <p className="adm-hint">
-              Trang sẽ hiển thị “Liên hệ tư vấn” và tạm ẩn bảng giá. Các gói
-              bên dưới vẫn được giữ nguyên — chuyển lại “Có giá công khai” để
-              dùng tiếp, không phải nhập lại.
-            </p>
-          ) : (
-            <div className="adm-tour-grid-2">
-              <NumberField
-                path="priceFrom.amount"
-                label="Giá từ (VND)"
-                value={priceAmount}
-                min={0}
-                suffix="₫"
-                disabled={packages.length > 0}
-                error={showError("priceFrom.amount")}
-                hint={
-                  packages.length > 0
-                    ? "Tự động bằng giá người lớn thấp nhất trong bảng giá."
-                    : "Hiển thị trên thẻ tour và khối giá."
-                }
-                onBlur={() => markTouched("priceFrom.amount")}
-                onChange={(next) =>
-                  update({
-                    priceFrom: next > 0 ? { amount: next, currency: "VND" } : { amount: 0, currency: "VND" },
-                  })
-                }
-              />
-              <TextField
-                path="priceNote"
-                label="Ghi chú giá (tuỳ chọn)"
-                value={textOf(data.priceNote)}
-                multiline
-                rows={2}
-                hint="Ví dụ: giá đã gồm VAT, chưa gồm vé tham quan…"
-                onBlur={() => markTouched("priceNote")}
-                onChange={(next) => {
-                  const nextValue = { ...data };
-                  if (next.trim()) nextValue.priceNote = next;
-                  else delete nextValue.priceNote;
-                  onChange(nextValue);
-                }}
-              />
-            </div>
-          )}
           <div className={`adm-tour-list${showError("pricingOptions") ? " adm-field--invalid" : ""}`}>
             <div className="adm-tour-list-head">
               <strong>Các gói giá</strong>
@@ -914,7 +921,7 @@ export const TourEditor = forwardRef<
             </div>
             <p className="adm-hint">
               Mỗi gói là một dòng trong bảng giá. Giá người lớn thấp nhất tự
-              động trở thành “Giá từ”.
+              động trở thành “Giá từ” ở phần Thông tin chung.
             </p>
             {showError("pricingOptions") ? (
               <p className="adm-field-error" role="alert">
@@ -1012,7 +1019,7 @@ export const TourEditor = forwardRef<
               </div>
             ))}
             <button type="button" className="adm-add-row" onClick={addPackage}>
-              ＋ Thêm gói giá
+              + Thêm gói giá
             </button>
           </div>
           <StringListEditor
@@ -1199,7 +1206,7 @@ export const TourEditor = forwardRef<
                   update({ _en: buildEnglish(), _enReviewed: false })
                 }
               >
-                ＋ Thêm bản dịch tiếng Anh
+                + Thêm bản dịch tiếng Anh
               </button>
             </div>
           ) : (
