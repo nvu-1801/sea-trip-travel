@@ -28,6 +28,15 @@ type BuildMetadataInput = {
    * that have no eligible counterpart (404s, single-language pages).
    */
   hreflang?: boolean;
+  /**
+   * True only when the English counterpart is published, readable and allowed
+   * to be indexed. Without it we never advertise an alternate that points at a
+   * noindex page — the old behaviour put `en` on VI pages even when the EN page
+   * was `noindex, nofollow`.
+   */
+  enIndexable?: boolean;
+  /** Bypass the layout title template; use when the title already carries the brand. */
+  absoluteTitle?: boolean;
 };
 
 export function buildMetadata({
@@ -41,20 +50,23 @@ export function buildMetadata({
   noIndex = false,
   keywords,
   hreflang = true,
+  enIndexable = false,
+  absoluteTitle = false,
 }: BuildMetadataInput): Metadata {
   const url = absoluteUrl(localizePath(locale, path));
 
-  const languages = hreflang
-    ? {
-        vi: absoluteUrl(localizePath("vi", path)),
-        en: absoluteUrl(localizePath("en", path)),
-        "x-default": absoluteUrl(localizePath("vi", path)),
-      }
-    : undefined;
+  const languages =
+    hreflang && enIndexable && !noIndex
+      ? {
+          vi: absoluteUrl(localizePath("vi", path)),
+          en: absoluteUrl(localizePath("en", path)),
+          "x-default": absoluteUrl(localizePath("vi", path)),
+        }
+      : undefined;
 
   return {
     metadataBase: new URL(siteConfig.url),
-    title,
+    title: absoluteTitle ? { absolute: title } : title,
     description,
     keywords: keywords ? [...keywords] : undefined,
     alternates: { canonical: url, ...(languages ? { languages } : {}) },

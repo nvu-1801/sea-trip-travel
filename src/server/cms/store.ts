@@ -589,7 +589,16 @@ export function save(
   });
 }
 export function settings() {
-  return published("settings", [defaultSettings])[0] ?? defaultSettings;
+  const stored = published("settings", [defaultSettings])[0];
+  if (!stored) return defaultSettings;
+  // Settings rows written before a field existed must inherit the default for
+  // that field. Merging (rather than overwriting) keeps every owner edit.
+  return settingsSchema.parse({
+    ...defaultSettings,
+    ...stored,
+    contact: { ...defaultSettings.contact, ...stored.contact },
+    seo: { ...defaultSettings.seo, ...(stored as { seo?: object }).seo },
+  });
 }
 export function homeHero() {
   return heroSchema.parse(published("hero", [defaultHero])[0] ?? defaultHero);
