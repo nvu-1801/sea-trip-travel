@@ -621,8 +621,14 @@ async function checkDesktopNavHighlight(browser) {
     `color=${hoverColor}`,
   );
 
-  await page.mouse.move(0, 0);
-  await page.waitForTimeout(250);
+  await page.mouse.move(10, 890);
+  // CI frames can be delayed: wait for hover to end and the actual CSS
+  // transition to finish rather than sampling at a fixed 250 ms deadline.
+  await page.waitForFunction(el => !el.matches(":hover"), await active.elementHandle());
+  await active.evaluate(async el => {
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await Promise.all(el.getAnimations().map(animation => animation.finished.catch(() => {})));
+  });
   const restAlpha = await backgroundAlpha();
   check(
     "highlight clears when the pointer leaves",
