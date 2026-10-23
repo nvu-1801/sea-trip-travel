@@ -1188,6 +1188,7 @@ export const TourEditor = forwardRef<
             onChange={(next) => setSeo("description", next)}
           />
           <ImageField
+            sizeGuide="Ảnh chia sẻ: 1200 × 630 px, tỷ lệ khoảng 1.91:1; tránh đặt chữ sát mép."
             label="Ảnh chia sẻ (tuỳ chọn)"
             value={textOf(seo.ogImage)}
             media={references.media ?? []}

@@ -17,6 +17,7 @@ import type { ThemeId } from "@/config/themes";
 import { Overview } from "./overview";
 import { ActivityCheck } from "./activity-check";
 import { HomeSections } from "./home-sections";
+import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
 import { HomeFeaturedEditor } from "./home-featured-editor";
 import type { HomeSectionMeta } from "@/lib/home-sections";
 import { HOME_SECTIONS } from "@/lib/home-sections";
@@ -391,6 +392,8 @@ export function Dashboard({
     landing: RecordRow | null;
   }>({ hero: null, landing: null });
   const [themeRecord, setThemeRecord] = useState<RecordRow | null>(null);
+  const [homeCategories, setHomeCategories] = useState<RegionEditorRow[]>([]);
+  const [regionCards, setRegionCards] = useState<RegionEditorRow[]>([]);
   const [homeTours, setHomeTours] = useState<RecordRow[]>([]);
   const [homeModal, setHomeModal] = useState<
     | {
@@ -633,11 +636,13 @@ export function Dashboard({
         return true;
       }
       if (next === "home") {
-        const [heroRows, landingRows, tourRows] = await Promise.all([
-          api("content/hero").catch(() => null),
-          api("content/landing").catch(() => null),
-          api("content/tours").catch(() => null),
-        ]);
+        const [heroRows, landingRows, tourRows, categoryRows] =
+          await Promise.all([
+            api("content/hero").catch(() => null),
+            api("content/landing").catch(() => null),
+            api("content/tours").catch(() => null),
+            api("home-regions"),
+          ]);
         if (
           serial !== loadSerial.current ||
           (background && activity !== activitySerial.current)
@@ -648,6 +653,7 @@ export function Dashboard({
           landing: (landingRows as RecordRow[] | null)?.[0] ?? null,
         });
         setHomeTours((tourRows as RecordRow[] | null) ?? []);
+        setHomeCategories(categoryRows as RegionEditorRow[]);
         setReferences({
           ...options,
           media: mediaSelectOptions(library),
@@ -965,8 +971,11 @@ export function Dashboard({
     }
     void navigateTo(entry.tab, { id: entry.id ?? "", slug: entry.slug });
   }
-  async function save(action: string, collection: string = tab): Promise<boolean> {
-    if (!selected) return false;
+  async function save(
+    action: string,
+    collection: string = tab,
+  ): Promise<boolean> {
+    if (!selected || uploadCount > 0) return false;
     if (
       collection === "tours" &&
       tab === "tours" &&
@@ -993,13 +1002,32 @@ export function Dashboard({
     }
     let ok = false;
     await run(async () => {
-      await api(`content/${collection}`, {
+      const editingRegions =
+        collection === "landing" &&
+        homeModal?.kind === "section" &&
+        homeModal.key === "regions";
+      await api(editingRegions ? "home-regions" : `content/${collection}`, {
         method: "POST",
-        body: JSON.stringify({
-          data: selected.data,
-          revision: selected.revision,
-          action,
-        }),
+        body: JSON.stringify(
+          editingRegions
+            ? {
+                revision: selected.revision,
+                regions: selected.data.regions,
+                action,
+                cards: regionCards.map((card) => ({
+                  id: card.id,
+                  revision: card.revision,
+                  name: card.data.name,
+                  tagline: card.data.tagline ?? "",
+                  image: card.data.image,
+                })),
+              }
+            : {
+                data: selected.data,
+                revision: selected.revision,
+                action,
+              },
+        ),
       });
       await load();
       pushToast(
@@ -1153,6 +1181,26 @@ export function Dashboard({
       string,
       EditorValue
     >;
+    if (meta.key === "regions") {
+      const parent = homeCategories.find(
+        (row) =>
+          row.state !== "deleted" && row.data.path === "/tour-trong-nuoc",
+      );
+      setRegionCards(
+        structuredClone(
+          homeCategories
+            .filter(
+              (row) =>
+                parent &&
+                row.state !== "deleted" &&
+                row.data.parentId === parent.id,
+            )
+            .sort(
+              (a, b) => Number(a.data.order ?? 0) - Number(b.data.order ?? 0),
+            ),
+        ),
+      );
+    }
     setSelected({
       ...record,
       data,
@@ -1180,6 +1228,7 @@ export function Dashboard({
     );
   }
   function closeHomeModal() {
+    if (busy || uploadCount > 0) return;
     void (async () => {
       if (
         !dirty ||
@@ -2964,8 +3013,9 @@ export function Dashboard({
                     </span>
                     <div className="adm-section-modal-titles">
                       <p className="adm-eyebrow">
-                        Trang chủ · Phần {String(homeModal.num).padStart(2, "0")}{" "}
-                        · {homeModal.where}
+                        Trang chủ · Phần{" "}
+                        {String(homeModal.num).padStart(2, "0")} ·{" "}
+                        {homeModal.where}
                       </p>
                       <h2 id="adm-section-title">{homeModal.title}</h2>
                       <p className="adm-section-modal-tip">
@@ -3001,6 +3051,11 @@ export function Dashboard({
                     role="group"
                     aria-label={`Nội dung phần ${homeModal.title}`}
                   >
+                    {notice && (
+                      <p className="adm-field-error" role="alert">
+                        {notice}
+                      </p>
+                    )}
                     {homeModal.kind === "hero" ? (
                       <HeroEditor
                         value={selected.data as unknown as HeroConfig}
@@ -3009,8 +3064,29 @@ export function Dashboard({
                         onChange={(data) => {
                           setSelected({
                             ...selected,
-                            data: data as unknown as Record<string, EditorValue>,
+                            data: data as unknown as Record<
+                              string,
+                              EditorValue
+                            >,
                           });
+                          setDirty(true);
+                        }}
+                      />
+                    ) : homeModal.key === "regions" ? (
+                      <HomeRegionsEditor
+                        value={selected.data.regions}
+                        cards={regionCards}
+                        references={references}
+                        onUploadImage={uploadImage}
+                        onChange={(regions) => {
+                          setSelected({
+                            ...selected,
+                            data: { ...selected.data, regions },
+                          });
+                          setDirty(true);
+                        }}
+                        onCardsChange={(cards) => {
+                          setRegionCards(cards);
                           setDirty(true);
                         }}
                       />
@@ -3070,7 +3146,7 @@ export function Dashboard({
                     </span>
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={busy || uploadCount > 0}
                       onClick={() => {
                         void save(
                           "save",
@@ -3085,7 +3161,7 @@ export function Dashboard({
                     <button
                       type="button"
                       className="adm-primary"
-                      disabled={busy}
+                      disabled={busy || uploadCount > 0}
                       onClick={() => {
                         void save(
                           "publish",

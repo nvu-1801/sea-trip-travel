@@ -28,12 +28,7 @@ const HOME_DESTINATION_LIMIT = 3;
 
 type Option = { value: string; label: string };
 type DestinationSection =
-  | "general"
-  | "region"
-  | "media"
-  | "home"
-  | "translations"
-  | "advanced";
+  "general" | "region" | "media" | "home" | "translations" | "advanced";
 
 type DestinationIssue = {
   path: string;
@@ -485,6 +480,7 @@ export const DestinationEditor = forwardRef<
         >
           <div className="adm-destination-media">
             <ImageField
+              sizeGuide="Ảnh điểm đến: nên từ 1600 × 1200 px (4:3). Giữ cảnh chính ở giữa để phù hợp nhiều khung cắt."
               label="Ảnh đại diện"
               value={imageSrc}
               previewAlt={imageAlt}

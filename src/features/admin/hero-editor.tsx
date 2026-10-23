@@ -29,6 +29,7 @@ function ImagePicker({
       <legend>{label}</legend>
       <ImageField
         label={`Chọn ${label.toLowerCase()}`}
+        sizeGuide="Banner ngang: 1920 × 1080 px (16:9), tối thiểu 1600 × 900 px. Giữ chủ thể ở giữa để ảnh vẫn đẹp khi cắt trên điện thoại."
         value={value.src}
         media={references.media ?? []}
         onUpload={onUploadImage}

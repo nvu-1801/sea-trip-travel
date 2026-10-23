@@ -7410,3 +7410,14 @@ select {
 .adm-tour-editor .adm-tour-nav {
   max-height: calc(100dvh - var(--adm-edit-offset, 160px) - 16px);
 }
+
+.adm-image-size-guide {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #d3e4f4;
+  border-radius: 10px;
+  background: #f0f6fc;
+  color: #244461;
+  font-size: 12px;
+  line-height: 1.65;
+}

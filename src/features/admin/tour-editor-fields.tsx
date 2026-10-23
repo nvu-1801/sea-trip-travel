@@ -505,6 +505,7 @@ export function ImageListEditor({
               </div>
             </div>
             <ImageField
+              sizeGuide="Ảnh vuông 1200 × 1200 px (1:1), tối thiểu 1000 × 1000 px để rõ nét trong khung 500 × 500. Ảnh ngang nên từ 1600 × 1200 px; giữ chủ thể ở giữa."
               label={index === 0 ? "Ảnh bìa đang dùng" : "Ảnh đang dùng"}
               value={textOf(image.src)}
               previewAlt={textOf(image.alt)}

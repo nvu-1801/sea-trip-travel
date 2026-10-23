@@ -118,7 +118,7 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     illustration: "/images/destinations/hoi-an.jpg",
     icon: "compass",
     group: "main",
-    tip: "Đổi tiêu đề và 4 thẻ vùng miền.",
+    tip: "Sửa tiêu đề, mô tả, ảnh và nội dung các thẻ vùng miền trong cùng một form.",
   },
   {
     key: "values",

@@ -48,6 +48,7 @@ import {
   fillTourImageSources,
   backfillSettingsSeo,
   fillMissingMediaSources,
+  saveHomeRegions,
   migrateContent,
   MEDIA_SOURCE_MIGRATION,
 } from "../src/server/cms/store";
@@ -1053,4 +1054,127 @@ test("cms data dir stays local unless running on Vercel", () => {
   assert.equal(cmsDataDir(), "/tmp");
   if (prev === undefined) delete process.env.VERCEL;
   else process.env.VERCEL = prev;
+});
+
+test("home regions save atomically, publish only scoped fields, and reject stale edits", () => {
+  const landing = list("landing")[0];
+  const category = list("categories").find((row) => row.id === "cat_mien_bac")!;
+  const beforeLanding = readStoredRow("landing", landing.id);
+  const beforeCategory = readStoredRow("categories", category.id);
+  try {
+    const publicLanding = JSON.parse(beforeLanding.published!);
+    const publicCategory = JSON.parse(beforeCategory.published!);
+    // Simulate unrelated private drafts in the same records.
+    const privateLanding = {
+      ...landing.data,
+      explore: { ...defaultLanding.explore, titleA: "PRIVATE EXPLORE" },
+    };
+    const privateCategory = {
+      ...category.data,
+      description: "PRIVATE CATEGORY DESCRIPTION",
+    };
+    save("landing", privateLanding, landing.revision, "save");
+    save("categories", privateCategory, category.revision, "save");
+    const regions = { ...defaultLanding.regions, titleA: "Việt Nam mới" };
+    const cards = [
+      {
+        id: category.id,
+        revision: category.revision + 1,
+        name: "Tour Miền Bắc mới",
+        tagline: "Hà Nội và Hạ Long",
+        image: { src: "/images/destinations/ha-long.jpg", alt: "Hạ Long" },
+      },
+    ];
+    saveHomeRegions({
+      revision: landing.revision + 1,
+      action: "save",
+      regions,
+      cards,
+    });
+    assert.equal(
+      readStoredRow("landing", landing.id).published,
+      beforeLanding.published,
+    );
+    assert.equal(
+      readStoredRow("categories", category.id).published,
+      beforeCategory.published,
+    );
+    const draftLanding = readStoredRow("landing", landing.id);
+    const draftCategory = readStoredRow("categories", category.id);
+    const revision = landing.revision + 2;
+    // One stale category must roll back the earlier landing write and audit.
+    const auditBefore = (
+      db().prepare("SELECT COUNT(*) AS n FROM audit").get() as { n: number }
+    ).n;
+    assert.throws(
+      () =>
+        saveHomeRegions({
+          revision,
+          action: "publish",
+          regions,
+          cards: [{ ...cards[0], revision: 0 }],
+        }),
+      /đã thay đổi/,
+    );
+    assert.deepEqual(readStoredRow("landing", landing.id), draftLanding);
+    assert.deepEqual(readStoredRow("categories", category.id), draftCategory);
+    assert.equal(
+      (db().prepare("SELECT COUNT(*) AS n FROM audit").get() as { n: number })
+        .n,
+      auditBefore,
+    );
+    assert.equal(list("landing")[0].revision, revision);
+    saveHomeRegions({
+      revision,
+      action: "publish",
+      regions,
+      cards: [{ ...cards[0], revision: category.revision + 2 }],
+    });
+    const liveLanding = JSON.parse(
+      readStoredRow("landing", landing.id).published!,
+    );
+    const liveCategory = JSON.parse(
+      readStoredRow("categories", category.id).published!,
+    );
+    assert.equal(liveLanding.regions.titleA, regions.titleA);
+    assert.deepEqual(liveLanding.explore, publicLanding.explore);
+    assert.equal(liveCategory.name, cards[0].name);
+    assert.equal(liveCategory.description, publicCategory.description);
+    assert.deepEqual(liveCategory.image, cards[0].image);
+    assert.equal(
+      JSON.parse(readStoredRow("categories", category.id).data).description,
+      "PRIVATE CATEGORY DESCRIPTION",
+    );
+    assert.equal(
+      JSON.parse(readStoredRow("landing", landing.id).data).explore.titleA,
+      "PRIVATE EXPLORE",
+    );
+    // IDs outside the domestic children and duplicated IDs are rejected atomically.
+    const latest = list("landing")[0];
+    const stable = readStoredRow("landing", landing.id);
+    assert.throws(
+      () =>
+        saveHomeRegions({
+          revision: latest.revision,
+          action: "save",
+          regions,
+          cards: [{ ...cards[0], id: "cat_missing" }],
+        }),
+      /không còn thuộc/,
+    );
+    assert.deepEqual(readStoredRow("landing", landing.id), stable);
+    assert.throws(
+      () =>
+        saveHomeRegions({
+          revision: latest.revision,
+          action: "save",
+          regions,
+          cards: [cards[0], cards[0]],
+        }),
+      /trùng/,
+    );
+  } finally {
+    restoreStoredRow("landing", landing.id, beforeLanding);
+    restoreStoredRow("categories", category.id, beforeCategory);
+  }
 });

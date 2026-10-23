@@ -702,6 +702,28 @@ try {
       name: "Các khối trang chủ theo đúng thứ tự hiển thị",
     })
     .waitFor();
+  await page.getByRole("button", { name: /Sửa tour theo vùng miền/i }).click();
+  const regionsDialog = page.getByRole("dialog", { name: "Tour theo vùng miền", exact: true });
+  await regionsDialog.waitFor();
+  const firstRegion = regionsDialog.getByRole("region", { name: "Thẻ vùng miền 1", exact: true });
+  await firstRegion.getByLabel("Tên vùng miền", { exact: true }).fill("Tour Miền Bắc kiểm thử");
+  await firstRegion.getByLabel("Mô tả địa điểm", { exact: true }).fill("Hà Nội và Hạ Long kiểm thử");
+  check("region form includes image size guidance", await firstRegion.getByText("Kích thước ảnh đề xuất:", { exact: false }).isVisible());
+  await page.setViewportSize({ width: 390, height: 844 });
+  check("region modal fits mobile viewport", await regionsDialog.evaluate(el => el.getBoundingClientRect().width <= innerWidth));
+  await regionsDialog.getByRole("button", { name: "Lưu bản nháp", exact: true }).click();
+  await regionsDialog.waitFor({ state: "hidden" });
+  const regionDraft = (await (await context.request.get(`${base}/api/admin/content/categories`)).json()).find(row => row.id === "cat_mien_bac");
+  check("home form saves shared category draft", regionDraft.data.name === "Tour Miền Bắc kiểm thử");
+  const draftPublic = await (await context.request.get(base)).text();
+  check("region draft stays private", !draftPublic.includes("Tour Miền Bắc kiểm thử"));
+  await page.getByRole("button", { name: /Sửa tour theo vùng miền/i }).click();
+  await regionsDialog.waitFor();
+  await regionsDialog.getByRole("button", { name: "Xuất bản thay đổi ↗", exact: true }).click();
+  await regionsDialog.waitFor({ state: "hidden" });
+  const regionPublic = await (await context.request.get(base)).text();
+  check("home form publishes shared category card", regionPublic.includes("Miền Bắc kiểm thử") && regionPublic.includes("Hà Nội và Hạ Long kiểm thử"));
+  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole("button", { name: /Sửa tour nổi bật/ }).click();
   const featuredHomeDialog = page.getByRole("dialog", {
     name: "Tour nổi bật",

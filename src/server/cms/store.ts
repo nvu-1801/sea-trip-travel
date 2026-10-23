@@ -18,6 +18,8 @@ import {
   markMigration,
   type AuditContext,
 } from "./db";
+import { homeRegionsInputSchema } from "@/domain/home-regions";
+import { ROUTES } from "@/config/navigation";
 import { AUDIT_FIELD_LABELS } from "@/lib/audit-activity";
 import { defaultHero, heroSchema } from "@/domain/home-hero";
 import { defaultLanding, landingSchema } from "@/domain/landing";
@@ -580,6 +582,18 @@ export function save(
   context: AuditContext = {},
 ) {
   seed();
+  return transaction(() =>
+    saveRecord(collection, input, revision, action, context),
+  );
+}
+
+function saveRecord(
+  collection: Collection,
+  input: unknown,
+  revision: number,
+  action: "save" | "publish" | "unpublish" | "delete" | "restore",
+  context: AuditContext = {},
+) {
   let normalized = input;
   if (
     collection === "settings" &&
@@ -621,7 +635,7 @@ export function save(
       for (const [k, v] of Object.entries(value)) inspect(v, k);
   };
   inspect(data);
-  return transaction(() => {
+  return (() => {
     const previous = db()
       .prepare(
         "SELECT revision,published,state,data FROM records WHERE collection=? AND id=?",
@@ -840,6 +854,82 @@ export function save(
       },
     });
     return { id: data.id, revision: revision + 1 };
+  })();
+}
+/** One atomic edit of the home introduction and its shared category cards. */
+export function saveHomeRegions(raw: unknown, context: AuditContext = {}) {
+  const input = homeRegionsInputSchema.parse(raw);
+  seed();
+  return transaction(() => {
+    const landing = list("landing")[0];
+    if (!landing) throw new Error("Chưa có dữ liệu trang chủ.");
+    const categories = list("categories");
+    const parent = categories.find(
+      (row) => row.state !== "deleted" && row.data.path === ROUTES.domestic,
+    );
+    if (!parent) throw new Error("Không tìm thấy danh mục Tour Trong Nước.");
+    if (new Set(input.cards.map((card) => card.id)).size !== input.cards.length)
+      throw new Error("Thẻ vùng miền bị trùng.");
+    // Keep unrelated public fields at their previous published values. Draft
+    // changes in other sections/category fields must stay private.
+    const persist = (
+      collection: "landing" | "categories",
+      row: CmsRecord,
+      patch: Record<string, unknown>,
+      revision: number,
+    ) => {
+      const before = db()
+        .prepare("SELECT published FROM records WHERE collection=? AND id=?")
+        .get(collection, row.id) as { published: string | null };
+      if (collection === "categories" && !before.published)
+        throw new Error("Vùng miền đã bị ẩn. Hãy tải lại trước khi lưu.");
+      const result = saveRecord(
+        collection,
+        { ...row.data, ...patch },
+        revision,
+        input.action,
+        context,
+      );
+      if (input.action === "publish") {
+        const base = before.published ? JSON.parse(before.published) : row.data;
+        db()
+          .prepare("UPDATE records SET published=? WHERE collection=? AND id=?")
+          .run(
+            JSON.stringify({
+              ...base,
+              ...patch,
+              ...(collection === "categories" ? { _cmsEdited: true } : {}),
+            }),
+            collection,
+            row.id,
+          );
+      }
+      return result;
+    };
+    const result = persist(
+      "landing",
+      landing,
+      { regions: input.regions },
+      input.revision,
+    );
+    for (const card of input.cards) {
+      const row = categories.find((item) => item.id === card.id);
+      if (!row || row.state === "deleted" || row.data.parentId !== parent.id)
+        throw new Error(
+          "Vùng miền đã thay đổi hoặc không còn thuộc Tour Trong Nước. Hãy tải lại.",
+        );
+      persist(
+        "categories",
+        row,
+        {
+          name: card.name,
+          tagline: card.tagline || undefined,
+          image: card.image,
+        },
+        card.revision,
+      );
+    }
+    return result;
   });
 }
 export function settings() {

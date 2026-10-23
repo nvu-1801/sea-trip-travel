@@ -269,6 +269,13 @@ export function Editor({
       return (
         <div className="adm-field">
           <ImageField
+            sizeGuide={
+              name === "ogImage"
+                ? "Ảnh chia sẻ: 1200 × 630 px, tỷ lệ khoảng 1.91:1."
+                : name === "photoSrc"
+                  ? "Ảnh section: từ 1600 × 1200 px. Giữ chủ thể ở giữa để cắt đẹp trên điện thoại."
+                  : "Ảnh nội dung, bài viết hoặc danh mục: từ 1600 × 1200 px; thẻ dọc nên dùng 1200 × 1600 px. Giữ chủ thể ở giữa."
+            }
             label={title}
             value={typeof value === "string" ? value : ""}
             media={opts}

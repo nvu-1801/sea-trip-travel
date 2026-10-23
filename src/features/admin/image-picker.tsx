@@ -27,6 +27,7 @@ export function ImageField({
   compact = false,
   onRemove,
   whereUsed,
+  sizeGuide = "Nên dùng ảnh gốc từ 1600 × 1200 px để hiển thị rõ nét; giữ chủ thể ở giữa, tránh phóng lớn ảnh nhỏ.",
   alt,
   onAltChange,
   altRequired = false,
@@ -46,6 +47,7 @@ export function ImageField({
   onRemove?: () => void;
   /** "Dùng ở …" line shown below the preview. */
   whereUsed?: string;
+  sizeGuide?: string;
   /** Controlled alt text. Omit to hide the alt input. */
   alt?: string;
   onAltChange?: (alt: string) => void;
@@ -262,6 +264,9 @@ export function ImageField({
         <span className="adm-image-format">JPEG, PNG, WebP · tối đa 10 MB</span>
       </div>
 
+      <p className="adm-image-size-guide">
+        <strong>Kích thước ảnh đề xuất:</strong> {sizeGuide}
+      </p>
       {whereUsed ? <p className="adm-image-where">{whereUsed}</p> : null}
 
       {error && (
