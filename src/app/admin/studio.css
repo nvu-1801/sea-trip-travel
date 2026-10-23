@@ -7410,3 +7410,24 @@ select {
 .adm-tour-editor .adm-tour-nav {
   max-height: calc(100dvh - var(--adm-edit-offset, 160px) - 16px);
 }
+
+/* Editorial guidance stays next to every picker, including before an upload. */
+.adm-image-guidance {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #e4ece9;
+  border-radius: 12px;
+  background: #f6faf8;
+  color: #36594e;
+  overflow-wrap: anywhere;
+}
+.adm-image-guidance > span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.adm-image-guidance > strong { font-size: 12px; line-height: 1.6; }
+.adm-image-guidance > p { margin: 0; font-size: 11px; line-height: 1.7; color: #586f66; }
+.adm-media > .adm-image-guidance { margin: 18px 0; }

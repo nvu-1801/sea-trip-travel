@@ -1189,6 +1189,7 @@ export const TourEditor = forwardRef<
           />
           <ImageField
             label="Ảnh chia sẻ (tuỳ chọn)"
+            imageUsage="share"
             value={textOf(seo.ogImage)}
             media={references.media ?? []}
             onUpload={onUploadImage}

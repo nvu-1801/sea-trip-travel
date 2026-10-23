@@ -506,6 +506,7 @@ export function ImageListEditor({
             </div>
             <ImageField
               label={index === 0 ? "Ảnh bìa đang dùng" : "Ảnh đang dùng"}
+              imageUsage="tour"
               value={textOf(image.src)}
               previewAlt={textOf(image.alt)}
               media={[...media]}

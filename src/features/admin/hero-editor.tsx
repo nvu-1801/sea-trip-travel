@@ -8,6 +8,7 @@ import {
   type UploadedImage,
 } from "./image-picker";
 import "./hero-editor.css";
+import type { ImageUsage } from "./image-upload-hint";
 
 type HeroImage = HeroConfig["collageMain"];
 function ImagePicker({
@@ -15,12 +16,14 @@ function ImagePicker({
   onChange,
   references,
   label,
+  imageUsage,
   onUploadImage,
 }: {
   value: HeroImage;
   onChange: (image: HeroImage) => void;
   references: ReferenceOptions;
   label: string;
+  imageUsage: ImageUsage;
   onUploadImage?: (file: File) => Promise<UploadedImage>;
 }) {
   const id = useId();
@@ -29,6 +32,7 @@ function ImagePicker({
       <legend>{label}</legend>
       <ImageField
         label={`Chọn ${label.toLowerCase()}`}
+        imageUsage={imageUsage}
         value={value.src}
         media={references.media ?? []}
         onUpload={onUploadImage}
@@ -295,6 +299,7 @@ export function HeroEditor({
               </div>
               <ImagePicker
                 label={`Ảnh slide ${index + 1}`}
+                imageUsage="hero"
                 value={slide.image}
                 onChange={(image) => updateSlide(index, { image })}
                 references={references}
@@ -320,6 +325,7 @@ export function HeroEditor({
         <div className="adm-hero-collage-images">
           <ImagePicker
             label="Ảnh chính của bố cục ảnh ghép"
+            imageUsage="portrait"
             value={value.collageMain}
             references={references}
             onUploadImage={onUploadImage}
@@ -327,6 +333,7 @@ export function HeroEditor({
           />
           <ImagePicker
             label="Ảnh phụ của bố cục ảnh ghép"
+            imageUsage="square"
             value={value.collageSecondary}
             references={references}
             onUploadImage={onUploadImage}

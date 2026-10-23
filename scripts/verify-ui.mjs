@@ -604,8 +604,16 @@ async function checkDesktopNavHighlight(browser) {
     `background alpha=${idleAlpha}`,
   );
 
+  const finishHighlightTransition = () =>
+    active.evaluate(async (el) => {
+      // Flush the new hover style before asking the browser for its transitions.
+      void getComputedStyle(el).backgroundColor;
+      await Promise.all(
+        el.getAnimations().map((animation) => animation.finished.catch(() => {})),
+      );
+    });
   await active.hover();
-  await page.waitForTimeout(250);
+  await finishHighlightTransition();
   const hoverAlpha = await backgroundAlpha();
   const hoverColor = await active.evaluate(
     (el) => getComputedStyle(el).color,
@@ -622,7 +630,11 @@ async function checkDesktopNavHighlight(browser) {
   );
 
   await page.mouse.move(0, 0);
-  await page.waitForTimeout(250);
+  await page.waitForFunction(
+    (el) => !el.matches(":hover"),
+    await active.elementHandle(),
+  );
+  await finishHighlightTransition();
   const restAlpha = await backgroundAlpha();
   check(
     "highlight clears when the pointer leaves",

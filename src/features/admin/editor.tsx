@@ -2,6 +2,7 @@
 import { useId } from "react";
 import { AdmMultiSelect, AdmSelect } from "./ui-select";
 import { ImageField, type UploadedImage } from "./image-picker";
+import type { ImageUsage } from "./image-upload-hint";
 type Value =
   string | number | boolean | null | Value[] | { [key: string]: Value };
 export type EditorValue = Value;
@@ -205,6 +206,7 @@ export function Editor({
   value,
   onChange,
   name = "",
+  imageUsage = "general",
   locked = false,
   references = {},
   onUploadImage,
@@ -212,6 +214,7 @@ export function Editor({
   value: Value;
   onChange: (value: Value) => void;
   name?: string;
+  imageUsage?: ImageUsage;
   locked?: boolean;
   references?: ReferenceOptions;
   onUploadImage?: (file: File) => Promise<UploadedImage>;
@@ -270,6 +273,7 @@ export function Editor({
         <div className="adm-field">
           <ImageField
             label={title}
+            imageUsage={name === "ogImage" ? "share" : imageUsage}
             value={typeof value === "string" ? value : ""}
             media={opts}
             onUpload={onUploadImage}
@@ -372,6 +376,7 @@ export function Editor({
             <Editor
               value={item}
               name={typeof item === "object" ? "" : name}
+              imageUsage={imageUsage}
               references={references}
               onUploadImage={onUploadImage}
               onChange={(next) =>
@@ -461,6 +466,7 @@ export function Editor({
                 <Editor
                   value={child}
                   name={key}
+                  imageUsage={key === "body" ? "articleBody" : key === "cover" ? "articleCover" : imageUsage}
                   references={references}
                   onUploadImage={onUploadImage}
                   onChange={(next) => onChange({ ...value, [key]: next })}
@@ -471,6 +477,7 @@ export function Editor({
                 key={key}
                 value={child}
                 name={key}
+                imageUsage={imageUsage}
                 references={references}
                 onUploadImage={onUploadImage}
                 locked={
