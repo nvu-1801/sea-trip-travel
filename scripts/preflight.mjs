@@ -24,6 +24,7 @@ const fullSteps = [
   ["tour import verification", "npm run verify:tour-import"],
   ["cms verification", "npm run verify:cms"],
   ["hero verification", "npm run verify:hero"],
+  ["tour editor verification", "npm run verify:tour-editor"],
   ["seo verification", "npm run verify:seo"],
 ];
 

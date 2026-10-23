@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
 import { TourEditor, type TourEditorHandle } from "./tour-editor";
+import { DraftPreview } from "./draft-preview";
+import { StickyEditorActions } from "./sticky-editor-actions";
 import {
   DestinationEditor,
   type DestinationEditorHandle,
@@ -359,6 +361,7 @@ export function Dashboard({
 }) {
   const tab = section;
   const [hasUpdates, setHasUpdates] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
   const [csrf, setCsrf] = useState(initialCsrf),
     [rows, setRows] = useState<RecordRow[]>([]),
     [selected, setSelected] = useState<RecordRow | null>(null),
@@ -825,18 +828,23 @@ export function Dashboard({
       throw new Error("Chỉ nhận file JPEG, PNG hoặc WebP.");
     if (file.size > 10 * 1024 * 1024)
       throw new Error("Ảnh vượt quá 10 MB.");
-    const uploaded = (await api("media", {
-      method: "POST",
-      headers: {
-        "content-type": file.type,
-        "x-image-alt": encodeURIComponent(file.name),
-      },
-      body: file,
-    })) as { src: string; alt: string };
-    if (!uploaded?.src) throw new Error("Máy chủ không trả về ảnh.");
-    await refreshMediaLibrary();
-    pushToast("success", "Đã tải ảnh lên thư viện.");
-    return { src: uploaded.src, alt: uploaded.alt ?? file.name };
+    setUploadCount((count) => count + 1);
+    try {
+      const uploaded = (await api("media", {
+        method: "POST",
+        headers: {
+          "content-type": file.type,
+          "x-image-alt": encodeURIComponent(file.name),
+        },
+        body: file,
+      })) as { src: string; alt: string };
+      if (!uploaded?.src) throw new Error("Máy chủ không trả về ảnh.");
+      await refreshMediaLibrary();
+      pushToast("success", "Đã tải ảnh lên thư viện.");
+      return { src: uploaded.src, alt: uploaded.alt ?? file.name };
+    } finally {
+      setUploadCount((count) => count - 1);
+    }
   }
   function requestConfirm(
     request: Exclude<ConfirmRequest, null>,
@@ -1037,9 +1045,11 @@ export function Dashboard({
    */
   function editorActions() {
     return (
-      <div className="adm-savebar adm-edit-actions">
+      <StickyEditorActions>
         <span className="adm-edit-status" aria-live="polite">
-          {busy
+          {uploadCount > 0
+            ? "Đang tải ảnh…"
+            : busy
             ? "Đang lưu thay đổi…"
             : dirty
               ? "Có thay đổi chưa lưu"
@@ -1048,7 +1058,51 @@ export function Dashboard({
         <div className="adm-edit-buttons">
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || uploadCount > 0 || !dirty}
+            onClick={() => {
+              void (async () => {
+                const ok = await requestConfirm({
+                  title: "Hủy các thay đổi chưa lưu?",
+                  body: "Nội dung sẽ trở về phiên bản đã lưu gần nhất. Website không thay đổi.",
+                  confirmLabel: "Hủy các thay đổi",
+                  danger: true,
+                });
+                if (ok && selected)
+                  await run(async () => {
+                    const fresh = (await api(`content/${tab}`)) as RecordRow[];
+                    const restored = fresh.find(
+                      (row) => row.id === selected.id,
+                    );
+                    if (!restored)
+                      throw new Error(
+                        "Không tìm thấy bản đã lưu. Hãy mở lại danh sách.",
+                      );
+                    setRows(fresh);
+                    setSelected(restored);
+                    setDirty(false);
+                    dirtyFields.current.clear();
+                    setHasUpdates(false);
+                  });
+              })();
+            }}
+          >
+            Hủy các thay đổi
+          </button>
+          {["tours", "articles"].includes(tab) && (
+            <button
+              type="button"
+              onClick={() => {
+                const preview = document.getElementById("admin-draft-preview");
+                if (preview instanceof HTMLDetailsElement) preview.open = true;
+                preview?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              Xem trước đang sửa
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={busy || uploadCount > 0}
             onClick={() => void save("save")}
           >
             Lưu bản nháp
@@ -1056,7 +1110,7 @@ export function Dashboard({
           <button
             type="button"
             className="adm-primary"
-            disabled={busy}
+            disabled={busy || uploadCount > 0}
             onClick={() => void save("publish")}
           >
             {busy ? "Đang lưu…" : "Xuất bản thay đổi ↗"}
@@ -1065,7 +1119,7 @@ export function Dashboard({
             <button
               type="button"
               className="adm-hide-action"
-              disabled={busy}
+              disabled={busy || uploadCount > 0}
               onClick={() => {
                 void (async () => {
                   const ok = await requestConfirm({
@@ -1082,7 +1136,7 @@ export function Dashboard({
             </button>
           )}
         </div>
-      </div>
+      </StickyEditorActions>
     );
   }
   function openHomeEditor(meta: HomeSectionMeta) {
@@ -3112,7 +3166,7 @@ export function Dashboard({
                       : undefined
                   }
                 >
-                  Xem bản nháp ↗
+                  Xem bản nháp đã lưu ↗
                 </Link>
               )}
             </div>
@@ -3215,6 +3269,9 @@ export function Dashboard({
               </div>
             )}
             {editorActions()}
+            {(tab === "tours" || tab === "articles") && (
+              <DraftPreview key={`${tab}:${selected.id}`} kind={tab} data={selected.data} />
+            )}
             {tab === "hero" ? (
               <HeroEditor
                 value={selected.data as unknown as HeroConfig}

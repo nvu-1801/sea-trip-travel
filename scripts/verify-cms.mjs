@@ -836,8 +836,12 @@ try {
   await page
     .getByRole("heading", { name: "Trang chủ", exact: true })
     .waitFor();
-  const editSectionButtons = page.getByRole("button", { name: /^Sửa / });
-  await editSectionButtons.first().waitFor();
+  // Wait for the home cards rather than matching a leftover edit button
+  // while the destination tab is still being replaced by async content.
+  const editSectionButtons = page.locator(".adm-section-card .adm-section-edit");
+  await page.waitForFunction(() =>
+    document.querySelectorAll(".adm-section-card .adm-section-edit").length >= 8,
+  );
   const sectionCount = await editSectionButtons.count();
   check("home lists every landing section", sectionCount >= 8);
   for (let index = 0; index < sectionCount; index += 1) {

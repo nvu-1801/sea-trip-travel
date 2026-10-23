@@ -18,7 +18,8 @@
     "test:cms": "node --import tsx --conditions=react-server --test tests/cms.test.ts",
     "verify:cms": "node scripts/verify-cms.mjs",
     "verify:hero": "node scripts/verify-hero.mjs",
-    "verify:seo": "node scripts/verify-seo.mjs"
+    "verify:seo": "node scripts/verify-seo.mjs",
+    "verify:tour-editor": "node scripts/verify-tour-editor.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

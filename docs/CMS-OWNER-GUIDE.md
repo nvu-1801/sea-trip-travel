@@ -81,6 +81,14 @@ Khi CMS được bật, trang public và admin tự kiểm tra thay đổi kho�
 
 Tab ẩn dừng kiểm tra, quay lại tab hoặc nối lại mạng sẽ kiểm tra tiếp. Đây là đồng bộ gần realtime, có độ trễ và không phải chế độ nhiều người cùng sửa một văn bản. Chi tiết kỹ thuật: `LIVE-CONTENT.md`.
 
+## Xem trước khi chỉnh sửa
+
+Trong form tour và bài viết, chọn **Xem trước đang sửa** để xem ảnh và nội dung chưa lưu. Bản xem trước rút gọn cập nhật theo form, không lưu hoặc xuất bản. Muốn xem đầy đủ giao diện thật, lưu nháp rồi mở **Xem bản nháp đã lưu**.
+
+Thanh **Hủy các thay đổi / Lưu bản nháp / Xuất bản thay đổi** bám dưới thanh đầu trang khi cuộn. Hủy các thay đổi yêu cầu xác nhận rồi khôi phục phiên bản đã lưu gần nhất, giữ form đang mở.
+
+Khung gallery chi tiết tour và khung chọn ảnh trong form tour có tỷ lệ vuông, tối đa **500 × 500 px**, tự co trên màn hình nhỏ. Mặc định hiển thị toàn bộ ảnh, không cắt ảnh gốc. Ảnh vừa chọn từ máy hiển thị ngay trong khi tải lên.
+
 ## Ảnh
 
 Thư viện giữ đủ 28 ảnh gốc, không sửa byte gốc. Ảnh mới nhận JPEG/PNG/WebP tối đa 10 MB và 25 triệu pixel, đổi thành WebP, bỏ metadata và không phóng lớn ảnh nhỏ. Có thể sửa mô tả ảnh trong thư viện, chọn ảnh trong form hoặc sao chép đường dẫn. Alt của ảnh đã gắn vào nội dung được chỉnh trong form nội dung đó. Ảnh đang được tham chiếu bởi nháp/bản xuất bản/thùng rác không được xóa. Các ảnh seed trong Git được giữ để tránh làm mất dữ liệu gốc; có thể gỡ tham chiếu khỏi nội dung.

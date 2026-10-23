@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { AdmSelect } from "./ui-select";
 import { AdminIcon } from "./admin-icons";
 
@@ -54,6 +54,17 @@ export function ImageField({
   libraryLabel?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const onChangeRef = useRef(onChange);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
   const altId = useId();
   const altHelpId = useId();
   const [dragging, setDragging] = useState(false);
@@ -61,10 +72,15 @@ export function ImageField({
   const [fit, setFit] = useState<"contain" | "cover">("contain");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [localPreview, setLocalPreview] = useState("");
+  useEffect(() => {
+    if (!localPreview) return;
+    return () => URL.revokeObjectURL(localPreview);
+  }, [localPreview]);
   const dragCount = useRef(0);
 
   async function handleFile(file: File | undefined) {
-    if (!file || !onUpload) return;
+    if (!file || !onUpload || uploading) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       setError("Chỉ nhận file JPEG, PNG hoặc WebP.");
       setStatus("");
@@ -77,14 +93,17 @@ export function ImageField({
     }
     setError("");
     setStatus("");
+    setLocalPreview(URL.createObjectURL(file));
     setUploading(true);
     try {
       const uploaded = await onUpload(file);
-      onChange(uploaded.src, uploaded.alt);
+      if (!mountedRef.current) return;
+      onChangeRef.current(uploaded.src, uploaded.alt);
       setStatus("Đã tải ảnh lên và dùng ngay trong form.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Tải ảnh thất bại.");
     } finally {
+      setLocalPreview("");
       setUploading(false);
     }
   }
@@ -151,10 +170,10 @@ export function ImageField({
           void handleFile(event.dataTransfer.files?.[0]);
         }}
       >
-        {value ? (
+        {value || localPreview ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={value}
+            src={localPreview || value}
             alt={previewAlt || ""}
             aria-hidden={previewAlt ? undefined : "true"}
             style={previewStyle}
@@ -218,9 +237,7 @@ export function ImageField({
             type="button"
             className="adm-image-action"
             onClick={() =>
-              setFit((current) =>
-                current === "contain" ? "cover" : "contain",
-              )
+              setFit((current) => (current === "contain" ? "cover" : "contain"))
             }
             title={
               fit === "contain"
@@ -245,11 +262,7 @@ export function ImageField({
         <span className="adm-image-format">JPEG, PNG, WebP · tối đa 10 MB</span>
       </div>
 
-      {whereUsed ? (
-        <p className="adm-image-where">
-          {whereUsed}
-        </p>
-      ) : null}
+      {whereUsed ? <p className="adm-image-where">{whereUsed}</p> : null}
 
       {error && (
         <p className="adm-field-error" role="alert">

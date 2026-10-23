@@ -56,7 +56,7 @@ export function TourGallery({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="mx-auto flex w-full max-w-[500px] flex-col gap-3">
       <div
         id="tour-gallery-panel"
         role="tabpanel"
@@ -69,8 +69,8 @@ export function TourGallery({
           altFallback={title}
           priority
           fit="contain"
-          sizes="(max-width: 1024px) 100vw, 60vw"
-          className="aspect-[16/10] w-full"
+          sizes="(max-width: 532px) calc(100vw - 32px), 500px"
+          className="aspect-square w-full"
           markPlaceholder
         />
         {active.caption ? (
