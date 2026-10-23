@@ -148,6 +148,31 @@ try {
     await frame.getAttribute("aria-describedby") === await imageHint.getAttribute("id"));
   check("tour sharing image has its own size guidance",
     await page.locator('#tour-section-seo .adm-image-guidance').filter({ hasText: "1200 × 630" }).count() === 1);
+  for (const width of [390, 360]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.evaluate(() => document.fonts.ready);
+    await imageHint.evaluate((el) => {
+      const toolbar = document.querySelector(".adm-topbar").getBoundingClientRect();
+      const actions = document.querySelector(".adm-edit-actions").getBoundingClientRect();
+      window.scrollBy({ top: el.getBoundingClientRect().top - toolbar.height - actions.height - 24, behavior: "instant" });
+    });
+    await page.waitForFunction(() => {
+      const hint = document.querySelector(".adm-tour-image-row .adm-image-guidance").getBoundingClientRect();
+      const actions = document.querySelector(".adm-edit-actions").getBoundingClientRect();
+      return hint.top >= actions.bottom && hint.bottom <= innerHeight;
+    });
+    const hintBox = await imageHint.boundingBox();
+    const frameBox = await frame.boundingBox();
+    const actionsBox = await page.locator(".adm-edit-actions").boundingBox();
+    check(`image size guidance is readable above the upload frame at ${width}px`,
+      await imageHint.isVisible() && hintBox && frameBox && actionsBox &&
+      hintBox.y >= actionsBox.y + actionsBox.height &&
+      hintBox.y + hintBox.height <= Math.min(frameBox.y, 1000) &&
+      hintBox.x >= 0 && hintBox.x + hintBox.width <= width);
+    mkdirSync("verify-screenshots", { recursive: true });
+    await page.screenshot({ path: `verify-screenshots/tour-image-guidance-${width}.png` });
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
   if (await frame.count()) {
     await frame.scrollIntoViewIfNeeded();
     let box = await frame.boundingBox();
