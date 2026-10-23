@@ -336,28 +336,34 @@ type SinglePhotoKey = "image" | "cover";
 function seedSinglePhoto(
   collection: "categories" | "articles",
   id: string,
-): { key: SinglePhotoKey; src: string } | undefined {
+): { key: SinglePhotoKey; src: string; alt: string } | undefined {
   if (collection === "categories") {
-    const src = tourCategories.find((item) => item.id === id)?.image?.src;
-    return src ? { key: "image", src } : undefined;
+    const image = tourCategories.find((item) => item.id === id)?.image;
+    return image?.src ? { key: "image", src: image.src, alt: image.alt } : undefined;
   }
-  const src = articles.find((item) => item.id === id)?.cover?.src;
-  return src ? { key: "cover", src } : undefined;
+  const cover = articles.find((item) => item.id === id)?.cover;
+  return cover?.src ? { key: "cover", src: cover.src, alt: cover.alt } : undefined;
 }
 
 /**
- * Fill one photo address, and nothing else. Only a missing/empty `src` is
- * written; `alt`, `caption`, focal points and every other field stay exactly
- * as the row stored them, and a photo the editor picked is never replaced.
+ * Fill a missing photo address, creating the photo object for early records
+ * that omitted it. Existing alt, caption, focal points and every other field
+ * stay as stored, and a photo the editor picked is never replaced.
  */
 function fillMissingPhotoSource(
   payload: Record<string, unknown> | null,
   key: SinglePhotoKey,
   src: string,
+  alt: string,
 ): boolean {
   if (!payload) return false;
   const raw = payload[key];
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return false;
+  // Early category records omitted the optional image object entirely.
+  if (raw === undefined || raw === null) {
+    payload[key] = { src, alt };
+    return true;
+  }
+  if (typeof raw !== "object" || Array.isArray(raw)) return false;
   const photo = raw as { src?: unknown };
   // `undefined`, `null` and "" all mean "no photo" in the older rows.
   if (photo.src) return false;
@@ -372,7 +378,7 @@ function fillMissingPhotoSource(
  * files carried their photos, and `seed()` inserts with `INSERT OR IGNORE`, so
  * a later deploy never touched them.
  *
- * This repair copies only the missing `src` from the content files into both
+ * This repair copies missing photos/addresses from the content files into both
  * `data` (draft) and `published` (what the site reads). Rows that already point
  * at a photo — an upload or a library pick by the owner — are left untouched,
  * and trashed rows are skipped so nothing the owner discarded is rewritten, so
@@ -402,8 +408,8 @@ export function fillMissingMediaSources(): number {
       ? (JSON.parse(row.published) as Record<string, unknown>)
       : null;
     // Evaluate both before deciding: `||` would skip the published payload.
-    const filledDraft = fillMissingPhotoSource(data, photo.key, photo.src);
-    const filledLive = fillMissingPhotoSource(live, photo.key, photo.src);
+    const filledDraft = fillMissingPhotoSource(data, photo.key, photo.src, photo.alt);
+    const filledLive = fillMissingPhotoSource(live, photo.key, photo.src, photo.alt);
     if (!filledDraft && !filledLive) continue;
     update.run(
       JSON.stringify(data),
@@ -420,7 +426,7 @@ export function fillMissingMediaSources(): number {
  * Id of the one-time media repair. Add a new id when the content files gain
  * photos for rows that already exist, so the new photos reach an older volume.
  */
-export const MEDIA_SOURCE_MIGRATION = "media-sources/categories-articles:v1";
+export const MEDIA_SOURCE_MIGRATION = "media-sources/categories-articles:v2";
 
 /** Applies every pending content repair. The caller owns the transaction. */
 function applyPendingMigrations(): number {

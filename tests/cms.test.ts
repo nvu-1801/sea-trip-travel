@@ -655,6 +655,29 @@ test("legacy category and article rows recover the seed photo in draft and publi
   restoreStoredRow("articles", articleId, before.article);
 });
 
+test("missing published image objects recover without overwriting an owner's draft photo", () => {
+  for (const image of [undefined, null]) {
+    const id = "cat_mien_bac";
+    const before = readStoredRow("categories", id);
+    try {
+      const row = JSON.parse(before.data) as Record<string, unknown>;
+      const draft = { ...row, image: { src: "/images/uploads/owner.jpg", alt: "Ảnh riêng" } };
+      const live = { ...row, image };
+      db().prepare("UPDATE records SET data=?,published=? WHERE collection='categories' AND id=?")
+        .run(JSON.stringify(draft), JSON.stringify(live), id);
+      fillMissingMediaSources();
+      const repaired = readStoredRow("categories", id);
+      assert.deepEqual(JSON.parse(repaired.data), draft);
+      assert.deepEqual(JSON.parse(repaired.published!), {
+        ...live,
+        image: { src: "/images/destinations/ha-long.jpg", alt: "Vịnh Hạ Long nhìn từ đảo Ti Tốp" },
+      });
+    } finally {
+      restoreStoredRow("categories", id, before);
+    }
+  }
+});
+
 test("the media backfill never replaces a photo the owner picked", () => {
   const id = "cat_mien_trung";
   const before = readStoredRow("categories", id);
@@ -682,13 +705,17 @@ test("the media backfill never replaces a photo the owner picked", () => {
   restoreStoredRow("categories", id, before);
 });
 
-test("a deploy repairs an old volume once and records the migration", () => {
+test("a deploy repairs missing image objects even after the v1 migration ran", () => {
   const id = "cat_tay_nguyen";
   const before = readStoredRow("categories", id);
   const row = JSON.parse(before.data) as Record<string, unknown>;
   const alt = (row.image as { alt: string }).alt;
-  // Old volume: the photo has no address and no migration has run yet.
-  writeStoredRow("categories", id, { ...row, image: { alt } });
+  // v1 skipped categories with no image object, but still recorded success.
+  const legacy = { ...row };
+  delete legacy.image;
+  writeStoredRow("categories", id, legacy);
+  db().prepare("INSERT OR IGNORE INTO cms_migrations(id,applied_at) VALUES(?,?)")
+    .run("media-sources/categories-articles:v1", new Date().toISOString());
   db().prepare("DELETE FROM cms_migrations WHERE id=?").run(MEDIA_SOURCE_MIGRATION);
 
   // Booting the new build is a separate process, exactly like a deploy.
