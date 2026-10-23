@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useId } from "react";
 import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
 import { ImageField, type UploadedImage } from "./image-picker";
 import "./home-regions-editor.css";
@@ -27,6 +28,7 @@ export function HomeRegionsEditor({
   onChange: (value: EditorValue) => void;
   onCardsChange: (cards: RegionEditorRow[]) => void;
 }) {
+  const fieldPrefix = useId();
   const patch = (id: string, fields: Record<string, EditorValue>) =>
     onCardsChange(
       cards.map((card) =>
@@ -73,19 +75,21 @@ export function HomeRegionsEditor({
             </div>
             <div className="adm-region-card-grid">
               <div>
-                <label className="adm-field">
-                  Tên vùng miền
+                <div className="adm-field">
+                  <label htmlFor={`${fieldPrefix}-${card.id}-name`}>Tên vùng miền</label>
                   <input
+                    id={`${fieldPrefix}-${card.id}-name`}
                     value={name}
                     maxLength={160}
                     onChange={(event) =>
                       patch(card.id, { name: event.target.value })
                     }
                   />
-                </label>
-                <label className="adm-field">
-                  Mô tả địa điểm
+                </div>
+                <div className="adm-field">
+                  <label htmlFor={`${fieldPrefix}-${card.id}-tagline`}>Mô tả địa điểm</label>
                   <textarea
+                    id={`${fieldPrefix}-${card.id}-tagline`}
                     value={tagline}
                     maxLength={600}
                     placeholder={String(card.data.description ?? "")}
@@ -93,7 +97,7 @@ export function HomeRegionsEditor({
                       patch(card.id, { tagline: event.target.value })
                     }
                   />
-                </label>
+                </div>
                 <ImageField
                   sizeGuide="Thẻ vùng miền: nên dùng 1200 × 1600 px (3:4), tối thiểu 900 × 1200 px. Giữ chủ thể ở giữa vì ảnh được cắt khác nhau trên máy tính và điện thoại."
                   label="Ảnh vùng miền"
