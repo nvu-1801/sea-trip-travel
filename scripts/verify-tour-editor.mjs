@@ -93,6 +93,9 @@ try {
   const tours = await (
     await context.request.get(`${base}/api/admin/content/tours`)
   ).json();
+  const editedTour =
+    tours.find((row) => row.data.slug === "ha-noi-ha-long-4-ngay-3-dem") ??
+    tours[0];
   const samples = [
     tours.find((r) => r.data.duration.days === 1),
     tours.find((r) => r.data.duration.days > 1),
@@ -112,7 +115,7 @@ try {
       );
     }
   }
-  await page.goto(`${base}/admin/tours?edit=${tours[0].data.slug}`);
+  await page.goto(`${base}/admin/tours?edit=${editedTour.data.slug}`);
   const title = page.locator("#tour-field-title");
   await title.waitFor();
   const originalTitle = await title.inputValue();
@@ -132,8 +135,9 @@ try {
   ).json();
   check(
     "preview uses unsaved content without writing a revision",
-    stored.find((r) => r.id === tours[0].id).revision === tours[0].revision &&
-      stored.find((r) => r.id === tours[0].id).data.title === originalTitle,
+    stored.find((r) => r.id === editedTour.id).revision ===
+      editedTour.revision &&
+      stored.find((r) => r.id === editedTour.id).data.title === originalTitle,
   );
   await page.locator("#tour-section-media").evaluate((el) => (el.open = true));
   const frame = page.locator(".adm-tour-image-row .adm-dropzone").first();
@@ -151,7 +155,9 @@ try {
       .png()
       .toBuffer();
     let releaseUpload;
-    const uploadGate = new Promise((resolve) => { releaseUpload = resolve; });
+    const uploadGate = new Promise((resolve) => {
+      releaseUpload = resolve;
+    });
     await page.route("**/api/admin/media", async (route) => {
       if (route.request().method() === "POST") await uploadGate;
       await route.continue();
@@ -184,31 +190,85 @@ try {
       .click();
     await preview.locator('.adm-draft-photo img[src^="/api/media/"]').waitFor();
     check("uploaded photo is reflected in the unsaved content preview", true);
-    check("upload completion preserves edits made while uploading", await title.inputValue() === duringUpload);
+    check(
+      "upload completion preserves edits made while uploading",
+      (await title.inputValue()) === duringUpload,
+    );
   }
   for (const width of [1440, 768, 390, 360]) {
     await page.setViewportSize({ width, height: 1000 });
-    await page.evaluate(() =>
-      window.scrollTo(0, document.body.scrollHeight / 2),
-    );
-    await page.waitForTimeout(300);
-    const visible = await page.evaluate(() => {
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      if (document.activeElement instanceof HTMLElement)
+        document.activeElement.blur();
+      window.scrollTo({
+        top: document.body.scrollHeight / 2,
+        behavior: "instant",
+      });
+    });
+    // Resizing can reflow the wrapped toolbar. Wait for ResizeObserver and
+    // browser layout to settle instead of assuming a fixed 300ms is enough.
+    await page
+      .waitForFunction(
+        () => {
+          const bar = document
+            .querySelector(".adm-edit-actions")
+            .getBoundingClientRect();
+          const toolbar = document
+            .querySelector(".adm-topbar")
+            .getBoundingClientRect();
+          return (
+            bar.top >= toolbar.bottom &&
+            bar.bottom <= innerHeight &&
+            bar.left >= 0 &&
+            bar.right <= innerWidth &&
+            document.documentElement.scrollWidth <= innerWidth + 1
+          );
+        },
+        null,
+        { timeout: 10000 },
+      )
+      .catch(async (error) => {
+        console.error(
+          "Unsettled editor layout",
+          await page.evaluate(() => ({
+            bar: document
+              .querySelector(".adm-edit-actions")
+              .getBoundingClientRect()
+              .toJSON(),
+            toolbar: document
+              .querySelector(".adm-topbar")
+              .getBoundingClientRect()
+              .toJSON(),
+            scrollWidth: document.documentElement.scrollWidth,
+            width: innerWidth,
+          })),
+        );
+        throw error;
+      });
+    const geometry = await page.evaluate(() => {
       const bar = document.querySelector(".adm-edit-actions");
       const toolbar = document.querySelector(".adm-topbar");
       const a = bar.getBoundingClientRect(),
         t = toolbar.getBoundingClientRect();
-      return (
-        a.top >= t.bottom &&
-        a.bottom <= innerHeight &&
-        a.left >= 0 &&
-        a.right <= innerWidth &&
-        getComputedStyle(bar).position === "sticky" &&
-        document.documentElement.scrollWidth <= innerWidth + 1
-      );
+      return {
+        bar: a.toJSON(),
+        toolbar: t.toJSON(),
+        width: innerWidth,
+        height: innerHeight,
+        scrollWidth: document.documentElement.scrollWidth,
+        position: getComputedStyle(bar).position,
+      };
     });
+    console.log(`Editor geometry ${width}px: ${JSON.stringify(geometry)}`);
     check(
       `save/cancel remain visible below toolbar after scroll at ${width}px`,
-      visible,
+      geometry.bar.top >= geometry.toolbar.bottom &&
+        geometry.bar.bottom <= geometry.height &&
+        geometry.bar.left >= 0 &&
+        geometry.bar.right <= geometry.width &&
+        geometry.position === "sticky" &&
+        geometry.scrollWidth <= geometry.width + 1,
     );
   }
   mkdirSync("verify-screenshots", { recursive: true });
@@ -241,10 +301,10 @@ try {
   ).json();
   check(
     "sticky save persists only a draft and preserves public snapshot",
-    saved.find((r) => r.id === tours[0].id).data.title ===
+    saved.find((r) => r.id === editedTour.id).data.title ===
       "Tour thử lưu nháp từ thanh bám cuộn",
   );
-  await visitor.goto(`${base}/tour/${tours[0].data.slug}`);
+  await visitor.goto(`${base}/tour/${editedTour.data.slug}`);
   await visitor
     .getByRole("heading", { level: 1, name: originalTitle, exact: true })
     .waitFor();
