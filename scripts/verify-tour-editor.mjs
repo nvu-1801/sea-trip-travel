@@ -141,6 +141,13 @@ try {
   );
   await page.locator("#tour-section-media").evaluate((el) => (el.open = true));
   const frame = page.locator(".adm-tour-image-row .adm-dropzone").first();
+  const imageHint = page.locator(".adm-tour-image-row .adm-image-guidance").first();
+  check("tour upload explains source resolution separately from the 500px frame",
+    (await imageHint.innerText()).includes("1000 × 1000 đến 1600 × 1600") &&
+    (await imageHint.innerText()).includes("500 × 500") &&
+    await frame.getAttribute("aria-describedby") === await imageHint.getAttribute("id"));
+  check("tour sharing image has its own size guidance",
+    await page.locator('#tour-section-seo .adm-image-guidance').filter({ hasText: "1200 × 630" }).count() === 1);
   if (await frame.count()) {
     await frame.scrollIntoViewIfNeeded();
     let box = await frame.boundingBox();

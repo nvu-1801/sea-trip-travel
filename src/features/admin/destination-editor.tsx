@@ -486,6 +486,7 @@ export const DestinationEditor = forwardRef<
           <div className="adm-destination-media">
             <ImageField
               label="Ảnh đại diện"
+              imageUsage="destination"
               value={imageSrc}
               previewAlt={imageAlt}
               media={media}

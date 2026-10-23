@@ -103,6 +103,8 @@ try {
     );
     assert.equal(response.status(), 200, await response.text());
   };
+  check("hero image picker explains the recommended desktop banner size",
+    (await admin.locator(".adm-hero-image-picker .adm-image-guidance").first().innerText()).includes("1920 × 1080"));
   const original = (await current()).data;
   const library = await (await context.request.get(`${base}/api/admin/media`)).json();
   const aliases = library.filter((item) => item.src === "/images/hero/blue-bay.webp");

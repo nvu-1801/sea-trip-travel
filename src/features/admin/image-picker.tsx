@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { AdmSelect } from "./ui-select";
 import { AdminIcon } from "./admin-icons";
+import { ImageUploadHint, type ImageUsage } from "./image-upload-hint";
 
 export type UploadedImage = { src: string; alt: string };
 
@@ -18,6 +19,7 @@ const MAX_SIZE = 10 * 1024 * 1024;
  */
 export function ImageField({
   label,
+  imageUsage = "general",
   value,
   previewAlt,
   previewStyle,
@@ -34,6 +36,7 @@ export function ImageField({
   libraryLabel = "Ảnh từ thư viện",
 }: {
   label: string;
+  imageUsage?: ImageUsage;
   value: string;
   previewAlt?: string;
   previewStyle?: CSSProperties;
@@ -65,6 +68,7 @@ export function ImageField({
       mountedRef.current = false;
     };
   }, []);
+  const guidanceId = useId();
   const altId = useId();
   const altHelpId = useId();
   const [dragging, setDragging] = useState(false);
@@ -122,8 +126,10 @@ export function ImageField({
   return (
     <div className="adm-image-field" data-compact={compact || undefined}>
       <span className="adm-select-label">{label}</span>
+      <ImageUploadHint usage={imageUsage} id={guidanceId} />
       <div
         className={`adm-dropzone${compact ? " adm-dropzone--compact" : ""}`}
+        aria-describedby={guidanceId}
         data-fit={fit}
         data-dragging={dragging || undefined}
         data-uploading={uploading || undefined}
@@ -204,6 +210,7 @@ export function ImageField({
           accept={ACCEPT}
           hidden
           aria-label={`Chọn file ${label} từ máy tính`}
+          aria-describedby={guidanceId}
           onChange={(event) => {
             void handleFile(event.target.files?.[0]);
             event.target.value = "";

@@ -793,6 +793,8 @@ try {
     "destination form shows the live home card preview",
     (await page.getByText("Thẻ sẽ xuất hiện", { exact: false }).count()) > 0,
   );
+  check("destination image picker explains dimensions for its public cards",
+    (await page.locator(".adm-destination-media .adm-image-guidance").innerText()).includes("1600 × 1000"));
   const destinationStatus = page.locator(".adm-home-status");
   check(
     "destination form separates website publication from home visibility",
@@ -861,6 +863,9 @@ try {
     .locator("summary")
     .filter({ hasText: /^Nội dung$/ })
     .click();
+  await page.getByLabel("Loại khối nội dung").first().selectOption("image");
+  check("article image blocks inherit their own size guidance",
+    await page.locator(".adm-image-guidance").filter({ hasText: "Khung nội dung hiển thị 16:9" }).count() > 0);
   await page.getByLabel("Loại khối nội dung").first().selectOption("heading");
   await page
     .getByLabel("Nội dung chữ", { exact: true })
@@ -1012,6 +1017,9 @@ try {
   await page
     .getByRole("heading", { name: "Thư viện ảnh", exact: true })
     .waitFor();
+  check("media upload offers guidance before choosing a file",
+    (await page.locator("#media-upload-size-guidance").innerText()).includes("1920 × 1080") &&
+    await page.getByLabel("Tải ảnh mới lên thư viện", { exact: true }).getAttribute("aria-describedby") === "media-upload-size-guidance");
   check("quick search switches admin tabs", true);
   await page.keyboard.press("Control+k");
   await quickAgain.waitFor();

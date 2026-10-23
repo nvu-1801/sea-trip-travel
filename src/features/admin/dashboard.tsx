@@ -6,6 +6,7 @@ import { Editor, type EditorValue, type ReferenceOptions } from "./editor";
 import { TourEditor, type TourEditorHandle } from "./tour-editor";
 import { DraftPreview } from "./draft-preview";
 import { StickyEditorActions } from "./sticky-editor-actions";
+import { ImageUploadHint } from "./image-upload-hint";
 import {
   DestinationEditor,
   type DestinationEditorHandle,
@@ -2660,6 +2661,7 @@ export function Dashboard({
               <span className="adm-media-count">{media.length} ảnh</span>
             </header>
 
+            <ImageUploadHint usage="library" id="media-upload-size-guidance" />
             <div className="adm-media-toolbar">
               <label className="adm-media-search">
                 <SearchIcon className="h-4 w-4" aria-hidden="true" />
@@ -2700,6 +2702,7 @@ export function Dashboard({
                     accept="image/jpeg,image/png,image/webp"
                     disabled={busy}
                     aria-label="Tải ảnh mới lên thư viện"
+                    aria-describedby="media-upload-size-guidance"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file)
@@ -3038,6 +3041,7 @@ export function Dashboard({
                       />
                     ) : (
                       <Editor
+                        imageUsage={homeModal.key === "values" ? "portrait" : "general"}
                         value={{
                           [homeModal.key]: selected.data[homeModal.key],
                         }}
@@ -3326,6 +3330,7 @@ export function Dashboard({
               />
             ) : (
               <Editor
+                imageUsage={tab === "articles" ? "articleCover" : tab === "categories" ? "category" : "general"}
                 references={references}
                 value={selected.data}
                 locked={selected.revision > 0}
