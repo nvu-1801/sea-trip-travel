@@ -11,6 +11,14 @@
   box-shadow: 0 8px 28px -18px rgb(52 28 38 / 0.4);
 }
 
+/* Editorial page heroes (categories, guides index, contact): the bar floats over
+   a light hero, so the gradient hairline would read as a stray line across the
+   top of the photograph-free canvas. Hide it only while the bar is transparent;
+   it returns with the solid plate on scroll. */
+.stt-site-header[data-overlay-scope="hero"][data-overlay="true"] .stt-header-brandline {
+  opacity: 0;
+}
+
 /* Only the home carousel places navigation directly over photography. */
 body:has([data-hero-mode="carousel"]) .stt-site-header[data-overlay="true"] {
   color: white;

@@ -142,6 +142,14 @@
   --theme-on-dark-accent: #dfa9b9;
   --theme-wordmark: #ecddd5;
 
+  /* --- Photo scrim --------------------------------------------------------
+     Deliberately theme-independent, unlike --theme-dark. These sit on top of
+     photographs (hero, journey chapter): if they follow the theme, a maroon
+     theme washes every photo pink. A neutral warm black keeps the image's own
+     colour while still carrying the white type. */
+  --scrim-dark: #13100f;
+  --scrim-dark-2: #241b19;
+
   /* Legacy alias: older rules still reference --font-fraunces. It now points
      at the locale-aware display stack instead of the retired Fraunces face. */
   --font-fraunces: var(--font-display);
@@ -211,35 +219,19 @@ html:not([lang="en"]) .nf-lang-en {
   }
 
   body {
-    background-color: var(--color-background);
     /*
-     * Layered "silk paper" canvas: a champagne glow from the top left, the
-     * faintest rose reflection from the top right, a rose-gold breath at the
-     * bottom, then a porcelain-to-rose-ivory wash. It keeps flat sections from
-     * looking like bare white without tinting the whole page pink.
+     * Flat theme canvas — one colour for the whole document.
+     *
+     * This used to carry a document-height gradient plus two large radial
+     * glows. On a long page (a tour detail easily runs 6.000px) those layers
+     * drift from porcelain to champagne to rose, so the `--color-background`
+     * that every section fades back into no longer matched the colour actually
+     * painted behind it: each section boundary showed up as a hard band of the
+     * wrong hue. A flat canvas keeps the theme exact, and the atmosphere now
+     * lives only where it is intentional — page heroes, muted sections and the
+     * footer — all of which fade to `--color-background` at both edges.
      */
-    background-image:
-      radial-gradient(
-        72% 55% at 6% -8%,
-        color-mix(in srgb, var(--color-accent) 14%, transparent) 0%,
-        transparent 62%
-      ),
-      radial-gradient(
-        60% 45% at 100% 2%,
-        color-mix(in srgb, var(--color-primary) 5%, transparent) 0%,
-        transparent 58%
-      ),
-      radial-gradient(
-        42% 32% at 50% 108%,
-        color-mix(in srgb, var(--color-rose-gold) 9%, transparent) 0%,
-        transparent 62%
-      ),
-      linear-gradient(
-        180deg,
-        var(--color-surface) 0%,
-        var(--color-background) 46%,
-        var(--color-surface-muted) 100%
-      );
+    background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-synthesis-weight: none;
@@ -284,9 +276,11 @@ html:not([lang="en"]) .nf-lang-en {
     }
   }
 
+  /* Slim, brand-tinted scrollbar. 8px keeps the thumb readable without
+     stealing a visible column of the page; the border turns it into a pill. */
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
@@ -294,13 +288,22 @@ html:not([lang="en"]) .nf-lang-en {
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: var(--color-border-strong);
-    border: 3px solid var(--color-background);
+    background-color: color-mix(
+      in srgb,
+      var(--color-border-strong) 88%,
+      transparent
+    );
+    border: 2px solid var(--color-background);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
     background-color: var(--color-rose-gold);
+  }
+
+  ::-webkit-scrollbar-button,
+  ::-webkit-scrollbar-corner {
+    display: none;
   }
 
   /* Only show focus rings for keyboard users when a custom ring is applied. */
@@ -454,7 +457,21 @@ html:not([lang="en"]) .nf-lang-en {
  */
 @utility surface-section-muted {
   background-color: var(--color-surface-muted);
+  /*
+   * The fade is the topmost layer on purpose: whatever glow sits under it, the
+   * first and last band of the section must be exactly `--color-background`,
+   * otherwise the section boundary reads as a seam against the page canvas.
+   */
   background-image:
+    linear-gradient(
+      180deg,
+      var(--color-background) 0%,
+      color-mix(in srgb, var(--color-background) 45%, transparent) 9%,
+      var(--color-surface-muted) 18%,
+      var(--color-surface-muted) 82%,
+      color-mix(in srgb, var(--color-background) 45%, transparent) 91%,
+      var(--color-background) 100%
+    ),
     radial-gradient(
       60% 50% at 100% 0%,
       color-mix(in srgb, var(--color-accent) 12%, transparent) 0%,
@@ -477,6 +494,15 @@ html:not([lang="en"]) .nf-lang-en {
 @utility surface-section-sunken {
   background-color: var(--color-surface-sunken);
   background-image:
+    linear-gradient(
+      180deg,
+      var(--color-background) 0%,
+      color-mix(in srgb, var(--color-background) 45%, transparent) 10%,
+      var(--color-surface-sunken) 20%,
+      var(--color-surface-sunken) 80%,
+      color-mix(in srgb, var(--color-background) 45%, transparent) 90%,
+      var(--color-background) 100%
+    ),
     radial-gradient(
       55% 45% at 0% 100%,
       color-mix(in srgb, var(--color-rose-gold) 10%, transparent) 0%,
@@ -618,25 +644,21 @@ html:not([lang="en"]) .nf-lang-en {
   }
 }
 
+/**
+ * Footer surface.
+ *
+ * Colours come from the active theme only — a hard-coded cream gradient used to
+ * sit here, which ignored the CMS theme and turned the footer beige on the
+ * deployed (pink) site. Same look as the pre-theme footer: near-white canvas
+ * with a soft brand-coloured glow and a light brand watermark.
+ */
 .stt-footer {
   background-color: var(--color-surface-sunken);
-  background-image:
-    radial-gradient(
-      70% 55% at 50% 0%,
-      rgb(217 178 106 / 0.18) 0%,
-      transparent 62%
-    ),
-    radial-gradient(
-      45% 40% at 100% 100%,
-      rgb(168 20 85 / 0.05) 0%,
-      transparent 60%
-    ),
-    linear-gradient(
-      180deg,
-      #f2e6dc 0%,
-      var(--color-surface-sunken) 52%,
-      #eadbd0 100%
-    );
+  background-image: radial-gradient(
+    70% 55% at 50% 0%,
+    color-mix(in srgb, var(--color-primary) 4%, transparent) 0%,
+    transparent 62%
+  );
 }
 
 .footer-glow {
@@ -649,8 +671,7 @@ html:not([lang="en"]) .nf-lang-en {
   transform: translateX(-50%);
   background: radial-gradient(
     closest-side,
-    color-mix(in srgb, var(--color-accent) 20%, transparent),
-    color-mix(in srgb, var(--color-primary) 4%, transparent) 58%,
+    color-mix(in srgb, var(--color-primary) 6%, transparent),
     transparent
   );
 }
@@ -665,7 +686,7 @@ html:not([lang="en"]) .nf-lang-en {
   font-size: clamp(72px, 17vw, 210px);
   line-height: 0.78;
   letter-spacing: -0.02em;
-  color: var(--color-champagne-deep);
+  color: var(--color-brand-100);
   margin-bottom: -0.12em;
 }
 
@@ -1097,8 +1118,8 @@ html[data-motion-paused="true"] .stt-seq[data-revealed="true"] > * {
   border-bottom: 1px solid var(--color-border);
   background: linear-gradient(
     135deg,
-    var(--theme-dark) 0%,
-    var(--theme-dark-2) 100%
+    var(--scrim-dark) 0%,
+    var(--scrim-dark-2) 100%
   );
 }
 /* Horizontal spotlight: photo column gets a right rule instead of a bottom
@@ -1113,13 +1134,26 @@ html[data-motion-paused="true"] .stt-seq[data-revealed="true"] > * {
   pointer-events: none;
   position: absolute;
   inset: 0;
+  /* Neutral ink, not the theme's dark: a maroon theme was washing every tour
+     photo pink at the bottom. */
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--theme-dark) 8%, transparent) 0%,
+    color-mix(in srgb, var(--scrim-dark) 10%, transparent) 0%,
     transparent 40%,
-    color-mix(in srgb, var(--theme-dark) 42%, transparent) 100%
+    color-mix(in srgb, var(--scrim-dark) 46%, transparent) 100%
   );
 }
+/* Neutral photo scrim for image cards that carry white type.
+   Uses the theme-independent scrim tokens, never `--theme-dark`. */
+.stt-photo-scrim {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--scrim-dark) 6%, transparent) 0%,
+    color-mix(in srgb, var(--scrim-dark) 40%, transparent) 42%,
+    color-mix(in srgb, var(--scrim-dark) 88%, transparent) 100%
+  );
+}
+
 .stt-card-pill {
   display: inline-flex;
   align-items: center;

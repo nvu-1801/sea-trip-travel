@@ -73,7 +73,7 @@ test("theme schema accepts every configured id and rejects unknown ids", () => {
   assert.throws(() => themeIdSchema.parse("midnight"));
 });
 
-test("themeById falls back to the current theme", () => {
+test("themeById falls back to the default theme", () => {
   assert.equal(themeById(undefined).id, DEFAULT_THEME_ID);
   assert.equal(themeById("missing").id, DEFAULT_THEME_ID);
   assert.equal(themeById("ocean").id, "ocean");

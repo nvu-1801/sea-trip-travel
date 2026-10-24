@@ -410,7 +410,9 @@ async function checkAnimationGating(browser) {
 
         if (
           rule.selectorText &&
-          /\[data-(reveal|parallax|unveil)\]/.test(rule.selectorText)
+          /\[data-(reveal|parallax|unveil|depth|words|horizon)[\]=]/.test(
+            rule.selectorText,
+          )
         ) {
           found.push({
             selector: rule.selectorText.slice(0, 60),
@@ -615,10 +617,24 @@ async function checkDesktopNavHighlight(browser) {
     hoverAlpha > 0.5,
     `background alpha=${hoverAlpha}`,
   );
+  // Read the expectation from the active theme instead of pinning the palette:
+  // the default theme is a CMS/owner decision, the behaviour under test is
+  // "the hovered label uses the strong brand colour".
+  const expectedHoverColor = await page.evaluate(() => {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-primary-strong")
+      .trim();
+    if (!/^#[0-9a-f]{6}$/i.test(raw)) return null;
+    const value = raw.slice(1);
+    return `rgb(${Number.parseInt(value.slice(0, 2), 16)}, ${Number.parseInt(
+      value.slice(2, 4),
+      16,
+    )}, ${Number.parseInt(value.slice(4, 6), 16)})`;
+  });
   check(
     "highlighted nav label switches to the dark brand colour",
-    hoverColor === "rgb(168, 20, 85)",
-    `color=${hoverColor}`,
+    expectedHoverColor !== null && hoverColor === expectedHoverColor,
+    `color=${hoverColor}, expected=${expectedHoverColor ?? "unknown"}`,
   );
 
   await page.mouse.move(10, 890);

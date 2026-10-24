@@ -21,6 +21,7 @@ const fastSteps = [
 
 const fullSteps = [
   ["ui verification", "npm run verify:ui"],
+  ["depth verification", "npm run verify:depth"],
   ["tour import verification", "npm run verify:tour-import"],
   ["cms verification", "npm run verify:cms"],
   ["hero verification", "npm run verify:hero"],

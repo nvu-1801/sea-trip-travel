@@ -8,7 +8,9 @@ import {
 import { Container, Section } from "@/components/ui/layout";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { AssetImage } from "@/components/ui/asset-image";
-import { Reveal, RevealGroup } from "@/components/ui/reveal";
+import { RevealGroup } from "@/components/ui/reveal";
+import { MaskedHeading } from "@/components/motion/word-reveal";
+import { DepthItem } from "@/components/motion/depth-stage";
 import type { Locale } from "@/i18n/config";
 import { landingSections } from "@/server/cms/store";
 import { localizePath } from "@/i18n/routing";
@@ -49,11 +51,12 @@ export function RegionsSection({ locale }: { locale: Locale }) {
         <div className="regions-editorial">
           <RevealGroup className="regions-heading">
             <SectionEyebrow className="journal-eyebrow">{copy.eyebrow}</SectionEyebrow>
-            <h2>
-              {copy.titleA}
-              <br />
-              <em>{copy.titleB}</em>
-            </h2>
+            <MaskedHeading
+              lines={[
+                { text: copy.titleA },
+                { text: copy.titleB, emphasis: true },
+              ]}
+            />
             <p className="regions-intro">{copy.intro}</p>
             <Link
               className="journal-text-link"
@@ -62,9 +65,13 @@ export function RegionsSection({ locale }: { locale: Locale }) {
               {en ? "All domestic journeys" : "Xem hành trình trong nước"} ↗
             </Link>
           </RevealGroup>
-          <ol className="region-postcards">
+          <ol className="region-postcards" data-depth-stage>
             {getChildCategories(domestic.id, locale).map((region, i) => (
-              <Reveal as="li" key={region.id} delay={i}>
+              <DepthItem
+                as="li"
+                key={region.id}
+                level={((i % 3) + 1) as 1 | 2 | 3}
+              >
                 <Link
                   className="region-postcard"
                   href={localizePath(locale, region.path)}
@@ -94,7 +101,7 @@ export function RegionsSection({ locale }: { locale: Locale }) {
                     </span>
                   </div>
                 </Link>
-              </Reveal>
+              </DepthItem>
             ))}
           </ol>
         </div>

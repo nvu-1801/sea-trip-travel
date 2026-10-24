@@ -13,10 +13,13 @@ import {
 import { getTourTags, getToursByCategoryId } from "@/lib/data/tours";
 import { buildMetadata } from "@/lib/seo";
 import { collectionPageJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
-import { Breadcrumbs, type Crumb } from "@/components/layout/breadcrumbs";
+import type { Crumb } from "@/components/layout/breadcrumbs";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
+import { ButtonLink } from "@/components/ui/button";
+import { ArrowRightIcon } from "@/components/ui/icons";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Reveal } from "@/components/ui/reveal";
+import { PageHero } from "@/features/shared/page-hero";
 import { CategoryCard } from "./category-card";
 import { TourExplorer } from "./tour-explorer";
 import { toTourCard } from "./tour-card-model";
@@ -26,7 +29,7 @@ import { categoryTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
 import { absoluteUrl } from "@/lib/seo";
 import type { Locale } from "@/i18n/config";
-import { format, getMessages } from "@/i18n/server";
+import { format, getMessages, plural } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { ROUTES } from "@/config/navigation";
 import { CATEGORY_SEO } from "@/content/seo";
@@ -135,6 +138,29 @@ export function CategoryPageView({
     locale,
   );
 
+  const dayValues = tours.map((tour) => tour.durationDays);
+  const minDays = dayValues.length ? Math.min(...dayValues) : 0;
+  const maxDays = dayValues.length ? Math.max(...dayValues) : 0;
+  const durationValue =
+    tours.length === 0
+      ? "—"
+      : minDays === maxDays
+        ? plural(m.common.dayUnit, minDays)
+        : format(m.category.metaDurationRange, { min: minDays, max: maxDays });
+
+  const regionLabel = m.regions[category.region];
+  const scopeLabel = parent ? parent.name : m.tour.categoryFallback;
+  const normalizeScope = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/^tour\s+/, "")
+      .replace(/\s*[-–—]\s*/g, "-")
+      .trim();
+  const eyebrow =
+    normalizeScope(scopeLabel) === normalizeScope(regionLabel)
+      ? scopeLabel
+      : `${scopeLabel} · ${regionLabel}`;
+
   return (
     <>
       <JsonLd
@@ -160,69 +186,88 @@ export function CategoryPageView({
         )}
       />
 
-      {indexable ? null : <TranslationNotice locale={locale} />}
-
-      <Breadcrumbs items={crumbs} ariaLabel={m.common.breadcrumbAria} />
-
-      <section className="relative overflow-hidden border-b border-border bg-surface-muted">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-brand-100/60 blur-3xl"
-        />
-        <Container>
-          <div className="relative flex flex-col gap-5 py-12 sm:py-16">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary-strong">
-              {parent ? parent.name : m.tour.categoryFallback} ·{" "}
-              {m.regions[category.region]}
-            </p>
-
-            <h1 className="max-w-3xl text-display font-display font-semibold text-foreground">
-              {category.name}
-            </h1>
-
-            <p className="max-w-2xl text-[1.0625rem] leading-relaxed text-foreground-muted">
-              {category.description}
-            </p>
-
+      <PageHero
+        crumbs={crumbs}
+        crumbsLabel={m.common.breadcrumbAria}
+        notice={indexable ? null : <TranslationNotice locale={locale} />}
+        eyebrow={eyebrow}
+        titleLines={[{ text: category.name }]}
+        description={category.description}
+        actions={
+          <>
+            <ButtonLink href="#tour-list" size="lg">
+              {format(m.category.heroCta, { count: tours.length })}
+            </ButtonLink>
             {category.region === "quy-nhon-phu-yen" ? (
               <Link
                 href={localizePath(
                   locale,
                   "/cam-nang-du-lich/kinh-nghiem-du-lich-quy-nhon-phu-yen",
                 )}
-                className="w-fit text-sm font-semibold text-primary-strong underline decoration-primary/30 underline-offset-4 transition-colors hover:decoration-primary"
+                className="stt-page-hero-link"
               >
-                Kinh nghiệm du lịch Quy Nhơn – Phú Yên cho người đi lần đầu
+                Kinh nghiệm du lịch Quy Nhơn – Phú Yên
+                <ArrowRightIcon className="h-4 w-4" />
               </Link>
-            ) : null}
-
-            {children.length > 0 ? (
-              <ul className="mt-2 flex flex-wrap gap-2">
-                {children.map((child) => (
-                  <li key={child.id}>
-                    <a
-                      href={`#${child.slug}`}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border-strong bg-surface px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary-strong"
-                    >
-                      {child.name}
-                      <span className="text-xs font-medium text-foreground-subtle">
-                        {getCategoryTourCount(child.id)}
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            ) : (
+              <Link
+                href={localizePath(locale, ROUTES.contact)}
+                className="stt-page-hero-link"
+              >
+                {m.common.requestConsultationFree}
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            )}
+          </>
+        }
+        meta={[
+          { label: m.category.metaTours, value: tours.length },
+          { label: m.common.duration, value: durationValue },
+          { label: m.common.departure, value: m.category.metaDaily },
+        ]}
+        badges={
+          children.length > 0 ? (
+            <ul className="flex flex-wrap gap-2">
+              {children.map((child) => (
+                <li key={child.id}>
+                  <a href={`#${child.slug}`} className="stt-page-hero-chip">
+                    {child.name}
+                    <span>{getCategoryTourCount(child.id)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null
+        }
+        media={{
+          src: category.image?.src,
+          alt: category.image?.alt ?? category.name,
+          sizes: "(max-width: 1023px) 100vw, 46vw",
+        }}
+        floating={
+          <div>
+            <p className="stt-page-hero-float-kicker">
+              {plural(m.common.tourCount, tours.length)}
+            </p>
+            <p className="stt-page-hero-float-body">
+              {category.tagline ?? m.regions[category.region]}
+            </p>
           </div>
-        </Container>
-      </section>
+        }
+        scrollCue={m.common.scrollCue}
+      />
 
-      <Section tone="default" spacing="default">
+      <Section
+        id="tour-list"
+        tone="default"
+        spacing="tight"
+        className="relative"
+      >
         <Container>
-          <h2 className="sr-only">
-            {format(m.category.listHeadingSr, { name: category.name })}
-          </h2>
-          <Reveal>
+          <div className="relative z-10">
+            <h2 className="sr-only">
+              {format(m.category.listHeadingSr, { name: category.name })}
+            </h2>
             <TourExplorer
               tours={tours}
               tags={tags}
@@ -242,7 +287,7 @@ export function CategoryPageView({
                 contactHref: localizePath(locale, ROUTES.contact),
               }}
             />
-          </Reveal>
+          </div>
         </Container>
       </Section>
 

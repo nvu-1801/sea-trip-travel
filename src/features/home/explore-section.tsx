@@ -5,7 +5,10 @@ import {
 } from "@/lib/data/destinations";
 import { Container, Section } from "@/components/ui/layout";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
-import { Reveal, RevealGroup } from "@/components/ui/reveal";
+import { RevealGroup } from "@/components/ui/reveal";
+import { MaskedHeading } from "@/components/motion/word-reveal";
+import { DepthItem, DepthStage } from "@/components/motion/depth-stage";
+import { TiltCard } from "@/components/motion/tilt-card";
 import { AssetImage } from "@/components/ui/asset-image";
 import type { Locale } from "@/i18n/config";
 import { landingSections } from "@/server/cms/store";
@@ -45,45 +48,49 @@ export function ExploreSection({ locale }: { locale: Locale }) {
         <RevealGroup className="journal-heading">
           <div>
             <SectionEyebrow className="journal-eyebrow">{copy.eyebrow}</SectionEyebrow>
-            <h2>
-              {copy.titleA}
-              <br />
-              <em>{copy.titleB}</em>
-            </h2>
+            <MaskedHeading
+              lines={[
+                { text: copy.titleA },
+                { text: copy.titleB, emphasis: true },
+              ]}
+            />
           </div>
           <p>{copy.body}</p>
         </RevealGroup>
-        <div className="destination-editorial" data-count={destinations.length}>
+        <DepthStage className="destination-editorial" count={destinations.length}>
           {destinations.map((destination, index) => (
-            <Reveal
+            <DepthItem
               key={destination.id}
-              delay={index}
               className="destination-editorial-item"
+              level={((index % 3) + 1) as 1 | 2 | 3}
             >
-              <Link
-                href={homeDestinationHref(destination, locale)}
-                className="destination-editorial-card"
-              >
-                <AssetImage
-                  image={destination.image}
-                  className="destination-editorial-photo"
-                  sizes="(max-width: 700px) 100vw, 55vw"
-                  unveil={index === 0}
-                />
-                <div className="destination-editorial-copy">
-                  <span className="destination-number">
-                    0{index + 1} / {en ? "DISCOVER" : "KHÁM PHÁ"}
-                  </span>
-                  <h3>{destination.name}</h3>
-                  <p>{destination.summary}</p>
-                  <span className="destination-arrow" aria-hidden="true">
-                    ↗
-                  </span>
-                </div>
-              </Link>
-            </Reveal>
+              <TiltCard>
+                <Link
+                  href={homeDestinationHref(destination, locale)}
+                  className="destination-editorial-card"
+                >
+                  <AssetImage
+                    image={destination.image}
+                    className="destination-editorial-photo"
+                    sizes="(max-width: 700px) 100vw, 55vw"
+                    parallax
+                    unveil={index === 0}
+                  />
+                  <div className="destination-editorial-copy">
+                    <span className="destination-number">
+                      0{index + 1} / {en ? "DISCOVER" : "KHÁM PHÁ"}
+                    </span>
+                    <h3>{destination.name}</h3>
+                    <p>{destination.summary}</p>
+                    <span className="destination-arrow" aria-hidden="true">
+                      ↗
+                    </span>
+                  </div>
+                </Link>
+              </TiltCard>
+            </DepthItem>
           ))}
-        </div>
+        </DepthStage>
         <div className="journal-footnote">
           <span>{copy.footnote}</span>
           <Link href={localizePath(locale, "/tour-quy-nhon-phu-yen")}>

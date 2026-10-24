@@ -6,23 +6,39 @@ import { HeroCarousel } from "./hero-carousel";
 import type { HeroCopy } from "./hero-copy";
 import "./hero.css";
 
+/**
+ * Keep only the first kicker label.
+ *
+ * Older copy used a middle dot (`Du lịch trong nước · Chọn lọc`) and the design
+ * has moved to a single kicker, so the separator and everything after it are
+ * dropped instead of being re-inserted.
+ */
+function primaryBadge(value: string): string {
+  return (
+    value
+      .split(/\s*[·•]\s*/)[0]
+      ?.replace(/^[\s—–-]+/, "")
+      .trim() ?? ""
+  );
+}
+
+/**
+ * House style: the hero lead is a fragment, not a sentence, so it carries no
+ * closing full stop. CMS copy still arrives with one.
+ */
+function trimClosingPeriod(value: string): string {
+  return value.replace(/[\s.]*\.\s*$/, "").trim();
+}
+
 export function Hero({ locale }: { locale: Locale }) {
   const config = homeHero();
   const messages = getMessages(locale).home.hero;
   const custom = config[locale];
-  // Normalise older CMS copy that used a middle dot or a leading marker. The
-  // editorial treatment no longer draws rules or em dashes: a middle dot keeps
-  // the two phrases readable without adding another horizontal line.
-  const badge = (custom.badge || messages.badge)
-    .replace(/\s*[·•]\s*/g, " · ")
-    .replace(/\s+[—–-]\s+/g, " · ")
-    .replace(/^[\s—–-]+/, "")
-    .trim();
   const copy: HeroCopy = {
-    badge,
+    badge: primaryBadge(custom.badge || messages.badge),
     titleLine1: custom.titleLine1 || messages.titleLine1,
     titleLine2: custom.titleLine2 || messages.titleLine2,
-    description: custom.description || messages.lead,
+    description: trimClosingPeriod(custom.description || messages.lead),
     primaryLabel: custom.primaryLabel || messages.ctaTours,
     secondaryLabel: custom.secondaryLabel || messages.ctaConsult,
   };

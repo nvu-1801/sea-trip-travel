@@ -26,7 +26,7 @@ export const siteConfig = {
   description:
     "SEA TRIP TRAVEL chọn lọc điểm đến và thiết kế trải nghiệm du lịch trong nước, tập trung vào Quy Nhơn – Phú Yên và các tuyến Miền Bắc, Miền Trung, Miền Nam, Tây Nguyên.",
   /** TODO(owner): domain thật, khi đã trỏ DNS. Dùng cho canonical, OG và link trong email. */
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3050",
   locale: "vi_VN",
   lang: "vi",
   contact: {

@@ -1,0 +1,83 @@
+/* =============================================================================
+   Tour detail
+   -----------------------------------------------------------------------------
+   The opening band, the card rhythm in the sticky column and the small accents
+   that give the page a deliberate hierarchy.
+
+   Background rule for this page (and the whole site): the document canvas is a
+   single flat `--color-background`. Atmosphere is painted only by bands that
+   end on exactly that colour, so a section boundary can never show up as a
+   band of the wrong hue.
+   ========================================================================== */
+
+.tour-detail-hero {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(
+      54% 48% at 88% -12%,
+      color-mix(in srgb, var(--color-primary) 7%, transparent) 0%,
+      transparent 64%
+    ),
+    radial-gradient(
+      46% 40% at 2% 2%,
+      color-mix(in srgb, var(--color-accent) 10%, transparent) 0%,
+      transparent 62%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-background) 58%
+    );
+}
+
+/* The glows sit above the gradient, so the bottom of the band is eased back
+   into the flat canvas instead of stopping on a tinted edge. */
+.tour-detail-hero::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: -1;
+  height: 7rem;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, var(--color-background) 100%);
+}
+
+@media print {
+  .tour-detail-hero::after {
+    display: none;
+  }
+}
+
+/* --- Sticky column cards -------------------------------------------------- */
+
+/* Cards that carry the commercial weight (price, consult CTA) get a thin brand
+   hairline so the column reads top-to-bottom instead of as four equal boxes. */
+.tour-card-accent {
+  position: relative;
+  overflow: hidden;
+}
+
+.tour-card-accent::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 3px;
+  background-image: linear-gradient(
+    100deg,
+    var(--color-brand-500) 0%,
+    var(--color-sun-500) 100%
+  );
+}
+
+.tour-aside-cta {
+  background-color: var(--color-surface);
+  background-image: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--color-primary-soft) 88%, var(--color-surface)) 0%,
+    var(--color-surface) 64%
+  );
+}

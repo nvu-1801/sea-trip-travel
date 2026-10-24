@@ -14,6 +14,24 @@ import {
 } from "./header-state";
 
 /**
+ * Routes whose first section is a full-viewport `PageHero`. On these pages the
+ * header floats over the hero exactly like it does on the home page: no plate,
+ * no border, no shadow until the visitor scrolls.
+ */
+const HERO_OVERLAY_PATHS = [
+  /^\/$/,
+  /^\/tour-quy-nhon-phu-yen(?:\/|$)/,
+  /^\/tour-trong-nuoc(?:\/|$)/,
+  /^\/cam-nang-du-lich\/?$/,
+  /^\/lien-he\/?$/,
+] as const;
+
+function usesHeroOverlay(pathname: string): boolean {
+  const path = pathname.replace(/^\/(?:vi|en)(?=\/|$)/, "") || "/";
+  return HERO_OVERLAY_PATHS.some((pattern) => pattern.test(path));
+}
+
+/**
  * Sticky header shell with scroll-driven motion.
  *
  * Two effects, both tied to the scroll position:
@@ -25,9 +43,10 @@ import {
  * previous UI. (`scroll.hidden` is still tracked by `header-state` but
  * deliberately not consumed here.)
  *
- * The home hero sits behind a fixed, transparent header. Scrolling reveals its
- * background and keeps navigation visible. Opening a nav panel always keeps
- * the header visible and gives it a solid background.
+ * The home hero and the editorial page heroes sit behind a fixed, transparent
+ * header. Scrolling reveals its background and keeps navigation visible.
+ * Opening a nav panel always keeps the header visible and gives it a solid
+ * background.
  *
  * Everything is transform/opacity/height — no layout thrash — and the whole
  * block is disabled under `prefers-reduced-motion` (see globals.css).
@@ -35,6 +54,7 @@ import {
 export function HeaderShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const home = /^\/(?:vi\/?|en\/?)?$/.test(pathname);
+  const overlay = usesHeroOverlay(pathname);
   const scroll = useSyncExternalStore(
     subscribeToScroll,
     getScrollSnapshot,
@@ -43,16 +63,17 @@ export function HeaderShell({ children }: { children: ReactNode }) {
   const navOpen = useSyncExternalStore(subscribeToNav, getNavOpenSnapshot, getServerNavSnapshot);
 
   const hidden = false;
-  const solid = !home || scroll.condensed || navOpen;
+  const solid = !overlay || scroll.condensed || navOpen;
 
   return (
     <header
       data-condensed={scroll.condensed}
       data-hidden={hidden}
-      data-overlay={home && !solid}
+      data-overlay={overlay && !solid}
+      data-overlay-scope={overlay && !home ? "hero" : undefined}
       className={cn(
         "stt-site-header group top-0 z-40 border-b",
-        home ? "fixed inset-x-0" : "sticky",
+        overlay ? "fixed inset-x-0" : "sticky",
         "transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out",
         solid
           ? "border-border bg-surface/95 backdrop-blur-md shadow-[0_8px_28px_-18px_rgba(60,38,28,0.35)]"

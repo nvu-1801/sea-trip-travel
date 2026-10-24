@@ -43,10 +43,12 @@ export function CategoryCard({
         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.05]"
       />
-      {/* Scrim keeps text readable over any image, including the placeholder. */}
+      {/* Scrim keeps text readable over any image, including the placeholder.
+          Neutral ink (not the theme's dark) so a maroon theme cannot tint the
+          photograph pink. */}
       <span
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-t from-brand-900/88 via-brand-900/38 to-brand-900/5 transition-opacity duration-300 group-hover:opacity-95"
+        className="stt-photo-scrim absolute inset-0 transition-opacity duration-300 group-hover:opacity-95"
       />
 
       <span className="relative z-10 flex flex-col gap-2 p-5 text-white">

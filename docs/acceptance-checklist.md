@@ -147,8 +147,8 @@ Vitals nào.
 
 ```bash
 npm run build && npm start
-npx lighthouse http://localhost:3000 --preset=desktop --view
-npx lighthouse "http://localhost:3000/tour/quy-nhon-phu-yen-3-ngay-2-dem" --view
+npx lighthouse http://localhost:3050 --preset=desktop --view
+npx lighthouse "http://localhost:3050/tour/quy-nhon-phu-yen-3-ngay-2-dem" --view
 ```
 
 Mục tiêu để đối chiếu (không phải kết quả đã đo): LCP < 2.5s · CLS < 0.1 ·

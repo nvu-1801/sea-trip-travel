@@ -1,4 +1,5 @@
 import "@/features/home/home-editorial.css";
+import "@/features/home/home-motion.css";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { JourneyStory, PlanningSection } from "@/features/home/journey-story";
 import type { Metadata } from "next";

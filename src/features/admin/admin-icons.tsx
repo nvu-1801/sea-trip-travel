@@ -49,6 +49,7 @@ export type AdminIconName =
   | "briefcase"
   | "money"
   | "refresh"
+  | "menu"
   | "theme";
 
 const PATHS: Record<AdminIconName, ReactNode> = {
@@ -292,8 +293,13 @@ const PATHS: Record<AdminIconName, ReactNode> = {
   ),
   refresh: (
     <>
-      <path d="M20 11a8 8 0 1 0-2 5.3" />
-      <path d="M20 5v6h-6" />
+      <path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.7L21 8" />
+      <path d="M21 3v5h-5" />
+    </>
+  ),
+  menu: (
+    <>
+      <path d="M4 7h16M4 12h16M4 17h16" />
     </>
   ),
   theme: (

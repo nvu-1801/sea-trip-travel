@@ -10,7 +10,7 @@ const browser = await chromium.launch({
     "C:\\Users\\Nguyen Vu\\AppData\\Local\\ms-playwright\\chromium-1243\\chrome-win64\\chrome.exe",
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-await page.goto("http://localhost:3000/vi", { waitUntil: "networkidle" });
+await page.goto("http://localhost:3050/vi", { waitUntil: "networkidle" });
 
 const form = page.locator(".journey-finder-form");
 await form.scrollIntoViewIfNeeded();

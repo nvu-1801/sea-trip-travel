@@ -1,0 +1,460 @@
+/* =============================================================================
+   Coastal Depth — the home page's 3D layer
+   -----------------------------------------------------------------------------
+   Everything here is additive: no rule in this file is required for the page to
+   be readable, printable or usable without JavaScript. Three rules keep that
+   promise true and are repeated for every effect:
+
+     1. the resting state is the finished state — motion travels *towards* it;
+     2. scroll-driven CSS lives inside
+        `@supports (animation-timeline: view())` +
+        `@media (prefers-reduced-motion: no-preference)`;
+     3. `prefers-reduced-motion`, the owner's pause switch
+        (`html[data-motion-paused]`) and print all flatten the layer at the end.
+
+   The vocabulary is borrowed from ThreeUI's landing builds (a masked word
+   reveal, layered Z depth, a scroll-read shader) and rewritten against this
+   site's tokens, light editorial palette and existing motion gate.
+   ========================================================================== */
+
+.home-editorial {
+  --stt-depth-perspective: 1400px;
+  --stt-depth-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* -----------------------------------------------------------------------------
+   1. Sea horizon (single WebGL canvas, static CSS underlay)
+   -------------------------------------------------------------------------- */
+
+.stt-horizon {
+  position: absolute;
+  inset: auto 0 0;
+  height: min(66svh, 620px);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Painted before the canvas, and left in place if WebGL never starts. */
+.stt-horizon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      120% 78% at 50% 100%,
+      color-mix(in srgb, var(--color-sun-300) 42%, transparent) 0%,
+      color-mix(in srgb, var(--color-brand-200) 30%, transparent) 42%,
+      transparent 78%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--color-brand-100) 26%, transparent) 62%,
+      color-mix(in srgb, var(--color-sun-300) 24%, transparent) 100%
+    );
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 34%, #000);
+  mask-image: linear-gradient(180deg, transparent, #000 34%, #000);
+}
+
+.stt-horizon[data-tone="dark"]::before {
+  background:
+    radial-gradient(
+      120% 80% at 50% 100%,
+      color-mix(in srgb, var(--color-sun-500) 46%, transparent) 0%,
+      color-mix(in srgb, var(--scrim-dark) 62%, transparent) 48%,
+      transparent 82%
+    );
+}
+
+.stt-horizon canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  transition: opacity 600ms ease;
+}
+
+.stt-horizon[data-tone="dark"] {
+  mix-blend-mode: screen;
+  opacity: 0.92;
+  z-index: -1;
+}
+
+.stt-horizon[data-tone="light"] {
+  opacity: 0.6;
+}
+
+/* Nothing but the painted underlay until a context really exists. */
+.stt-horizon[data-webgl="pending"] canvas,
+.stt-horizon[data-webgl="fallback"] canvas {
+  opacity: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   2. Masked word reveal for display headings
+   -------------------------------------------------------------------------- */
+
+.stt-words {
+  display: block;
+}
+
+.stt-words-line {
+  display: block;
+}
+
+/*
+ * The clip that makes the rise read as a mask. Padding plus an equal negative
+ * margin keeps Vietnamese descenders (ạ, ộ, ỹ) and stacked accents inside the
+ * visible band instead of being sliced by `overflow: hidden`.
+ */
+.stt-words-word {
+  display: inline-block;
+  vertical-align: top;
+  overflow: hidden;
+  padding: 0.1em 0 0.18em;
+  margin: -0.1em 0 -0.18em;
+}
+
+.stt-words-inner {
+  display: inline-block;
+}
+
+.stt-words[data-words="armed"] .stt-words-inner {
+  transform: translate3d(0, 112%, 0);
+}
+
+.stt-words[data-words="in"] .stt-words-inner {
+  transform: none;
+  transition: transform 820ms var(--stt-depth-ease)
+    var(--stt-word-delay, 0ms);
+}
+
+@media (max-width: 639px) {
+  .stt-words[data-words="in"] .stt-words-inner {
+    transition-delay: 0ms;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   3. Depth stages — CSS 3D, driven by the scroll timeline
+   -------------------------------------------------------------------------- */
+
+[data-depth-stage] {
+  perspective: var(--stt-depth-perspective);
+  perspective-origin: 50% 42%;
+  /* A rotateY'd card projects a few pixels wider than its layout box. Clip the
+     horizontal overflow at the stage so the page can never scroll sideways;
+     the vertical axis stays visible so shadows and lifted states survive. */
+  overflow-x: clip;
+}
+
+.stt-depth-item {
+  min-width: 0;
+  transform-origin: 50% 72%;
+  backface-visibility: hidden;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-depth-stage] [data-depth] {
+      animation: stt-depth-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 32%;
+    }
+  }
+}
+
+/*
+ * Three resting distances. The card nearest the reader arrives last and from
+ * the shallowest angle, which is what makes a grid read as a stack instead of
+ * a single sheet that fades.
+ */
+@keyframes stt-depth-rise {
+  from {
+    transform: translate3d(
+        var(--stt-depth-x, 0px),
+        3rem,
+        var(--stt-depth-z, -120px)
+      )
+      rotateX(var(--stt-depth-rx, 6deg)) rotateY(var(--stt-depth-ry, 0deg));
+  }
+  to {
+    transform: none;
+  }
+}
+
+[data-depth="1"] {
+  --stt-depth-z: -170px;
+  --stt-depth-rx: 7deg;
+}
+
+[data-depth="2"] {
+  --stt-depth-z: -105px;
+  --stt-depth-rx: 5deg;
+}
+
+[data-depth="3"] {
+  --stt-depth-z: -55px;
+  --stt-depth-rx: 3deg;
+}
+
+/* Destination mosaic: the item is the plane, the tilt wrapper is the card. */
+.destination-editorial-item {
+  display: grid;
+}
+
+.destination-editorial-item > .stt-tilt {
+  height: 100%;
+}
+
+/* Regions: a slight yaw on each postcard, alternating direction by column. */
+.region-postcards > li[data-depth]:nth-child(even) {
+  --stt-depth-ry: -3deg;
+}
+
+.region-postcards > li[data-depth]:nth-child(odd) {
+  --stt-depth-ry: 3deg;
+}
+
+/* -----------------------------------------------------------------------------
+   4. Region postcards — a postcard fan, then a three-beat inside
+   -----------------------------------------------------------------------------
+   The four cards are the section's only "objects", so they get a longer
+   choreography than the rest of the page:
+
+     1. the card itself swings in from its own side of the grid (outside cards
+        travel further and rotate more), on a longer scroll range than the
+        generic depth items;
+     2. while it lands, the photograph settles from a 12% crop to its resting
+        frame, which reads as a camera coming to rest rather than a fade;
+     3. the index row and the copy rise separately, so the reveal keeps moving
+        after the card has stopped.
+
+   All of it is scoped under `[data-depth]` so the gate audit in `verify:ui`
+   covers these rules too.
+   -------------------------------------------------------------------------- */
+
+.region-postcards > li[data-depth] {
+  --stt-depth-x: 0px;
+}
+
+.region-postcards > [data-depth]:nth-child(1) {
+  --stt-depth-x: -30px;
+  --stt-depth-ry: 7deg;
+  --stt-depth-rx: 2deg;
+  animation-range: entry 0% cover 38%;
+}
+
+.region-postcards > [data-depth]:nth-child(2) {
+  --stt-depth-x: -10px;
+  --stt-depth-ry: 4deg;
+  --stt-depth-rx: 3deg;
+  animation-range: entry 4% cover 38%;
+}
+
+.region-postcards > [data-depth]:nth-child(3) {
+  --stt-depth-x: 10px;
+  --stt-depth-ry: -4deg;
+  --stt-depth-rx: 3deg;
+  animation-range: entry 8% cover 40%;
+}
+
+.region-postcards > [data-depth]:nth-child(4) {
+  --stt-depth-x: 30px;
+  --stt-depth-ry: -7deg;
+  --stt-depth-rx: 2deg;
+  animation-range: entry 12% cover 40%;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-depth] .region-postcard-photo img {
+      animation: stt-region-photo linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 46%;
+    }
+
+    [data-depth] .region-postcard-top {
+      animation: stt-region-index linear both;
+      animation-timeline: view();
+      animation-range: entry 6% cover 34%;
+    }
+
+    [data-depth] .region-postcard-copy {
+      animation: stt-region-copy linear both;
+      animation-timeline: view();
+      animation-range: entry 12% cover 40%;
+    }
+  }
+}
+
+@keyframes stt-region-photo {
+  from {
+    transform: scale(1.12);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes stt-region-index {
+  from {
+    transform: translate3d(0, -0.9rem, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes stt-region-copy {
+  from {
+    transform: translate3d(0, 1.6rem, 26px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   4b. Explore copy �?" the chip, title and summary rise after the plate lands
+   -----------------------------------------------------------------------------
+   Kept off the arrow: a scroll animation with `fill: both` would keep
+   overriding the arrow's hover rotation.
+   -------------------------------------------------------------------------- */
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-depth-stage] .destination-editorial-copy > :not(.destination-arrow) {
+      animation: stt-explore-copy linear both;
+      animation-timeline: view();
+      animation-range: entry 8% cover 30%;
+    }
+
+    [data-depth-stage] .destination-editorial-copy > :nth-child(2) {
+      animation-range: entry 12% cover 33%;
+    }
+
+    [data-depth-stage] .destination-editorial-copy > :nth-child(3) {
+      animation-range: entry 16% cover 36%;
+    }
+  }
+}
+
+@keyframes stt-explore-copy {
+  from {
+    transform: translate3d(0, 1rem, 34px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* The hover lift belongs to the card, not to the plane that swings in. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .region-postcard {
+    transition:
+      transform 600ms var(--stt-depth-ease),
+      box-shadow 600ms var(--stt-depth-ease);
+  }
+
+  .region-postcard:hover {
+    transform: translateY(-6px) perspective(1000px) rotateX(1.5deg);
+    box-shadow: 0 26px 54px
+      color-mix(in srgb, var(--theme-dark) 34%, transparent);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   5. Pointer tilt (desktop, fine pointers only)
+   -------------------------------------------------------------------------- */
+
+.stt-tilt {
+  transform: perspective(1000px) rotateX(var(--stt-tilt-x, 0deg))
+    rotateY(var(--stt-tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 600ms var(--stt-depth-ease);
+}
+
+.stt-tilt[data-tilting="true"] {
+  transition-duration: 140ms;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .stt-tilt {
+    transform: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   5. Reduced motion, owner pause and print flatten the whole layer
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-depth-stage] [data-depth],
+  .stt-depth-item,
+  [data-depth] .region-postcard-photo img,
+  [data-depth] .region-postcard-top,
+  [data-depth] .region-postcard-copy {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .stt-words .stt-words-inner {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .stt-tilt {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .stt-horizon {
+    opacity: 0.45;
+  }
+}
+
+html[data-motion-paused="true"] [data-depth-stage] [data-depth],
+html[data-motion-paused="true"]
+  [data-depth-stage]
+  .destination-editorial-copy
+  > :not(.destination-arrow),
+html[data-motion-paused="true"] .stt-depth-item,
+html[data-motion-paused="true"] [data-depth] .region-postcard-photo img,
+html[data-motion-paused="true"] [data-depth] .region-postcard-top,
+html[data-motion-paused="true"] [data-depth] .region-postcard-copy {
+  animation: none !important;
+  transform: none !important;
+}
+
+html[data-motion-paused="true"] .stt-words .stt-words-inner {
+  transform: none !important;
+  transition: none !important;
+}
+
+html[data-motion-paused="true"] .stt-tilt {
+  transform: none !important;
+  transition: none !important;
+}
+
+@media print {
+  [data-depth-stage] [data-depth],
+  [data-depth-stage] .destination-editorial-copy > :not(.destination-arrow),
+  .stt-depth-item,
+  .stt-tilt,
+  .stt-words .stt-words-inner,
+  [data-depth] .region-postcard-photo img,
+  [data-depth] .region-postcard-top,
+  [data-depth] .region-postcard-copy {
+    animation: none !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .stt-horizon {
+    display: none !important;
+  }
+}

@@ -43,7 +43,7 @@ Các giá trị này đã xuất hiện ở: header, footer, nút liên hệ n�
 | A1 | Hotline chính thức | ✅ | Đã nhận |
 | A2 | Email nhận yêu cầu tư vấn | ✅ | Đã nhận |
 | A3 | Người nhận email sales | ✅ có trong `.env.example` | **Phải đặt lại** trong môi trường deploy thật |
-| A4 | **Domain thật** | 🔴 | Vẫn là `http://localhost:3000`. Cần domain + DNS trước khi deploy, vì nó vào canonical, OG và link trong email |
+| A4 | **Domain thật** | 🔴 | Vẫn là `http://localhost:3050`. Cần domain + DNS trước khi deploy, vì nó vào canonical, OG và link trong email |
 | A5 | **Bảo đảm email gửi đi** | 🔴 | Xem mục riêng bên dưới |
 | A6 | **Tên pháp nhân + mã số thuế** | 🔴 | Đã có địa chỉ; còn thiếu **tên công ty/hộ kinh doanh** và **MST** để ghi ở footer và trang chính sách |
 | A7 | **Duyệt chính sách xử lý thông tin** | 🔴 | Bản dự thảo ở `src/app/chinh-sach-bao-mat/page.tsx` cần được đọc và duyệt |
