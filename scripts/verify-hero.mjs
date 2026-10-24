@@ -140,6 +140,10 @@ try {
   await assertNoPlaybackToggle(page);
   check("hero has no pause/play toggle", true);
   check("carousel is the default hero", true);
+  check(
+    "carousel photograph has no coloured horizon overlay",
+    (await page.locator('[data-hero-mode="carousel"] [data-horizon]').count()) === 0,
+  );
   const photos = page.locator(".stt-cinema-image img");
   check("all five supplied photos are present", (await photos.count()) === 5);
   check("slide 2 and 5 use the replacement photos", original.slides[1].image.src === "/images/hero/ky-co-user.png" && original.slides[4].image.src === "/images/hero/ghenh-da-dia-user.png");

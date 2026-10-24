@@ -9,7 +9,6 @@ import { localizePath } from "@/i18n/routing";
 import { ArrowRightIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { MaskedHeading } from "@/components/motion/word-reveal";
 import type { HeroCopy } from "./hero-copy";
-import { HorizonCanvas } from "./horizon-canvas";
 
 export function HeroCarousel({
   config,
@@ -152,7 +151,6 @@ export function HeroCarousel({
             )}
           </div>
         ))}
-        <HorizonCanvas tone="dark" alpha={0.92} />
         <div className="stt-cinema-shade" aria-hidden="true" />
         {/* A single light sweep per slide change: it sells the "new chapter"
             beat without touching the photograph's own colour. */}
