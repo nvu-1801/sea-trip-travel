@@ -17,7 +17,12 @@ import { Container, Section, SectionHeading } from "@/components/ui/layout";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Reveal } from "@/components/ui/reveal";
 import { ButtonLink } from "@/components/ui/button";
-import { ClockIcon, MapPinIcon, UsersIcon } from "@/components/ui/icons";
+import {
+  ArrowRightIcon,
+  ClockIcon,
+  MapPinIcon,
+  UsersIcon,
+} from "@/components/ui/icons";
 import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { isIndexable } from "@/domain/localization";
@@ -41,6 +46,7 @@ import {
 } from "./tour-facts";
 import { MobileConsultBar } from "./mobile-consult-bar";
 import { TOUR_SEO } from "@/content/seo";
+import "./tour-detail.css";
 
 function crumbsFor(tour: Tour, locale: Locale): Crumb[] {
   const m = getMessages(locale);
@@ -168,21 +174,31 @@ export function TourDetailContent({
 
       {preview || indexable ? null : <TranslationNotice locale={locale} />}
 
-      <Breadcrumbs items={crumbs} ariaLabel={m.common.breadcrumbAria} />
+      <header className="tour-detail-hero">
+        <Breadcrumbs items={crumbs} ariaLabel={m.common.breadcrumbAria} />
 
-      <div className="pb-24 lg:pb-0">
         <Container>
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
             {/* --- Main column ------------------------------------------------ */}
             <div className="lg:col-span-7">
               <div className="flex flex-col gap-6">
-                {primaryCategory ? (
-                  <Link
-                    href={localizePath(locale, primaryCategory.path)}
-                    className="inline-flex min-h-9 w-fit items-center text-xs font-bold uppercase tracking-[0.18em] text-primary-strong transition-colors hover:text-primary-strong-hover"
-                  >
-                    {primaryCategory.name}
-                  </Link>
+                {primaryCategory || tour.tourCode ? (
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    {primaryCategory ? (
+                      <Link
+                        href={localizePath(locale, primaryCategory.path)}
+                        className="eyebrow-pill group/cat gap-2 transition-colors hover:text-primary-strong-hover"
+                      >
+                        {primaryCategory.name}
+                        <ArrowRightIcon className="h-3 w-3 transition-transform duration-200 group-hover/cat:translate-x-0.5" />
+                      </Link>
+                    ) : null}
+                    {tour.tourCode ? (
+                      <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1.5 text-[0.6875rem] font-bold tracking-[0.14em] text-foreground-subtle">
+                        {tour.tourCode}
+                      </span>
+                    ) : null}
+                  </div>
                 ) : null}
 
                 <h1 className="text-display font-display font-semibold text-foreground">
@@ -192,18 +208,13 @@ export function TourDetailContent({
                 <p className="text-[1.0625rem] leading-relaxed text-foreground-muted">
                   {tour.summary}
                 </p>
-                {tour.tourCode ? (
-                  <span className="w-fit rounded-full border border-border bg-surface-muted px-3 py-1 text-xs font-bold tracking-widest text-primary-strong">
-                    {tour.tourCode}
-                  </span>
-                ) : null}
 
                 {destinations.length > 0 ? (
                   <ul className="flex flex-wrap gap-1.5">
                     {destinations.map((destination) => (
                       <li
                         key={destination.id}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-3 py-1.5 text-xs font-semibold text-foreground-muted"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-foreground-muted"
                       >
                         <MapPinIcon className="h-3.5 w-3.5 text-primary-strong" />
                         {destination.name}
@@ -223,6 +234,9 @@ export function TourDetailContent({
                     imageSr: m.tour.galleryImageLabel,
                     alt: m.tour.galleryAlt,
                     placeholderAlt: m.tour.galleryPlaceholderAlt,
+                    prev: m.tour.galleryPrev,
+                    next: m.tour.galleryNext,
+                    counter: m.tour.galleryCounter,
                   }}
                 />
               </div>
@@ -235,7 +249,7 @@ export function TourDetailContent({
             {/* --- Sticky panel ---------------------------------------------- */}
             <aside className="lg:col-span-5">
               <div className="lg:sticky lg:top-28 flex flex-col gap-5">
-                <div className="hidden rounded-2xl border border-border bg-surface-muted p-5 lg:block">
+                <div className="hidden rounded-2xl border border-border bg-surface-muted p-5 shadow-soft lg:block">
                   <dl className="flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-4">
                       <dt className="flex items-center gap-2 text-sm text-foreground-muted">
@@ -270,7 +284,7 @@ export function TourDetailContent({
 
                 <TourPriceBlock tour={tour} locale={locale} />
                 {tour.returnPoints.length > 0 || tour.transport.length > 0 ? (
-                  <dl className="grid gap-4 rounded-2xl border border-border p-5 text-sm">
+                  <dl className="grid gap-4 rounded-2xl border border-border bg-surface p-5 text-sm shadow-soft">
                     {tour.returnPoints.length > 0 ? (
                       <div>
                         <dt className="text-xs text-foreground-subtle">
@@ -294,7 +308,7 @@ export function TourDetailContent({
                   </dl>
                 ) : null}
 
-                <div className="hidden rounded-2xl border border-border bg-surface p-5 shadow-soft lg:block">
+                <div className="tour-aside-cta hidden rounded-2xl border border-border p-5 shadow-soft lg:block">
                   <p className="text-sm font-semibold text-foreground">
                     {m.tour.asideWant}
                   </p>
@@ -331,7 +345,9 @@ export function TourDetailContent({
             </ul>
           </nav>
         </Container>
+      </header>
 
+      <div className="pb-24 lg:pb-0">
         {hasPublishedPrice(tour.priceFrom) && tour.pricingOptions.length > 0 ? (
           <Section tone="muted" spacing="default">
             <Container>

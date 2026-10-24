@@ -16,8 +16,8 @@ import { z } from "zod";
  */
 
 export const THEME_IDS = [
-  "current",
   "pink",
+  "current",
   "ocean",
   "nature",
   "sunset",
@@ -286,20 +286,20 @@ const tet: ThemeVars = {
 
 export const THEMES: readonly ThemeDefinition[] = [
   {
-    id: "current",
-    label: "Hiện tại",
-    description:
-      "Rose-ivory, mận espresso và champagne gold. Giao diện đang dùng trên website.",
-    swatch: ["#f8f4f1", "#a81455", "#d9b26a", "#241a20"],
-    vars: current,
-  },
-  {
     id: "pink",
     label: "Hồng",
     description:
-      "Nền hồng phấn và điểm nhấn hồng logo như phiên bản trước; mềm và nữ tính nhưng vẫn rõ chữ.",
+      "Nền hồng phấn và điểm nhấn hồng logo; mềm và nữ tính nhưng vẫn rõ chữ. Theme mặc định.",
     swatch: ["#fffafc", "#d10053", "#ffbc0e", "#4a0a26"],
     vars: pink,
+  },
+  {
+    id: "current",
+    label: "Nâu vàng",
+    description:
+      "Rose-ivory, mận espresso và champagne gold. Tông trầm, ấm, thiên về ảnh phong cảnh.",
+    swatch: ["#f8f4f1", "#a81455", "#d9b26a", "#241a20"],
+    vars: current,
   },
   {
     id: "ocean",
@@ -336,10 +336,19 @@ export const THEMES: readonly ThemeDefinition[] = [
   },
 ];
 
-export const DEFAULT_THEME_ID: ThemeId = "current";
+/**
+ * Theme used when a record has no valid id: a fresh CMS database seeds this,
+ * and `themeById` falls back to it. Kept explicit (not `THEMES[0]`) so the
+ * picker order can change without silently changing the site default.
+ */
+export const DEFAULT_THEME_ID: ThemeId = "pink";
 
 export const themeIdSchema = z.enum(THEME_IDS);
 
 export function themeById(id: string | null | undefined): ThemeDefinition {
-  return THEMES.find((theme) => theme.id === id) ?? THEMES[0];
+  return (
+    THEMES.find((theme) => theme.id === id) ??
+    THEMES.find((theme) => theme.id === DEFAULT_THEME_ID) ??
+    THEMES[0]
+  );
 }

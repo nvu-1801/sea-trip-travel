@@ -13,7 +13,7 @@ thống gửi email cho bộ phận tư vấn; tư vấn viên liên hệ lại.
 ```bash
 npm install
 cp .env.example .env.local     # rồi điền giá trị thật
-npm run dev                    # http://localhost:3000
+npm run dev                    # http://localhost:3050
 ```
 
 Kiểm tra chất lượng:

@@ -7,7 +7,9 @@ import type { HeroConfig } from "@/domain/home-hero";
 import type { Locale } from "@/i18n/config";
 import { localizePath } from "@/i18n/routing";
 import { ArrowRightIcon, ChevronRightIcon } from "@/components/ui/icons";
+import { MaskedHeading } from "@/components/motion/word-reveal";
 import type { HeroCopy } from "./hero-copy";
+import { HorizonCanvas } from "./horizon-canvas";
 
 export function HeroCarousel({
   config,
@@ -150,13 +152,30 @@ export function HeroCarousel({
             )}
           </div>
         ))}
+        <HorizonCanvas tone="dark" alpha={0.92} />
         <div className="stt-cinema-shade" aria-hidden="true" />
-        <div className="stt-cinema-copy" key={active.id}>
+        {/* A single light sweep per slide change: it sells the "new chapter"
+            beat without touching the photograph's own colour. */}
+        <span
+          key={`sweep-${active.id}`}
+          className="stt-cinema-sweep"
+          aria-hidden="true"
+        />
+
+        <div className="stt-cinema-copy" key={`copy-${active.id}`}>
           <p className="stt-cinema-eyebrow">{copy.badge}</p>
-          <h1>
-            {title}
-            <span>{copy.titleLine2}</span>
-          </h1>
+          <MaskedHeading
+            as="h1"
+            className="stt-cinema-title"
+            lines={[
+              { text: title },
+              ...(copy.titleLine2
+                ? [{ text: copy.titleLine2, emphasis: true }]
+                : []),
+            ]}
+            stagger={58}
+            lineStagger={130}
+          />
           <p className="stt-cinema-description">{description}</p>
           <div className="stt-cinema-actions">
             <Link
@@ -175,6 +194,7 @@ export function HeroCarousel({
             </Link>
           </div>
         </div>
+
         <div className="stt-cinema-bottom">
           <div
             className="stt-cinema-caption"
@@ -188,7 +208,7 @@ export function HeroCarousel({
             <p>{label}</p>
           </div>
           {count > 1 && (
-            <div className="stt-cinema-controls">
+            <div className="stt-cinema-rail">
               <div
                 className="stt-cinema-dots"
                 role="group"
@@ -210,20 +230,22 @@ export function HeroCarousel({
                   </button>
                 ))}
               </div>
-              <button
-                type="button"
-                aria-label={english ? "Previous photo" : "Ảnh trước"}
-                onClick={() => navigate(-1)}
-              >
-                <ChevronRightIcon className="h-5 w-5 rotate-180" />
-              </button>
-              <button
-                type="button"
-                aria-label={english ? "Next photo" : "Ảnh tiếp theo"}
-                onClick={() => navigate(1)}
-              >
-                <ChevronRightIcon className="h-5 w-5" />
-              </button>
+              <div className="stt-cinema-controls">
+                <button
+                  type="button"
+                  aria-label={english ? "Previous photo" : "Ảnh trước"}
+                  onClick={() => navigate(-1)}
+                >
+                  <ChevronRightIcon className="h-5 w-5 rotate-180" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={english ? "Next photo" : "Ảnh tiếp theo"}
+                  onClick={() => navigate(1)}
+                >
+                  <ChevronRightIcon className="h-5 w-5" />
+                </button>
+              </div>
             </div>
           )}
         </div>

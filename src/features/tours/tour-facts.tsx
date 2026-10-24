@@ -83,7 +83,7 @@ export function TourPriceBlock({
   const hasPrice = hasPublishedPrice(tour.priceFrom);
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5 shadow-soft">
+    <div className="tour-card-accent rounded-2xl border border-border bg-surface p-5 shadow-soft">
       <p className="text-[0.6875rem] font-bold uppercase tracking-wider text-foreground-subtle">
         {hasPrice ? m.common.priceLabelFrom : m.common.priceLabelContact}
       </p>

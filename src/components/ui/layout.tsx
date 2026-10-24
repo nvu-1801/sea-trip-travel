@@ -26,7 +26,7 @@ type SectionProps = {
   /** Visual treatment, keeps section backgrounds deliberate rather than random. */
   tone?: "default" | "muted" | "sunken" | "inverse";
   /** Vertical rhythm. `loose` gives editorial breathing room. */
-  spacing?: "tight" | "default" | "loose";
+  spacing?: "none" | "tight" | "default" | "loose";
 };
 
 const tones = {
@@ -37,6 +37,7 @@ const tones = {
 } as const;
 
 const spacings = {
+  none: "",
   tight: "py-9 sm:py-12",
   default: "py-12 sm:py-20",
   loose: "py-14 sm:py-28",

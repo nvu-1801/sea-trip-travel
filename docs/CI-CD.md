@@ -113,3 +113,16 @@ smoke test. Sai ở bước này thì lỗi chỉ lộ ra trên production.
 
 Email cập nhật chủ site đọc `RELEASE_NOTICE_*` trong `.env.production`
 trên VPS; thiếu cấu hình thì bước gửi mail chỉ cảnh báo.
+
+## 6. Agent chịu trách nhiệm tới khi release hoàn tất
+
+Khi người dùng yêu cầu "push vào main và deploy", agent được phép thực hiện commit các thay đổi thuộc task, push nhánh, tạo/cập nhật PR, chờ checks, merge và xác nhận deploy trong chat đang hoạt động. Áp dụng cho nhánh hiện tại, nhánh feature mới và khi bắt đầu ở main (phải chuyển thay đổi sang nhánh feature trước khi commit). Giữ nguyên các thay đổi ngoài phạm vi task; nếu chưa rõ phạm vi release thì xác nhận trước khi gom chúng vào commit.
+
+Quy tắc đầy đủ nằm trong `AGENTS.md`, mục `Complete release ownership during an active chat`:
+
+- Theo dõi đúng workflow/run và SHA của PR mới nhất; sau merge lấy SHA thực tế trên main. Không dùng run xanh của commit khác hoặc dispatch workflow trùng với trigger PR/push.
+- CI PR lỗi: đọc log step lỗi, tái hiện nếu có thể, sửa nguyên nhân, chạy full preflight rồi push lại cùng nhánh tới khi xanh. Chỉ rerun khi có bằng chứng lỗi hạ tầng tạm thời.
+- CI/deploy main lỗi: tạo nhánh fix và PR mới, đi qua đầy đủ gate rồi theo dõi run main thay thế. Không bỏ check hoặc deploy tay trên VPS.
+- Deploy bị skip hoặc chưa bật không phải thành công. Thiếu quyền, review, credential hoặc kết nối hạ tầng thì báo blocker cụ thể; không vượt branch protection hay tự đổi secret.
+- Chỉ hoàn tất khi run main thành công, deploy và public verification xanh, health có status ok, database connected và đúng SHA. Nếu main thay đổi đồng thời, xác định release mới và kiểm tra run/health tương ứng.
+- Giữ lượt chat hoạt động trong lúc chờ và sửa; cập nhật ngắn ít nhất mỗi 60 giây. Báo link PR, Actions, SHA và health khi kết thúc. Không có cơ chế tự thức dậy sau khi lượt chat kết thúc.

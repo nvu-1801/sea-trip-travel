@@ -10,6 +10,30 @@ body {
   font-size: 14px;
   line-height: 1.6;
 }
+/* The Studio page scrollbar is part of the interface, not the OS default. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #e7b7ca transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 2px solid #fffafc;
+  border-radius: 999px;
+  background: #e7b7ca;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d98eac;
+}
+::-webkit-scrollbar-button,
+::-webkit-scrollbar-corner {
+  display: none;
+}
 button,
 input,
 textarea,
@@ -150,40 +174,87 @@ form {
   color: #e0005a;
 }
 .adm-shell {
+  --adm-sidebar-width: 260px;
+  --adm-pink: #fff8fb;
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-columns: var(--adm-sidebar-width) minmax(0, 1fr);
   min-height: 100vh;
 }
+/* The sidebar owns the pink wash for its full height, at the full grid width.
+   The footer stays pinned; only the menu column scrolls, and its scrollbar
+   lives in a stable 10px gutter so the active pill keeps one width. */
 .adm-shell aside {
   position: sticky;
   top: 0;
+  width: 100%;
   height: 100vh;
-  background: linear-gradient(180deg, #fff7fa 0%, #fff 42%, #fff 100%);
-  border-right: 1px solid #f2dde7;
-  padding: 32px 20px;
+  height: 100dvh;
+  padding: 28px 10px 18px 20px;
+  background:
+    radial-gradient(115% 36% at 0% 0%, #ffe9f2 0%, transparent 72%),
+    var(--adm-pink);
+  border-right: 0;
+  box-shadow: inset -1px 0 0 #f2dde7;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   overflow: hidden;
+}
+/* Only the menu column scrolls: "Về website" and "Đăng xuất" stay pinned at
+   the bottom instead of being pushed below the fold. The scrollbar lives in a
+   stable 10px gutter so the active pill keeps one width, and the rail stays
+   invisible until the column is hovered or focused. */
+.adm-side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.adm-nav-close {
+  display: none;
+}
+.adm-nav-scrim {
+  display: none;
 }
 .adm-shell nav {
   display: grid;
-  gap: 5px;
+  gap: 3px;
   align-content: start;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-bottom: 8px;
-}
-/* The old thin pink scrollbar read as a stray pink band next to the labels —
-   and its gutter made the active pill narrower than the sidebar. Hide the
-   scrollbar entirely: the wheel, trackpad and keyboard still scroll the nav. */
-.adm-shell nav {
-  scrollbar-width: none;
+  scrollbar-gutter: stable;
+  padding-bottom: 4px;
 }
 .adm-shell nav::-webkit-scrollbar {
-  display: none;
+  width: 10px;
+}
+.adm-shell nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.adm-shell nav::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+.adm-shell nav:hover::-webkit-scrollbar-thumb,
+.adm-shell nav:focus-within::-webkit-scrollbar-thumb {
+  background: #f2c3d6;
+  border-color: #fff8fb;
+}
+.adm-shell nav:hover::-webkit-scrollbar-thumb:hover {
+  background: #e79ab8;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .adm-shell nav {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  .adm-shell nav:hover,
+  .adm-shell nav:focus-within {
+    scrollbar-color: #f2c3d6 transparent;
+  }
 }
 .adm-shell nav button {
   text-align: left;
@@ -193,7 +264,8 @@ form {
   display: flex;
   align-items: center;
   gap: 13px;
-  min-height: 47px;
+  min-height: 39px;
+  padding: 0 12px;
   color: #6e5c68;
 }
 .adm-shell nav button svg {
@@ -230,49 +302,105 @@ form {
   z-index: 40;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 18px;
   margin: -38px -44px 26px;
-  padding: 11px 44px;
-  background: rgb(255 250 252 / 0.9);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  padding: 10px 44px;
+  min-height: 64px;
+  /* Same pink as the sidebar, so the top band and the rail read as one
+     continuous Studio chrome instead of two different surfaces. */
+  background: var(--adm-pink);
   border-bottom: 1px solid #f2dde7;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.7);
+}
+.adm-topbar-menu {
+  display: none;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid #f0dce6;
+  border-radius: 12px;
+  background: #fff;
+  color: #a81455;
+}
+.adm-topbar-menu:hover {
+  border-color: #e0005a;
+  background: #fff6fa;
 }
 .adm-topbar-lead {
   display: flex;
-  align-items: center;
-  gap: 9px;
-  min-width: 0;
-  font-size: 12px;
-  color: #8b7684;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 140px;
+  max-width: 230px;
 }
-.adm-topbar-brand {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  color: #e0005a;
-  white-space: nowrap;
-}
-.adm-topbar-brand b {
+.adm-topbar-group {
+  overflow: hidden;
   color: #b08093;
-  font-weight: 700;
-}
-.adm-topbar-slash {
-  color: #dcc4d1;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 .adm-topbar-section {
   overflow: hidden;
-  color: #43303c;
+  color: #2a1820;
+  font-size: 13px;
   font-weight: 700;
+  line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .adm-topbar-actions {
   display: flex;
-  flex: none;
+  flex: 0 1 auto;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
+  margin-left: auto;
+}
+.adm-topbar-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #f0dce6;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgb(72 16 43 / 0.04),
+    inset 0 1px 0 #fff;
+}
+.adm-topbar-tools .adm-topbar-icon {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+}
+.adm-topbar-tools .adm-topbar-icon:hover {
+  background: #fff1f6;
+}
+.adm-topbar-tools .adm-topbar-icon[aria-expanded="true"] {
+  background: #e0005a;
+}
+.adm-topbar-tools .adm-avatar {
+  margin-left: 2px;
+}
+.adm-topbar-divider {
+  flex: none;
+  width: 1px;
+  height: 22px;
+  margin: 0 2px;
+  background: #f0dce6;
 }
 .adm-topbar-new {
   display: inline-flex;
@@ -298,10 +426,14 @@ form {
 }
 .adm-search {
   display: flex;
+  flex: 1 1 480px;
   align-items: center;
   gap: 9px;
-  width: clamp(190px, 26vw, 340px);
+  width: auto;
+  max-width: 620px;
+  min-width: 0;
   min-height: 40px;
+  margin-inline: auto;
   padding: 0 10px 0 13px;
   border: 1px solid #f0dce6;
   border-radius: 12px;
@@ -334,6 +466,9 @@ form {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.adm-search-short {
+  display: none;
 }
 .adm-search kbd {
   flex: none;
@@ -749,13 +884,13 @@ form {
   color: #8b7684;
 }
 .adm-nav-group + .adm-nav-group {
-  margin-top: 18px;
-  padding-top: 14px;
+  margin-top: 10px;
+  padding-top: 8px;
   border-top: 1px solid #f7e3ec;
 }
 .adm-nav-label {
-  margin: 0 0 6px 2px;
-  font-size: 10px;
+  margin: 0 0 3px 2px;
+  font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -2959,24 +3094,18 @@ a.adm-image-action:hover {
   .adm-main {
     padding: 28px 22px;
   }
-  /* The top bar carries identity, quick create, search and actions. Between
-     761px and 1050px they no longer fit on one line, so let the bar wrap
-     instead of forcing the whole shell wider than the viewport. */
+  /* One row at every width: the title truncates, the search shrinks and the
+     action cluster stays put instead of wrapping onto a second line. */
   .adm-topbar {
     margin: -28px -22px 22px;
-    padding: 10px 22px;
-    flex-wrap: wrap;
-    row-gap: 10px;
-  }
-  .adm-topbar-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    padding: 9px 22px;
+    gap: 12px;
   }
   .adm-search {
-    width: clamp(170px, 24vw, 260px);
+    flex-basis: 300px;
   }
   .adm-shell {
-    grid-template-columns: 205px 1fr;
+    grid-template-columns: 224px minmax(0, 1fr);
   }
   .adm-brand {
     font-size: 17px;
@@ -2985,74 +3114,183 @@ a.adm-image-action:hover {
     display: none;
   }
 }
-@media (max-width: 760px) {
+/* Tablets: four stat cards force every label onto its own line, and the
+   labelled create button makes the toolbar wrap. Two columns + an icon. */
+@media (max-width: 900px) {
+  .adm-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .adm-search {
+    flex-basis: 240px;
+  }
+  .adm-topbar-new {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+  .adm-topbar-new span {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
   .adm-shell {
     display: block;
   }
+  /* Off-canvas drawer: the 13 sections no longer turn into a clipped
+     horizontal chip strip that hides half the menu. */
   .adm-shell aside {
-    position: static;
-    height: auto;
-    padding: 12px 14px;
-    gap: 10px;
-    border-bottom: 1px solid #f2dde7;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 80;
+    width: min(84vw, 320px);
+    height: 100dvh;
+    padding: 20px 12px 24px 18px;
+    gap: 14px;
+    background:
+      radial-gradient(115% 30% at 0% 0%, #ffe9f2 0%, transparent 72%),
+      #fff8fb;
+    border-right: 1px solid #f2dde7;
+    box-shadow: 0 24px 70px rgb(72 16 43 / 0.2);
+    transform: translateX(-102%);
+    visibility: hidden;
+    transition:
+      transform 0.26s ease,
+      visibility 0s linear 0.26s;
   }
-  .adm-shell aside > .adm-eyebrow,
-  .adm-site-link {
-    display: none;
+  .adm-shell[data-nav-open="true"] aside {
+    transform: none;
+    visibility: visible;
+    transition:
+      transform 0.26s ease,
+      visibility 0s;
+  }
+  .adm-nav-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 75;
+    background: rgb(42 24 32 / 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .adm-shell[data-nav-open="true"] .adm-nav-scrim {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .adm-nav-close {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+    border: 1px solid #f2dde7;
+    border-radius: 10px;
+    background: #fff;
+    color: #8b7684;
+    font-size: 20px;
+    line-height: 1;
   }
   .adm-shell nav {
-    display: flex;
+    display: grid;
     gap: 5px;
-    overflow-x: auto;
-    padding-bottom: 2px;
+    flex: none;
+    overflow: visible;
+    scrollbar-gutter: auto;
+    padding-bottom: 0;
   }
-  /* One scrollable chip row instead of stacked columns per menu group. */
-  .adm-shell nav .adm-nav-group {
-    display: contents;
+  .adm-shell aside::-webkit-scrollbar {
+    width: 8px;
   }
-  .adm-shell nav .adm-nav-label {
-    display: none;
+  .adm-shell aside::-webkit-scrollbar-thumb {
+    background: #f2c3d6;
+    border: 2px solid #fff8fb;
+    border-radius: 999px;
+  }
+  .adm-shell aside {
+    overflow-y: auto;
   }
   .adm-shell nav button {
-    white-space: nowrap;
-    flex-shrink: 0;
-    font-size: 11px;
-    min-height: 40px;
-    padding: 8px 11px;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 13px;
+    white-space: normal;
+  }
+  .adm-shell aside > .adm-eyebrow {
+    display: block;
+    margin: 0;
+  }
+  .adm-site-link {
+    display: block;
+    margin-top: auto;
+    padding: 8px 12px;
+    font-size: 13px;
   }
   .adm-shell aside > button {
-    align-self: flex-end;
-    font-size: 10px;
-    min-height: 30px;
-    padding: 3px 10px;
+    align-self: stretch;
+    min-height: 42px;
+    font-size: 12.5px;
+    padding: 8px 12px;
   }
   .adm-main {
-    padding: 25px 15px;
+    padding: 18px 15px;
   }
   .adm-topbar {
-    gap: 10px;
-    margin: -25px -15px 16px;
-    padding: 9px 15px;
+    gap: 8px;
+    margin: -18px -15px 16px;
+    padding: 8px 15px;
+    min-height: 56px;
   }
-  .adm-topbar-brand,
-  .adm-topbar-slash {
+  .adm-topbar-menu {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+  }
+  .adm-topbar-lead {
+    max-width: 32%;
+    min-width: 0;
+  }
+  .adm-topbar-group {
     display: none;
   }
   .adm-topbar-section {
-    font-size: 11.5px;
+    font-size: 12.5px;
   }
   .adm-topbar-actions {
+    flex: 1 1 auto;
     gap: 6px;
   }
   .adm-search {
-    width: 38px;
+    flex: 1 1 auto;
+    width: auto;
+    max-width: none;
+    min-width: 0;
     min-height: 38px;
-    justify-content: center;
-    padding: 0;
+    padding: 0 11px;
   }
-  .adm-search-text,
-  .adm-search kbd {
+  .adm-search kbd,
+  .adm-topbar-divider,
+  .adm-topbar-site,
+  .adm-topbar-refresh {
     display: none;
+  }
+  .adm-search-long {
+    display: none;
+  }
+  .adm-search-short {
+    display: inline;
+  }
+  .adm-topbar-tools {
+    padding: 2px;
+    border-radius: 12px;
+  }
+  .adm-topbar-tools .adm-topbar-icon {
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
   }
   .adm-topbar-new {
     width: 38px;
@@ -3080,6 +3318,11 @@ a.adm-image-action:hover {
     gap: 18px;
     padding: 22px 20px 20px;
     border-radius: 20px;
+  }
+  @media (max-width: 600px) {
+    .adm-topbar-lead {
+      display: none;
+    }
   }
   .adm-masthead h1 {
     font-size: 32px;
@@ -3525,6 +3768,25 @@ a.adm-image-action:hover {
 .adm-hide-action:hover:not(:disabled) {
   background: #fceae8;
 }
+/* Exit control inside the sticky form toolbar. Quiet by default so it never
+   competes with "Xuất bản", but clearly a way out of a long form. */
+.adm-exit-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #fff7fa;
+  border-color: #f0dce6;
+  color: #6e5c68;
+}
+.adm-exit-action svg {
+  flex: none;
+}
+.adm-exit-action:hover:not(:disabled) {
+  border-color: #e0005a;
+  background: #fff1f6;
+  color: #a30047;
+}
 @media (max-width: 760px) {
   .adm-edit-actions.adm-savebar {
     top: 0;
@@ -3733,6 +3995,17 @@ a.adm-image-action:hover {
   .adm-tour-section--collapsible > .adm-tour-section-head,
   .adm-tour-section-body {
     padding: 14px;
+  }
+}
+/* Phones: the section title already sits in the masthead, so give the search
+   every pixel the drawer button and quick actions do not need. */
+@media (max-width: 560px) {
+  .adm-topbar-lead,
+  .adm-topbar-refresh {
+    display: none;
+  }
+  .adm-search {
+    border-radius: 11px;
   }
 }
 

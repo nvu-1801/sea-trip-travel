@@ -1,11 +1,11 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { cn } from "@/lib/utils";
 import { CloseIcon, CompassIcon } from "@/components/ui/icons";
 import { ButtonLink } from "@/components/ui/button";
 import { Select } from "@/components/ui/form-controls";
 import { TourCard, type TourCardModel } from "./tour-card";
+import "./tour-explorer.css";
 
 type SortKey = "recommended" | "duration-asc" | "duration-desc";
 
@@ -36,6 +36,11 @@ function countLabel(label: { one: string; other: string }, count: number): strin
  * This is genuinely client-side on purpose: the whole catalogue for a category
  * is small, so shipping it once beats a server round-trip per keystroke. Every
  * string arrives in `labels`; the catalogs stay on the server.
+ *
+ * Layout owns two behaviours the page relies on:
+ *   - the filter island docks under the header from `lg` up (pure CSS sticky);
+ *   - the first row of cards arrives as one staggered group instead of one
+ *     observer per card.
  */
 export function TourExplorer({
   tours,
@@ -86,55 +91,56 @@ export function TourExplorer({
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface-muted p-4 sm:p-5">
-        {availableTags.length > 0 ? (
-          <div className="flex flex-col gap-2.5">
-            <p id="tour-filter-label" className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
+    <div className="stt-explorer">
+      <div className="stt-explorer-panel">
+        <div className="stt-explorer-head">
+          {availableTags.length > 0 ? (
+            <p id="tour-filter-label" className="stt-explorer-label">
               {labels.filterLabel}
             </p>
-            <div role="group" aria-labelledby="tour-filter-label" className="flex flex-wrap gap-2">
+          ) : (
+            <span aria-hidden="true" />
+          )}
+          <p aria-live="polite" className="stt-explorer-count">
+            {countLabel(labels.tourCount, visible.length)}
+          </p>
+        </div>
+
+        {availableTags.length > 0 ? (
+          <div
+            role="group"
+            aria-labelledby="tour-filter-label"
+            className="stt-explorer-chips no-scrollbar"
+          >
+            <button
+              type="button"
+              aria-pressed={activeTag === null}
+              onClick={() => setActiveTag(null)}
+              data-focus-ring=""
+              data-active={activeTag === null}
+              className="stt-explorer-chip"
+            >
+              {labels.all}
+            </button>
+            {availableTags.map((tag) => (
               <button
+                key={tag}
                 type="button"
-                aria-pressed={activeTag === null}
-                onClick={() => setActiveTag(null)}
+                aria-pressed={activeTag === tag}
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
                 data-focus-ring=""
-                className={cn(
-                  "inline-flex min-h-11 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors",
-                  activeTag === null
-                    ? "border-primary-strong bg-primary-strong text-white"
-                    : "border-border-strong bg-surface text-foreground-muted hover:border-primary hover:text-primary-strong",
-                )}
+                data-active={activeTag === tag}
+                className="stt-explorer-chip"
               >
-                {labels.all}
+                {tag}
               </button>
-              {availableTags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  aria-pressed={activeTag === tag}
-                  onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                  data-focus-ring=""
-                  className={cn(
-                    "inline-flex min-h-11 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors",
-                    activeTag === tag
-                      ? "border-primary-strong bg-primary-strong text-white"
-                      : "border-border-strong bg-surface text-foreground-muted hover:border-primary hover:text-primary-strong",
-                  )}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex min-w-0 flex-col gap-1.5 sm:w-60">
-            <label
-              id={sortLabelId}
-              className="text-xs font-bold uppercase tracking-wider text-foreground-muted"
-            >
+        <div className="stt-explorer-sort">
+          <div className="stt-explorer-sort-field">
+            <label id={sortLabelId} className="stt-explorer-label">
               {labels.sortLabel}
             </label>
             <Select
@@ -145,27 +151,22 @@ export function TourExplorer({
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <p aria-live="polite" className="text-sm text-foreground-muted">
-              {countLabel(labels.tourCount, visible.length)}
-            </p>
-            {isFiltered ? (
-              <button
-                type="button"
-                onClick={clearFilters}
-                data-focus-ring=""
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border-strong bg-surface px-3.5 text-sm font-semibold text-foreground-muted transition-colors hover:border-primary hover:text-primary-strong"
-              >
-                <CloseIcon className="h-3.5 w-3.5" />
-                {labels.clearFilter}
-              </button>
-            ) : null}
-          </div>
+          {isFiltered ? (
+            <button
+              type="button"
+              onClick={clearFilters}
+              data-focus-ring=""
+              className="stt-explorer-clear"
+            >
+              <CloseIcon className="h-3.5 w-3.5" />
+              {labels.clearFilter}
+            </button>
+          ) : null}
         </div>
       </div>
 
       {visible.length > 0 ? (
-        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="stt-explorer-grid">
           {visible.map((tour) => (
             <li key={tour.slug} className="flex">
               <TourCard tour={tour} />
@@ -173,7 +174,7 @@ export function TourExplorer({
           ))}
         </ul>
       ) : (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border-strong bg-surface px-6 py-16 text-center">
+        <div className="flex flex-col items-center gap-4 rounded-3xl border border-dashed border-border-strong bg-surface px-6 py-16 text-center">
           <CompassIcon className="h-9 w-9 text-brand-300" />
           <div>
             <h3 className="text-lg font-bold text-foreground">{labels.emptyTitle}</h3>

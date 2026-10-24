@@ -14,6 +14,7 @@ import { format, getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import type { HeroConfig } from "@/domain/home-hero";
 import type { HeroCopy } from "./hero-copy";
+import { HorizonCanvas } from "./horizon-canvas";
 
 /**
  * Home hero.
@@ -57,6 +58,7 @@ export function CollageHero({
       data-hero-mode="collage"
       className="stt-travel-hero stt-hero-editorial relative isolate overflow-x-clip bg-background"
     >
+      <HorizonCanvas tone="light" alpha={0.42} />
       {/* Brand field: two soft blooms plus a faint dot grid, no heavy wash. */}
       <span
         aria-hidden="true"

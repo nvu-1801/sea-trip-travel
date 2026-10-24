@@ -3,6 +3,8 @@ import { Container, Section } from "@/components/ui/layout";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { AssetImage } from "@/components/ui/asset-image";
 import { Reveal, RevealGroup } from "@/components/ui/reveal";
+import { MaskedHeading } from "@/components/motion/word-reveal";
+import { DepthItem } from "@/components/motion/depth-stage";
 import {
   ArrowRightIcon,
   CalendarIcon,
@@ -58,39 +60,40 @@ export function JourneyStory({ locale }: { locale: Locale }) {
               ? "MAKE TIME FOR A JOURNEY"
               : "DÀNH THỜI GIAN CHO MỘT CHUYẾN ĐI"}
           </SectionEyebrow>
-          <h2>
-            {en ? "No need to go far." : "Không cần đi thật xa."}
-            <br />
-            <em>
-              {en
-                ? "Just somewhere that feels different."
-                : "Chỉ cần thấy mình thật khác."}
-            </em>
-          </h2>
+          <MaskedHeading
+            lines={[
+              { text: en ? "No need to go far." : "Không cần đi thật xa." },
+              {
+                text: en
+                  ? "Just somewhere that feels different."
+                  : "Chỉ cần thấy mình thật khác.",
+                emphasis: true,
+              },
+            ]}
+          />
           <p>
             {en
               ? "Start with the time you have. We will help you find a journey that fits."
               : "Bắt đầu từ số ngày bạn có. Tìm một hành trình vừa vặn, đủ để nghỉ ngơi và mang về những câu chuyện mới."}
           </p>
         </RevealGroup>
-        <div className="journey-duration-grid">
+        <div className="journey-duration-grid" data-depth-stage>
           {trips.map(([days, title, description], i) => (
-            <Reveal key={days} delay={(i % 3) as 0 | 1 | 2}>
-            <Link
-              key={days}
-              href={`${localizePath(locale, "/tim-tour")}?days=${encodeURIComponent(days)}`}
-            >
-              <span className="journey-duration">
-                {days}
-                <small>{en ? "DAYS" : "NGÀY"}</small>
-              </span>
-              <h3>{title}</h3>
-              <p>{description}</p>
-              <span className="journey-duration-cta">
-                {en ? "Find a journey" : "Xem hành trình"} ↗
-              </span>
-            </Link>
-            </Reveal>
+            <DepthItem key={days} level={((i % 3) + 1) as 1 | 2 | 3}>
+              <Link
+                href={`${localizePath(locale, "/tim-tour")}?days=${encodeURIComponent(days)}`}
+              >
+                <span className="journey-duration">
+                  {days}
+                  <small>{en ? "DAYS" : "NGÀY"}</small>
+                </span>
+                <h3>{title}</h3>
+                <p>{description}</p>
+                <span className="journey-duration-cta">
+                  {en ? "Find a journey" : "Xem hành trình"} ↗
+                </span>
+              </Link>
+            </DepthItem>
           ))}
         </div>
       </Container>

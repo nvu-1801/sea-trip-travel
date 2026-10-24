@@ -8,7 +8,7 @@
   isolation: isolate;
   overflow: hidden;
   min-height: 100svh;
-  background: var(--theme-dark);
+  background: var(--scrim-dark);
   color: var(--theme-on-dark);
   display: flex;
   flex-direction: column;
@@ -23,19 +23,43 @@
   z-index: -1;
   pointer-events: none;
 }
+/* Slow drift + crossfade. The outgoing frame sinks a hair while the incoming
+   one settles, so a slide change reads as a camera move, not a slideshow. */
 .stt-cinema-image {
   opacity: 0;
-  transition: opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translate3d(0, 1.4%, 0);
+  transition:
+    opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 1600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .stt-cinema-image[data-active="true"] {
   opacity: 1;
+  transform: none;
 }
 .stt-cinema-image img {
-  transform: scale(1.06);
-  transition: transform 6500ms cubic-bezier(0.2, 0.5, 0.3, 1);
+  transform: scale(1.1);
+  transition: transform 8000ms cubic-bezier(0.2, 0.5, 0.3, 1);
 }
 .stt-cinema-image[data-active="true"] img {
-  transform: scale(1);
+  transform: scale(1.01);
+}
+/* One diagonal highlight per chapter change, behind the copy. */
+.stt-cinema-sweep {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 52%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    104deg,
+    transparent 38%,
+    rgb(255 255 255 / 0.16) 50%,
+    transparent 62%
+  );
+  mix-blend-mode: screen;
+  animation: stt-cinema-sweep 1500ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .stt-cinematic-hero[data-motion-blocked="true"] .stt-cinema-image img {
   animation-play-state: paused;
@@ -47,21 +71,22 @@
   transition: none;
 }
 .stt-cinema-shade {
+  /* Neutral scrim: the photograph keeps its own colour under every theme. */
   background:
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--theme-dark) 78%, transparent),
-      color-mix(in srgb, var(--theme-dark) 32%, transparent) 52%,
+      color-mix(in srgb, var(--scrim-dark) 78%, transparent),
+      color-mix(in srgb, var(--scrim-dark) 32%, transparent) 52%,
       transparent 85%
     ),
     linear-gradient(
       0deg,
-      color-mix(in srgb, var(--theme-dark) 72%, transparent),
+      color-mix(in srgb, var(--scrim-dark) 72%, transparent),
       transparent 42%
     ),
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--theme-dark) 58%, transparent),
+      color-mix(in srgb, var(--scrim-dark) 58%, transparent),
       transparent 24%
     );
 }
@@ -70,17 +95,14 @@
   padding-top: 70px;
   padding-bottom: 64px;
 }
-.stt-cinema-copy > * {
-  animation: stt-cinema-enter 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.stt-cinema-copy > h1 {
-  animation-delay: 100ms;
+.stt-cinema-copy > :not(.stt-cinema-title) {
+  animation: stt-cinema-enter 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .stt-cinema-copy > .stt-cinema-description {
-  animation-delay: 180ms;
+  animation-delay: 240ms;
 }
 .stt-cinema-copy > .stt-cinema-actions {
-  animation-delay: 260ms;
+  animation-delay: 340ms;
 }
 .stt-cinematic-hero[data-motion-enabled="false"] .stt-cinema-copy > *,
 .stt-cinematic-hero[data-motion-blocked="true"] .stt-cinema-copy > * {
@@ -98,28 +120,38 @@
   letter-spacing: 0.005em;
   color: var(--theme-on-dark);
   text-shadow: 0 1px 12px
-    color-mix(in srgb, var(--theme-dark) 45%, transparent);
+    color-mix(in srgb, var(--scrim-dark) 45%, transparent);
   margin-bottom: 22px;
 }
 .stt-cinema-copy h1 {
   font-family: var(--font-fraunces), Georgia, serif;
-  font-size: clamp(44px, 5.6vw, 84px);
+  font-size: clamp(46px, 6vw, 92px);
   font-weight: 500;
-  line-height: 1.08;
-  letter-spacing: -0.045em;
+  line-height: 1.04;
+  letter-spacing: -0.042em;
+  font-optical-sizing: auto;
   text-wrap: balance;
 }
-.stt-cinema-copy h1 > span {
-  display: block;
-  color: var(--theme-on-dark-accent);
-  margin-top: 6px;
+.stt-cinema-title .stt-words-line + .stt-words-line {
+  margin-top: clamp(2px, 0.6vw, 8px);
+}
+.stt-cinema-title .stt-words-line em {
   font-style: italic;
+  color: var(--theme-on-dark-accent);
+}
+/* The word mask clips on the glyph box; italic tails and Vietnamese hooks need
+   a little horizontal room before the clip cuts them. */
+.stt-cinema-title .stt-words-word {
+  padding-inline: 0.06em;
+  margin-inline: -0.06em;
 }
 .stt-cinema-description {
-  max-width: 440px;
-  margin-top: 24px;
-  font-size: 16px;
-  line-height: 1.8;
+  max-width: 44ch;
+  margin-top: 26px;
+  font-family: var(--font-lora), Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
   color: color-mix(in srgb, var(--theme-on-dark) 90%, transparent);
   text-wrap: pretty;
 }
@@ -189,7 +221,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px 24px;
   border-top: 1px solid #ffffff45;
   padding-top: 22px;
 }
@@ -207,6 +239,15 @@
 .stt-cinema-caption p {
   font-size: 13px;
   font-weight: 500;
+}
+.stt-cinema-rail {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(14px, 1.8vw, 24px);
+  flex: 1 1 320px;
+  min-width: 0;
 }
 .stt-cinema-controls,
 .stt-cinema-dots {
@@ -235,8 +276,8 @@
   cursor: default;
 }
 .stt-cinema-dots {
-  gap: 0;
-  margin-right: 16px;
+  gap: 2px;
+  margin-right: 0;
 }
 .stt-cinema-dots button {
   width: 30px;
@@ -246,17 +287,17 @@
   cursor: pointer;
 }
 .stt-cinema-dots button > span {
-  width: 19px;
+  width: 16px;
   height: 2px;
   border-radius: 2px;
   background: #ffffff70;
   transition:
-    transform 200ms,
+    width 240ms cubic-bezier(0.16, 1, 0.3, 1),
     background-color 200ms;
 }
 .stt-cinema-dots button[aria-current="true"] > span {
-  background: #fff;
-  transform: scaleY(2);
+  width: 30px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
 }
 .stt-hero-editorial .stt-hero-bloom-sun,
 .stt-hero-editorial .stt-idle-waves {
@@ -325,6 +366,19 @@
     transform: none;
   }
 }
+@keyframes stt-cinema-sweep {
+  from {
+    transform: translate3d(-110%, 0, 0) skewX(-6deg);
+    opacity: 0;
+  }
+  22% {
+    opacity: 0.55;
+  }
+  to {
+    transform: translate3d(210%, 0, 0) skewX(-6deg);
+    opacity: 0;
+  }
+}
 @media (max-width: 767px) {
   .stt-cinematic-hero {
     padding: 0;
@@ -336,9 +390,9 @@
   .stt-cinema-shade {
     background: linear-gradient(
       0deg,
-      color-mix(in srgb, var(--theme-dark) 94%, transparent),
-      color-mix(in srgb, var(--theme-dark) 48%, transparent) 65%,
-      color-mix(in srgb, var(--theme-dark) 40%, transparent)
+      color-mix(in srgb, var(--scrim-dark) 94%, transparent),
+      color-mix(in srgb, var(--scrim-dark) 48%, transparent) 65%,
+      color-mix(in srgb, var(--scrim-dark) 40%, transparent)
     );
   }
   .stt-cinema-copy {
@@ -357,8 +411,8 @@
     margin-bottom: 16px;
   }
   .stt-cinema-description {
-    font-size: 14px;
-    line-height: 1.7;
+    font-size: 16px;
+    line-height: 1.6;
     margin-top: 20px;
   }
   .stt-cinema-actions {
@@ -375,7 +429,7 @@
   .stt-cinema-bottom {
     flex-wrap: wrap;
     padding-top: 16px;
-    gap: 10px;
+    gap: 12px;
   }
   .stt-cinema-caption {
     gap: 14px;
@@ -383,21 +437,24 @@
   .stt-cinema-caption p {
     font-size: 12px;
   }
-  .stt-cinema-controls {
-    width: 100%;
-    justify-content: flex-end;
-    max-width: 100%;
+  .stt-cinema-rail {
+    flex: 1 0 100%;
+    justify-content: space-between;
+    gap: 10px 12px;
   }
   .stt-cinema-dots {
     margin-right: auto;
     min-width: 0;
-    flex: 1;
+    flex: 1 1 auto;
     flex-wrap: wrap;
     justify-content: flex-start;
   }
   .stt-cinema-dots button {
     width: 24px;
     min-height: 44px;
+  }
+  .stt-cinema-controls {
+    flex: 0 0 auto;
   }
   .stt-finder-island {
     padding: 18px;
@@ -406,7 +463,9 @@
 @media (prefers-reduced-motion: reduce) {
   .stt-cinema-copy,
   .stt-cinema-copy > *,
-  .stt-cinema-image[data-active="true"] img {
+  .stt-cinema-image,
+  .stt-cinema-image[data-active="true"] img,
+  .stt-cinema-sweep {
     animation: none;
   }
   .stt-cinema-image,
@@ -415,9 +474,15 @@
   .stt-cinema-dots button > span {
     transition: none;
   }
+  .stt-cinema-image {
+    transform: none;
+  }
   .stt-cinema-image img,
   .stt-cinema-primary:hover {
     transform: none;
+  }
+  .stt-cinema-sweep {
+    display: none;
   }
 }
 html[data-motion-paused="true"] .stt-cinema-copy,
@@ -426,8 +491,12 @@ html[data-motion-paused="true"] .stt-cinema-image[data-active="true"] img {
   animation: none;
   transform: none;
 }
+html[data-motion-paused="true"] .stt-cinema-sweep {
+  display: none;
+}
 @media print {
-  .stt-cinema-controls {
+  .stt-cinema-controls,
+  .stt-cinema-sweep {
     display: none;
   }
   .stt-cinema-copy,

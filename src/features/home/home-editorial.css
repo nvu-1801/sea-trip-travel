@@ -525,11 +525,32 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   outline: 2px solid var(--color-primary-strong);
   outline-offset: 4px;
 }
+/* ---------------------------------------------------------------------------
+   Explore — a coastal mosaic
+   ---------------------------------------------------------------------------
+   Three photographs, one tall plate and two smaller ones. The heading gets a
+   quiet rose hairline so the eye lands on the mosaic; each plate carries an
+   index chip, a scrim that only darkens the edges of the photograph, and a
+   glass arrow. Motion is layered: the depth stage swings the plates in, the
+   photograph drifts with the scroll (AssetImage `parallax`), the copy rises on
+   its own timeline and the pointer lifts the whole plate without touching the
+   image's colour balance.
+   ------------------------------------------------------------------------ */
+.journal-explore .journal-heading {
+  padding-bottom: clamp(18px, 2.2vw, 28px);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--color-rose-gold) 34%, transparent);
+  margin-bottom: clamp(24px, 3vw, 36px);
+}
 .destination-editorial {
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  grid-template-rows: repeat(2, 240px);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr);
+  grid-template-rows: repeat(2, clamp(232px, 21vw, 286px));
+  gap: 16px;
+}
+.destination-editorial-item {
+  position: relative;
+  min-width: 0;
 }
 .destination-editorial-item:first-child {
   grid-row: span 2;
@@ -555,57 +576,116 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   display: block;
   height: 100%;
   overflow: hidden;
-  border-radius: 14px;
-  background: var(--theme-dark);
+  border-radius: 20px;
+  background: var(--scrim-dark);
+  box-shadow:
+    0 24px 52px -42px rgb(8 40 38 / 0.6),
+    inset 0 0 0 1px rgb(255 255 255 / 0.14);
   transform-style: preserve-3d;
   transition:
-    transform 500ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 500ms ease;
+    transform 600ms var(--stt-depth-ease, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow 600ms var(--stt-depth-ease, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.destination-editorial-card:focus-visible {
+  outline: 2px solid var(--color-primary-strong);
+  outline-offset: 3px;
+}
+/* A soft pool of light from the top-left; it only appears on hover, so the
+   resting photograph is not washed out. */
+.destination-editorial-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 92% at 16% -6%,
+    rgb(255 255 255 / 0.22) 0%,
+    transparent 58%
+  );
+  opacity: 0;
+  transition: opacity 700ms ease;
 }
 .destination-editorial-photo {
   position: absolute;
   inset: 0;
-  transition: transform 1s cubic-bezier(0.2, 0.65, 0.3, 1);
+  /* The parallax wrapper scales the photo, so the card must clip it. */
+  overflow: hidden;
+}
+.destination-editorial-photo img {
+  filter: saturate(1.04);
+  transition:
+    filter 700ms ease,
+    transform 1.2s cubic-bezier(0.2, 0.65, 0.3, 1);
 }
 /* The curtain must read as the section surface, not a white card. */
 .destination-editorial-item:first-child .destination-editorial-photo {
   --unveil-color: var(--color-background);
 }
+/* The scrim is neutral and edge-weighted: the middle of the photo keeps its
+   own colour, while the chip and the copy stay readable on any image. */
 .destination-editorial-card::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    transparent 15%,
-    color-mix(in srgb, var(--theme-dark) 78%, transparent) 100%
-  );
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--scrim-dark) 30%, transparent) 0%,
+      transparent 32%
+    ),
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--scrim-dark) 94%, transparent) 0%,
+      color-mix(in srgb, var(--scrim-dark) 46%, transparent) 30%,
+      transparent 68%
+    );
 }
 .destination-editorial-copy {
   position: absolute;
-  inset: auto 28px 26px;
-  z-index: 1;
+  inset: auto clamp(18px, 2.2vw, 30px) clamp(20px, 2.2vw, 28px);
+  z-index: 2;
   color: var(--theme-on-dark);
-  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 620ms var(--stt-depth-ease, cubic-bezier(0.16, 1, 0.3, 1));
 }
 .destination-number {
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 24px;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  padding: 0 0.62rem;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  color: color-mix(in srgb, var(--theme-on-dark) 94%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 .destination-editorial-copy h3 {
   font-family: var(--font-fraunces), Georgia, serif;
-  font-size: 28px;
-  margin-top: 10px;
+  font-size: clamp(24px, 2.1vw, 30px);
+  line-height: 1.06;
+  letter-spacing: -0.022em;
+  margin-top: 14px;
+  text-wrap: balance;
 }
 .destination-editorial-item:first-child h3 {
-  font-size: 40px;
+  font-size: clamp(34px, 3.4vw, 46px);
 }
 .destination-editorial-copy p {
-  max-width: 85%;
+  max-width: 34ch;
   font-size: 13px;
-  line-height: 1.65;
-  margin-top: 8px;
+  line-height: 1.7;
+  margin-top: 10px;
+  padding-right: 2.6rem;
   color: color-mix(in srgb, var(--theme-on-dark) 84%, transparent);
+  text-wrap: pretty;
 }
 .destination-arrow {
   position: absolute;
@@ -613,28 +693,43 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   bottom: 2px;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid #ffffff65;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgb(255 255 255 / 0.42);
   border-radius: 50%;
+  background: rgb(255 255 255 / 0.08);
+  font-size: 15px;
+  line-height: 1;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   transition:
-    background 0.3s,
-    transform 0.3s;
+    background 300ms ease,
+    border-color 300ms ease,
+    color 300ms ease,
+    transform 380ms var(--stt-depth-ease, cubic-bezier(0.16, 1, 0.3, 1));
 }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .destination-editorial-card:hover {
-    transform: translateY(-4px) perspective(1000px) rotateX(1.5deg);
-    box-shadow: 0 24px 50px rgba(8, 40, 38, 0.28);
+    transform: translateY(-6px);
+    box-shadow:
+      0 36px 70px -44px rgb(8 40 38 / 0.58),
+      inset 0 0 0 1px rgb(255 255 255 / 0.24);
+  }
+  .destination-editorial-card:hover::before {
+    opacity: 1;
   }
   .destination-editorial-card:hover .destination-editorial-copy {
-    transform: translateZ(14px);
+    transform: translateZ(18px);
   }
-  .destination-editorial-card:hover .destination-editorial-photo {
-    transform: scale(1.055);
+  .destination-editorial-card:hover .destination-editorial-photo img {
+    filter: saturate(1.1);
+    transform: scale(1.06);
   }
   .destination-editorial-card:hover .destination-arrow {
-    background: #ffffff22;
-    transform: rotate(45deg);
+    border-color: transparent;
+    background: var(--color-primary);
+    color: #fff;
+    transform: rotate(45deg) scale(1.05);
   }
 }
 .journal-footnote {
@@ -691,7 +786,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
      viewport-height section rather than a band of empty background. */
   min-height: 900px;
   min-height: max(900px, 100svh);
-  background: var(--theme-dark);
+  background: var(--scrim-dark);
   padding: clamp(72px, 7vw, 112px) 0;
   color: var(--theme-on-dark);
 }
@@ -713,8 +808,8 @@ html[data-motion-paused="true"] .home-brand-wordmark {
     ),
     linear-gradient(
       100deg,
-      color-mix(in srgb, var(--theme-dark) 94%, transparent),
-      color-mix(in srgb, var(--theme-dark) 56%, transparent)
+      color-mix(in srgb, var(--scrim-dark) 94%, transparent),
+      color-mix(in srgb, var(--scrim-dark) 56%, transparent)
     );
 }
 .journey-story-heading {
@@ -934,7 +1029,12 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   border-radius: 24px;
   overflow: hidden;
   color: var(--theme-on-dark);
-  background: var(--theme-dark);
+  background: var(--scrim-dark);
+  /* A neutral ink for everything that darkens the photograph. The theme's
+     `--theme-dark` is a maroon in several palettes, and using it as a scrim
+     turned every region photo pink. This keeps the card readable without
+     tinting the image. */
+  --region-ink: 12 10 12;
   box-shadow: 0 12px 30px color-mix(in srgb, var(--theme-dark) 12%, transparent);
   transform-style: preserve-3d;
   transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 500ms ease;
@@ -950,13 +1050,22 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--theme-dark) 40%, transparent),
-    transparent 30%,
-    color-mix(in srgb, var(--theme-dark) 65%, transparent) 60%,
-    color-mix(in srgb, var(--theme-dark) 95%, transparent)
-  );
+  /* Two short scrims instead of one full-card wash: a narrow fade behind the
+     index row at the top, and a deeper one behind the copy at the foot. The
+     middle of the photograph stays untouched, so the region keeps its own
+     colour instead of reading as a pink/maroon tint. */
+  background:
+    linear-gradient(
+      180deg,
+      rgb(var(--region-ink) / 0.42),
+      rgb(var(--region-ink) / 0) 20%
+    ),
+    linear-gradient(
+      0deg,
+      rgb(var(--region-ink) / 0.86),
+      rgb(var(--region-ink) / 0.46) 26%,
+      rgb(var(--region-ink) / 0) 60%
+    );
 }
 .region-postcard-top {
   display: flex;
@@ -970,7 +1079,7 @@ html[data-motion-paused="true"] .home-brand-wordmark {
   padding: 6px 9px;
   border: 1px solid #ffffff70;
   border-radius: 99px;
-  background: color-mix(in srgb, var(--theme-dark) 34%, transparent);
+  background: rgb(var(--region-ink) / 0.4);
   white-space: nowrap;
   letter-spacing: 0;
 }
@@ -1614,7 +1723,7 @@ html[data-motion-paused="true"] .region-postcard-cta > span {
     animation: none !important;
     transition: none !important;
   }
-  .destination-editorial-card:hover .destination-editorial-photo,
+  .destination-editorial-card:hover .destination-editorial-photo img,
   .region-index a:hover .region-index-arrow,
   .destination-editorial-card:hover .destination-arrow {
     transform: none;

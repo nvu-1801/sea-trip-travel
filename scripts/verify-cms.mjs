@@ -840,6 +840,17 @@ try {
     "editor actions sit above the form and stay sticky",
     actionsBeforeForm,
   );
+  const exitAction = page.locator(".adm-edit-actions .adm-exit-action");
+  check(
+    "editor toolbar offers an exit control",
+    (await exitAction.count()) === 1 && (await exitAction.isVisible()),
+  );
+  await exitAction.click();
+  await page.getByRole("button", { name: /Chỉnh sửa/ }).first().waitFor();
+  check(
+    "exit control returns to the record list",
+    (await page.locator(".adm-edit-actions").count()) === 0,
+  );
   for (const width of [360, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await page.waitForTimeout(250);
@@ -987,6 +998,22 @@ try {
   for (const width of [360, 390, 768]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`${base}/admin`);
+    // Ask the layout, not the test, which shell is active: the admin shell's
+    // breakpoint is a CSS decision, and a tablet width can sit on either side
+    // of it. If the drawer trigger is on screen, the sidebar is not.
+    const menu = page.getByRole("button", { name: "Mở menu quản trị" });
+    const drawerShell = await menu.isVisible().catch(() => false);
+    if (drawerShell) {
+      check(`admin ${width}px shows the drawer trigger`, true);
+      await menu.click();
+      await page
+        .getByRole("button", { name: "Đóng menu quản trị" })
+        .waitFor();
+      check(
+        `admin ${width}px opens the navigation drawer`,
+        (await menu.getAttribute("aria-expanded")) === "true",
+      );
+    }
     await page.getByRole("navigation", { name: "Quản trị" })
       .getByRole("button", { name: /Tour du lịch/ }).click();
     await page.getByRole("button", { name: /Chỉnh sửa/ }).first().waitFor();

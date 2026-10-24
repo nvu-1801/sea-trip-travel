@@ -3,8 +3,8 @@ import { ROUTES } from "@/config/navigation";
 import { siteConfig } from "@/config/runtime-site";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/json-ld";
-import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { Container, Section, SectionHeading } from "@/components/ui/layout";
+import { ButtonLink } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Reveal } from "@/components/ui/reveal";
 import {
@@ -14,6 +14,7 @@ import {
   PhoneIcon,
   SendIcon,
 } from "@/components/ui/icons";
+import { PageHero } from "@/features/shared/page-hero";
 import { LeadForm } from "@/features/leads/lead-form";
 import { leadFormLabels } from "@/features/leads/lead-form-labels";
 import { getMessages } from "@/i18n/server";
@@ -62,6 +63,11 @@ export default async function ContactPage({ params }: PageProps<"/[locale]">) {
     },
   ];
 
+  const crumbs = [
+    { label: m.common.home, href: localizePath(locale, "/") },
+    { label: m.nav.contact },
+  ];
+
   return (
     <>
       <JsonLd
@@ -72,33 +78,58 @@ export default async function ContactPage({ params }: PageProps<"/[locale]">) {
         ])}
       />
 
-      <Breadcrumbs
-        items={[
-          { label: m.common.home, href: localizePath(locale, "/") },
-          { label: m.nav.contact },
+      <PageHero
+        crumbs={crumbs}
+        crumbsLabel={m.common.breadcrumbAria}
+        eyebrow={m.contact.heroEyebrow}
+        titleLines={[
+          { text: m.contact.heroTitleLine1 },
+          { text: m.contact.heroTitleLine2, emphasis: true },
         ]}
-        ariaLabel={m.common.breadcrumbAria}
-      />
-
-      <section className="relative overflow-hidden border-b border-border bg-surface-muted">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-brand-100/70 blur-3xl"
-        />
-        <Container>
-          <div className="relative flex flex-col gap-4 py-12 sm:py-16">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary-strong">
-              {m.contact.heroEyebrow}
-            </p>
-            <h1 className="max-w-3xl text-display font-display font-semibold text-foreground">
-              {m.contact.heroTitle}
-            </h1>
-            <p className="max-w-2xl text-[1.0625rem] leading-relaxed text-foreground-muted">
-              {m.contact.heroDescription}
+        description={m.contact.heroDescription}
+        actions={
+          <>
+            <ButtonLink
+              href={siteConfig.contact.hotlineHref}
+              size="lg"
+              external
+            >
+              <PhoneIcon className="h-4 w-4" />
+              {m.common.callHotline}
+            </ButtonLink>
+            <a href="#tu-van" className="stt-page-hero-link">
+              {m.contact.formTitle}
+              <SendIcon className="h-4 w-4" />
+            </a>
+          </>
+        }
+        meta={[
+          { label: m.common.hotline, value: siteConfig.contact.hotline },
+          { label: m.common.email, value: siteConfig.contact.email },
+        ]}
+        media={{
+          src: "/images/hero/coastal-sunset.webp",
+          alt: m.contact.heroImageAlt,
+          sizes: "(max-width: 1023px) 100vw, 46vw",
+        }}
+        floating={
+          <div>
+            <p className="stt-page-hero-float-kicker">{m.common.hotline}</p>
+            <a
+              href={siteConfig.contact.hotlineHref}
+              className="stt-page-hero-float-body mt-1 inline-flex min-h-11 items-center font-display text-lg font-semibold text-foreground transition-colors hover:text-primary-strong"
+            >
+              {siteConfig.contact.hotline}
+            </a>
+            <p className="mt-1 flex items-center gap-1.5 text-[0.6875rem] font-semibold text-foreground-subtle">
+              <ClockIcon className="h-3.5 w-3.5" />
+              {m.site.workingHours}
             </p>
           </div>
-        </Container>
-      </section>
+        }
+        scrollCue={m.common.scrollCue}
+        tone="warm"
+      />
 
       <Section tone="default" spacing="default">
         <Container>
@@ -163,7 +194,7 @@ export default async function ContactPage({ params }: PageProps<"/[locale]">) {
             </div>
 
             {/* --- Form ---------------------------------------------------- */}
-            <div className="lg:col-span-7">
+            <div id="tu-van" className="scroll-mt-28 lg:col-span-7">
               <Reveal>
                 <div className="rounded-3xl border border-border bg-surface p-6 shadow-card sm:p-8">
                   <SectionHeading

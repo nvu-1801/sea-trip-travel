@@ -109,9 +109,13 @@ try {
       const stage = visitor.locator("#tour-gallery-panel > div").first();
       await stage.waitFor();
       const box = await stage.boundingBox();
+      const expectedRatio = width >= 640 ? 16 / 10 : 4 / 3;
+      const measuredRatio = box ? box.width / box.height : 0;
       check(
-        `public ${tour.data.slug} ${width}px uses a square at most 500px`,
-        box && Math.abs(box.width - box.height) < 2 && box.width <= 500.5,
+        `public ${tour.data.slug} ${width}px keeps a photo card at most 500px with the editorial ratio`,
+        Boolean(box) &&
+          box.width <= 500.5 &&
+          Math.abs(measuredRatio - expectedRatio) < 0.04,
       );
     }
   }

@@ -1,0 +1,691 @@
+/* =============================================================================
+   Editorial page hero
+   -----------------------------------------------------------------------------
+   Shared by tour categories, the guides index and the contact page.
+
+   Motion rules live in two places only:
+     1. `[data-entrance]` — one-shot above-the-fold entrance from globals.css.
+     2. `[data-parallax]` / `[data-depth]` — scroll-linked, always inside
+        `@supports (animation-timeline: view())` + reduced-motion guard so the
+        gating audit in `scripts/verify-ui.mjs` keeps passing and no content is
+        ever parked at opacity 0.
+   ========================================================================== */
+
+.stt-page-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--color-border) 78%, transparent);
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(
+      58% 52% at 92% 2%,
+      color-mix(in srgb, var(--color-primary) 8%, transparent) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      54% 48% at 0% 100%,
+      color-mix(in srgb, var(--color-accent) 16%, transparent) 0%,
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-background) 52%,
+      var(--color-surface-muted) 100%
+    );
+}
+
+.stt-page-hero[data-tone="warm"] {
+  background-image:
+    radial-gradient(
+      62% 58% at 88% 0%,
+      color-mix(in srgb, var(--color-accent) 16%, transparent) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      50% 44% at 4% 100%,
+      color-mix(in srgb, var(--color-primary) 5%, transparent) 0%,
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-background) 60%,
+      var(--color-champagne) 150%
+    );
+}
+
+.stt-page-hero-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.stt-page-hero-atmosphere::before,
+.stt-page-hero-atmosphere::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+}
+
+.stt-page-hero-atmosphere::before {
+  top: -14rem;
+  right: -10rem;
+  width: 34rem;
+  height: 34rem;
+  background: color-mix(in srgb, var(--color-brand-200) 46%, transparent);
+  opacity: 0.55;
+}
+
+.stt-page-hero-atmosphere::after {
+  bottom: -18rem;
+  left: -12rem;
+  width: 30rem;
+  height: 30rem;
+  background: color-mix(in srgb, var(--color-sun-300) 40%, transparent);
+  opacity: 0.5;
+}
+
+.stt-page-hero-inner {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  /* Clears the fixed, transparent header (64–73px) before the breadcrumb. */
+  padding-top: 5.25rem;
+  padding-bottom: clamp(2.25rem, 4vw, 3.5rem);
+}
+
+@media (min-width: 640px) {
+  .stt-page-hero-inner {
+    padding-top: 5.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stt-page-hero-inner {
+    padding-top: 6.5rem;
+  }
+}
+
+/* The breadcrumb hugs the top of the hero and the content block is centred in
+   the remaining viewport, so the first screen is one deliberate composition. */
+.stt-page-hero-inner > .container-page {
+  margin-block: auto;
+  padding-block: 1.25rem 0.5rem;
+}
+
+/* --- Grid ---------------------------------------------------------------- */
+
+.stt-page-hero-grid {
+  display: grid;
+  gap: clamp(3rem, 6vw, 4.75rem);
+  align-items: center;
+  padding-top: clamp(0.5rem, 2vw, 1.5rem);
+}
+
+@media (min-width: 1024px) {
+  .stt-page-hero-grid {
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+    gap: clamp(2.5rem, 4.5vw, 4.5rem);
+  }
+}
+
+/* --- Copy ---------------------------------------------------------------- */
+
+.stt-page-hero-copy {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+}
+
+.stt-page-hero-copy .eyebrow-pill {
+  max-width: 100%;
+  text-align: left;
+  line-height: 1.5;
+}
+
+/* Masked word reveal. `.stt-words*` base rules normally ship with the home
+   page; these scoped copies keep the category/guides/contact heroes
+   self-contained. Transform only — never opacity — so the text is painted
+   before JavaScript decides the animation is allowed. */
+.stt-page-hero .stt-words {
+  display: block;
+}
+
+.stt-page-hero .stt-words-line {
+  display: block;
+}
+
+.stt-page-hero .stt-words-word {
+  display: inline-block;
+  vertical-align: top;
+  overflow: hidden;
+  padding: 0.08em 0 0.16em;
+  margin: -0.08em 0 -0.16em;
+}
+
+.stt-page-hero .stt-words-inner {
+  display: inline-block;
+  transform-origin: 50% 100%;
+}
+
+.stt-page-hero .stt-words[data-words="armed"] .stt-words-inner {
+  transform: translate3d(0, 112%, 0);
+}
+
+.stt-page-hero .stt-words[data-words="in"] .stt-words-inner {
+  transform: none;
+  transition: transform 820ms var(--ease-out-soft) var(--stt-word-delay, 0ms);
+}
+
+@media (max-width: 639px) {
+  .stt-page-hero .stt-words[data-words="in"] .stt-words-inner {
+    transition-delay: 0ms;
+  }
+}
+
+.stt-page-hero-title {
+  display: block;
+  margin-top: 1.25rem;
+  max-width: 30ch;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.4rem + 2.65vw, 3.7rem);
+  font-weight: 600;
+  line-height: 1.03;
+  letter-spacing: -0.028em;
+  color: var(--color-foreground);
+  text-wrap: balance;
+}
+
+.stt-page-hero-title em {
+  font-style: italic;
+  color: var(--color-primary-strong);
+  letter-spacing: -0.02em;
+}
+
+.stt-page-hero-lead {
+  margin-top: 1.2rem;
+  max-width: 35rem;
+  font-size: clamp(1.0313rem, 0.97rem + 0.28vw, 1.15rem);
+  line-height: 1.8;
+  color: color-mix(in srgb, var(--color-foreground) 66%, var(--color-foreground-muted));
+  text-wrap: pretty;
+}
+
+.stt-page-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem 1.35rem;
+  margin-top: 1.75rem;
+}
+
+.stt-page-hero-actions a:not([class*="stt-btn-"]),
+.stt-page-hero-actions button:not([class*="stt-btn-"]) {
+  color: var(--color-primary-strong);
+}
+
+/* Secondary text link that sits next to the primary CTA. */
+.stt-page-hero-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-primary-strong);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.32em;
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--color-primary) 34%,
+    transparent
+  );
+  transition:
+    color 200ms var(--ease-out-soft),
+    text-decoration-color 200ms var(--ease-out-soft);
+}
+
+.stt-page-hero-link:hover {
+  color: var(--color-primary-strong-hover);
+  text-decoration-color: var(--color-primary);
+}
+
+.stt-page-hero-link svg {
+  transition: transform 240ms var(--ease-out-soft);
+}
+
+.stt-page-hero-link:hover svg {
+  transform: translateX(0.2rem);
+}
+
+/* --- Fact strip ---------------------------------------------------------- */
+
+.stt-page-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.9rem;
+  margin-top: 2rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid
+    color-mix(in srgb, var(--color-border-strong) 72%, transparent);
+  max-width: 34rem;
+}
+
+.stt-page-hero-meta-item {
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.3rem;
+  min-width: 0;
+  padding-right: 1.9rem;
+}
+
+.stt-page-hero-meta-item + .stt-page-hero-meta-item::before {
+  content: "";
+  position: absolute;
+  left: -1rem;
+  top: 0.15rem;
+  bottom: 0.15rem;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--color-rose-gold) 70%, transparent) 22%,
+    color-mix(in srgb, var(--color-rose-gold) 70%, transparent) 78%,
+    transparent
+  );
+}
+
+.stt-page-hero-meta dt {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: color-mix(
+    in srgb,
+    var(--color-foreground-subtle) 82%,
+    var(--color-foreground)
+  );
+}
+
+.stt-page-hero-meta dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 1.1rem + 0.4vw, 1.45rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.012em;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* --- Sub-category chips -------------------------------------------------- */
+
+.stt-page-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  max-width: 35rem;
+}
+
+.stt-page-hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  border: 1px solid
+    color-mix(in srgb, var(--color-border-strong) 86%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  transition:
+    border-color 200ms var(--ease-out-soft),
+    color 200ms var(--ease-out-soft),
+    transform 260ms var(--ease-out-soft),
+    box-shadow 260ms var(--ease-out-soft);
+}
+
+.stt-page-hero-chip span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-foreground-subtle);
+}
+
+.stt-page-hero-chip:hover {
+  border-color: var(--color-rose-gold);
+  color: var(--color-primary-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px -14px rgb(52 28 38 / 0.5);
+}
+
+.stt-page-hero-cue {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 2.1rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-foreground-subtle);
+}
+
+.stt-page-hero-cue-line {
+  position: relative;
+  display: block;
+  width: 3rem;
+  height: 1px;
+  flex: none;
+  background-image: linear-gradient(
+    90deg,
+    var(--color-brand-500) 0%,
+    var(--color-sun-400) 100%
+  );
+}
+
+.stt-page-hero-cue-line::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  border-right: 1px solid var(--color-sun-500);
+  border-bottom: 1px solid var(--color-sun-500);
+  transform: rotate(-45deg);
+}
+
+/* --- Media stage --------------------------------------------------------- */
+
+.stt-page-hero-stage {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  padding-block: 0.75rem;
+}
+
+.stt-page-hero-halo {
+  position: absolute;
+  inset: -6% -8% auto auto;
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--color-rose-gold) 34%, transparent),
+    transparent
+  );
+  filter: blur(44px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.stt-page-hero-arc {
+  position: absolute;
+  top: -3.5rem;
+  right: -3.25rem;
+  width: 21rem;
+  height: 21rem;
+  color: var(--color-rose-gold);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.stt-page-hero-frame {
+  position: relative;
+  z-index: 1;
+  margin-inline: auto;
+  max-width: 36rem;
+}
+
+.stt-page-hero-frame-line {
+  position: absolute;
+  inset: -0.85rem -1.1rem 1.1rem 0.9rem;
+  z-index: 0;
+  border: 1px solid
+    color-mix(in srgb, var(--color-rose-gold) 70%, transparent);
+  border-radius: 2.6rem;
+  pointer-events: none;
+}
+
+.stt-page-hero-media-clip {
+  position: relative;
+  z-index: 1;
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 2rem;
+  border: 1px solid
+    color-mix(in srgb, var(--color-champagne-deep) 62%, transparent);
+  box-shadow:
+    0 2px 3px rgb(52 28 38 / 0.06),
+    0 18px 32px -18px rgb(52 28 38 / 0.28),
+    0 46px 88px -42px rgb(120 24 60 / 0.5);
+}
+
+.stt-page-hero-media {
+  width: 100%;
+  height: 100%;
+}
+
+@media (min-width: 1024px) {
+  .stt-page-hero-media-clip {
+    aspect-ratio: 5 / 4;
+    max-height: 30rem;
+    border-radius: 2.25rem;
+  }
+}
+
+.stt-page-hero-float {
+  position: absolute;
+  right: 0.85rem;
+  bottom: -1.15rem;
+  z-index: 3;
+  width: max-content;
+  max-width: min(19.5rem, calc(100% - 1.7rem));
+  border: 1px solid
+    color-mix(in srgb, var(--color-border-strong) 62%, transparent);
+  border-radius: 1.25rem;
+  background-color: color-mix(
+    in srgb,
+    var(--color-surface) 88%,
+    transparent
+  );
+  background-image: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--color-surface) 96%, transparent) 0%,
+    color-mix(in srgb, var(--color-champagne) 26%, transparent) 100%
+  );
+  padding: 0.95rem 1.1rem;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    0 3px 6px rgb(52 28 38 / 0.06),
+    0 26px 50px -28px rgb(52 28 38 / 0.55);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .stt-page-hero-float {
+    -webkit-backdrop-filter: blur(16px) saturate(1.25);
+    backdrop-filter: blur(16px) saturate(1.25);
+  }
+}
+
+@media (min-width: 1024px) {
+  .stt-page-hero-float {
+    right: auto;
+    left: -1.35rem;
+    bottom: -1.5rem;
+  }
+}
+
+.stt-page-hero-float-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--color-primary-strong);
+}
+
+.stt-page-hero-float-kicker::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+
+.stt-page-hero-float-body {
+  margin-top: 0.4rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--color-ink);
+  text-wrap: pretty;
+  /* WCAG 2.5.8: 14px at line-height 1.5 leaves a 21px tap target on the
+     hotline link. Grow it to 25px and take the extra space back out of the
+     margins, so the text does not move. */
+  padding-block: 2px;
+  margin-top: calc(0.4rem - 2px);
+  margin-bottom: -2px;
+}
+
+/* --- Bottom fade --------------------------------------------------------- */
+
+.stt-page-hero-fade {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 0;
+  height: 6rem;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-background) 72%, transparent) 55%,
+    var(--color-background) 100%
+  );
+}
+
+/* --- Scroll-linked motion ------------------------------------------------ */
+
+@keyframes stt-page-hero-drift {
+  from {
+    transform: translate3d(0, 1.35rem, 0);
+  }
+  to {
+    transform: translate3d(0, -1.35rem, 0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .stt-page-hero [data-depth="1"] {
+      animation: stt-page-hero-drift linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+
+/* --- Motion guards ------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .stt-page-hero .stt-words-inner {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .stt-page-hero [data-depth="1"] {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+html[data-motion-paused="true"] .stt-page-hero .stt-words-inner,
+html[data-motion-paused="true"] .stt-page-hero [data-depth="1"] {
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+@media print {
+  .stt-page-hero .stt-words-inner,
+  .stt-page-hero [data-depth="1"] {
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .stt-page-hero-fade,
+  .stt-page-hero-atmosphere,
+  .stt-page-hero-arc,
+  .stt-page-hero-halo {
+    display: none !important;
+  }
+}
+
+/* --- Small screens ------------------------------------------------------- */
+
+@media (max-width: 1023px) {
+  .stt-page-hero-frame-line {
+    display: none;
+  }
+
+  .stt-page-hero-arc {
+    top: -2.25rem;
+    right: -2rem;
+    width: 14rem;
+    height: 14rem;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Stack the fact strip as label→value rows. Three squeezed columns pushed the
+     third value onto its own line with no divider, which read as broken. */
+  .stt-page-hero-meta {
+    flex-direction: column;
+    gap: 0;
+    max-width: none;
+  }
+
+  .stt-page-hero-meta-item {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0;
+  }
+
+  .stt-page-hero-meta-item + .stt-page-hero-meta-item {
+    border-top: 1px dashed
+      color-mix(in srgb, var(--color-border-strong) 62%, transparent);
+  }
+
+  .stt-page-hero-meta-item + .stt-page-hero-meta-item::before {
+    content: none;
+  }
+
+  .stt-page-hero-meta dd {
+    font-size: 1.05rem;
+    text-align: right;
+  }
+}
