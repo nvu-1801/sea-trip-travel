@@ -17,6 +17,7 @@ import { SkipLink, SiteHeader } from "@/components/layout/site-header";
 import { IdleMotionManager } from "@/features/home/idle-motion-manager";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
+import { InitialScroll } from "@/components/layout/initial-scroll";
 import { FloatingContact } from "@/components/layout/floating-contact";
 import { JsonLd } from "@/components/seo/json-ld";
 import { travelAgencyJsonLd, websiteJsonLd } from "@/lib/json-ld";
@@ -165,6 +166,7 @@ export default async function LocaleLayout({
 
           <SkipLink label={m.common.skipToContent} />
           <PageViewTracker />
+          <InitialScroll />
           <IdleMotionManager />
           {version !== null && <LiveContent version={version} />}
           <SiteHeader locale={locale} />

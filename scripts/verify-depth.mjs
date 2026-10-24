@@ -107,7 +107,9 @@ async function checkPaint(browser) {
     };
   });
 
-  check("the horizon layer exists", Boolean(horizon));
+  const carousel = await page.locator('[data-hero-mode="carousel"]').count() > 0;
+  check("the horizon only decorates the collage hero", carousel ? horizon === null : Boolean(horizon));
+  if (!carousel) {
   check(
     "the horizon reports a WebGL state (ok or fallback)",
     horizon?.webgl === "ok" || horizon?.webgl === "fallback",
@@ -121,6 +123,7 @@ async function checkPaint(browser) {
     );
   } else {
     console.log("  [note] WebGL unavailable in this browser; CSS underlay is in use.");
+  }
   }
 
   mkdirSync(SHOT_DIR, { recursive: true });
@@ -256,6 +259,12 @@ async function checkHorizonLifecycle(browser) {
   section("2. The WebGL loop stops when the hero leaves the viewport");
   const { context, page } = await openHome(browser);
 
+  if (await page.locator('[data-hero-mode="carousel"]').count()) {
+    check("carousel has no horizon rendering loop", await page.locator("[data-horizon]").count() === 0);
+    await context.close();
+    return;
+  }
+
   const atTop = await page.getAttribute("[data-horizon]", "data-paused");
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.waitForTimeout(800);
@@ -365,7 +374,8 @@ async function checkReducedMotion(browser) {
     state.depthAnimations.filter((value) => value !== "none").slice(0, 2).join(", "),
   );
   check("no home content is held invisible", state.hidden === 0, `${state.hidden} node(s)`);
-  check("the horizon is paused", state.paused === "true", `data-paused=${state.paused}`);
+  const carousel = await page.locator('[data-hero-mode="carousel"]').count() > 0;
+  check("the horizon is paused or absent from the carousel", carousel ? state.paused === undefined : state.paused === "true", `data-paused=${state.paused}`);
 
   mkdirSync(SHOT_DIR, { recursive: true });
   await page.screenshot({
@@ -399,7 +409,8 @@ async function checkPauseSwitch(browser) {
     };
   });
 
-  check("the horizon reports paused", state.paused === "true", `data-paused=${state.paused}`);
+  const carousel = await page.locator('[data-hero-mode="carousel"]').count() > 0;
+  check("the horizon reports paused or is absent from the carousel", carousel ? state.paused === undefined : state.paused === "true", `data-paused=${state.paused}`);
   check(
     "the pause switch removes the depth animations",
     state.depthAnimations.every((value) => value === "none"),

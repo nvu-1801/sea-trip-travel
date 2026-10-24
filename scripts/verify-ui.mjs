@@ -246,6 +246,22 @@ async function checkNoHorizontalOverflow(browser) {
       await page.waitForTimeout(700);
       const metrics = await measureOverflow(page);
 
+      check(
+        `${viewport.name}px ${route} — fresh navigation starts at the top`,
+        (await page.evaluate(() => window.scrollY)) === 0,
+      );
+      if (route === "/") {
+        await page.evaluate(() => window.scrollTo({ top: 180, behavior: "instant" }));
+        await page.reload({ waitUntil: "load" });
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(700);
+        check(
+          `${viewport.name}px — reload resets scroll and restores transparent home header`,
+          (await page.evaluate(() => window.scrollY)) === 0 &&
+            await page.locator("header.stt-site-header").getAttribute("data-overlay") === "true",
+        );
+      }
+
       const overflow = overflowOf(metrics);
       const transient = overflowOf(early) > 1 && overflow <= 1;
 
