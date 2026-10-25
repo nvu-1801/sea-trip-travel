@@ -51,6 +51,8 @@ import {
   saveHomeRegions,
   migrateContent,
   MEDIA_SOURCE_MIGRATION,
+  redirectTarget,
+  repairPlaceholderSlugs,
 } from "../src/server/cms/store";
 import {
   hashPassword,
@@ -1177,4 +1179,142 @@ test("home regions save atomically, publish only scoped fields, and reject stale
     restoreStoredRow("landing", landing.id, beforeLanding);
     restoreStoredRow("categories", category.id, beforeCategory);
   }
+});
+
+test("a Studio placeholder slug becomes readable and the old URL redirects", () => {
+  const source = list("tours").find((row) => row.id === "tour_qn_py_3n2d")!;
+  const draft = {
+    ...source.data,
+    id: "tour_slug_repair",
+    slug: "noi-dung-abc12345",
+    title: "Nội dung mới",
+  };
+  // First save while the tour is still unnamed keeps the temporary slug.
+  save("tours", draft, 0, "save");
+  assert.equal(
+    list("tours").find((row) => row.id === "tour_slug_repair")?.data.slug,
+    "noi-dung-abc12345",
+  );
+  // Naming it turns the placeholder into the public slug and keeps the old URL.
+  save(
+    "tours",
+    { ...draft, title: "Tour Đảo Bình Ba 2N1Đ" },
+    1,
+    "publish",
+  );
+  const saved = list("tours").find((row) => row.id === "tour_slug_repair")!;
+  assert.equal(saved.data.slug, "dao-binh-ba-2-ngay-1-dem");
+  assert.ok(
+    published<{ slug: string }>("tours", []).some(
+      (tour) => tour.slug === "dao-binh-ba-2-ngay-1-dem",
+    ),
+  );
+  assert.equal(
+    redirectTarget("/tour/noi-dung-abc12345"),
+    "/tour/dao-binh-ba-2-ngay-1-dem",
+  );
+  // The readable slug is now a published decision and may not change again.
+  assert.throws(
+    () =>
+      save(
+        "tours",
+        { ...saved.data, slug: "dao-binh-ba-doi-ten" },
+        saved.revision,
+        "publish",
+      ),
+    /slug/,
+  );
+});
+
+test("the slug migration renames placeholders and follows references", () => {
+  const insert = db().prepare(
+    "INSERT INTO records(collection,id,data,published,state,revision,updated_at) VALUES(?,?,?,?,?,?,?)",
+  );
+  const now = new Date().toISOString();
+  const tour = {
+    id: "tour_migrate_slug",
+    slug: "noi-dung-deadbeef",
+    title: "Tour Hà Giang 3N2Đ",
+  };
+  const article = {
+    id: "art_migrate_slug",
+    slug: "bai-viet-migrate",
+    title: "Bài viết kiểm thử migration",
+    relatedTourSlugs: ["noi-dung-deadbeef"],
+  };
+  insert.run(
+    "tours",
+    tour.id,
+    JSON.stringify(tour),
+    JSON.stringify(tour),
+    "published",
+    1,
+    now,
+  );
+  insert.run(
+    "articles",
+    article.id,
+    JSON.stringify(article),
+    JSON.stringify(article),
+    "published",
+    1,
+    now,
+  );
+  const landing = list("landing")[0];
+  const beforeLanding = JSON.parse(
+    (
+      db()
+        .prepare("SELECT data FROM records WHERE collection='landing' AND id=?")
+        .get(landing.id) as { data: string }
+    ).data,
+  ) as Record<string, unknown>;
+  const featured = {
+    ...(beforeLanding.featured as Record<string, unknown>),
+    tourIds: ["noi-dung-deadbeef"],
+  };
+  db()
+    .prepare(
+      "UPDATE records SET data=?, published=? WHERE collection='landing' AND id=?",
+    )
+    .run(
+      JSON.stringify({ ...beforeLanding, featured }),
+      JSON.stringify({ ...beforeLanding, featured }),
+      landing.id,
+    );
+
+  const repaired = repairPlaceholderSlugs();
+  assert.ok(repaired >= 1);
+  assert.equal(
+    list("tours").find((row) => row.id === tour.id)?.data.slug,
+    "ha-giang-3-ngay-2-dem",
+  );
+  assert.equal(
+    published<{ id: string; slug: string }>("tours", []).find(
+      (row) => row.id === tour.id,
+    )?.slug,
+    "ha-giang-3-ngay-2-dem",
+  );
+  const migratedArticle = list("articles").find(
+    (row) => row.id === article.id,
+  )!;
+  assert.deepEqual(migratedArticle.data.relatedTourSlugs, [
+    "ha-giang-3-ngay-2-dem",
+  ]);
+  assert.deepEqual(
+    (
+      published<{ id: string; relatedTourSlugs: string[] }>("articles", []).find(
+        (row) => row.id === article.id,
+      ) as { relatedTourSlugs: string[] }
+    ).relatedTourSlugs,
+    ["ha-giang-3-ngay-2-dem"],
+  );
+  assert.equal(
+    redirectTarget("/tour/noi-dung-deadbeef"),
+    "/tour/ha-giang-3-ngay-2-dem",
+  );
+  const liveLanding = list("landing")[0];
+  assert.deepEqual(
+    (liveLanding.data.featured as Record<string, unknown>).tourIds,
+    ["ha-giang-3-ngay-2-dem"],
+  );
 });

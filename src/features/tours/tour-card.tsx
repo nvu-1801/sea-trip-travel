@@ -51,8 +51,8 @@ export function TourCard({
           priority={priority}
           sizes={
             horizontal
-              ? "(max-width: 640px) 100vw, 45vw"
-              : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              ? "(max-width: 640px) 150vw, 68vw"
+              : "(max-width: 640px) 150vw, (max-width: 1024px) 75vw, 50vw"
           }
           className={cn(
             "stt-card-photo aspect-[4/3] w-full",

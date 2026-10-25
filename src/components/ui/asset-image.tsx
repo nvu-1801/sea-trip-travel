@@ -104,6 +104,7 @@ export function AssetImage({
           src={src}
           alt={alt}
           fill
+          quality={90}
           sizes={sizes}
           priority={priority}
           style={

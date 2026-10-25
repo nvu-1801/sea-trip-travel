@@ -11,6 +11,7 @@ import { REGION_LABELS, type Region } from "@/domain/common";
 import { ImageField, type UploadedImage } from "./image-picker";
 import { AdmSelect } from "./ui-select";
 import { slugify } from "@/lib/slugify";
+import { isPlaceholderSlug } from "@/lib/public-slug";
 import {
   Field,
   NumberField,
@@ -736,7 +737,9 @@ export const DestinationEditor = forwardRef<
               hint={
                 locked
                   ? "Đã khóa sau lần lưu đầu để bảo toàn dữ liệu liên kết."
-                  : "Chỉ chữ thường, số và dấu gạch ngang. Điểm đến không có trang riêng; slug dùng nội bộ."
+                  : isPlaceholderSlug(data.slug)
+                    ? "Slug tạm sẽ tự đổi theo tên điểm đến khi lưu."
+                    : "Chỉ chữ thường, số và dấu gạch ngang. Điểm đến không có trang riêng; slug dùng nội bộ."
               }
             >
               {locked ? (

@@ -40,7 +40,7 @@ export function CategoryCard({
         image={category.image}
         altFallback={format(m.common.destinationAlt, { name: category.name })}
         priority={priority}
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        sizes="(max-width: 640px) 150vw, (max-width: 1024px) 75vw, 50vw"
         className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.05]"
       />
       {/* Scrim keeps text readable over any image, including the placeholder.

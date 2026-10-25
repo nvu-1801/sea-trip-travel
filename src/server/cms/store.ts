@@ -21,6 +21,12 @@ import {
 import { homeRegionsInputSchema } from "@/domain/home-regions";
 import { ROUTES } from "@/config/navigation";
 import { AUDIT_FIELD_LABELS } from "@/lib/audit-activity";
+import {
+  isPlaceholderSlug,
+  slugFromTitle,
+  tourSlugFromTitle,
+  uniqueSlug,
+} from "@/lib/public-slug";
 import { defaultHero, heroSchema } from "@/domain/home-hero";
 import { defaultLanding, landingSchema } from "@/domain/landing";
 import {
@@ -430,11 +436,92 @@ export function fillMissingMediaSources(): number {
  */
 export const MEDIA_SOURCE_MIGRATION = "media-sources/categories-articles:v2";
 
+/**
+ * One-time repair for rows created while the Studio wrote `noi-dung-<random>`
+ * slugs. Each row gets a readable slug derived from its title, the published
+ * snapshot is rewritten, references (articles, home pins) follow, and the old
+ * URL is kept alive as a permanent redirect.
+ */
+export const PUBLIC_SLUG_MIGRATION = "slug/readable:v1";
+
+export function repairPlaceholderSlugs(): number {
+  const now = new Date().toISOString();
+  const renames = new Map<string, string>();
+  let repaired = 0;
+  const update = db().prepare(
+    "UPDATE records SET data=?, published=?, revision=revision+1, updated_at=? WHERE collection=? AND id=?",
+  );
+  for (const collection of PUBLIC_SLUG_COLLECTIONS) {
+    const rows = db()
+      .prepare(
+        "SELECT id,data,published,state FROM records WHERE collection=?",
+      )
+      .all(collection) as {
+      id: string;
+      data: string;
+      published: string | null;
+      state: string;
+    }[];
+    const entries = rows.map((row) => ({
+      row,
+      data: JSON.parse(row.data) as Record<string, unknown>,
+      published: row.published
+        ? (JSON.parse(row.published) as Record<string, unknown>)
+        : null,
+    }));
+    const taken = new Set(
+      entries
+        .filter((entry) => entry.row.state !== "deleted")
+        .map((entry) => String(entry.data.slug ?? ""))
+        .filter(Boolean),
+    );
+    for (const entry of entries) {
+      const oldSlug = String(entry.data.slug ?? "");
+      if (!isPlaceholderSlug(oldSlug)) continue;
+      const base = slugBaseFor(collection, slugTitleOf(collection, entry.data));
+      if (!base) continue;
+      taken.delete(oldSlug);
+      const newSlug = uniqueSlug(base, taken);
+      taken.add(newSlug);
+      const oldPath = publicPathFor(collection, entry.data);
+      entry.data.slug = newSlug;
+      if (entry.published) entry.published.slug = newSlug;
+      if (
+        collection === "categories" &&
+        entry.data.path === `/danh-muc/${oldSlug}`
+      ) {
+        entry.data.path = `/danh-muc/${newSlug}`;
+        if (entry.published) entry.published.path = entry.data.path;
+      }
+      const newPath = publicPathFor(collection, entry.data);
+      if (oldPath && newPath && oldPath !== newPath)
+        rememberRedirect(oldPath, newPath);
+      update.run(
+        JSON.stringify(entry.data),
+        entry.published ? JSON.stringify(entry.published) : null,
+        now,
+        collection,
+        entry.row.id,
+      );
+      if (collection === "tours") renames.set(oldSlug, newSlug);
+      repaired += 1;
+    }
+  }
+  applyTourSlugReferences(renames);
+  return repaired;
+}
+
 /** Applies every pending content repair. The caller owns the transaction. */
 function applyPendingMigrations(): number {
-  if (migrationApplied(MEDIA_SOURCE_MIGRATION)) return 0;
-  const repaired = fillMissingMediaSources();
-  markMigration(MEDIA_SOURCE_MIGRATION);
+  let repaired = 0;
+  if (!migrationApplied(MEDIA_SOURCE_MIGRATION)) {
+    repaired += fillMissingMediaSources();
+    markMigration(MEDIA_SOURCE_MIGRATION);
+  }
+  if (!migrationApplied(PUBLIC_SLUG_MIGRATION)) {
+    repaired += repairPlaceholderSlugs();
+    markMigration(PUBLIC_SLUG_MIGRATION);
+  }
   return repaired;
 }
 
@@ -574,6 +661,230 @@ function summarizeAuditChanges(
   return { changedFields: labels, changes };
 }
 
+/**
+ * Collections whose records carry a public URL. Everything else (settings,
+ * hero, landing…) has no slug and is never touched by the slug helpers below.
+ */
+const PUBLIC_SLUG_COLLECTIONS = [
+  "tours",
+  "articles",
+  "categories",
+  "destinations",
+] as const;
+type PublicSlugCollection = (typeof PUBLIC_SLUG_COLLECTIONS)[number];
+
+function isPublicSlugCollection(
+  collection: Collection,
+): collection is PublicSlugCollection {
+  return (PUBLIC_SLUG_COLLECTIONS as readonly string[]).includes(collection);
+}
+
+function slugTitleOf(
+  collection: PublicSlugCollection,
+  data: Record<string, unknown>,
+): string {
+  const value =
+    collection === "tours" || collection === "articles"
+      ? data.title
+      : data.name;
+  return typeof value === "string" ? value : "";
+}
+
+function slugBaseFor(
+  collection: PublicSlugCollection,
+  title: string,
+): string {
+  return collection === "tours"
+    ? tourSlugFromTitle(title)
+    : slugFromTitle(title);
+}
+
+/** Locale-less public path of a record, used for 301 redirects. */
+function publicPathFor(
+  collection: Collection,
+  data: Record<string, unknown>,
+): string | null {
+  const slug = String(data.slug ?? "");
+  if (!slug) return null;
+  if (collection === "tours") return `/tour/${slug}`;
+  if (collection === "articles") return `/cam-nang-du-lich/${slug}`;
+  if (collection === "categories") return String(data.path ?? "") || null;
+  return null;
+}
+
+/**
+ * Remembers that `fromPath` moved to `toPath`. Old URLs keep working with a
+ * permanent redirect instead of 404-ing after an editorial rename.
+ */
+export function rememberRedirect(fromPath: string, toPath: string): void {
+  if (!fromPath || !toPath || fromPath === toPath) return;
+  db()
+    .prepare(
+      "INSERT INTO content_redirects(from_path,to_path,created_at) VALUES(?,?,?) ON CONFLICT(from_path) DO UPDATE SET to_path=excluded.to_path",
+    )
+    .run(fromPath, toPath, new Date().toISOString());
+}
+
+/** Follows a redirect chain (max 5 hops) and returns null for unknown paths. */
+export function redirectTarget(path: string): string | null {
+  if (!path.startsWith("/")) return null;
+  const read = db().prepare(
+    "SELECT to_path FROM content_redirects WHERE from_path=?",
+  );
+  const seen = new Set<string>([path]);
+  let current = path;
+  for (let hop = 0; hop < 5; hop += 1) {
+    const row = read.get(current) as { to_path: string } | undefined;
+    if (!row) return current === path ? null : current;
+    if (seen.has(row.to_path)) return null;
+    seen.add(row.to_path);
+    current = row.to_path;
+  }
+  return null;
+}
+
+/**
+ * Studio-generated slugs are placeholders, not published decisions: derive a
+ * readable slug from the title while the stored slug is still `noi-dung-…`.
+ * Once a record owns a real slug it stays locked, so published links and SEO
+ * are never silently rewritten by a title edit.
+ */
+function normalizePublicSlug(
+  collection: Collection,
+  data: Record<string, unknown>,
+  previousData: Record<string, unknown> | null,
+): void {
+  if (!isPublicSlugCollection(collection)) return;
+  const stored = String(previousData?.slug ?? "");
+  const incoming = String(data.slug ?? "");
+  const taken = new Set(
+    list(collection)
+      .filter((row) => row.id !== data.id && row.state !== "deleted")
+      .map((row) => String(row.data.slug ?? ""))
+      .filter(Boolean),
+  );
+  const derive = () => slugBaseFor(collection, slugTitleOf(collection, data));
+
+  if (!previousData) {
+    if (!incoming || isPlaceholderSlug(incoming)) {
+      const base = derive();
+      if (base) data.slug = uniqueSlug(base, taken);
+    } else if (taken.has(incoming)) {
+      throw new Error("Slug/đường dẫn đã tồn tại");
+    }
+  } else if (isPlaceholderSlug(stored)) {
+    if (!incoming || isPlaceholderSlug(incoming)) {
+      const base = derive();
+      if (base) data.slug = uniqueSlug(base, taken);
+    } else {
+      if (taken.has(incoming)) throw new Error("Slug/đường dẫn đã tồn tại");
+      data.slug = incoming;
+    }
+  }
+
+  if (collection === "categories") {
+    const storedPath = String(previousData?.path ?? "");
+    const incomingPath = String(data.path ?? "");
+    const autoPath = !previousData || storedPath === `/danh-muc/${stored}`;
+    // Keep the auto-generated `/danh-muc/<slug>` path in sync; a hand-written
+    // category path is an editorial decision and stays untouched.
+    if (
+      autoPath &&
+      (!previousData ||
+        incomingPath === storedPath ||
+        incomingPath === `/danh-muc/${stored}`)
+    )
+      data.path = `/danh-muc/${String(data.slug ?? "")}`;
+  }
+}
+
+/**
+ * A tour rename must follow every reference that stores a slug: article
+ * "tour liên quan" lists and the home-page pin list. Both accept slugs, so a
+ * stale value would silently drop the tour from those sections.
+ */
+function applyTourSlugReferences(renames: Map<string, string>): number {
+  if (renames.size === 0) return 0;
+  const now = new Date().toISOString();
+  let changed = 0;
+  const update = db().prepare(
+    "UPDATE records SET data=?, published=?, revision=revision+1, updated_at=? WHERE collection=? AND id=?",
+  );
+  const rewrite = (value: unknown): string[] | null => {
+    if (!Array.isArray(value)) return null;
+    let touched = false;
+    const next = value.map((entry) => {
+      const mapped = renames.get(String(entry));
+      if (mapped && mapped !== entry) touched = true;
+      return mapped ?? entry;
+    });
+    return touched ? (next as string[]) : null;
+  };
+
+  const articleRows = db()
+    .prepare("SELECT id,data,published FROM records WHERE collection='articles'")
+    .all() as { id: string; data: string; published: string | null }[];
+  for (const row of articleRows) {
+    const data = JSON.parse(row.data) as Record<string, unknown>;
+    const published = row.published
+      ? (JSON.parse(row.published) as Record<string, unknown>)
+      : null;
+    const nextData = rewrite(data.relatedTourSlugs);
+    const nextPublished = published
+      ? rewrite(published.relatedTourSlugs)
+      : null;
+    if (!nextData && !nextPublished) continue;
+    if (nextData) data.relatedTourSlugs = nextData;
+    if (published && nextPublished) published.relatedTourSlugs = nextPublished;
+    update.run(
+      JSON.stringify(data),
+      published ? JSON.stringify(published) : null,
+      now,
+      "articles",
+      row.id,
+    );
+    changed += 1;
+  }
+
+  const landingRows = db()
+    .prepare("SELECT id,data,published FROM records WHERE collection='landing'")
+    .all() as { id: string; data: string; published: string | null }[];
+  for (const row of landingRows) {
+    const data = JSON.parse(row.data) as Record<string, unknown>;
+    const published = row.published
+      ? (JSON.parse(row.published) as Record<string, unknown>)
+      : null;
+    const nextData = rewrite(
+      (data.featured as Record<string, unknown> | undefined)?.tourIds,
+    );
+    const nextPublished = published
+      ? rewrite(
+          (published.featured as Record<string, unknown> | undefined)?.tourIds,
+        )
+      : null;
+    if (!nextData && !nextPublished) continue;
+    if (nextData)
+      data.featured = {
+        ...(data.featured as Record<string, unknown> | undefined),
+        tourIds: nextData,
+      };
+    if (published && nextPublished)
+      published.featured = {
+        ...(published.featured as Record<string, unknown> | undefined),
+        tourIds: nextPublished,
+      };
+    update.run(
+      JSON.stringify(data),
+      published ? JSON.stringify(published) : null,
+      now,
+      "landing",
+      row.id,
+    );
+    changed += 1;
+  }
+  return changed;
+}
+
 export function save(
   collection: Collection,
   input: unknown,
@@ -634,7 +945,6 @@ function saveRecord(
     if (value && typeof value === "object")
       for (const [k, v] of Object.entries(value)) inspect(v, k);
   };
-  inspect(data);
   return (() => {
     const previous = db()
       .prepare(
@@ -648,11 +958,27 @@ function saveRecord(
           data: string;
         }
       | undefined;
+    const previousData = previous
+      ? (JSON.parse(previous.data) as Record<string, unknown>)
+      : null;
+    // Studio placeholders (`noi-dung-…`) may be replaced by a readable slug
+    // derived from the title; a real, already-saved slug stays immutable.
+    normalizePublicSlug(
+      collection,
+      data as Record<string, unknown>,
+      previousData,
+    );
+    inspect(data);
     if ((previous?.revision ?? 0) !== revision)
       throw new Error("Nội dung đã thay đổi. Tải lại trước khi lưu.");
-    if (previous) {
-      const old = JSON.parse(previous.data);
-      if (old.slug !== data.slug || old.path !== data.path)
+    if (previousData) {
+      const slugChanged = previousData.slug !== data.slug;
+      const pathChanged = previousData.path !== data.path;
+      const placeholder = isPlaceholderSlug(previousData.slug);
+      if (
+        (slugChanged && !(isPublicSlugCollection(collection) && placeholder)) ||
+        (pathChanged && !(collection === "categories" && placeholder))
+      )
         throw new Error(
           "Giữ nguyên slug/đường dẫn để bảo toàn liên kết đã phát hành.",
         );
@@ -832,6 +1158,22 @@ function saveRecord(
         "INSERT INTO records(collection,id,data,published,state,revision,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(collection,id) DO UPDATE SET data=excluded.data,published=excluded.published,state=excluded.state,revision=excluded.revision,updated_at=excluded.updated_at",
       )
       .run(collection, data.id, json, publicValue, state, revision + 1, now);
+    if (previousData) {
+      const oldSlug = String(previousData.slug ?? "");
+      const newSlug = String((data as Record<string, unknown>).slug ?? "");
+      if (oldSlug && newSlug && oldSlug !== newSlug) {
+        const oldPath = publicPathFor(collection, previousData);
+        const newPath = publicPathFor(
+          collection,
+          data as Record<string, unknown>,
+        );
+        if (oldPath && newPath) rememberRedirect(oldPath, newPath);
+        // A renamed tour is still the same tour: follow its slug in article
+        // "tour liên quan" lists and the home-page pin list.
+        if (collection === "tours")
+          applyTourSlugReferences(new Map([[oldSlug, newSlug]]));
+      }
+    }
     const auditSummary = summarizeAuditChanges(
       previous?.data,
       data as Record<string, unknown>,

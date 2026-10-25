@@ -168,12 +168,13 @@
   border-radius: 14px;
   padding: 18px;
 }
-.adm-hero-slide > summary {
+.adm-hero-slide > .adm-hero-slide-heading {
+  margin: 0;
+  justify-content: flex-start;
+  font-size: 14px;
   font-weight: 650;
-  cursor: pointer;
-  display: list-item;
 }
-.adm-hero-slide > summary > span {
+.adm-hero-slide > .adm-hero-slide-heading > span {
   color: #d90057;
   font-size: 12px;
   margin-right: 14px;

@@ -110,14 +110,14 @@ export default async function SearchPage({
         { value: "contact", label: "Liên hệ báo giá", hint: "Xác nhận khi tư vấn" },
       ];
   return (
-    <section className="py-12 sm:py-20">
+    <section className="stt-search-page py-12 sm:py-20">
       <Container>
-        <p className="eyebrow">
+        <p className="stt-search-eyebrow">
           {en
             ? "SEA TRIP · Explore your next chapter"
             : "SEA TRIP · Tìm chuyến đi tiếp theo"}
         </p>
-        <h1 className="text-display-lg font-display mt-3 mb-7">
+        <h1 className="stt-search-title">
           {en ? "Find your next journey" : "Một hành trình dành cho bạn"}
         </h1>
         {activeDestination ? (
@@ -167,7 +167,7 @@ export default async function SearchPage({
             {en ? "Find a journey →" : "Tìm hành trình →"}
           </button>
         </form>
-        <div className="my-8 flex flex-wrap justify-between gap-4">
+        <div className="stt-search-results-bar">
           <p role="status">
             {found.length} {en ? "journeys for you" : "hành trình phù hợp"}
           </p>
@@ -202,3 +202,4 @@ export default async function SearchPage({
     </section>
   );
 }
+import "@/features/tours/tour-search.css";

@@ -30,6 +30,7 @@ import {
   type TourSectionKey,
 } from "@/domain/tour-rules";
 import { slugify } from "@/lib/slugify";
+import { isPlaceholderSlug } from "@/lib/public-slug";
 
 export type TourEditorHandle = {
   /** Returns false (and jumps to the first issue) when the draft is invalid. */
@@ -1603,7 +1604,9 @@ export const TourEditor = forwardRef<
               <small className="adm-hint">
                 {locked
                   ? "Đã khóa sau lần lưu đầu để bảo toàn liên kết đã phát hành."
-                  : "Chỉ chữ thường, số và dấu gạch ngang. Kiểm tra trước khi lưu lần đầu."}
+                  : isPlaceholderSlug(data.slug)
+                    ? "Slug tạm: hệ thống sẽ tự đổi theo tên tour khi lưu. Có thể sửa tay trước khi lưu."
+                    : "Chỉ chữ thường, số và dấu gạch ngang. Kiểm tra trước khi lưu lần đầu."}
               </small>
               <small className="adm-hint">
                 Đường dẫn công khai:{" "}
@@ -1623,8 +1626,8 @@ export const TourEditor = forwardRef<
             </div>
           </dl>
           <p className="adm-hint">
-            Ngày cập nhật do hệ thống tự ghi khi lưu. Slug chỉ sửa được ở bản
-            nháp đầu tiên.
+            Ngày cập nhật do hệ thống tự ghi khi lưu. Slug tự tạo từ tên tour;
+            slug tạm còn sửa được, slug đã phát hành thì khóa.
           </p>
           {stringsOf(data.sourceDocuments).length > 0 ? (
             <div className="adm-field">

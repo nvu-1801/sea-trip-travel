@@ -2,7 +2,14 @@ import { z } from "zod";
 import { requireSession } from "@/server/cms/auth";
 import { db } from "@/server/cms/db";
 import { auditFailure, auditRequest } from "@/server/cms/audit";
-import { listLeads, encrypt, decrypt, markMail } from "@/server/cms/leads";
+import {
+  listLeads,
+  encrypt,
+  decrypt,
+  markMail,
+  unreadLeadCount,
+  markLeadRead,
+} from "@/server/cms/leads";
 import { consumeLimit } from "@/server/cms/store";
 import { getMailer } from "@/server/email/mailer";
 import { contactLeadSchema } from "@/domain/lead";
@@ -17,24 +24,39 @@ import { handle, jsonBody, reply } from "@/server/cms/http";
 export async function GET(request: Request) {
   return handle(async () => {
     await requireSession(request);
+    if (new URL(request.url).searchParams.get("unread") === "1") {
+      return reply({ count: unreadLeadCount() });
+    }
     return reply(listLeads());
   });
 }
 export async function PATCH(request: Request) {
   return handle(async () => {
     await requireSession(request);
+    const body = await jsonBody(request, 10000);
+    if (body?.action === "mark-read") {
+      const { id } = z.object({ id: z.string().min(1).max(100) }).parse(body);
+      if (!markLeadRead(id))
+        return reply({ error: "Không có yêu cầu này" }, 404);
+      return reply({ ok: true, count: unreadLeadCount() });
+    }
     const input = z
       .object({
         id: z.string().max(100),
         status: z.enum(["new", "contacted", "qualified", "won", "lost"]),
         note: z.string().max(2000),
       })
-      .parse(await jsonBody(request, 10000));
+      .parse(body);
     const before = db()
       .prepare("SELECT status FROM leads WHERE id=?")
       .get(input.id) as { status: string } | undefined;
     if (!before) {
-      auditFailure(request, "lead-update", input.id, "Không tìm thấy yêu cầu tư vấn");
+      auditFailure(
+        request,
+        "lead-update",
+        input.id,
+        "Không tìm thấy yêu cầu tư vấn",
+      );
       return reply({ error: "Không có yêu cầu này" }, 404);
     }
     db()
@@ -54,7 +76,12 @@ export async function POST(request: Request) {
   return handle(async () => {
     await requireSession(request);
     if (!consumeLimit("retry-mail", 20, 3600000)) {
-      auditFailure(request, "lead-mail-retry", "rate-limit", "Đã đạt giới hạn gửi lại trong giờ");
+      auditFailure(
+        request,
+        "lead-mail-retry",
+        "rate-limit",
+        "Đã đạt giới hạn gửi lại trong giờ",
+      );
       return reply({ error: "Đã đạt giới hạn gửi lại trong giờ" }, 429);
     }
     const { id } = z
@@ -64,11 +91,21 @@ export async function POST(request: Request) {
       .prepare("SELECT data,mail_status FROM leads WHERE id=?")
       .get(id) as { data: string; mail_status: string } | undefined;
     if (!row) {
-      auditFailure(request, "lead-mail-retry", id, "Không tìm thấy yêu cầu tư vấn");
+      auditFailure(
+        request,
+        "lead-mail-retry",
+        id,
+        "Không tìm thấy yêu cầu tư vấn",
+      );
       return reply({ error: "Không có yêu cầu này" }, 404);
     }
     if (row.mail_status === "sent") {
-      auditFailure(request, "lead-mail-retry", id, "Email đã gửi thành công trước đó");
+      auditFailure(
+        request,
+        "lead-mail-retry",
+        id,
+        "Email đã gửi thành công trước đó",
+      );
       return reply({ error: "Email đã gửi thành công" }, 409);
     }
     const lead = contactLeadSchema.parse(decrypt(row.data)),
@@ -83,7 +120,12 @@ export async function POST(request: Request) {
       )
       .run(id);
     if (!lock.changes) {
-      auditFailure(request, "lead-mail-retry", id, "Email đang gửi hoặc đã gửi");
+      auditFailure(
+        request,
+        "lead-mail-retry",
+        id,
+        "Email đang gửi hoặc đã gửi",
+      );
       return reply({ error: "Email đang gửi hoặc đã gửi" }, 409);
     }
     const context = {
@@ -125,10 +167,16 @@ export async function POST(request: Request) {
         details: { leadId: id, mailStatus: "sent" },
       });
     } else {
-      auditFailure(request, "lead-mail-retry", id, "Nhà cung cấp email từ chối gửi", {
-        leadId: id,
-        mailStatus: "failed",
-      });
+      auditFailure(
+        request,
+        "lead-mail-retry",
+        id,
+        "Nhà cung cấp email từ chối gửi",
+        {
+          leadId: id,
+          mailStatus: "failed",
+        },
+      );
     }
     return reply(
       result.ok

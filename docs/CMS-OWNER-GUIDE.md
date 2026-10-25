@@ -61,7 +61,7 @@ Carousel phủ toàn màn hình đầu và chạy ra sau header trong suốt. Kh
 
 `Thêm mới` tạo bản nháp theo cấu trúc mẫu, không tự xuất bản. Tour mới được xóa giá, ảnh và nguồn tư liệu của mẫu để chủ quản trị chọn lại. Kiểm tra kỹ nội dung lịch trình trước khi xuất bản.
 
-`Lưu bản nháp` giữ bản public trước đó nếu nội dung đã xuất bản; `Xuất bản thay đổi` cập nhật public ngay. Xem bản nháp đã lưu bằng liên kết xem trước. `Ẩn` gỡ khỏi website; `Thùng rác` cho phép khôi phục thành nháp. Slug/path và mã nội dung được giữ ổn định sau khi tạo để bảo toàn liên kết. Khi hai phiên cùng sửa, phiên cũ bị từ chối để tránh lưu đè.
+`Lưu bản nháp` giữ bản public trước đó nếu nội dung đã xuất bản; `Xuất bản thay đổi` cập nhật public ngay. Xem bản nháp đã lưu bằng liên kết xem trước. `Ẩn` gỡ khỏi website; `Thùng rác` cho phép khôi phục thành nháp. Slug tự tạo từ tên khi lưu lần đầu (tour bỏ chữ “Tour” và đổi `2N1Đ` thành `2-ngay-1-dem`). Slug tạm `noi-dung-…` còn sửa được; slug đã có tên thật và mã nội dung được giữ ổn định để bảo toàn liên kết, URL cũ tự chuyển hướng 301 sang URL mới. Khi hai phiên cùng sửa, phiên cũ bị từ chối để tránh lưu đè.
 
 ### Gợi ý nội dung tour với ChatGPT
 
@@ -116,4 +116,4 @@ Kiểm tra trên mobile, VI/EN, giá/chính sách và ảnh; xem lại tìm ki�
 
 ## SEO
 
-Xem `docs/SEO-QNPY.md` d? bi?t b?n d? t? kh�a ? URL, c�ch �p d?ng SEO v�o DB production b?ng `npm run seo:apply` (dry-run m?c d?nh) v� quy t?c hreflang/sitemap. Home SEO s?a trong **Website & footer ? SEO**; category/tour SEO s?a trong form tuong ?ng.
+Xem `docs/SEO-QNPY.md` d? bi?t b?n d? t? kh�a ? URL, c�ch �p d?ng SEO v�o DB production b?ng `npm run seo:apply` (dry-run m?c d?nh) v� quy t?c hreflang/sitemap. Home SEO s?a trong **Website & footer ? SEO**; category/tour SEO s?a trong form tuong ?ng.

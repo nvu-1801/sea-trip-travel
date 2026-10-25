@@ -206,6 +206,7 @@ export function Editor({
   onChange,
   name = "",
   locked = false,
+  slugEditable = false,
   references = {},
   onUploadImage,
 }: {
@@ -213,6 +214,11 @@ export function Editor({
   onChange: (value: Value) => void;
   name?: string;
   locked?: boolean;
+  /**
+   * A Studio placeholder slug (`noi-dung-…`) may still be renamed even though
+   * the record already has a saved revision; id and updatedAt stay locked.
+   */
+  slugEditable?: boolean;
   references?: ReferenceOptions;
   onUploadImage?: (file: File) => Promise<UploadedImage>;
 }) {
@@ -456,7 +462,20 @@ export function Editor({
               ),
           )
           .map(([key, child]) =>
-            typeof child === "object" && child !== null ? (
+            typeof child === "object" && child !== null &&
+            (key === "images" || key === "image" || key === "cover" ||
+              (!Array.isArray(child) && "alt" in child)) ? (
+              <fieldset key={key} className="adm-image-group">
+                <legend>{labels[key] ?? key}</legend>
+                <Editor
+                  value={child}
+                  name={key}
+                  references={references}
+                  onUploadImage={onUploadImage}
+                  onChange={(next) => onChange({ ...value, [key]: next })}
+                />
+              </fieldset>
+            ) : typeof child === "object" && child !== null ? (
               <details
                 key={key}
                 open={
@@ -481,12 +500,11 @@ export function Editor({
                 references={references}
                 onUploadImage={onUploadImage}
                 locked={
-                  key === "id" ||
-                  key === "updatedAt" ||
-                  key === "slug" ||
-                  key === "path"
+                  key === "id" || key === "updatedAt"
                     ? locked
-                    : false
+                    : key === "slug" || key === "path"
+                      ? locked && !slugEditable
+                      : false
                 }
                 onChange={(next) => onChange({ ...value, [key]: next })}
               />
