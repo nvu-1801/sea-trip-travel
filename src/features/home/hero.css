@@ -6,21 +6,171 @@
 .stt-cinema-stage {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow: clip;
+  height: 100svh;
   min-height: 100svh;
-  background: var(--scrim-dark);
+  background: #031b23;
   color: var(--theme-on-dark);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 160px max(28px, calc((100vw - 1280px) / 2)) 36px;
+  padding: 124px max(28px, calc((100vw - 1280px) / 2)) 26px;
   touch-action: pan-y;
+}
+
+/* --- Sea: one 3D canvas, with a CSS sea that is always painted first ------ */
+.stt-sea {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 40% at 60% 56%, rgb(246 199 138 / 0.5), transparent 66%),
+    linear-gradient(
+      180deg,
+      #010f15 0%,
+      #062531 40%,
+      #0a4651 52%,
+      #0d5d66 58%,
+      #04242c 100%
+    );
+}
+.stt-sea-sky,
+.stt-sea-fallback,
+.stt-sea-haze {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.stt-sea-sky {
+  background:
+    radial-gradient(52% 28% at 62% 55%, rgb(255 224 172 / 0.46), transparent 72%),
+    linear-gradient(
+      180deg,
+      #01121a 0%,
+      #062b37 38%,
+      #0d4a55 52%,
+      #145a62 56%,
+      #0b3e49 100%
+    );
+}
+.stt-sea canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1100ms ease;
+}
+.stt-sea[data-sea-state="ready"] canvas {
+  opacity: 1;
+}
+.stt-sea-fallback {
+  top: 53%;
+  inset-inline: 0;
+  bottom: 0;
+  background:
+    repeating-linear-gradient(
+      176deg,
+      transparent 0 16px,
+      rgb(255 255 255 / 0.05) 16px 17px,
+      transparent 17px 34px
+    ),
+    linear-gradient(180deg, #0f6f77 0%, #084f5c 36%, #052d37 100%);
+  opacity: 0.92;
+  transition: opacity 900ms ease;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 12%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 12%);
+}
+.stt-sea[data-sea-state="ready"] .stt-sea-fallback {
+  opacity: 0;
+}
+.stt-sea-haze {
+  top: 42%;
+  bottom: auto;
+  height: 26%;
+  background: radial-gradient(
+    55% 60% at 60% 50%,
+    rgb(250 217 166 / 0.4),
+    transparent 72%
+  );
+  filter: blur(10px);
+  opacity: 0.85;
+}
+
+/* Two scrims, not one wash: the left protects the copy, the bottom protects
+   the controls, and the photograph keeps its own colour in between. */
+.stt-cinema-sea-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      rgb(2 18 23 / 0.72) 0%,
+      rgb(2 18 23 / 0.36) 34%,
+      transparent 64%
+    ),
+    linear-gradient(
+      0deg,
+      rgb(2 18 23 / 0.9) 0%,
+      rgb(2 18 23 / 0.28) 24%,
+      transparent 48%
+    ),
+    linear-gradient(180deg, rgb(2 18 23 / 0.7) 0%, transparent 24%);
+}
+.stt-cinema-top-scrim {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 3;
+  height: 190px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(2 15 20 / 0.72), transparent);
+}
+
+/* The photograph is a window at rest and opens to the full stage as the
+   camera reaches the shore. `clip-path` is animated by GSAP; without JS the
+   roomy frame is the finished composition. */
+.stt-cinema-window {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  background: var(--scrim-dark);
+  clip-path: inset(7% 5% 13% 40% round 30px);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.16);
+  will-change: clip-path, transform;
+}
+.stt-cinema-window .stt-cinema-image {
+  z-index: 0;
+}
+.stt-cinema-window .stt-cinema-shade {
+  z-index: 1;
+}
+.stt-cinema-window .stt-cinema-sweep {
+  z-index: 2;
+}
+.stt-cinema-window-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      120% 90% at 50% 50%,
+      transparent 58%,
+      rgb(0 12 16 / 0.28) 100%
+    ),
+    linear-gradient(180deg, rgb(2 15 20 / 0.16), transparent 22%);
 }
 .stt-cinema-image,
 .stt-cinema-shade {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
 }
 /* Slow drift + crossfade. The outgoing frame sinks a hair while the incoming
@@ -50,7 +200,7 @@
   bottom: -10%;
   left: 0;
   width: 52%;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   background: linear-gradient(
     104deg,
@@ -91,22 +241,62 @@
     );
 }
 .stt-cinema-copy {
-  max-width: 850px;
-  padding-top: 70px;
-  padding-bottom: 64px;
+  position: relative;
+  z-index: 4;
+  max-width: min(520px, 33vw);
+  padding-top: 26px;
+  padding-bottom: 26px;
+  text-shadow: 0 2px 24px rgb(2 15 20 / 0.55);
+  will-change: transform;
 }
-.stt-cinema-copy > :not(.stt-cinema-title) {
+.stt-cinema-copy-inner {
   animation: stt-cinema-enter 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.stt-cinema-copy > .stt-cinema-description {
-  animation-delay: 240ms;
-}
-.stt-cinema-copy > .stt-cinema-actions {
-  animation-delay: 340ms;
-}
-.stt-cinematic-hero[data-motion-enabled="false"] .stt-cinema-copy > *,
-.stt-cinematic-hero[data-motion-blocked="true"] .stt-cinema-copy > * {
+.stt-cinematic-hero[data-motion-enabled="false"] .stt-cinema-copy-inner,
+.stt-cinematic-hero[data-motion-blocked="true"] .stt-cinema-copy-inner {
   animation: none;
+}
+/* Direct route past the pinned transition; keyboard users get the same CTA
+   without having to scroll through the camera move. */
+.stt-cinema-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.72);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+.stt-cinema-cue:hover {
+  color: #fff;
+}
+.stt-cinema-cue-line {
+  position: relative;
+  display: block;
+  width: 46px;
+  height: 1px;
+  flex: none;
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.12),
+    rgb(255 255 255 / 0.8)
+  );
+}
+.stt-cinema-cue-line::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  border-right: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  transform: rotate(45deg);
 }
 .stt-cinema-eyebrow {
   display: inline-flex;
@@ -217,6 +407,8 @@
   outline-offset: 4px;
 }
 .stt-cinema-bottom {
+  position: relative;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -379,13 +571,69 @@
     opacity: 0;
   }
 }
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .stt-cinematic-hero {
     padding: 0;
   }
   .stt-cinema-stage {
-    min-height: 100svh;
-    padding: 128px 22px 22px;
+    min-height: max(100svh, 640px);
+    padding: 104px 22px 22px;
+  }
+  .stt-cinema-window {
+    /* A photograph band above the copy; the sea stays visible behind the
+       words and the controls. */
+    clip-path: inset(0 0 61% 0 round 0 0 30px 30px);
+    box-shadow: none;
+  }
+  .stt-cinema-sea-scrim {
+    background:
+      linear-gradient(
+        180deg,
+        rgb(2 18 23 / 0.42) 0%,
+        rgb(2 18 23 / 0.12) 34%,
+        rgb(2 18 23 / 0.82) 58%,
+        rgb(2 18 23 / 0.95) 100%
+      ),
+      linear-gradient(180deg, rgb(2 15 20 / 0.7) 0%, transparent 22%);
+  }
+  .stt-cinema-top-scrim {
+    height: 140px;
+  }
+  .stt-cinema-copy {
+    max-width: 100%;
+    margin-top: auto;
+    padding-top: 26px;
+    padding-bottom: 20px;
+  }
+  .stt-cinema-cue {
+    margin-top: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .stt-cinema-copy {
+    max-width: min(520px, 33vw);
+  }
+  .stt-cinema-copy h1 {
+    font-size: clamp(44px, 5vw, 80px);
+  }
+  .stt-cinema-copy .stt-cinema-description {
+    margin-top: 20px;
+  }
+  .stt-cinema-copy .stt-cinema-actions {
+    margin-top: 24px;
+  }
+  .stt-cinema-copy .stt-cinema-cue {
+    margin-top: 22px;
+  }
+  .stt-cinema-bottom {
+    padding-top: 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .stt-cinematic-hero {
+    padding: 0;
   }
   .stt-cinema-shade {
     background: linear-gradient(
@@ -462,7 +710,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .stt-cinema-copy,
-  .stt-cinema-copy > *,
+  .stt-cinema-copy-inner,
+  .stt-cinema-copy-inner > *,
   .stt-cinema-image,
   .stt-cinema-image[data-active="true"] img,
   .stt-cinema-sweep {
@@ -486,7 +735,8 @@
   }
 }
 html[data-motion-paused="true"] .stt-cinema-copy,
-html[data-motion-paused="true"] .stt-cinema-copy > *,
+html[data-motion-paused="true"] .stt-cinema-copy-inner,
+html[data-motion-paused="true"] .stt-cinema-copy-inner > *,
 html[data-motion-paused="true"] .stt-cinema-image[data-active="true"] img {
   animation: none;
   transform: none;
@@ -500,7 +750,8 @@ html[data-motion-paused="true"] .stt-cinema-sweep {
     display: none;
   }
   .stt-cinema-copy,
-  .stt-cinema-copy > *,
+  .stt-cinema-copy-inner,
+  .stt-cinema-copy-inner > *,
   .stt-cinema-image[data-active="true"] img {
     animation: none;
   }

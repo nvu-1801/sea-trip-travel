@@ -110,20 +110,63 @@ async function checkPaint(browser) {
   const carousel = await page.locator('[data-hero-mode="carousel"]').count() > 0;
   check("the horizon only decorates the collage hero", carousel ? horizon === null : Boolean(horizon));
   if (!carousel) {
-  check(
-    "the horizon reports a WebGL state (ok or fallback)",
-    horizon?.webgl === "ok" || horizon?.webgl === "fallback",
-    `data-webgl=${horizon?.webgl ?? "missing"}`,
-  );
-  if (horizon?.webgl === "ok") {
     check(
-      "the WebGL backing store has a real size",
-      horizon.width > 0 && horizon.height > 0,
-      `${horizon.width}x${horizon.height}`,
+      "the horizon reports a WebGL state (ok or fallback)",
+      horizon?.webgl === "ok" || horizon?.webgl === "fallback",
+      `data-webgl=${horizon?.webgl ?? "missing"}`,
     );
-  } else {
-    console.log("  [note] WebGL unavailable in this browser; CSS underlay is in use.");
+    if (horizon?.webgl === "ok") {
+      check(
+        "the WebGL backing store has a real size",
+        horizon.width > 0 && horizon.height > 0,
+        `${horizon.width}x${horizon.height}`,
+      );
+    } else {
+      console.log("  [note] WebGL unavailable in this browser; CSS underlay is in use.");
+    }
   }
+
+  if (carousel) {
+    await page
+      .waitForFunction(
+        () => {
+          const state = document
+            .querySelector("[data-sea-scene]")
+            ?.getAttribute("data-sea-state");
+          return state === "ready" || state === "fallback";
+        },
+        undefined,
+        { timeout: 15000 },
+      )
+      .catch(() => {});
+    const sea = await page.evaluate(() => {
+      const host = document.querySelector("[data-sea-scene]");
+      const canvas = host?.querySelector("canvas");
+      return {
+        state: host?.getAttribute("data-sea-state") ?? null,
+        running: host?.getAttribute("data-sea-running") ?? null,
+        width: canvas?.width ?? 0,
+        height: canvas?.height ?? 0,
+      };
+    });
+    check("the carousel renders the cinematic sea", Boolean(sea.state));
+    check(
+      "the cinematic sea reports ready or fallback",
+      sea.state === "ready" || sea.state === "fallback",
+      `data-sea-state=${sea.state ?? "missing"}`,
+    );
+    if (sea.state === "ready") {
+      check(
+        "the sea canvas has a real backing store",
+        sea.width > 0 && sea.height > 0,
+        `${sea.width}x${sea.height}`,
+      );
+    }
+    check(
+      "the sea loop runs while the hero is visible",
+      sea.state === "fallback" || sea.running === "true",
+      `data-sea-state=${sea.state}, running=${sea.running}`,
+    );
   }
 
   mkdirSync(SHOT_DIR, { recursive: true });
@@ -276,6 +319,103 @@ async function checkHorizonLifecycle(browser) {
   await context.close();
 }
 
+async function checkCinematicPin(browser) {
+  section("2b. The first transition pins on desktop and releases on smaller screens");
+  const { context, page } = await openHome(browser);
+
+  check(
+    "desktop pins the first transition",
+    (await page.locator(".pin-spacer").count()) === 1,
+  );
+  const before = await page.evaluate(() => {
+    const node = document.querySelector("[data-cinematic-window]");
+    return node ? getComputedStyle(node).clipPath : "";
+  });
+  await page.evaluate(() =>
+    window.scrollTo({ top: innerHeight * 0.45, behavior: "instant" }),
+  );
+  await page.waitForTimeout(700);
+  const after = await page.evaluate(() => {
+    const node = document.querySelector("[data-cinematic-window]");
+    return node ? getComputedStyle(node).clipPath : "";
+  });
+  check(
+    "scrolling opens the destination frame",
+    before.length > 0 && after !== before,
+    `${before} -> ${after}`,
+  );
+
+  await page.evaluate(() => window.scrollTo({ top: 2400, behavior: "instant" }));
+  await page.waitForTimeout(900);
+  check(
+    "the sea loop pauses when the hero leaves the viewport",
+    (await page.getAttribute("[data-sea-scene]", "data-sea-running")) !== "true",
+    `data-sea-running=${await page.getAttribute("[data-sea-scene]", "data-sea-running")}`,
+  );
+
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await page.setViewportSize({ width: 900, height: 1000 });
+  await page.waitForTimeout(800);
+  check(
+    "the pin is removed below the desktop breakpoint",
+    (await page.locator(".pin-spacer").count()) === 0,
+  );
+  check(
+    "a breakpoint change does not widen the page",
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+  );
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(800);
+  check(
+    "the pin returns when the desktop breakpoint returns",
+    (await page.locator(".pin-spacer").count()) === 1,
+  );
+
+  await context.close();
+}
+
+async function checkWebGLFallback(browser) {
+  section("7. The hero survives without WebGL");
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on("pageerror", (error) => pageErrors.push(String(error)));
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+      if (typeof type === "string" && type.includes("webgl")) return null;
+      return original.call(this, type, ...args);
+    };
+  });
+  await page.goto(BASE, { waitUntil: "load" });
+  await page.waitForTimeout(1200);
+  check(
+    "WebGL failure falls back to the CSS sea",
+    (await page.getAttribute("[data-sea-scene]", "data-sea-state")) ===
+      "fallback",
+    `data-sea-state=${await page.getAttribute("[data-sea-scene]", "data-sea-state")}`,
+  );
+  check(
+    "the hero heading is still visible without WebGL",
+    (await page.locator(".stt-cinema-copy h1").innerText()).length > 5,
+  );
+  check(
+    "no page errors without WebGL",
+    pageErrors.length === 0,
+    pageErrors[0] ?? "",
+  );
+  mkdirSync(SHOT_DIR, { recursive: true });
+  await page.screenshot({
+    path: path.join(SHOT_DIR, "motion-home-no-webgl.png"),
+  });
+  await context.close();
+}
+
 async function checkPointerTilt(browser) {
   section("3. Pointer tilt stays inside its budget and resets");
   const { context, page } = await openHome(browser);
@@ -376,6 +516,21 @@ async function checkReducedMotion(browser) {
   check("no home content is held invisible", state.hidden === 0, `${state.hidden} node(s)`);
   const carousel = await page.locator('[data-hero-mode="carousel"]').count() > 0;
   check("the horizon is paused or absent from the carousel", carousel ? state.paused === undefined : state.paused === "true", `data-paused=${state.paused}`);
+  if (carousel) {
+    check(
+      "reduced motion removes the pinned transition",
+      (await page.locator(".pin-spacer").count()) === 0,
+    );
+    const seaState = await page.getAttribute(
+      "[data-sea-scene]",
+      "data-sea-state",
+    );
+    check(
+      "reduced motion shows the static sea fallback",
+      seaState === "fallback" || seaState === "starting",
+      `data-sea-state=${seaState}`,
+    );
+  }
 
   mkdirSync(SHOT_DIR, { recursive: true });
   await page.screenshot({
@@ -411,6 +566,18 @@ async function checkPauseSwitch(browser) {
 
   const carousel = await page.locator('[data-hero-mode="carousel"]').count() > 0;
   check("the horizon reports paused or is absent from the carousel", carousel ? state.paused === undefined : state.paused === "true", `data-paused=${state.paused}`);
+  if (carousel) {
+    check(
+      "the pause switch removes the pinned transition",
+      (await page.locator(".pin-spacer").count()) === 0,
+    );
+    check(
+      "the pause switch stops the sea loop",
+      (await page.getAttribute("[data-sea-scene]", "data-sea-running")) !==
+        "true",
+      `data-sea-running=${await page.getAttribute("[data-sea-scene]", "data-sea-running")}`,
+    );
+  }
   check(
     "the pause switch removes the depth animations",
     state.depthAnimations.every((value) => value === "none"),
@@ -490,10 +657,12 @@ try {
 
   await checkPaint(browser);
   await checkHorizonLifecycle(browser);
+  await checkCinematicPin(browser);
   await checkPointerTilt(browser);
   await checkReducedMotion(browser);
   await checkPauseSwitch(browser);
   await checkNoOverflow(browser);
+  await checkWebGLFallback(browser);
 } catch (error) {
   failures += 1;
   console.error(`\nverify:motion crashed: ${error?.stack ?? error}`);

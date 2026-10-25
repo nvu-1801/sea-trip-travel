@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { primaryNav } from "@/config/navigation";
 import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
@@ -60,12 +61,12 @@ export function DesktopNav({
     }
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!openLabel || !focusPanelOnOpen.current) return;
     focusPanelOnOpen.current = false;
 
     const label = openLabel;
-    let frame = 0;
+    const deadline = performance.now() + 1200;
     let raf = 0;
 
     const attempt = () => {
@@ -77,7 +78,10 @@ export function DesktopNav({
         link.focus();
         if (document.activeElement === link) return;
       }
-      if (frame++ < 10) raf = requestAnimationFrame(attempt);
+      // Heavy first-paint work (hero renderer, font swap) can delay the panel
+      // for more than ten frames; keep trying for a bounded second instead of
+      // silently leaving keyboard focus on the trigger.
+      if (performance.now() < deadline) raf = requestAnimationFrame(attempt);
     };
 
     attempt();
@@ -97,6 +101,13 @@ export function DesktopNav({
   const open = (label: string) => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     applyOpen(label);
+  };
+
+  const focusFirstPanelLink = (label: string) => {
+    itemRefs.current
+      .get(label)
+      ?.querySelector<HTMLAnchorElement>("a[data-nav-panel-link]")
+      ?.focus();
   };
 
   const scheduleClose = () => {
@@ -196,7 +207,13 @@ export function DesktopNav({
                     if (event.key === "ArrowDown") {
                       event.preventDefault();
                       focusPanelOnOpen.current = true;
-                      open(item.labelKey);
+                      // Commit the open state before moving focus: a busy
+                      // first paint (hero renderer, fonts) must not leave
+                      // keyboard focus on the trigger.
+                      flushSync(() => open(item.labelKey));
+                      focusFirstPanelLink(item.labelKey);
+                      if (document.activeElement?.matches?.("a[data-nav-panel-link]"))
+                        focusPanelOnOpen.current = false;
                     }
                     if (event.key === "Escape") applyOpen(null);
                   }}
@@ -227,6 +244,15 @@ export function DesktopNav({
                       ? "visible translate-y-0 scale-100 opacity-100 blur-0"
                       : "invisible -translate-y-2 scale-[0.97] opacity-0 blur-[3px]",
                   )}
+                  style={{
+                    // Opening must be visible in the same commit so keyboard
+                    // focus can land inside immediately; closing still fades
+                    // before the panel is hidden.
+                    visibility: expanded ? "visible" : "hidden",
+                    transitionDuration: expanded
+                      ? "300ms, 300ms, 300ms, 0s"
+                      : "300ms, 300ms, 300ms, 300ms",
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Escape") {
                       event.preventDefault();

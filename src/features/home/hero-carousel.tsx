@@ -8,24 +8,34 @@ import type { Locale } from "@/i18n/config";
 import { localizePath } from "@/i18n/routing";
 import { ArrowRightIcon, ChevronRightIcon } from "@/components/ui/icons";
 import { MaskedHeading } from "@/components/motion/word-reveal";
+import { motionAllowed, subscribeMotion } from "@/lib/motion";
 import type { HeroCopy } from "./hero-copy";
+import { CinematicSea } from "./cinematic-sea";
+import { initCinematicScroll } from "./cinematic-scroll";
 
 export function HeroCarousel({
   config,
   copy,
   locale,
   motionEnabled,
+  scrollCue,
 }: {
   config: HeroConfig;
   copy: HeroCopy;
   locale: Locale;
   motionEnabled: boolean;
+  scrollCue: string;
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(!config.autoplay);
   const [blocked, setBlocked] = useState(true);
   const [failed, setFailed] = useState<string[]>([]);
   const frame = useRef<HTMLElement>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
+  const copyRef = useRef<HTMLDivElement>(null);
+  const shadeRef = useRef<HTMLDivElement>(null);
+  const cueRef = useRef<HTMLAnchorElement>(null);
+  const seaProgress = useRef(0);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const english = locale === "en";
   const count = config.slides.length;
@@ -82,6 +92,64 @@ export function HeroCarousel({
     blocked,
   ]);
 
+  /**
+   * The one pinned scroll moment. GSAP owns the timeline and the scene reads
+   * the same progress ref, so no React state changes on scroll and there is no
+   * second scroll loop. Rebuilds only when the motion preference itself flips
+   * (reduced motion or the owner pause switch); tab visibility is left to the
+   * scene and the carousel.
+   */
+  useEffect(() => {
+    const root = frame.current;
+    const windowEl = windowRef.current;
+    if (!root || !windowEl) return;
+
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+    let allowed = motionAllowed();
+
+    const setup = async () => {
+      if (!allowed) {
+        seaProgress.current = 0.24;
+        return;
+      }
+      try {
+        const dispose = await initCinematicScroll({
+          root,
+          windowEl,
+          copyEl: copyRef.current,
+          shadeEl: shadeRef.current,
+          cueEl: cueRef.current,
+          progress: seaProgress,
+        });
+        if (disposed) dispose();
+        else cleanup = dispose;
+      } catch {
+        // GSAP could not load; the static composition is already complete.
+        cleanup = undefined;
+      }
+    };
+
+    void setup();
+
+    const unsubscribe = subscribeMotion(() => {
+      if (document.hidden) return;
+      const next = motionAllowed();
+      if (next === allowed) return;
+      allowed = next;
+      cleanup?.();
+      cleanup = undefined;
+      seaProgress.current = next ? 0 : 0.24;
+      if (next) void setup();
+    });
+
+    return () => {
+      disposed = true;
+      unsubscribe();
+      cleanup?.();
+    };
+  }, []);
+
   const navigate = (direction: number) => {
     setIndex((current) => (current + direction + count) % count);
   };
@@ -126,71 +194,89 @@ export function HeroCarousel({
         touch.current = null;
       }}
     >
-      <div className="stt-cinema-stage">
-        {config.slides.map((slide, position) => (
-          <div
-            key={slide.id}
-            className="stt-cinema-image"
-            data-active={position === index % count}
-            aria-hidden={position !== index % count}
-          >
-            {!failed.includes(slide.id) && (
-              <Image
-                src={slide.image.src}
-                alt={slide.image.alt}
-                fill
-                sizes="100vw"
-                preload={position === 0}
-                loading={position === 0 ? undefined : "eager"}
-                style={{
-                  objectPosition: `${slide.image.positionX}% ${slide.image.positionY}%`,
-                }}
-                className="object-cover"
-                onError={() => setFailed((items) => [...items, slide.id])}
-              />
-            )}
-          </div>
-        ))}
-        <div className="stt-cinema-shade" aria-hidden="true" />
-        {/* A single light sweep per slide change: it sells the "new chapter"
-            beat without touching the photograph's own colour. */}
-        <span
-          key={`sweep-${active.id}`}
-          className="stt-cinema-sweep"
-          aria-hidden="true"
-        />
+      <div className="stt-cinema-stage" data-cinematic-stage="">
+        <CinematicSea progressRef={seaProgress} />
+        <div className="stt-cinema-sea-scrim" aria-hidden="true" />
 
-        <div className="stt-cinema-copy" key={`copy-${active.id}`}>
-          <p className="stt-cinema-eyebrow">{copy.badge}</p>
-          <MaskedHeading
-            as="h1"
-            className="stt-cinema-title"
-            lines={[
-              { text: title },
-              ...(copy.titleLine2
-                ? [{ text: copy.titleLine2, emphasis: true }]
-                : []),
-            ]}
-            stagger={58}
-            lineStagger={130}
+        <div
+          className="stt-cinema-window"
+          ref={windowRef}
+          data-cinematic-window=""
+        >
+          {config.slides.map((slide, position) => (
+            <div
+              key={slide.id}
+              className="stt-cinema-image"
+              data-active={position === index % count}
+              aria-hidden={position !== index % count}
+            >
+              {!failed.includes(slide.id) && (
+                <Image
+                  src={slide.image.src}
+                  alt={slide.image.alt}
+                  fill
+                  sizes="100vw"
+                  preload={position === 0}
+                  loading={position === 0 ? undefined : "eager"}
+                  style={{
+                    objectPosition: `${slide.image.positionX}% ${slide.image.positionY}%`,
+                  }}
+                  className="object-cover"
+                  onError={() => setFailed((items) => [...items, slide.id])}
+                />
+              )}
+            </div>
+          ))}
+          <div className="stt-cinema-shade" ref={shadeRef} aria-hidden="true" />
+          {/* A single light sweep per slide change: it sells the "new chapter"
+              beat without touching the photograph's own colour. */}
+          <span
+            key={`sweep-${active.id}`}
+            className="stt-cinema-sweep"
+            aria-hidden="true"
           />
-          <p className="stt-cinema-description">{description}</p>
-          <div className="stt-cinema-actions">
-            <Link
-              href={localizePath(locale, config.primaryHref)}
-              className="stt-cinema-primary"
-            >
-              {copy.primaryLabel}
-              <ArrowRightIcon className="h-5 w-5" />
-            </Link>
-            <Link
-              href={localizePath(locale, config.secondaryHref)}
-              className="stt-cinema-secondary"
-            >
-              {copy.secondaryLabel}
-              <span aria-hidden="true">↗</span>
-            </Link>
+          <span className="stt-cinema-window-grain" aria-hidden="true" />
+        </div>
+
+        <div className="stt-cinema-top-scrim" aria-hidden="true" />
+
+        <div className="stt-cinema-copy" ref={copyRef}>
+          <div className="stt-cinema-copy-inner" key={`copy-${active.id}`}>
+            <p className="stt-cinema-eyebrow">{copy.badge}</p>
+            <MaskedHeading
+              as="h1"
+              className="stt-cinema-title"
+              lines={[
+                { text: title },
+                ...(copy.titleLine2
+                  ? [{ text: copy.titleLine2, emphasis: true }]
+                  : []),
+              ]}
+              stagger={58}
+              lineStagger={130}
+            />
+            <p className="stt-cinema-description">{description}</p>
+            <div className="stt-cinema-actions">
+              <Link
+                href={localizePath(locale, config.primaryHref)}
+                className="stt-cinema-primary"
+              >
+                {copy.primaryLabel}
+                <ArrowRightIcon className="h-5 w-5" />
+              </Link>
+              <Link
+                href={localizePath(locale, config.secondaryHref)}
+                className="stt-cinema-secondary"
+              >
+                {copy.secondaryLabel}
+                <span aria-hidden="true">↗</span>
+              </Link>
+            </div>
           </div>
+          <a href="#tim-hanh-trinh" className="stt-cinema-cue" ref={cueRef}>
+            <span className="stt-cinema-cue-line" aria-hidden="true" />
+            {scrollCue}
+          </a>
         </div>
 
         <div className="stt-cinema-bottom">

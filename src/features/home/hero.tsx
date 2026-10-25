@@ -32,7 +32,8 @@ function trimClosingPeriod(value: string): string {
 
 export function Hero({ locale }: { locale: Locale }) {
   const config = homeHero();
-  const messages = getMessages(locale).home.hero;
+  const all = getMessages(locale);
+  const messages = all.home.hero;
   const custom = config[locale];
   const copy: HeroCopy = {
     badge: primaryBadge(custom.badge || messages.badge),
@@ -51,6 +52,7 @@ export function Hero({ locale }: { locale: Locale }) {
       copy={copy}
       locale={locale}
       motionEnabled={settings().motion}
+      scrollCue={all.common.scrollCue}
     />
   );
 }
