@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { ROUTES } from "@/config/navigation";
 import {
@@ -8,6 +8,7 @@ import {
   getRelatedArticles,
 } from "@/lib/data/articles";
 import { getTourBySlug } from "@/lib/data/tours";
+import { contentRedirect } from "@/lib/data/redirects";
 import { formatDateLong } from "@/lib/format";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { articleJsonLd, breadcrumbJsonLd } from "@/lib/json-ld";
@@ -50,7 +51,11 @@ export async function generateMetadata({
 
   // 404 during metadata resolution — before the PPR shell streams. A `notFound()`
   // reached while streaming degrades to a soft 404 (HTTP 200 + noindex).
-  if (!article) notFound();
+  if (!article) {
+    const target = contentRedirect(`/cam-nang-du-lich/${slug}`);
+    if (target) permanentRedirect(localizePath(locale, target));
+    notFound();
+  }
 
   const indexable = isIndexable(
     articleTranslationStatus(article.id, locale),
@@ -82,7 +87,11 @@ export default async function ArticlePage({
   const locale = await resolveLocaleFromParams(params);
   const m = getMessages(locale);
   const article = getArticleBySlug(slug, locale);
-  if (!article) notFound();
+  if (!article) {
+    const target = contentRedirect(`/cam-nang-du-lich/${slug}`);
+    if (target) permanentRedirect(localizePath(locale, target));
+    notFound();
+  }
 
   const indexable = isIndexable(
     articleTranslationStatus(article.id, locale),

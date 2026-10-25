@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getTourBySlug, getTourSlugs } from "@/lib/data/tours";
+import { contentRedirect } from "@/lib/data/redirects";
 import {
   TourDetailView,
   buildTourMetadata,
 } from "@/features/tours/tour-detail-view";
 import { resolveLocaleFromParams } from "@/i18n/params";
+import { localizePath } from "@/i18n/routing";
 
 /**
  * Every tour slug is produced by `generateStaticParams`, so real tour URLs are
@@ -28,7 +30,12 @@ export async function generateMetadata({
   const locale = await resolveLocaleFromParams(params);
   // 404 during metadata resolution — before the PPR shell streams. A `notFound()`
   // reached while streaming degrades to a soft 404 (HTTP 200 + noindex).
-  if (!getTourBySlug(slug, locale)) notFound();
+  if (!getTourBySlug(slug, locale)) {
+    // A renamed tour keeps its old URL alive with a permanent redirect.
+    const target = contentRedirect(`/tour/${slug}`);
+    if (target) permanentRedirect(localizePath(locale, target));
+    notFound();
+  }
   return buildTourMetadata(slug, locale);
 }
 
@@ -36,10 +43,10 @@ export default async function TourDetailPage({
   params,
 }: PageProps<"/[locale]/tour/[slug]">) {
   const { slug } = await params;
-  return (
-    <TourDetailView
-      slug={slug}
-      locale={await resolveLocaleFromParams(params)}
-    />
-  );
+  const locale = await resolveLocaleFromParams(params);
+  if (!getTourBySlug(slug, locale)) {
+    const target = contentRedirect(`/tour/${slug}`);
+    if (target) permanentRedirect(localizePath(locale, target));
+  }
+  return <TourDetailView slug={slug} locale={locale} />;
 }

@@ -186,9 +186,8 @@ export function PageHero({
                       positionY: media.positionY,
                     }}
                     altFallback={media.alt}
-                    sizes={media.sizes ?? "(max-width: 1023px) 100vw, 46vw"}
+                    sizes={media.sizes ?? "(max-width: 1023px) 150vw, 70vw"}
                     priority
-                    parallax
                     unveil
                     className="stt-page-hero-media"
                   />

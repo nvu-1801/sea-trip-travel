@@ -187,6 +187,7 @@ export function CategoryPageView({
       />
 
       <PageHero
+        className="stt-tour-category-hero"
         crumbs={crumbs}
         crumbsLabel={m.common.breadcrumbAria}
         notice={indexable ? null : <TranslationNotice locale={locale} />}
@@ -242,7 +243,9 @@ export function CategoryPageView({
         media={{
           src: category.image?.src,
           alt: category.image?.alt ?? category.name,
-          sizes: "(max-width: 1023px) 100vw, 46vw",
+          // Cover crops a landscape source into a taller frame; request enough
+          // source pixels for the covered height as well as the visible width.
+          sizes: "(max-width: 1023px) 150vw, 70vw",
         }}
         floating={
           <div>

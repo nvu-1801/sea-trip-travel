@@ -97,7 +97,7 @@ export async function POST(request: Request) {
         fit: "inside",
         withoutEnlargement: true,
       })
-      .webp({ quality: 85 })
+      .webp({ quality: 92, effort: 5 })
       .toBuffer({ resolveWithObject: true });
     await mkdir(directory(), { recursive: true, mode: 0o700 });
     await writeFile(path.join(directory(), name), output.data, { mode: 0o600 });

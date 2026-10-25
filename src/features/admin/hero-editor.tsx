@@ -247,15 +247,14 @@ export function HeroEditor({
             </button>
           </div>
           {value.slides.map((slide, index) => (
-            <details
+            <section
               key={slide.id}
               className="adm-hero-slide"
-              open={index === 0}
             >
-              <summary>
+              <h3 className="adm-hero-slide-heading">
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 {slide.caption}
-              </summary>
+              </h3>
               <div className="adm-hero-slide-toolbar">
                 <button
                   type="button"
@@ -314,7 +313,7 @@ export function HeroEditor({
                   updateSlide(index, content as Partial<typeof slide>)
                 }
               />
-            </details>
+            </section>
           ))}
         </>
       ) : (

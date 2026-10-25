@@ -17,7 +17,8 @@ export function cmsDataDir(): string {
 
 export function db() {
   if (database) return database;
-  const file = process.env.CMS_DB_PATH ?? path.join(cmsDataDir(), "seatrip.sqlite");
+  const file =
+    process.env.CMS_DB_PATH ?? path.join(cmsDataDir(), "seatrip.sqlite");
   mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
   database = new DatabaseSync(file);
   database.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
@@ -37,15 +38,22 @@ export function db() {
     CREATE TABLE IF NOT EXISTS cms_versions (scope TEXT PRIMARY KEY, version INTEGER NOT NULL DEFAULT 0);
     INSERT OR IGNORE INTO cms_versions(scope) VALUES('public'),('admin');
     CREATE TABLE IF NOT EXISTS cms_migrations (id TEXT PRIMARY KEY, applied_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS content_redirects (from_path TEXT PRIMARY KEY, to_path TEXT NOT NULL, created_at TEXT NOT NULL);
     PRAGMA user_version=1;`);
+  const leadColumns = database.prepare("PRAGMA table_info(leads)").all() as {
+    name: string;
+  }[];
+  if (!leadColumns.some((column) => column.name === "read_at")) {
+    database.exec("ALTER TABLE leads ADD COLUMN read_at TEXT");
+  }
   // Additive migration for installations created before the activity page.
   // SQLite has no "ADD COLUMN IF NOT EXISTS", so inspect first. Old audit rows
   // keep status='success' (they were only written after a successful mutation)
   // and show "Không đủ dữ liệu" for actor/IP, which were never recorded.
   const auditColumns = new Set(
-    (database.prepare("PRAGMA table_info(audit)").all() as { name: string }[]).map(
-      (column) => column.name,
-    ),
+    (
+      database.prepare("PRAGMA table_info(audit)").all() as { name: string }[]
+    ).map((column) => column.name),
   );
   const addAuditColumn = (name: string, definition: string) => {
     if (!auditColumns.has(name)) {
@@ -104,7 +112,9 @@ export function contentVersion(scope: "public" | "admin"): string {
  * existing install gets it on the next start without a manual step.
  */
 export function migrationApplied(id: string): boolean {
-  return Boolean(db().prepare("SELECT 1 FROM cms_migrations WHERE id=?").get(id));
+  return Boolean(
+    db().prepare("SELECT 1 FROM cms_migrations WHERE id=?").get(id),
+  );
 }
 
 export function markMigration(id: string): void {

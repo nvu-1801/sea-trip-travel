@@ -38,7 +38,7 @@ function countLabel(label: { one: string; other: string }, count: number): strin
  * string arrives in `labels`; the catalogs stay on the server.
  *
  * Layout owns two behaviours the page relies on:
- *   - the filter island docks under the header from `lg` up (pure CSS sticky);
+ *   - the filter toolbar sticks below the site header while browsing cards;
  *   - the first row of cards arrives as one staggered group instead of one
  *     observer per card.
  */
@@ -145,6 +145,7 @@ export function TourExplorer({
             </label>
             <Select
               aria-labelledby={sortLabelId}
+              className="h-9 rounded-lg pl-3 pr-10 text-[0.8125rem]"
               value={sort}
               options={sortOptions}
               onChange={(next) => setSort(next as SortKey)}

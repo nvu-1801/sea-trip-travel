@@ -111,7 +111,7 @@ export function TourGallery({
             altFallback={title}
             priority
             fit="cover"
-            sizes="(max-width: 532px) calc(100vw - 32px), 500px"
+            sizes="(max-width: 532px) 150vw, 750px"
             className="aspect-[4/3] w-full sm:aspect-[16/10]"
             markPlaceholder
           />

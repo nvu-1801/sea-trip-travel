@@ -50,3 +50,17 @@ export function listLeads() {
 export function markMail(id: string, status: string) {
   db().prepare("UPDATE leads SET mail_status=? WHERE id=?").run(status, id);
 }
+export function unreadLeadCount(): number {
+  return (
+    db()
+      .prepare("SELECT COUNT(*) AS count FROM leads WHERE read_at IS NULL")
+      .get() as { count: number }
+  ).count;
+}
+export function markLeadRead(id: string): boolean {
+  return (
+    db()
+      .prepare("UPDATE leads SET read_at=COALESCE(read_at, ?) WHERE id=?")
+      .run(new Date().toISOString(), id).changes > 0
+  );
+}

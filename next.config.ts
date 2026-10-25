@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
   poweredByHeader: false,
+  images: {
+    qualities: [75, 90],
+  },
   outputFileTracingExcludes: {
     "/*": ["./data/**/*", "./.env*", "./verify-screenshots/**/*", "./*.log"],
   },

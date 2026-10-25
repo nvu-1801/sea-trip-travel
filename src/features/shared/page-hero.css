@@ -643,6 +643,79 @@ html[data-motion-paused="true"] .stt-page-hero [data-depth="1"] {
   }
 }
 
+/* Softer typography for tour category introductions. */
+.stt-tour-category-hero .eyebrow-pill {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  color: var(--color-primary-strong);
+  background: color-mix(in srgb, var(--color-primary-soft) 55%, var(--color-surface));
+  box-shadow: none;
+}
+
+.stt-tour-category-hero .stt-page-hero-title {
+  font-size: clamp(2.125rem, 1.4rem + 2.3vw, 3.4rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, var(--color-foreground) 90%, var(--color-primary-strong));
+}
+
+.stt-tour-category-hero .stt-page-hero-lead {
+  max-width: 36rem;
+  font-size: clamp(1rem, 0.94rem + 0.24vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.85;
+  color: color-mix(in srgb, var(--color-foreground) 75%, var(--color-foreground-muted));
+}
+
+.stt-tour-category-hero .stt-page-hero-actions {
+  gap: 0.75rem 1.25rem;
+}
+
+.stt-tour-category-hero .stt-page-hero-actions .stt-btn-primary {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.stt-tour-category-hero .stt-page-hero-link {
+  max-width: 100%;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.65;
+  text-decoration-color: color-mix(in srgb, var(--color-primary-strong) 25%, transparent);
+}
+
+.stt-tour-category-hero .stt-page-hero-link svg { flex-shrink: 0; }
+
+.stt-tour-category-hero .stt-page-hero-meta dt {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+  text-transform: none;
+  color: color-mix(in srgb, var(--color-foreground) 70%, var(--color-foreground-muted));
+}
+
+.stt-tour-category-hero .stt-page-hero-meta dd {
+  font-family: var(--font-sans);
+  font-size: clamp(1.125rem, 1rem + 0.35vw, 1.375rem);
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.025em;
+  color: var(--color-primary-strong);
+}
+
+.stt-tour-category-hero .stt-page-hero-cue {
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  text-transform: none;
+  color: color-mix(in srgb, var(--color-foreground) 70%, var(--color-foreground-muted));
+}
+
 /* --- Small screens ------------------------------------------------------- */
 
 @media (max-width: 1023px) {

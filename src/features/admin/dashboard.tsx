@@ -52,6 +52,7 @@ import { homeSectionDraft } from "@/lib/admin-home-draft";
 import { AdminIcon, type AdminIconName } from "./admin-icons";
 import { SearchIcon, CloseIcon } from "@/components/ui/icons";
 import { searchKey } from "@/lib/search";
+import { isPlaceholderSlug } from "@/lib/public-slug";
 import {
   ADMIN_SEARCH_GROUP_LABELS,
   rankAdminSearch,
@@ -68,6 +69,7 @@ type RecordRow = {
   updated_at: string;
 };
 type Lead = {
+  read_at: string | null;
   id: string;
   status: string;
   note: string;
@@ -106,7 +108,15 @@ const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
   { label: null, keys: ["overview", "activity"] },
   {
     label: "Nội dung website",
-    keys: ["home", "theme", "tours", "articles", "categories", "destinations", "media"],
+    keys: [
+      "home",
+      "theme",
+      "tours",
+      "articles",
+      "categories",
+      "destinations",
+      "media",
+    ],
   },
   { label: "Bán hàng", keys: ["leads"] },
   { label: "Hệ thống", keys: ["messages", "settings", "account"] },
@@ -119,7 +129,11 @@ const TOUR_GROUPS = [
     title: "Quy Nhơn – Phú Yên · Tour nhiều ngày",
   },
   { duration: "1day", line: "domestic", title: "Trong nước · Tour 1 ngày" },
-  { duration: "multi", line: "domestic", title: "Trong nước · Tour nhiều ngày" },
+  {
+    duration: "multi",
+    line: "domestic",
+    title: "Trong nước · Tour nhiều ngày",
+  },
 ] as const;
 type Guide = {
   purpose: string;
@@ -306,16 +320,19 @@ const GUIDES: Record<string, Guide> = {
       "Không tự gửi lại email đã báo thành công; SMTP lỗi vẫn giữ được dữ liệu khách.",
   },
   overview: {
-    purpose: "Xem nhanh hiệu quả website: lượt xem hôm nay, khách, leads và pipeline kinh doanh.",
+    purpose:
+      "Xem nhanh hiệu quả website: lượt xem hôm nay, khách, leads và pipeline kinh doanh.",
     steps: [
       "Chọn khoảng 7/14/30 ngày để so sánh xu hướng.",
       "Bấm Làm mới để tải số liệu mới nhất từ /api/admin/stats.",
       "Xem Top trang để biết tour/bài nào đang hút khách.",
       "Theo dõi phễu Mới → Đã chốt và pipeline VND ước tính.",
     ],
-    required: "Cần có lượt truy cập (tracker /api/track) thì biểu đồ mới có số liệu.",
+    required:
+      "Cần có lượt truy cập (tracker /api/track) thì biểu đồ mới có số liệu.",
     result: "Số liệu tổng hợp theo giờ Việt Nam, không cần build lại.",
-    pitfalls: "Adblock/chặn beacon có thể làm thiếu số; sai múi giờ trình duyệt không ảnh hưởng vì server chuẩn hoá.",
+    pitfalls:
+      "Adblock/chặn beacon có thể làm thiếu số; sai múi giờ trình duyệt không ảnh hưởng vì server chuẩn hoá.",
   },
   activity: {
     purpose:
@@ -362,6 +379,7 @@ export function Dashboard({
 }) {
   const tab = section;
   const [hasUpdates, setHasUpdates] = useState(false);
+  const [unreadLeads, setUnreadLeads] = useState(0);
   const [uploadCount, setUploadCount] = useState(0);
   const [csrf, setCsrf] = useState(initialCsrf),
     [rows, setRows] = useState<RecordRow[]>([]),
@@ -423,9 +441,7 @@ export function Dashboard({
     id: string;
     slug?: string;
   } | null>(
-    initialEdit
-      ? { tab: section, id: initialEdit, slug: initialEdit }
-      : null,
+    initialEdit ? { tab: section, id: initialEdit, slug: initialEdit } : null,
   );
   /** Set just before a confirmed document navigation, to skip beforeunload. */
   const skipUnload = useRef(false);
@@ -525,7 +541,9 @@ export function Dashboard({
             dialog.querySelectorAll<HTMLElement>(
               'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])',
             ),
-          ).filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null)
+          ).filter(
+            (el) => !el.hasAttribute("disabled") && el.offsetParent !== null,
+          )
         : [];
 
     const keepFocusInside = (event: KeyboardEvent) => {
@@ -556,10 +574,7 @@ export function Dashboard({
   }, [homeModal]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        event.key.toLowerCase() === "k"
-      ) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         if (quickOpen) {
           setQuickOpen(false);
@@ -739,10 +754,14 @@ export function Dashboard({
           }[];
           links = tourRows.map((row) => ({
             categoryIds: Array.isArray(row.data.categoryIds)
-              ? row.data.categoryIds.filter((v): v is string => typeof v === "string")
+              ? row.data.categoryIds.filter(
+                  (v): v is string => typeof v === "string",
+                )
               : [],
             destinationIds: Array.isArray(row.data.destinationIds)
-              ? row.data.destinationIds.filter((v): v is string => typeof v === "string")
+              ? row.data.destinationIds.filter(
+                  (v): v is string => typeof v === "string",
+                )
               : [],
           }));
         } catch {
@@ -798,13 +817,38 @@ export function Dashboard({
       queueMicrotask(() => void load(tab));
     }
   }, [tab, csrf]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!csrf) return;
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/admin/leads?unread=1", {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const result = await response.json();
+        if (!cancelled) setUnreadLeads(result.count);
+      } catch {
+        /* Keep the last count until the connection recovers. */
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 10000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [csrf]);
   useContentUpdates({
     enabled: Boolean(csrf),
     url: "/api/admin/changes",
     initialVersion,
     onChange: async () => {
       if (busy || loading) return false;
-      if (tab === "account" || tab === "overview" || tab === "activity") return true;
+      if (tab === "account" || tab === "overview" || tab === "activity")
+        return true;
       if (dirty || selected) {
         setHasUpdates(true);
         return false;
@@ -854,11 +898,12 @@ export function Dashboard({
       // Thư viện sẽ đồng bộ ở lần tải trang sau; ảnh vừa tải vẫn dùng được ngay.
     }
   }
-  async function uploadImage(file: File): Promise<{ src: string; alt: string }> {
+  async function uploadImage(
+    file: File,
+  ): Promise<{ src: string; alt: string }> {
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
       throw new Error("Chỉ nhận file JPEG, PNG hoặc WebP.");
-    if (file.size > 10 * 1024 * 1024)
-      throw new Error("Ảnh vượt quá 10 MB.");
+    if (file.size > 10 * 1024 * 1024) throw new Error("Ảnh vượt quá 10 MB.");
     setUploadCount((count) => count + 1);
     try {
       const uploaded = (await api("media", {
@@ -986,9 +1031,7 @@ export function Dashboard({
       const row = rows.find(
         (item) =>
           item.id === entry.id ||
-          (entry.slug
-            ? String(item.data.slug ?? "") === entry.slug
-            : false),
+          (entry.slug ? String(item.data.slug ?? "") === entry.slug : false),
       );
       if (row) {
         setSelected(row);
@@ -1104,10 +1147,10 @@ export function Dashboard({
           {uploadCount > 0
             ? "Đang tải ảnh…"
             : busy
-            ? "Đang lưu thay đổi…"
-            : dirty
-              ? "Có thay đổi chưa lưu"
-              : "Chưa có thay đổi"}
+              ? "Đang lưu thay đổi…"
+              : dirty
+                ? "Có thay đổi chưa lưu"
+                : "Chưa có thay đổi"}
         </span>
         <div className="adm-edit-buttons">
           <button
@@ -1418,9 +1461,7 @@ export function Dashboard({
     .filter(([key, label]) => {
       if (!quickNeedle) return true;
       const needle = searchKey(quickNeedle).replace(/\s+/g, "");
-      return searchKey(`${label} ${key}`)
-        .replace(/\s+/g, "")
-        .includes(needle);
+      return searchKey(`${label} ${key}`).replace(/\s+/g, "").includes(needle);
     })
     .map(([key, label]) => ({
       key: `nav:${key}`,
@@ -1486,7 +1527,10 @@ export function Dashboard({
     if (filter === "all" ? row.state === "deleted" : row.state !== filter)
       return false;
     if (tab === "tours") {
-      if (durationFilter !== "all" && durationGroupOf(row.data) !== durationFilter)
+      if (
+        durationFilter !== "all" &&
+        durationGroupOf(row.data) !== durationFilter
+      )
         return false;
       if (lineFilter !== "all" && lineGroupOf(row.data, qnpyIds) !== lineFilter)
         return false;
@@ -1689,13 +1733,17 @@ export function Dashboard({
           const byId = new Map(rows.map((r) => [r.id, r]));
           const roots = visibleRows.filter(
             (r) =>
-              typeof r.data.parentId !== "string" || !byId.has(r.data.parentId as string),
+              typeof r.data.parentId !== "string" ||
+              !byId.has(r.data.parentId as string),
           );
           return roots
             .map((root) => ({
               key: root.id,
               title: `${String(root.data.name ?? root.id)} — trang tuyến chính`,
-              hint: typeof root.data.path === "string" ? `Trang ${root.data.path} · chứa các nhóm con bên dưới` : undefined,
+              hint:
+                typeof root.data.path === "string"
+                  ? `Trang ${root.data.path} · chứa các nhóm con bên dưới`
+                  : undefined,
               path: typeof root.data.path === "string" ? root.data.path : "",
               items: [
                 root,
@@ -1760,8 +1808,7 @@ export function Dashboard({
             sections.push({
               key: "home",
               title: `Khám phá trang chủ · ${enabled.length}/${HOME_DESTINATION_LIMIT} điểm đang bật`,
-              hint:
-                "Đúng thứ tự thẻ trên landing page. Điểm phải được xuất bản mới lên web.",
+              hint: "Đúng thứ tự thẻ trên landing page. Điểm phải được xuất bản mới lên web.",
               items: enabled,
             });
           for (const region of [
@@ -1841,7 +1888,10 @@ export function Dashboard({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={cover} alt="" loading="lazy" />
           ) : (
-            <AdminIcon name={kind === "category" ? "categories" : "destinations"} size={28} />
+            <AdminIcon
+              name={kind === "category" ? "categories" : "destinations"}
+              size={28}
+            />
           )}
         </div>
         <div className="adm-tour-body">
@@ -1905,7 +1955,8 @@ export function Dashboard({
           </p>
           <small>
             {new Date(row.updated_at).toLocaleDateString("vi-VN")} · v
-            {row.revision} · {using === 0 ? "chưa gắn vào tour nào" : `${using} tour`}
+            {row.revision} ·{" "}
+            {using === 0 ? "chưa gắn vào tour nào" : `${using} tour`}
           </small>
         </div>
         <div className="adm-record-actions">
@@ -2119,6 +2170,15 @@ export function Dashboard({
                   >
                     <AdminIcon name={icon as AdminIconName} size={17} />
                     {label}
+                    {key === "leads" && unreadLeads > 0 && (
+                      <span
+                        className="adm-unread-badge"
+                        aria-label={`${unreadLeads} khách hàng chưa đọc`}
+                        aria-live="polite"
+                      >
+                        {unreadLeads}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -2226,7 +2286,7 @@ export function Dashboard({
                 title="Hướng dẫn sử dụng trang này"
                 onClick={() => setHelpOpen((value) => !value)}
               >
-                ?
+                <AdminIcon name="help" size={16} />
               </button>
               <button
                 type="button"
@@ -2235,7 +2295,7 @@ export function Dashboard({
                 title="Mở website"
                 onClick={leaveToWebsite}
               >
-                ↗
+                <AdminIcon name="globe" size={16} />
               </button>
               <button
                 type="button"
@@ -2311,7 +2371,9 @@ export function Dashboard({
                   <p>{guide.result}</p>
                   <h3>Lỗi thường gặp</h3>
                   <p>{guide.pitfalls}</p>
-                  {["tours", "articles", "categories", "destinations"].includes(tab) && (
+                  {["tours", "articles", "categories", "destinations"].includes(
+                    tab,
+                  ) && (
                     <details>
                       <summary>
                         Phân biệt Lưu nháp · Xuất bản · Ẩn · Thùng rác · Khôi
@@ -2365,14 +2427,27 @@ export function Dashboard({
           </div>
         )}
         {tab === "overview" ? (
-          <>{csrf ? <Overview csrf={csrf} /> : <p className="adm-empty">Đang tải…</p>}</>
+          <>
+            {csrf ? (
+              <Overview csrf={csrf} />
+            ) : (
+              <p className="adm-empty">Đang tải…</p>
+            )}
+          </>
         ) : tab === "activity" ? (
           <ActivityCheck />
         ) : tab === "account" ? (
           <section className="adm-panel adm-security">
             <div className="adm-security-head">
               <span className="adm-security-shield" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M12 2.5 4.5 5.5v6c0 4.6 3.2 8 7.5 10 4.3-2 7.5-5.4 7.5-10v-6L12 2.5Z" />
                   <path d="m9 11.5 2.2 2.2L15.5 9.5" />
                 </svg>
@@ -2380,8 +2455,8 @@ export function Dashboard({
               <div>
                 <h2>Đổi mật khẩu</h2>
                 <p>
-                  Dùng ít nhất 14 ký tự. Sau khi đổi, mọi phiên đang đăng
-                  nhập (kể cả máy này) sẽ bị thu hồi.
+                  Dùng ít nhất 14 ký tự. Sau khi đổi, mọi phiên đang đăng nhập
+                  (kể cả máy này) sẽ bị thu hồi.
                 </p>
               </div>
             </div>
@@ -2447,18 +2522,24 @@ export function Dashboard({
                   (len >= 14 ? 1 : 0) +
                   (len >= 20 ? 1 : 0) +
                   (/[A-Z]/.test(password) && /[a-z]/.test(password) ? 1 : 0) +
-                  (/\d/.test(password) && /[^A-Za-z0-9]/.test(password) ? 1 : 0);
+                  (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)
+                    ? 1
+                    : 0);
                 const label =
-                  len === 0 ? "" : score <= 1 ? "Yếu" : score === 2 ? "Trung bình" : score === 3 ? "Khá" : "Mạnh";
+                  len === 0
+                    ? ""
+                    : score <= 1
+                      ? "Yếu"
+                      : score === 2
+                        ? "Trung bình"
+                        : score === 3
+                          ? "Khá"
+                          : "Mạnh";
                 return (
                   <div className="adm-pw-meter" aria-live="polite">
                     <div className="adm-pw-meter-bar">
                       {[0, 1, 2, 3].map((i) => (
-                        <span
-                          key={i}
-                          data-on={i < score}
-                          data-level={score}
-                        />
+                        <span key={i} data-on={i < score} data-level={score} />
                       ))}
                     </div>
                     <p>
@@ -2467,7 +2548,10 @@ export function Dashboard({
                       ) : len < 14 ? (
                         <>Còn thiếu {14 - len} ký tự nữa mới đủ độ dài.</>
                       ) : (
-                        <>Độ dài đạt yêu cầu · Độ mạnh: <strong>{label}</strong> (gợi ý thêm chữ hoa, số và ký tự đặc biệt).</>
+                        <>
+                          Độ dài đạt yêu cầu · Độ mạnh: <strong>{label}</strong>{" "}
+                          (gợi ý thêm chữ hoa, số và ký tự đặc biệt).
+                        </>
                       )}
                     </p>
                   </div>
@@ -2499,7 +2583,12 @@ export function Dashboard({
                     "qualified",
                     "star",
                   ],
-                  ["Đã chốt", leads.filter((l) => l.status === "won").length, "won", "trophy"],
+                  [
+                    "Đã chốt",
+                    leads.filter((l) => l.status === "won").length,
+                    "won",
+                    "trophy",
+                  ],
                 ] as const
               ).map(([label, count, value, icon]) => (
                 <button
@@ -2508,7 +2597,9 @@ export function Dashboard({
                   className="adm-stat-btn"
                   data-active={leadStatusFilter === value}
                   onClick={() =>
-                    setLeadStatusFilter(leadStatusFilter === value ? "all" : value)
+                    setLeadStatusFilter(
+                      leadStatusFilter === value ? "all" : value,
+                    )
                   }
                   title={
                     value === "all"
@@ -2557,7 +2648,10 @@ export function Dashboard({
                 {(
                   [
                     ["all", `Tất cả (${leads.length})`],
-                    ["new", `Mới (${leads.filter((l) => l.status === "new").length})`],
+                    [
+                      "new",
+                      `Mới (${leads.filter((l) => l.status === "new").length})`,
+                    ],
                     [
                       "contacted",
                       `Đã liên hệ (${leads.filter((l) => l.status === "contacted").length})`,
@@ -2566,7 +2660,10 @@ export function Dashboard({
                       "qualified",
                       `Tiềm năng (${leads.filter((l) => l.status === "qualified").length})`,
                     ],
-                    ["won", `Đã chốt (${leads.filter((l) => l.status === "won").length})`],
+                    [
+                      "won",
+                      `Đã chốt (${leads.filter((l) => l.status === "won").length})`,
+                    ],
                     [
                       "lost",
                       `Chưa phù hợp (${leads.filter((l) => l.status === "lost").length})`,
@@ -2663,9 +2760,7 @@ export function Dashboard({
                               </span>
                             </div>
                             {interest && (
-                              <p className="adm-lead-interest">
-                                {interest}
-                              </p>
+                              <p className="adm-lead-interest">{interest}</p>
                             )}
                             {message && (
                               <p className="adm-lead-message">“{message}”</p>
@@ -2720,6 +2815,36 @@ export function Dashboard({
                               />
                             </label>
                             <div className="adm-lead-actions">
+                              {!lead.read_at && (
+                                <button
+                                  disabled={busy}
+                                  onClick={() =>
+                                    void run(async () => {
+                                      const result = await api("leads", {
+                                        method: "PATCH",
+                                        body: JSON.stringify({
+                                          id: lead.id,
+                                          action: "mark-read",
+                                        }),
+                                      });
+                                      setUnreadLeads(result.count);
+                                      setLeads((items) =>
+                                        items.map((item) =>
+                                          item.id === lead.id
+                                            ? {
+                                                ...item,
+                                                read_at:
+                                                  new Date().toISOString(),
+                                              }
+                                            : item,
+                                        ),
+                                      );
+                                    })
+                                  }
+                                >
+                                  Đánh dấu đã đọc
+                                </button>
+                              )}
                               <button
                                 className="adm-primary"
                                 disabled={busy}
@@ -2968,7 +3093,10 @@ export function Dashboard({
                           void navigator.clipboard
                             .writeText(item.src)
                             .then(() =>
-                              pushToast("success", "Đã sao chép đường dẫn ảnh."),
+                              pushToast(
+                                "success",
+                                "Đã sao chép đường dẫn ảnh.",
+                              ),
                             )
                             .catch(() =>
                               setNotice(
@@ -3040,9 +3168,9 @@ export function Dashboard({
                 <div>
                   <h2>Các khối trang chủ theo đúng thứ tự hiển thị</h2>
                   <p>
-                    Mỗi thẻ là một phần thật trên landing page, chia 3 nhóm
-                    Đầu – Giữa – Cuối trang. Bấm Sửa để mở modal chỉ chứa
-                    trường của phần đó.
+                    Mỗi thẻ là một phần thật trên landing page, chia 3 nhóm Đầu
+                    – Giữa – Cuối trang. Bấm Sửa để mở modal chỉ chứa trường của
+                    phần đó.
                   </p>
                 </div>
                 <div className="adm-home-states" role="status">
@@ -3124,9 +3252,7 @@ export function Dashboard({
                         {homeModal.where}
                       </p>
                       <h2 id="adm-section-title">{homeModal.title}</h2>
-                      <p className="adm-section-modal-tip">
-                        {homeModal.tip}
-                      </p>
+                      <p className="adm-section-modal-tip">{homeModal.tip}</p>
                     </div>
                     <button
                       type="button"
@@ -3304,11 +3430,7 @@ export function Dashboard({
           <section className="adm-panel adm-edit">
             <div className="adm-editor-header">
               <div>
-                <button
-                  onClick={closeEditor}
-                >
-                  ← Danh sách
-                </button>
+                <button onClick={closeEditor}>← Danh sách</button>
                 <h2>
                   {tab === "hero"
                     ? "Khối mở đầu trang chủ"
@@ -3447,7 +3569,11 @@ export function Dashboard({
             )}
             {editorActions()}
             {(tab === "tours" || tab === "articles") && (
-              <DraftPreview key={`${tab}:${selected.id}`} kind={tab} data={selected.data} />
+              <DraftPreview
+                key={`${tab}:${selected.id}`}
+                kind={tab}
+                data={selected.data}
+              />
             )}
             {tab === "hero" ? (
               <HeroEditor
@@ -3469,7 +3595,10 @@ export function Dashboard({
                 references={references}
                 onUploadImage={uploadImage}
                 onNavigateTab={(next) => void navigateTo(next)}
-                locked={selected.revision > 0}
+                locked={
+                  selected.revision > 0 &&
+                  !isPlaceholderSlug(selected.data.slug)
+                }
                 onChange={(data) => {
                   setSelected({
                     ...selected,
@@ -3492,7 +3621,10 @@ export function Dashboard({
                   }[]
                 }
                 recordState={selected.state}
-                locked={selected.revision > 0}
+                locked={
+                  selected.revision > 0 &&
+                  !isPlaceholderSlug(selected.data.slug)
+                }
                 onChange={(data) => {
                   setSelected({
                     ...selected,
@@ -3506,6 +3638,7 @@ export function Dashboard({
                 references={references}
                 value={selected.data}
                 locked={selected.revision > 0}
+                slugEditable={isPlaceholderSlug(selected.data.slug)}
                 onUploadImage={uploadImage}
                 onChange={(data) => {
                   setSelected({
@@ -3519,7 +3652,11 @@ export function Dashboard({
           </section>
         ) : (
           <>
-            <div className="adm-stats" role="group" aria-label="Tổng quan trạng thái">
+            <div
+              className="adm-stats"
+              role="group"
+              aria-label="Tổng quan trạng thái"
+            >
               {(
                 [
                   {
@@ -3565,10 +3702,7 @@ export function Dashboard({
                 >
                   <span className="adm-stat-label">
                     <i aria-hidden="true">
-                      <AdminIcon
-                        name={stat.icon as AdminIconName}
-                        size={14}
-                      />
+                      <AdminIcon name={stat.icon as AdminIconName} size={14} />
                     </i>
                     {stat.label}
                   </span>
@@ -3591,7 +3725,9 @@ export function Dashboard({
                     </i>
                     Thùng rác
                   </span>
-                  <strong>{rows.filter((r) => r.state === "deleted").length}</strong>
+                  <strong>
+                    {rows.filter((r) => r.state === "deleted").length}
+                  </strong>
                   <small>
                     {trashUrgentCount > 0
                       ? `${trashUrgentCount} mục sắp bị xóa vĩnh viễn · Bấm để xem`
@@ -3607,12 +3743,7 @@ export function Dashboard({
                       : "Lưu nháp → xuất bản để lên web"}
                   </span>
                   <strong>
-                    v
-                    {Math.max(
-                      0,
-                      ...rows.map((r) => r.revision ?? 0),
-                      0,
-                    )}
+                    v{Math.max(0, ...rows.map((r) => r.revision ?? 0), 0)}
                   </strong>
                   <small>
                     {rows[0]?.updated_at
@@ -3631,63 +3762,74 @@ export function Dashboard({
                     : "Mỗi dòng chữ VI / EN hiển thị đúng vị trí trên website. Sửa câu chữ ở đây, xuất bản là lên web ngay."}
                 </p>
               ) : (
-              <div className="adm-toolbar">
-                <input
-                  aria-label={`Tìm trong ${tabLabel}`}
-                  placeholder={`Tìm trong ${tabLabel} — gõ tên, slug…`}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <AdmFilterSelect
-                  value={filter}
-                  onChange={setFilter}
-                  options={[
-                    {
-                      value: "all",
-                      label: "Tất cả",
-                      count: rows.filter((r) => r.state !== "deleted").length,
-                    },
-                    {
-                      value: "published",
-                      label: "Đang xuất bản",
-                      count: rows.filter((r) => r.state === "published").length,
-                    },
-                    {
-                      value: "draft",
-                      label: "Bản nháp",
-                      count: rows.filter((r) => r.state === "draft").length,
-                    },
-                    {
-                      value: "deleted",
-                      label: "Thùng rác",
-                      count: deletedCount,
-                    },
-                  ]}
-                />
-                <button
-                  type="button"
-                  className={`adm-trash-btn${trashOpen || filter === "deleted" ? " adm-trash-btn--active" : ""}`}
-                  onClick={() => setTrashOpen(true)}
-                  aria-pressed={trashOpen}
-                  title={`Xem ${deletedCount} mục trong thùng rác — tự xóa sau ${TRASH_RETENTION_DAYS} ngày`}
-                >
-                  Thùng rác · {TRASH_RETENTION_DAYS} ngày
-                  <span className="adm-trash-count">{deletedCount}</span>
-                </button>
-                {!["messages", "settings", "hero", "landing"].includes(tab) && (
+                <div className="adm-toolbar">
+                  <input
+                    aria-label={`Tìm trong ${tabLabel}`}
+                    placeholder={`Tìm trong ${tabLabel} — gõ tên, slug…`}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  <AdmFilterSelect
+                    value={filter}
+                    onChange={setFilter}
+                    options={[
+                      {
+                        value: "all",
+                        label: "Tất cả",
+                        count: rows.filter((r) => r.state !== "deleted").length,
+                      },
+                      {
+                        value: "published",
+                        label: "Đang xuất bản",
+                        count: rows.filter((r) => r.state === "published")
+                          .length,
+                      },
+                      {
+                        value: "draft",
+                        label: "Bản nháp",
+                        count: rows.filter((r) => r.state === "draft").length,
+                      },
+                      {
+                        value: "deleted",
+                        label: "Thùng rác",
+                        count: deletedCount,
+                      },
+                    ]}
+                  />
                   <button
-                    className="adm-primary"
-                    disabled={busy}
-                    onClick={create}
+                    type="button"
+                    className={`adm-trash-btn${trashOpen || filter === "deleted" ? " adm-trash-btn--active" : ""}`}
+                    onClick={() => setTrashOpen(true)}
+                    aria-pressed={trashOpen}
+                    title={`Xem ${deletedCount} mục trong thùng rác — tự xóa sau ${TRASH_RETENTION_DAYS} ngày`}
                   >
-                    + Thêm mới
+                    Thùng rác · {TRASH_RETENTION_DAYS} ngày
+                    <span className="adm-trash-count">{deletedCount}</span>
                   </button>
-                )}
-              </div>
+                  {!["messages", "settings", "hero", "landing"].includes(
+                    tab,
+                  ) && (
+                    <button
+                      className="adm-primary"
+                      disabled={busy}
+                      onClick={create}
+                    >
+                      + Thêm mới
+                    </button>
+                  )}
+                </div>
               )}
               {tab === "tours" && filter !== "deleted" && (
-                <div className="adm-tour-chips" role="group" aria-label="Lọc tour">
-                  <div className="adm-chip-row" role="group" aria-label="Thời lượng">
+                <div
+                  className="adm-tour-chips"
+                  role="group"
+                  aria-label="Lọc tour"
+                >
+                  <div
+                    className="adm-chip-row"
+                    role="group"
+                    aria-label="Thời lượng"
+                  >
                     {(
                       [
                         ["all", "Tất cả"],
@@ -3707,12 +3849,19 @@ export function Dashboard({
                       </button>
                     ))}
                   </div>
-                  <div className="adm-chip-row" role="group" aria-label="Tuyến tour">
+                  <div
+                    className="adm-chip-row"
+                    role="group"
+                    aria-label="Tuyến tour"
+                  >
                     {(
                       [
                         ["all", "Mọi tuyến"],
                         ["qnpy", `QN – Phú Yên (${countBy("all", "qnpy")})`],
-                        ["domestic", `Trong nước (${countBy("all", "domestic")})`],
+                        [
+                          "domestic",
+                          `Trong nước (${countBy("all", "domestic")})`,
+                        ],
                       ] as const
                     ).map(([value, label]) => (
                       <button
@@ -3775,7 +3924,11 @@ export function Dashboard({
                               Tên điểm được dùng khi khách gõ ở /tim-tour; thẻ
                               Khám phá mở sẵn đúng từ khóa này.
                             </span>
-                            <a href="/vi/tim-tour" target="_blank" rel="noreferrer">
+                            <a
+                              href="/vi/tim-tour"
+                              target="_blank"
+                              rel="noreferrer"
+                            >
                               Thử tìm kiếm ↗
                             </a>
                           </li>
@@ -3788,7 +3941,10 @@ export function Dashboard({
                           </li>
                         </ul>
                         <p className="adm-home-count" role="status">
-                          Đang bật <strong>{homeEnabledCount}/{HOME_DESTINATION_LIMIT}</strong>{" "}
+                          Đang bật{" "}
+                          <strong>
+                            {homeEnabledCount}/{HOME_DESTINATION_LIMIT}
+                          </strong>{" "}
                           điểm cho khối Khám phá.{" "}
                           {homeSlotsFull
                             ? "Đã đủ 3 điểm — tắt một điểm trước khi bật thêm."
@@ -3803,10 +3959,7 @@ export function Dashboard({
                             }{" "}
                             đang xuất bản
                           </strong>{" "}
-                          ·{" "}
-                          {
-                            rows.filter((row) => row.state === "draft").length
-                          }{" "}
+                          · {rows.filter((row) => row.state === "draft").length}{" "}
                           bản nháp. Dùng bộ lọc phía trên để chỉ xem một nhóm.
                         </p>
                       </>
@@ -3815,20 +3968,34 @@ export function Dashboard({
                         <li>
                           <strong>Menu + footer</strong>
                           <span>2 danh mục Gốc hiện ở menu và footer.</span>
-                          <a href="/vi" target="_blank" rel="noreferrer">Xem menu ↗</a>
+                          <a href="/vi" target="_blank" rel="noreferrer">
+                            Xem menu ↗
+                          </a>
                         </li>
                         <li>
                           <strong>Trang tuyến</strong>
-                          <span>Mỗi danh mục là 1 trang /tour-... liệt kê tour con.</span>
-                          <a href="/vi/tour-quy-nhon-phu-yen" target="_blank" rel="noreferrer">Xem trang tuyến ↗</a>
+                          <span>
+                            Mỗi danh mục là 1 trang /tour-... liệt kê tour con.
+                          </span>
+                          <a
+                            href="/vi/tour-quy-nhon-phu-yen"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Xem trang tuyến ↗
+                          </a>
                         </li>
                         <li>
                           <strong>Trong form tour</strong>
-                          <span>Mục “Danh mục” — tick chọn, không gõ tay mã.</span>
+                          <span>
+                            Mục “Danh mục” — tick chọn, không gõ tay mã.
+                          </span>
                         </li>
                         <li>
                           <strong>Breadcrumb + sitemap</strong>
-                          <span>Tự sinh từ cây cha → con; đổi tên không đổi link.</span>
+                          <span>
+                            Tự sinh từ cây cha → con; đổi tên không đổi link.
+                          </span>
                         </li>
                       </ul>
                     )}
@@ -3842,233 +4009,295 @@ export function Dashboard({
                 </p>
               )}
               <div className="adm-records">
-                {tourSections ? (
-                  tourSections.map((section) => (
-                    <section key={section.key} className="adm-tour-group">
-                      <header className="adm-tour-group-head">
-                        <h3>{section.title}</h3>
-                        <span className="adm-tour-group-count">
-                          {section.items.length} tour
-                        </span>
-                      </header>
-                      {section.items.map((row) => renderTourCard(row))}
-                    </section>
-                  ))
-                ) : articleSections ? (
-                  articleSections.map((section) => (
-                    <section key={section.key} className="adm-tour-group">
-                      <header className="adm-tour-group-head adm-article-group-head">
-                        <div>
+                {tourSections
+                  ? tourSections.map((section) => (
+                      <section key={section.key} className="adm-tour-group">
+                        <header className="adm-tour-group-head">
                           <h3>{section.title}</h3>
-                          <p>{section.hint}</p>
-                        </div>
-                        <span className="adm-tour-group-count">
-                          {section.items.length} bài
-                        </span>
-                      </header>
-                      {section.items.map((row) => renderArticleCard(row))}
-                    </section>
-                  ))
-                ) : tab === "articles" ? (
-                  visibleRows.map((row) => renderArticleCard(row))
-                ) : categorySections ? (
-                  categorySections.map((section) => (
-                    <section key={section.key} className="adm-tour-group">
-                      <header className="adm-tour-group-head adm-article-group-head">
-                        <div>
-                          <h3>{section.title}</h3>
-                          {section.hint && <p>{section.hint}</p>}
-                        </div>
-                        <span className="adm-tour-group-count">
-                          {section.items.length} danh mục
-                        </span>
-                      </header>
-                      {section.items.map((row) => {
-                        const parentId =
-                          typeof row.data.parentId === "string"
-                            ? row.data.parentId
-                            : "";
-                        const parent = rows.find((r) => r.id === parentId);
-                        return renderTaxonomyCard(
-                          row,
-                          "category",
-                          parent ? String(parent.data.name ?? parent.id) : undefined,
-                        );
-                      })}
-                      {section.path && (
-                        <a
-                          className="adm-ghost-link"
-                          href={`/vi${section.path}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Xem trang tuyến này ↗
-                        </a>
-                      )}
-                    </section>
-                  ))
-                ) : destinationSections ? (
-                  destinationSections.map((section) => (
-                    <section key={section.key} className="adm-tour-group">
-                      <header className="adm-tour-group-head adm-article-group-head">
-                        <div>
-                          <h3>{section.title}</h3>
-                          <p>{section.hint}</p>
-                        </div>
-                        <span className="adm-tour-group-count">
-                          {section.items.length} điểm
-                        </span>
-                      </header>
-                      {section.items.map((row) => renderTaxonomyCard(row, "destination"))}
-                    </section>
-                  ))
-                ) : tab === "categories" || tab === "destinations" ? (
-                  visibleRows.map((row) =>
-                    renderTaxonomyCard(
-                      row,
-                      tab === "categories" ? "category" : "destination",
-                    ),
-                  )
-                ) : (
-                  visibleRows.map((row) => (
-                    <article key={row.id}>
-                      <div className="adm-record-mark">
-                        {(() => {
-                          const icon = tabs.find((t) => t[0] === tab)?.[2];
-                          return icon ? (
-                            <AdminIcon name={icon as AdminIconName} size={25} />
-                          ) : null;
-                        })()}
-                      </div>
-                      <div className="adm-record-copy">
-                        <span className={`adm-badge ${row.state}`}>
-                          {row.state === "published"
-                            ? "Đang xuất bản"
-                            : row.state === "deleted"
-                              ? "Thùng rác"
-                              : "Bản nháp"}
-                        </span>
-                        <h2>
-                          {tab === "hero"
-                            ? "Section đầu trang chủ"
-                            : tab === "landing"
-                              ? "Các khối trang chủ (finder/story/FAQ/explore/regions/values)"
-                              : tab === "settings"
-                                ? `${String(row.data.name ?? "Cấu hình website")} · mã “${row.id}”`
-                                : tab === "messages"
-                                  ? row.id === "vi"
-                                    ? "🇻🇳 Tiếng Việt — câu chữ chính"
-                                    : row.id === "en"
-                                      ? "🇬🇧 Tiếng Anh — bản dịch"
-                                      : String(row.data.title ?? row.data.name ?? row.id)
-                                  : String(row.data.title ?? row.data.name ?? row.id)}
-                        </h2>
-                        <p>
-                          {tab === "settings"
-                            ? (() => {
-                                const contact = (row.data.contact ?? {}) as Record<string, unknown>;
-                                const hotline = typeof contact.hotline === "string" ? contact.hotline : "";
-                                const email = typeof contact.email === "string" ? contact.email : "";
-                                const footer = Array.isArray(row.data.footerLinks)
-                                  ? (row.data.footerLinks as unknown[]).length
-                                  : 0;
-                                const social = Array.isArray(row.data.socialLinks)
-                                  ? (row.data.socialLinks as unknown[]).length
-                                  : 0;
-                                return `Hotline ${hotline || "—"} · ${email || "—"} · ${footer} link footer · ${social} mạng xã hội`;
-                              })()
-                            : tab === "messages"
-                              ? row.id === "vi"
-                                ? "Mọi tiêu đề, nút bấm, nhãn form tiếng Việt trên website."
-                                : "Bản dịch tiếng Anh tương ứng — xuất bản để lên web ngay."
-                              : String(
-                                  row.data.summary ??
-                                    row.data.excerpt ??
-                                    row.data.description ??
-                                    row.data.slug ??
-                                    row.id,
-                                ).slice(0, 120)}
-                        </p>
-                        {(tab === "settings" ||
-                          tab === "messages" ||
-                          tab === "hero" ||
-                          tab === "landing") && (
-                          <p className="adm-card-place">
-                            {tab === "settings"
-                              ? "Hiện ở: header · footer · trang liên hệ · nút gọi/Zalo"
-                              : tab === "messages"
-                                ? "Hiện ở: trang chủ · liên hệ · chính sách · thông báo"
-                                : "Hiện ở: trang chủ"}
-                          </p>
-                        )}
-                        <small>
-                          {new Date(row.updated_at).toLocaleDateString("vi-VN")}{" "}
-                          · v{row.revision}
-                          {(tab === "categories" || tab === "destinations") &&
-                            (() => {
-                              const using = tourLinks.filter((t) =>
-                                tab === "categories"
-                                  ? t.categoryIds.includes(row.id)
-                                  : t.destinationIds.includes(row.id),
-                              ).length;
-                              const path =
-                                tab === "categories" &&
-                                typeof row.data.path === "string"
-                                  ? row.data.path
-                                  : null;
-                              return (
-                                <>
-                                  {" "}·{" "}
-                                  <span className="adm-use-hint">
-                                    {path ? (
-                                      <>
-                                        Trang <code>{path}</code> ·{" "}
-                                      </>
-                                    ) : row.data.showOnHome === true ? (
-                                      <>Khám phá trang chủ · </>
-                                    ) : (
-                                      <>Không hiện Khám phá · </>
+                          <span className="adm-tour-group-count">
+                            {section.items.length} tour
+                          </span>
+                        </header>
+                        {section.items.map((row) => renderTourCard(row))}
+                      </section>
+                    ))
+                  : articleSections
+                    ? articleSections.map((section) => (
+                        <section key={section.key} className="adm-tour-group">
+                          <header className="adm-tour-group-head adm-article-group-head">
+                            <div>
+                              <h3>{section.title}</h3>
+                              <p>{section.hint}</p>
+                            </div>
+                            <span className="adm-tour-group-count">
+                              {section.items.length} bài
+                            </span>
+                          </header>
+                          {section.items.map((row) => renderArticleCard(row))}
+                        </section>
+                      ))
+                    : tab === "articles"
+                      ? visibleRows.map((row) => renderArticleCard(row))
+                      : categorySections
+                        ? categorySections.map((section) => (
+                            <section
+                              key={section.key}
+                              className="adm-tour-group"
+                            >
+                              <header className="adm-tour-group-head adm-article-group-head">
+                                <div>
+                                  <h3>{section.title}</h3>
+                                  {section.hint && <p>{section.hint}</p>}
+                                </div>
+                                <span className="adm-tour-group-count">
+                                  {section.items.length} danh mục
+                                </span>
+                              </header>
+                              {section.items.map((row) => {
+                                const parentId =
+                                  typeof row.data.parentId === "string"
+                                    ? row.data.parentId
+                                    : "";
+                                const parent = rows.find(
+                                  (r) => r.id === parentId,
+                                );
+                                return renderTaxonomyCard(
+                                  row,
+                                  "category",
+                                  parent
+                                    ? String(parent.data.name ?? parent.id)
+                                    : undefined,
+                                );
+                              })}
+                              {section.path && (
+                                <a
+                                  className="adm-ghost-link"
+                                  href={`/vi${section.path}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Xem trang tuyến này ↗
+                                </a>
+                              )}
+                            </section>
+                          ))
+                        : destinationSections
+                          ? destinationSections.map((section) => (
+                              <section
+                                key={section.key}
+                                className="adm-tour-group"
+                              >
+                                <header className="adm-tour-group-head adm-article-group-head">
+                                  <div>
+                                    <h3>{section.title}</h3>
+                                    <p>{section.hint}</p>
+                                  </div>
+                                  <span className="adm-tour-group-count">
+                                    {section.items.length} điểm
+                                  </span>
+                                </header>
+                                {section.items.map((row) =>
+                                  renderTaxonomyCard(row, "destination"),
+                                )}
+                              </section>
+                            ))
+                          : tab === "categories" || tab === "destinations"
+                            ? visibleRows.map((row) =>
+                                renderTaxonomyCard(
+                                  row,
+                                  tab === "categories"
+                                    ? "category"
+                                    : "destination",
+                                ),
+                              )
+                            : visibleRows.map((row) => (
+                                <article key={row.id}>
+                                  <div className="adm-record-mark">
+                                    {(() => {
+                                      const icon = tabs.find(
+                                        (t) => t[0] === tab,
+                                      )?.[2];
+                                      return icon ? (
+                                        <AdminIcon
+                                          name={icon as AdminIconName}
+                                          size={25}
+                                        />
+                                      ) : null;
+                                    })()}
+                                  </div>
+                                  <div className="adm-record-copy">
+                                    <span className={`adm-badge ${row.state}`}>
+                                      {row.state === "published"
+                                        ? "Đang xuất bản"
+                                        : row.state === "deleted"
+                                          ? "Thùng rác"
+                                          : "Bản nháp"}
+                                    </span>
+                                    <h2>
+                                      {tab === "hero"
+                                        ? "Section đầu trang chủ"
+                                        : tab === "landing"
+                                          ? "Các khối trang chủ (finder/story/FAQ/explore/regions/values)"
+                                          : tab === "settings"
+                                            ? `${String(row.data.name ?? "Cấu hình website")} · mã “${row.id}”`
+                                            : tab === "messages"
+                                              ? row.id === "vi"
+                                                ? "🇻🇳 Tiếng Việt — câu chữ chính"
+                                                : row.id === "en"
+                                                  ? "🇬🇧 Tiếng Anh — bản dịch"
+                                                  : String(
+                                                      row.data.title ??
+                                                        row.data.name ??
+                                                        row.id,
+                                                    )
+                                              : String(
+                                                  row.data.title ??
+                                                    row.data.name ??
+                                                    row.id,
+                                                )}
+                                    </h2>
+                                    <p>
+                                      {tab === "settings"
+                                        ? (() => {
+                                            const contact = (row.data.contact ??
+                                              {}) as Record<string, unknown>;
+                                            const hotline =
+                                              typeof contact.hotline ===
+                                              "string"
+                                                ? contact.hotline
+                                                : "";
+                                            const email =
+                                              typeof contact.email === "string"
+                                                ? contact.email
+                                                : "";
+                                            const footer = Array.isArray(
+                                              row.data.footerLinks,
+                                            )
+                                              ? (
+                                                  row.data
+                                                    .footerLinks as unknown[]
+                                                ).length
+                                              : 0;
+                                            const social = Array.isArray(
+                                              row.data.socialLinks,
+                                            )
+                                              ? (
+                                                  row.data
+                                                    .socialLinks as unknown[]
+                                                ).length
+                                              : 0;
+                                            return `Hotline ${hotline || "—"} · ${email || "—"} · ${footer} link footer · ${social} mạng xã hội`;
+                                          })()
+                                        : tab === "messages"
+                                          ? row.id === "vi"
+                                            ? "Mọi tiêu đề, nút bấm, nhãn form tiếng Việt trên website."
+                                            : "Bản dịch tiếng Anh tương ứng — xuất bản để lên web ngay."
+                                          : String(
+                                              row.data.summary ??
+                                                row.data.excerpt ??
+                                                row.data.description ??
+                                                row.data.slug ??
+                                                row.id,
+                                            ).slice(0, 120)}
+                                    </p>
+                                    {(tab === "settings" ||
+                                      tab === "messages" ||
+                                      tab === "hero" ||
+                                      tab === "landing") && (
+                                      <p className="adm-card-place">
+                                        {tab === "settings"
+                                          ? "Hiện ở: header · footer · trang liên hệ · nút gọi/Zalo"
+                                          : tab === "messages"
+                                            ? "Hiện ở: trang chủ · liên hệ · chính sách · thông báo"
+                                            : "Hiện ở: trang chủ"}
+                                      </p>
                                     )}
-                                    {using} tour đang dùng
-                                  </span>
-                                </>
-                              );
-                            })()}
-                          {row.state === "deleted" &&
-                            (() => {
-                              const left = trashDaysLeft(row.updated_at);
-                              return left === null ? null : (
-                                <>
-                                  {" "}·{" "}
-                                  <span className="adm-trash-left">
-                                    Còn {left} ngày — tự xóa vĩnh viễn sau{" "}
-                                    {TRASH_RETENTION_DAYS} ngày
-                                  </span>
-                                </>
-                              );
-                            })()}
-                        </small>
-                      </div>
-                      <div className="adm-record-actions">
-                        <button
-                          onClick={() => {
-                            setSelected(row);
-                            setDirty(false);
-                          }}
-                        >
-                          Chỉnh sửa
-                        </button>
-                        {!["settings", "messages", "hero", "landing"].includes(
-                          tab,
-                        ) && (
-                          <button onClick={() => trashOrRestore(row)}>
-                            {row.state === "deleted" ? "Khôi phục" : "Xoá"}
-                          </button>
-                        )}
-                      </div>
-                    </article>
-                  ))
-                )}
+                                    <small>
+                                      {new Date(
+                                        row.updated_at,
+                                      ).toLocaleDateString("vi-VN")}{" "}
+                                      · v{row.revision}
+                                      {(tab === "categories" ||
+                                        tab === "destinations") &&
+                                        (() => {
+                                          const using = tourLinks.filter((t) =>
+                                            tab === "categories"
+                                              ? t.categoryIds.includes(row.id)
+                                              : t.destinationIds.includes(
+                                                  row.id,
+                                                ),
+                                          ).length;
+                                          const path =
+                                            tab === "categories" &&
+                                            typeof row.data.path === "string"
+                                              ? row.data.path
+                                              : null;
+                                          return (
+                                            <>
+                                              {" "}
+                                              ·{" "}
+                                              <span className="adm-use-hint">
+                                                {path ? (
+                                                  <>
+                                                    Trang <code>{path}</code>{" "}
+                                                    ·{" "}
+                                                  </>
+                                                ) : row.data.showOnHome ===
+                                                  true ? (
+                                                  <>Khám phá trang chủ · </>
+                                                ) : (
+                                                  <>Không hiện Khám phá · </>
+                                                )}
+                                                {using} tour đang dùng
+                                              </span>
+                                            </>
+                                          );
+                                        })()}
+                                      {row.state === "deleted" &&
+                                        (() => {
+                                          const left = trashDaysLeft(
+                                            row.updated_at,
+                                          );
+                                          return left === null ? null : (
+                                            <>
+                                              {" "}
+                                              ·{" "}
+                                              <span className="adm-trash-left">
+                                                Còn {left} ngày — tự xóa vĩnh
+                                                viễn sau {TRASH_RETENTION_DAYS}{" "}
+                                                ngày
+                                              </span>
+                                            </>
+                                          );
+                                        })()}
+                                    </small>
+                                  </div>
+                                  <div className="adm-record-actions">
+                                    <button
+                                      onClick={() => {
+                                        setSelected(row);
+                                        setDirty(false);
+                                      }}
+                                    >
+                                      Chỉnh sửa
+                                    </button>
+                                    {![
+                                      "settings",
+                                      "messages",
+                                      "hero",
+                                      "landing",
+                                    ].includes(tab) && (
+                                      <button
+                                        onClick={() => trashOrRestore(row)}
+                                      >
+                                        {row.state === "deleted"
+                                          ? "Khôi phục"
+                                          : "Xoá"}
+                                      </button>
+                                    )}
+                                  </div>
+                                </article>
+                              ))}
               </div>
               {loading && !rows.length ? (
                 <p className="adm-empty">Nội dung đang được tải…</p>
@@ -4105,8 +4334,8 @@ export function Dashboard({
                   </h2>
                   <p>
                     Mỗi mục được giữ {TRASH_RETENTION_DAYS} ngày kể từ lúc xóa
-                    rồi hệ thống tự xóa vĩnh viễn. Khôi phục để đưa về bản
-                    nháp — chưa xuất bản lên website.
+                    rồi hệ thống tự xóa vĩnh viễn. Khôi phục để đưa về bản nháp
+                    — chưa xuất bản lên website.
                   </p>
                 </div>
                 <button
@@ -4135,8 +4364,7 @@ export function Dashboard({
               {trashRows.length === 0 ? (
                 <p className="adm-empty">
                   Thùng rác trống. Nội dung bạn chuyển vào thùng rác sẽ nằm ở
-                  đây đủ {TRASH_RETENTION_DAYS} ngày trước khi tự xóa vĩnh
-                  viễn.
+                  đây đủ {TRASH_RETENTION_DAYS} ngày trước khi tự xóa vĩnh viễn.
                 </p>
               ) : (
                 <ul className="adm-trash-list">
@@ -4153,18 +4381,14 @@ export function Dashboard({
                         tab === "articles"
                           ? articleCoverSrcOf(row.data)
                           : coverSrcOf(row.data);
-                      const urgent =
-                        meta.left !== null && meta.left <= 7;
+                      const urgent = meta.left !== null && meta.left <= 7;
                       return (
                         <li
                           key={row.id}
                           className="adm-trash-item"
                           data-urgent={urgent}
                         >
-                          <div
-                            className="adm-trash-thumb"
-                            aria-hidden="true"
-                          >
+                          <div className="adm-trash-thumb" aria-hidden="true">
                             {cover ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={cover} alt="" loading="lazy" />
@@ -4354,7 +4578,9 @@ export function Dashboard({
                     </div>
                     <div>
                       <dt>Ảnh</dt>
-                      <dd>{hasImage ? "Có ảnh thật" : "Chưa có ảnh — dùng nền"}</dd>
+                      <dd>
+                        {hasImage ? "Có ảnh thật" : "Chưa có ảnh — dùng nền"}
+                      </dd>
                     </div>
                     <div>
                       <dt>Liên kết</dt>
@@ -4389,10 +4615,7 @@ export function Dashboard({
                     >
                       Sửa điểm đến
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setHomePreview(null)}
-                    >
+                    <button type="button" onClick={() => setHomePreview(null)}>
                       Đóng
                     </button>
                   </footer>
@@ -4451,7 +4674,10 @@ export function Dashboard({
                   if (event.shiftKey && document.activeElement === first) {
                     event.preventDefault();
                     last.focus();
-                  } else if (!event.shiftKey && document.activeElement === last) {
+                  } else if (
+                    !event.shiftKey &&
+                    document.activeElement === last
+                  ) {
                     event.preventDefault();
                     first.focus();
                   }
