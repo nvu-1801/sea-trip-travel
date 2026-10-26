@@ -527,6 +527,31 @@ try {
       .getByText("Nội dung mới từ Studio", { exact: true })
       .count()) === 1,
   );
+
+  await page.goto(`${base}/admin/health`);
+  await page
+    .getByRole("heading", { name: "Sức khỏe website", exact: true })
+    .waitFor();
+  await page.getByText("Dung lượng", { exact: true }).first().waitFor();
+  const health = await (
+    await context.request.get(`${base}/api/admin/health?days=7`)
+  ).json();
+  check(
+    "health page reports the data volume",
+    health.storage?.available === true && health.storage?.dataBytes > 0,
+  );
+  check(
+    "health page scores SEO on a 0–100 scale",
+    health.seo?.score >= 0 && health.seo?.score <= 100,
+  );
+  check(
+    "health page reports every speed metric honestly",
+    Array.isArray(health.speed?.metrics) && health.speed.metrics.length === 5,
+  );
+  check(
+    "health payload never leaks the data folder path",
+    !JSON.stringify(health).includes(folder),
+  );
   const sharp = (await import("sharp")).default;
   const image = await sharp({
     create: { width: 40, height: 30, channels: 3, background: "#009988" },
