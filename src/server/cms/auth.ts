@@ -25,6 +25,19 @@ export function verifyPassword(password: string, encoded: string) {
   const expected = Buffer.from(hash, "hex");
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
+/** Re-authentication for destructive/export actions. Never changes the session. */
+export function verifyAdminPassword(password: string) {
+  const user = db()
+    .prepare("SELECT password FROM admin WHERE id=1")
+    .get() as { password: string } | undefined;
+  return Boolean(
+    user &&
+      verifyPassword(
+        password,
+        user.password,
+      ),
+  );
+}
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 export class HttpError extends Error {

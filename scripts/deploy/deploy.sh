@@ -17,7 +17,11 @@ fi
 mkdir "$release"
 tar -xzf "$app_dir/incoming-$sha.tar.gz" -C "$release"
 cd "$release"
-export APP_ENV_FILE="$app_dir/.env.production" APP_SHA="$sha" APP_IMAGE="sea-trip:$sha"
+test -f "$release/scripts/backup/manage.sh" || {
+  echo "Release is missing scripts/backup/manage.sh"
+  exit 1
+}
+export APP_ENV_FILE="$app_dir/.env.production" APP_SHA="$sha" APP_IMAGE="sea-trip:$sha" APP_BACKUP_DIR="$app_dir/backups"
 compose=(docker compose --env-file "$APP_ENV_FILE" -f "$release/compose.yml")
 previous=''
 if test -f "$app_dir/current-image"; then previous=$(cat "$app_dir/current-image"); fi
@@ -26,12 +30,21 @@ if test -f "$app_dir/current-sha"; then previous_sha=$(cat "$app_dir/current-sha
 [[ "$previous_sha" =~ ^[a-f0-9]{40}$ ]] || previous_sha=''
 if test -n "$previous"; then
   backup="/app/data/backups/pre-$sha.sqlite"
-  "${compose[@]}" exec -T -e BACKUP_PATH="$backup" app node scripts/admin.mjs backup </dev/null
-  cid=$("${compose[@]}" ps -q app </dev/null)
-  docker cp "$cid:$backup" "$app_dir/backups/pre-$sha.sqlite"
-  if "${compose[@]}" exec -T app node -e 'process.exit(require("fs").existsSync("/app/data/uploads")?0:1)' </dev/null; then
-    docker cp "$cid:/app/data/uploads" "$app_dir/backups/media-$sha"
+  # Share the backup lock so a scheduled/manual backup cannot interleave with
+  # this pre-deploy copy (and vice versa). These files are never retention-pruned.
+  exec 8>"$app_dir/backup.lock"
+  if flock -w 600 8; then
+    "${compose[@]}" exec -T -e BACKUP_PATH="$backup" app node scripts/admin.mjs backup </dev/null
+    cid=$("${compose[@]}" ps -q app </dev/null)
+    docker cp "$cid:$backup" "$app_dir/backups/pre-$sha.sqlite"
+    if "${compose[@]}" exec -T app node -e 'process.exit(require("fs").existsSync("/app/data/uploads")?0:1)' </dev/null; then
+      docker cp "$cid:/app/data/uploads" "$app_dir/backups/media-$sha"
+    fi
+    flock -u 8
+  else
+    echo "WARNING: backup lock busy; skipping pre-deploy copy (scheduled backup is running)."
   fi
+  exec 8>&-
 fi
 echo "Building image for $sha"
 "${compose[@]}" build --pull app </dev/null
@@ -54,4 +67,9 @@ printf '%s\n' "$previous_sha" > "$app_dir/previous-sha"
 printf '%s\n' "$APP_IMAGE" > "$app_dir/current-image"
 printf '%s\n' "$sha" > "$app_dir/current-sha"
 ln -sfn "$release" "$app_dir/current"
+test -f "$app_dir/current/scripts/backup/manage.sh" || {
+  echo "Backup operator CLI missing from current release"
+  exit 1
+}
+echo "Backup operator CLI available: $app_dir/current/scripts/backup/manage.sh"
 echo "Deployed and health verified: $sha"

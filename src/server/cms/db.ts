@@ -32,6 +32,22 @@ export function db() {
     CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY, action TEXT NOT NULL, target TEXT NOT NULL, created_at TEXT NOT NULL, actor TEXT, ip TEXT, status TEXT NOT NULL DEFAULT 'success', details TEXT);
     CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, name TEXT NOT NULL, alt TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS leads (id TEXT PRIMARY KEY, data TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new', note TEXT NOT NULL DEFAULT '', mail_status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS backup_runs (
+      id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      status TEXT NOT NULL,
+      requested_by TEXT,
+      created_at TEXT NOT NULL,
+      started_at TEXT,
+      finished_at TEXT,
+      backup_id TEXT,
+      size_bytes INTEGER,
+      app_sha TEXT,
+      offsite_status TEXT,
+      error TEXT,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_backup_runs_status ON backup_runs(status, created_at);
     CREATE TABLE IF NOT EXISTS page_views (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, locale TEXT NOT NULL DEFAULT 'vi', referrer TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT 'direct', device TEXT NOT NULL DEFAULT 'desktop', session_id TEXT NOT NULL DEFAULT '', visitor_id TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views(created_at);
     CREATE INDEX IF NOT EXISTS idx_page_views_path ON page_views(path);

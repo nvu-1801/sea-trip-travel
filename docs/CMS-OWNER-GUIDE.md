@@ -99,6 +99,12 @@ Yêu cầu tư vấn được lưu trước gửi email; SMTP lỗi vẫn giữ 
 
 Danh sách hiện tải 500 lead gần nhất; khi vận hành lượng lớn cần bổ sung phân trang/xuất dữ liệu theo bộ lọc. SQLite lưu toàn bộ bản ghi trong volume/backup, không xóa các lead cũ ngoài danh sách. Xóa dữ liệu khách là thao tác vĩnh viễn có xác nhận.
 
+## Sao lưu & phục hồi
+
+Mục **Bảo mật → Sao lưu & phục hồi** hiển thị lịch (ngày 1 & 16 lúc 03:00 Asia/Bangkok), bản thành công gần nhất, retention, offsite và cho phép tạo backup thủ công / tải bản `.seatar` đã mã hóa sau khi nhập lại mật khẩu. Tạo/tải đều có giới hạn tần suất; mật khẩu không được lưu.
+
+Hệ thống **không** có nút khôi phục đè production. Khôi phục và kiểm tra chạy bằng CLI trên VPS (`manage.sh verify` / `restore-test`), không đụng dữ liệu thật. Backup cùng VPS không bảo vệ trước reset/mất ổ đĩa: phải sao chép file `.seatar` và khóa `archive.key` ra ngoài. Chi tiết: `docs/BACKUP-RESTORE.md`.
+
 ## Kiểm tra hoạt động
 
 Mở **Kiểm tra hoạt động** ở nhóm đầu tiên của menu Studio. Trang này chỉ đọc audit log, không sửa hay xóa log.

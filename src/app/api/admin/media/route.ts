@@ -4,6 +4,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { requireSession } from "@/server/cms/auth";
 import { cmsDataDir, db } from "@/server/cms/db";
+import { backupInProgress } from "@/server/cms/backup";
 import { auditFailure, auditRequest } from "@/server/cms/audit";
 import { handle, jsonBody, reply } from "@/server/cms/http";
 import { z } from "zod";
@@ -56,6 +57,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return handle(async () => {
     await requireSession(request);
+    if (backupInProgress())
+      return reply(
+        {
+          error:
+            "Hệ thống đang sao lưu dữ liệu. Thử tải ảnh lại sau ít phút.",
+        },
+        409,
+      );
     const max = 10 * 1024 * 1024;
     const type = request.headers.get("content-type") ?? "";
     if (!["image/jpeg", "image/png", "image/webp"].includes(type))
@@ -132,6 +141,14 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   return handle(async () => {
     await requireSession(request);
+    if (backupInProgress())
+      return reply(
+        {
+          error:
+            "Hệ thống đang sao lưu dữ liệu. Thử xóa ảnh lại sau ít phút.",
+        },
+        409,
+      );
     const { id } = z
       .object({ id: z.uuid() })
       .parse(await jsonBody(request, 1000));

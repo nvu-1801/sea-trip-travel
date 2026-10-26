@@ -1,0 +1,11 @@
+[Unit]
+Description=Poll the SEA TRIP backup queue every minute
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+AccuracySec=10s
+Unit=seatrip-backup-worker.service
+
+[Install]
+WantedBy=timers.target

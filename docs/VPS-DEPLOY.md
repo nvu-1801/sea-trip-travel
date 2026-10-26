@@ -101,20 +101,35 @@ Customer-Note: Trang tour hiển thị lịch trình và giá rõ ràng hơn
 
 ## Backup và phục hồi
 
-Backup nhất quán SQLite:
+Công cụ chuẩn nằm ở `scripts/backup/manage.sh` (cài cố định tại
+`/opt/seatrip/bin/backup/manage.sh`). Lịch tự động ngày 1 & 16 lúc 03:00
+Asia/Bangkok, giữ 3 bản auto đã verify, không xóa backup trước deploy. Hướng dẫn
+đầy đủ: `docs/BACKUP-RESTORE.md`.
 
 ```bash
-export APP_ENV_FILE=/opt/seatrip/.env.production
 cd /opt/seatrip/current
-docker compose --env-file "$APP_ENV_FILE" exec -T -e BACKUP_PATH=/app/data/backups/manual.sqlite app node scripts/admin.mjs backup
-cid=$(docker compose --env-file "$APP_ENV_FILE" ps -q app)
-docker cp "$cid:/app/data/backups/manual.sqlite" /secure-backups/seatrip.sqlite
-docker cp "$cid:/app/data/uploads" /secure-backups/uploads
+sudo bash scripts/backup/manage.sh install --app-dir /opt/seatrip
+sudo /opt/seatrip/bin/backup/manage.sh check
+sudo /opt/seatrip/bin/backup/manage.sh run
+sudo /opt/seatrip/bin/backup/manage.sh list
+sudo /opt/seatrip/bin/backup/manage.sh verify <backup-id>
+sudo /opt/seatrip/bin/backup/manage.sh restore-test <backup-id>
 ```
 
-Đặt lịch cron/systemd hằng ngày cho hai phần này; bản ghi lead mã hóa nhưng ảnh và nội dung public không mã hóa. Bảo vệ backup, sao chép ra máy khác, lưu khóa mã hóa riêng trong password manager. Snapshot/backup phải có cả DB, uploads và khóa. Định kỳ thử phục hồi vào volume thử, chạy `node scripts/admin.mjs verify`, đăng nhập và tải ảnh trước khi coi backup dùng được. Không sao chép trực tiếp SQLite đang ghi để làm backup.
+- Bản backup gồm SQLite snapshot (`VACUUM INTO`), uploads, manifest và cấu hình
+  runtime trong archive mã hóa AES-256-GCM; file tải từ admin là `.seatar`.
+- Khóa `/opt/seatrip/.backup/archive.key` phải được sao lưu ngoài VPS. Mất khóa
+  thì không phục hồi được.
+- Chưa cấu hình `BACKUP_OFFSITE_DIR` thì trạng thái là “chưa cấu hình offsite”;
+  backup cùng VPS không bảo vệ trước reset/mất ổ đĩa.
+- `restore-test` chạy container/volume độc lập, `--network none`, `MAIL_TRANSPORT=log`,
+  không publish port và không đụng production. Chỉ số RTO ghi sau khi đo thật.
+- Lệnh cũ `scripts/admin.mjs backup` + `docker cp` chỉ còn là fallback thủ công,
+  không đảm bảo uploads nhất quán bằng công cụ mới.
 
-Phục hồi: dừng app, sao lưu trạng thái hiện tại trước, đưa file SQLite đã integrity-check cùng uploads vào volume bằng container tạm, đặt owner `1001:1001`, dùng đúng LEAD_ENCRYPTION_KEY và khởi động app. Không thay DB khi app còn chạy. Giữ bản gốc cho đến khi kiểm tra dữ liệu và ảnh thành công.
+Không thay DB khi app còn chạy. Quy trình phục hồi DB, reset VPS và chuyển VPS
+mới (kèm `.env.production`, `LEAD_ENCRYPTION_KEY`, SSH/GitHub, DNS/HTTPS,
+health/SHA) nằm trong `docs/BACKUP-RESTORE.md`.
 
 Rollback image:
 

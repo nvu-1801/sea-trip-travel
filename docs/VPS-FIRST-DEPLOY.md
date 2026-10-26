@@ -509,25 +509,28 @@ cat /opt/seatrip/current-image
 cat /opt/seatrip/current-sha
 ```
 
-Backup thủ công nhất quán, gồm DB và ảnh:
+Backup chuẩn (SQLite + uploads nhất quán, mã hóa, timer ngày 1 & 16 lúc 03:00
+Asia/Bangkok). Cài một lần rồi dùng lệnh cố định:
 
 ```bash
-backup_id=$(date -u +%Y%m%dT%H%M%SZ)
-umask 077
-mkdir -p /opt/seatrip/backups
-docker compose --env-file "$APP_ENV_FILE" exec -T \
-  -e BACKUP_PATH="/app/data/backups/manual-$backup_id.sqlite" \
-  app node scripts/admin.mjs backup
-cid=$(docker compose --env-file "$APP_ENV_FILE" ps -q app)
-docker cp "$cid:/app/data/backups/manual-$backup_id.sqlite" "/opt/seatrip/backups/manual-$backup_id.sqlite"
-if docker compose --env-file "$APP_ENV_FILE" exec -T app node -e 'process.exit(require("fs").existsSync("/app/data/uploads")?0:1)'; then
-  docker cp "$cid:/app/data/uploads" "/opt/seatrip/backups/uploads-$backup_id"
-fi
+cd /opt/seatrip/current
+sudo bash scripts/backup/manage.sh install --app-dir /opt/seatrip
+
+sudo /opt/seatrip/bin/backup/manage.sh check
+sudo systemctl list-timers 'seatrip-backup*' --all
+sudo /opt/seatrip/bin/backup/manage.sh run
+sudo /opt/seatrip/bin/backup/manage.sh list
+sudo /opt/seatrip/bin/backup/manage.sh verify <backup-id>
+sudo /opt/seatrip/bin/backup/manage.sh restore-test <backup-id>
 ```
 
-Chưa có lịch backup hằng ngày hoặc bản sao ngoài VPS chỉ bằng các lệnh này.
-Cần cấu hình theo nơi lưu backup thực tế và thử phục hồi trước khi cam kết dịch vụ backup.
-Script deploy tự backup trước cập nhật khi có release trước; không thay thế backup định kỳ.
+Giữ khóa `/opt/seatrip/.backup/archive.key` ở nơi an toàn ngoài VPS. Chưa có
+`BACKUP_OFFSITE_DIR` thì trạng thái là “chưa cấu hình offsite”. Quy trình phục
+hồi DB, reset/chuyển VPS, lấy lại `.env.production` + `LEAD_ENCRYPTION_KEY`,
+SSH/GitHub, DNS/HTTPS và xác minh health/SHA: `docs/BACKUP-RESTORE.md`.
+
+Script deploy tự backup trước cập nhật khi có release trước; các file
+`pre-<sha>.sqlite`/`media-<sha>` được giữ nguyên và không bị retention xóa.
 
 Rollback tự động chỉ áp dụng lúc khởi động/health nội bộ lỗi và có image trước.
 Lỗi HTTPS công khai không tự rollback. Không tự phục hồi DB cũ vì có thể mất lead mới.
