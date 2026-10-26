@@ -84,6 +84,9 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "lead-update": "Cập nhật yêu cầu tư vấn",
   "lead-mail-retry": "Gửi lại email tư vấn",
   "lead-delete": "Xóa yêu cầu tư vấn",
+  "lead-trash": "Chuyển yêu cầu tư vấn vào thùng rác",
+  "lead-restore": "Khôi phục yêu cầu tư vấn",
+  "lead-purge": "Xóa vĩnh viễn yêu cầu tư vấn",
   "content-save-failed": "Lưu nội dung thất bại",
   "role-change": "Thay đổi quyền người dùng",
   "permission-change": "Thay đổi quyền truy cập",
@@ -158,6 +161,7 @@ const LEAD_STATUS_LABELS: Record<string, string> = {
   won: "Đã chốt",
   lost: "Chưa phù hợp",
   deleted: "Đã xóa",
+  purged: "Đã xóa vĩnh viễn",
 };
 
 function leadStatusLabel(value: string | null | undefined): string {
@@ -207,7 +211,14 @@ export function activityTargetLabel(raw: Pick<RawActivity, "action" | "target" |
     return name ? `Ảnh · ${name}` : "Thư viện ảnh";
   }
 
-  if (action === "lead-update" || action === "lead-mail-retry" || action === "lead-delete") {
+  if (
+    action === "lead-update" ||
+    action === "lead-mail-retry" ||
+    action === "lead-delete" ||
+    action === "lead-trash" ||
+    action === "lead-restore" ||
+    action === "lead-purge"
+  ) {
     const leadId = stringValue(details.leadId);
     return leadId ? `Yêu cầu tư vấn · ${leadId}` : "Yêu cầu tư vấn";
   }
@@ -285,10 +296,16 @@ export function activityDetailItems(raw: Pick<RawActivity, "action" | "details">
 
   const before = recordValue(details.before);
   const after = recordValue(details.after);
-  const beforeLeadStatus = stringValue(before?.status);
+  const beforeLeadStatus =
+    stringValue(before?.status) ??
+    (raw.action === "lead-restore" ? "deleted" : null);
   const afterLeadStatus =
     stringValue(after?.status) ??
-    (raw.action === "lead-delete" ? "deleted" : null);
+    (raw.action === "lead-delete" || raw.action === "lead-trash"
+      ? "deleted"
+      : raw.action === "lead-purge"
+        ? "purged"
+        : null);
   if (beforeLeadStatus || afterLeadStatus) {
     items.push({
       label: "Trạng thái yêu cầu",
@@ -341,13 +358,13 @@ function baseFlags(raw: Pick<RawActivity, "action" | "status">): AuditFlag[] {
       reason: "Hệ thống ghi nhận thao tác này không thành công.",
     });
   }
-  if (DELETE_ACTION.test(raw.action)) {
+  if (DELETE_ACTION.test(raw.action) || raw.action === "lead-trash") {
     flags.push({
       code: "delete",
       label: "Xóa dữ liệu",
       reason:
-        raw.action === "delete"
-          ? "Nội dung được chuyển vào thùng rác và có thể khôi phục."
+        raw.action === "delete" || raw.action === "lead-trash"
+          ? "Dữ liệu được chuyển vào thùng rác và có thể khôi phục."
           : "Dữ liệu bị xóa khỏi hệ thống.",
     });
   }

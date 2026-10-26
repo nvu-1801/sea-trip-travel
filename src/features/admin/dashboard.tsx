@@ -16,6 +16,7 @@ import { ThemePanel } from "./theme-panel";
 import type { ThemeId } from "@/config/themes";
 import { Overview } from "./overview";
 import { ActivityCheck } from "./activity-check";
+import { HealthCheck } from "./health-check";
 import { HomeSections } from "./home-sections";
 import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
 import { HomeFeaturedEditor } from "./home-featured-editor";
@@ -29,6 +30,7 @@ import {
   type ToastKind,
 } from "./notify";
 import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
+import { LEAD_TRASH_RETENTION_DAYS } from "@/lib/lead-trash";
 import { mediaSelectOptions } from "@/lib/admin-media-options";
 import { adminSectionHref } from "@/lib/admin-routes";
 import {
@@ -75,8 +77,44 @@ type Lead = {
   note: string;
   mail_status: string;
   created_at: string;
-  data: Record<string, string>;
+  deleted_at?: string | null;
+  data: Record<string, unknown>;
+  /** Resolved server-side so the card can link to the exact tour page. */
+  tourTitle?: string;
+  /** `null` = the lead references a tour that is no longer published. */
+  tourHref?: string | null;
 };
+
+/** `YYYY-MM-DD` → `DD/MM/YYYY`, without shifting the day across timezones. */
+function formatLeadDay(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+}
+
+/** Stable, readable timestamp for the admin card. */
+function formatLeadDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Only ever turn a stored path into a link when it cannot become `javascript:`. */
+function safePageHref(value: string): string {
+  if (value.startsWith("/")) return value;
+  if (/^https?:\/\//i.test(value)) return value;
+  return "";
+}
+
+function textOf(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
 
 /** One row in the header quick-search palette. */
 type QuickEntry = {
@@ -102,10 +140,11 @@ const tabs = [
   ["settings", "Website & footer", "settings"],
   ["leads", "Yêu cầu tư vấn", "leads"],
   ["activity", "Kiểm tra hoạt động", "activity"],
+  ["health", "Sức khỏe website", "chart"],
   ["account", "Bảo mật", "account"],
 ] as const;
 const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
-  { label: null, keys: ["overview", "activity"] },
+  { label: null, keys: ["overview", "activity", "health"] },
   {
     label: "Nội dung website",
     keys: [
@@ -305,19 +344,19 @@ const GUIDES: Record<string, Guide> = {
   },
   leads: {
     purpose:
-      "Chăm sóc yêu cầu tư vấn: trạng thái, ghi chú nội bộ, gửi lại email.",
+      "Chăm sóc yêu cầu tư vấn: trạng thái, ghi chú nội bộ, gửi lại email, thùng rác.",
     steps: [
       "Tìm theo tên hoặc số điện thoại ở ô tìm kiếm.",
       "Đổi trạng thái (Mới/Đã liên hệ/Tiềm năng/Đã chốt/Chưa phù hợp) rồi bấm Lưu chăm sóc.",
       "Ghi chú nội bộ được mã hóa; chỉ bấm Gửi lại email sau khi SMTP đã cấu hình đúng.",
-      "Xóa dữ liệu khách chỉ khi thật cần — thao tác vĩnh viễn, có xác nhận.",
+      "Xóa dữ liệu khách sẽ chuyển vào Thùng rác 60 ngày — khôi phục được trước khi bị xóa vĩnh viễn.",
     ],
     required:
       "Mỗi lần đổi trạng thái/ghi chú phải bấm Lưu chăm sóc mới được ghi nhận.",
     result:
       "Danh sách hiện 500 yêu cầu gần nhất; dữ liệu và ghi chú mã hóa trong database.",
     pitfalls:
-      "Không tự gửi lại email đã báo thành công; SMTP lỗi vẫn giữ được dữ liệu khách.",
+      "Không tự gửi lại email đã báo thành công; SMTP lỗi vẫn giữ được dữ liệu khách. Mục trong Thùng rác không hiện ở danh sách, tìm kiếm hay email.",
   },
   overview: {
     purpose:
@@ -349,6 +388,22 @@ const GUIDES: Record<string, Guide> = {
       "Danh sách chỉ đọc, không sửa hay xóa log. Thời gian hiển thị theo giờ Việt Nam.",
     pitfalls:
       "Log trống hoặc thiếu trường không có nghĩa là hệ thống bình thường; trang sẽ báo “Chưa đủ dữ liệu”.",
+  },
+  health: {
+    purpose:
+      "Đánh giá nhanh dung lượng dữ liệu, tốc độ tải thật của khách và mức độ sẵn sàng SEO của website.",
+    steps: [
+      "Đọc 3 thẻ đầu: Dung lượng, Tốc độ, SEO — màu đỏ là mục cần xử lý trước.",
+      "Chọn 7 hoặc 28 ngày để xem tốc độ theo dữ liệu khách thật (p75).",
+      "Mở danh sách lỗi SEO và bấm “Sửa” để nhảy tới đúng tour/bài viết/danh mục.",
+      "Bấm Làm mới sau khi xuất bản thay đổi; số liệu được giữ tối đa 60 giây.",
+    ],
+    required:
+      "Tốc độ cần vài lượt truy cập thật sau khi phát hành; trang sẽ báo “Đang thu thập” khi chưa đủ mẫu.",
+    result:
+      "Dung lượng tách riêng database, ảnh và file khác; SEO chấm theo metadata, nội dung, kỹ thuật và bản dịch EN.",
+    pitfalls:
+      "Đừng xoá file trong volume để “giảm GB” — dùng Thư viện ảnh/Thùng rác. Vercel serverless không có volume bền vững nên mục dung lượng sẽ báo không áp dụng.",
   },
   account: {
     purpose: "Đổi mật khẩu quản trị và quản lý phiên đăng nhập.",
@@ -395,6 +450,10 @@ export function Dashboard({
     ),
     [lineFilter, setLineFilter] = useState<"all" | "qnpy" | "domestic">("all"),
     [leadStatusFilter, setLeadStatusFilter] = useState("all");
+  const [leadTrashOpen, setLeadTrashOpen] = useState(false);
+  const [trashedLeads, setTrashedLeads] = useState<Lead[]>([]);
+  const [leadTrashCount, setLeadTrashCount] = useState(0);
+  const [leadTrashLoading, setLeadTrashLoading] = useState(false);
   const [references, setReferences] = useState<ReferenceOptions>({});
   const [qnpyIds, setQnpyIds] = useState<ReadonlySet<string>>(new Set());
   const [tourLinks, setTourLinks] = useState<
@@ -511,6 +570,14 @@ export function Dashboard({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [trashOpen]);
+  useEffect(() => {
+    if (!leadTrashOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLeadTrashOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [leadTrashOpen]);
   useEffect(() => {
     if (!homeModal) return;
     const onKey = (e: KeyboardEvent) => {
@@ -656,8 +723,8 @@ export function Dashboard({
     const activity = activitySerial.current;
     if (!background) setLoading(true);
     try {
-      if (next === "activity") {
-        // The activity page owns its own read-only feed and filters.
+      if (next === "activity" || next === "health") {
+        // These pages own their own read-only feeds and filters.
         setSelected(null);
         setDirty(false);
         dirtyFields.current.clear();
@@ -827,7 +894,10 @@ export function Dashboard({
         });
         if (!response.ok) return;
         const result = await response.json();
-        if (!cancelled) setUnreadLeads(result.count);
+        if (!cancelled) {
+          setUnreadLeads(result.count);
+          setLeadTrashCount(Number(result.trash ?? 0));
+        }
       } catch {
         /* Keep the last count until the connection recovers. */
       }
@@ -847,7 +917,12 @@ export function Dashboard({
     initialVersion,
     onChange: async () => {
       if (busy || loading) return false;
-      if (tab === "account" || tab === "overview" || tab === "activity")
+      if (
+        tab === "account" ||
+        tab === "overview" ||
+        tab === "activity" ||
+        tab === "health"
+      )
         return true;
       if (dirty || selected) {
         setHasUpdates(true);
@@ -1391,6 +1466,54 @@ export function Dashboard({
             "Đã chuyển vào Thùng rác. Mở Thùng rác để xem hoặc khôi phục.",
           );
         }
+      });
+    })();
+  }
+  function openLeadTrash() {
+    setLeadTrashOpen(true);
+    void (async () => {
+      setLeadTrashLoading(true);
+      try {
+        const items = (await api("leads?trash=1")) as Lead[];
+        setTrashedLeads(items);
+        setLeadTrashCount(items.length);
+      } catch (error) {
+        setNotice(error instanceof Error ? error.message : "Có lỗi xảy ra");
+      } finally {
+        setLeadTrashLoading(false);
+      }
+    })();
+  }
+  function restoreLeadFromTrash(lead: Lead) {
+    void run(async () => {
+      await api("leads", {
+        method: "PATCH",
+        body: JSON.stringify({ id: lead.id, action: "restore" }),
+      });
+      setTrashedLeads((items) => items.filter((item) => item.id !== lead.id));
+      setLeadTrashCount((count) => Math.max(0, count - 1));
+      await load("leads", true);
+      pushToast("success", "Đã khôi phục khách hàng.");
+    });
+  }
+  function purgeLeadFromTrash(lead: Lead) {
+    void (async () => {
+      const name = String(lead.data.fullName ?? lead.data.name ?? "khách hàng");
+      const ok = await requestConfirm({
+        title: "Xóa vĩnh viễn khách hàng?",
+        body: `Dữ liệu của "${name}" sẽ bị xóa khỏi database ngay và không thể khôi phục.`,
+        confirmLabel: "Xóa vĩnh viễn",
+        danger: true,
+      });
+      if (!ok) return;
+      void run(async () => {
+        await api("leads", {
+          method: "DELETE",
+          body: JSON.stringify({ id: lead.id, purge: true }),
+        });
+        setTrashedLeads((items) => items.filter((item) => item.id !== lead.id));
+        setLeadTrashCount((count) => Math.max(0, count - 1));
+        pushToast("success", "Đã xóa vĩnh viễn dữ liệu khách hàng.");
       });
     })();
   }
@@ -2260,7 +2383,7 @@ export function Dashboard({
             ) : null}
             <span className="adm-topbar-divider" aria-hidden="true" />
             <div className="adm-topbar-tools">
-              {!["account", "overview", "activity"].includes(tab) && (
+              {!["account", "overview", "activity", "health"].includes(tab) && (
                 <button
                   type="button"
                   className="adm-topbar-icon adm-topbar-refresh"
@@ -2322,7 +2445,9 @@ export function Dashboard({
             <p className="adm-masthead-deck">
               {tab === "activity"
                 ? "Theo dõi thao tác quản trị và những điểm cần xem lại."
-                : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
+                : tab === "health"
+                  ? "Dung lượng, tốc độ tải thật và mức độ sẵn sàng SEO."
+                  : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
             </p>
           </div>
           <div className="adm-masthead-side">
@@ -2436,6 +2561,12 @@ export function Dashboard({
           </>
         ) : tab === "activity" ? (
           <ActivityCheck />
+        ) : tab === "health" ? (
+          csrf ? (
+            <HealthCheck csrf={csrf} />
+          ) : (
+            <p className="adm-empty">Đang tải…</p>
+          )
         ) : tab === "account" ? (
           <section className="adm-panel adm-security">
             <div className="adm-security-head">
@@ -2639,6 +2770,20 @@ export function Dashboard({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
+                <button
+                  type="button"
+                  className="adm-lead-trash-btn"
+                  onClick={openLeadTrash}
+                  aria-haspopup="dialog"
+                >
+                  <AdminIcon name="trash" size={14} />
+                  Thùng rác
+                  {leadTrashCount > 0 && (
+                    <span className="adm-lead-trash-count">
+                      {leadTrashCount}
+                    </span>
+                  )}
+                </button>
               </div>
               <div
                 className="adm-chip-row adm-lead-chips"
@@ -2721,15 +2866,47 @@ export function Dashboard({
                       const initial = (
                         name.trim().charAt(0).toUpperCase() || "?"
                       ).slice(0, 1);
-                      const interest = String(
-                        lead.data.interest ?? lead.data.tourSlug ?? "",
-                      );
-                      const message = String(lead.data.message ?? "");
+                      const phone = textOf(lead.data.phone);
+                      const email = textOf(lead.data.email);
+                      const interest = textOf(lead.data.interest);
+                      const message = textOf(lead.data.message);
+                      const travelDate = textOf(lead.data.travelDate);
+                      const partySize = lead.data.partySize
+                        ? String(lead.data.partySize)
+                        : "";
+                      const sourcePage = textOf(lead.data.sourcePage);
+                      const sourceHref = safePageHref(sourcePage);
+                      const requestId = textOf(lead.data.requestId);
+                      const localeLabel =
+                        lead.data.locale === "en" ? "English" : "Tiếng Việt";
+                      const tourSlug = textOf(lead.data.tourSlug);
+                      const tourTitle = lead.tourTitle || tourSlug;
+                      const tourHref =
+                        lead.tourHref === undefined
+                          ? tourSlug
+                            ? safePageHref(`/tour/${tourSlug}`)
+                            : ""
+                          : (lead.tourHref ?? "");
+                      const utm =
+                        lead.data.utm && typeof lead.data.utm === "object"
+                          ? (lead.data.utm as Record<string, unknown>)
+                          : null;
+                      const utmBits = (
+                        [
+                          ["Nguồn", textOf(utm?.source)],
+                          ["Kênh", textOf(utm?.medium)],
+                          ["Chiến dịch", textOf(utm?.campaign)],
+                          ["Nội dung", textOf(utm?.content)],
+                          ["Từ khóa", textOf(utm?.term)],
+                        ] as const
+                      ).filter(([, value]) => value);
                       return (
                         <article
                           className="adm-lead-card"
                           key={lead.id}
                           data-live-editor={`lead:${lead.id}`}
+                          data-mail={lead.mail_status}
+                          data-unread={lead.read_at ? undefined : "true"}
                         >
                           <div className="adm-lead-info">
                             <div className="adm-lead-top">
@@ -2741,16 +2918,40 @@ export function Dashboard({
                               </span>
                               <div className="adm-lead-who">
                                 <h2>{name}</h2>
-                                {lead.data.phone ? (
-                                  <Link
-                                    className="adm-lead-phone"
-                                    href={`tel:${String(lead.data.phone).replace(/\s+/g, "")}`}
-                                  >
-                                    {String(lead.data.phone)}
-                                  </Link>
-                                ) : (
-                                  <small>Chưa có số điện thoại</small>
-                                )}
+                                <div className="adm-lead-contact">
+                                  {phone ? (
+                                    <a
+                                      className="adm-lead-chip"
+                                      href={`tel:${phone.replace(/[\s.()-]/g, "")}`}
+                                    >
+                                      <AdminIcon name="phone" size={13} />
+                                      <span>{phone}</span>
+                                    </a>
+                                  ) : (
+                                    <span
+                                      className="adm-lead-chip"
+                                      data-muted="true"
+                                    >
+                                      Chưa có SĐT
+                                    </span>
+                                  )}
+                                  {email ? (
+                                    <a
+                                      className="adm-lead-chip"
+                                      href={`mailto:${email}`}
+                                    >
+                                      <AdminIcon name="mail" size={13} />
+                                      <span>{email}</span>
+                                    </a>
+                                  ) : (
+                                    <span
+                                      className="adm-lead-chip"
+                                      data-muted="true"
+                                    >
+                                      Chưa có email
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               <span
                                 className="adm-lead-pill"
@@ -2759,27 +2960,125 @@ export function Dashboard({
                                 {statusVi[lead.status] ?? lead.status}
                               </span>
                             </div>
-                            {interest && (
-                              <p className="adm-lead-interest">{interest}</p>
-                            )}
+
+                            <div className="adm-lead-facts">
+                              <div className="adm-lead-fact">
+                                <span>Ngày nhận</span>
+                                <strong>{formatLeadDateTime(lead.created_at)}</strong>
+                              </div>
+                              <div className="adm-lead-fact">
+                                <span>Ngày dự kiến</span>
+                                <strong data-empty={travelDate ? undefined : "true"}>
+                                  {travelDate
+                                    ? formatLeadDay(travelDate)
+                                    : "Chưa chọn"}
+                                </strong>
+                              </div>
+                              <div className="adm-lead-fact">
+                                <span>Số khách</span>
+                                <strong data-empty={partySize ? undefined : "true"}>
+                                  {partySize ? `${partySize} khách` : "Chưa rõ"}
+                                </strong>
+                              </div>
+                              <div className="adm-lead-fact">
+                                <span>Ngôn ngữ</span>
+                                <strong>{localeLabel}</strong>
+                              </div>
+                            </div>
+
+                            {tourSlug ? (
+                              tourHref ? (
+                                <a
+                                  className="adm-lead-tour"
+                                  href={tourHref}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <span
+                                    className="adm-lead-tour-icon"
+                                    aria-hidden="true"
+                                  >
+                                    <AdminIcon name="compass" size={16} />
+                                  </span>
+                                  <span className="adm-lead-tour-body">
+                                    <small>Tour khách đã chọn</small>
+                                    <strong>{tourTitle}</strong>
+                                    {interest && interest !== tourTitle && (
+                                      <em>Nhu cầu: {interest}</em>
+                                    )}
+                                  </span>
+                                  <span className="adm-lead-tour-go">
+                                    Mở trang tour ↗
+                                  </span>
+                                </a>
+                              ) : (
+                                <div
+                                  className="adm-lead-tour"
+                                  data-static="true"
+                                >
+                                  <span
+                                    className="adm-lead-tour-icon"
+                                    aria-hidden="true"
+                                  >
+                                    <AdminIcon name="compass" size={16} />
+                                  </span>
+                                  <span className="adm-lead-tour-body">
+                                    <small>Tour khách đã chọn</small>
+                                    <strong>{tourTitle}</strong>
+                                    <em>Tour này không còn xuất bản</em>
+                                  </span>
+                                </div>
+                              )
+                            ) : interest ? (
+                              <p className="adm-lead-interest">
+                                <span>Quan tâm</span>
+                                {interest}
+                              </p>
+                            ) : null}
+
                             {message && (
                               <p className="adm-lead-message">“{message}”</p>
                             )}
-                            <p className="adm-lead-meta">
-                              {lead.created_at
-                                ? new Date(lead.created_at).toLocaleString(
-                                    "vi-VN",
-                                  )
-                                : "—"}
-                              {" · "}
-                              Email:{" "}
+
+                            <div className="adm-lead-foot">
+                              {requestId && (
+                                <span className="adm-lead-code">
+                                  #{requestId}
+                                </span>
+                              )}
+                              {sourceHref && (
+                                <a
+                                  href={sourceHref}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  Trang khách đã gửi ↗
+                                </a>
+                              )}
                               <span
-                                className="adm-mail-badge"
-                                data-mail={lead.mail_status}
+                                className="adm-lead-mail"
+                                title="Email thông báo nội bộ gửi tới hộp thư sales (SALES_RECIPIENTS)"
                               >
-                                {mailVi[lead.mail_status] ?? lead.mail_status}
+                                Mail nội bộ{" "}
+                                <span
+                                  className="adm-mail-badge"
+                                  data-mail={lead.mail_status}
+                                >
+                                  {mailVi[lead.mail_status] ??
+                                    lead.mail_status}
+                                </span>
                               </span>
-                            </p>
+                            </div>
+
+                            {utmBits.length > 0 && (
+                              <p className="adm-lead-utm">
+                                {utmBits.map(([label, value]) => (
+                                  <span key={label}>
+                                    {label}: {value}
+                                  </span>
+                                ))}
+                              </p>
+                            )}
                           </div>
                           <div className="adm-lead-care">
                             <AdmLeadStatusSelect
@@ -2894,9 +3193,9 @@ export function Dashboard({
                                 onClick={() => {
                                   void (async () => {
                                     const ok = await requestConfirm({
-                                      title: "Xóa dữ liệu khách hàng?",
-                                      body: `Xóa vĩnh viễn yêu cầu của "${name}". Không thể khôi phục.`,
-                                      confirmLabel: "Xóa vĩnh viễn",
+                                      title: "Chuyển khách hàng vào Thùng rác?",
+                                      body: `"${name}" sẽ gỡ khỏi danh sách chăm sóc. Dữ liệu được giữ trong Thùng rác ${LEAD_TRASH_RETENTION_DAYS} ngày để khôi phục, sau đó tự xóa vĩnh viễn.`,
+                                      confirmLabel: "Chuyển vào Thùng rác",
                                       danger: true,
                                     });
                                     if (!ok) return;
@@ -2905,10 +3204,11 @@ export function Dashboard({
                                         method: "DELETE",
                                         body: JSON.stringify({ id: lead.id }),
                                       });
+                                      setLeadTrashCount((count) => count + 1);
                                       await load();
                                       pushToast(
                                         "success",
-                                        "Đã xóa dữ liệu khách hàng.",
+                                        `Đã chuyển "${name}" vào Thùng rác.`,
                                       );
                                     });
                                   })();
@@ -4466,6 +4766,192 @@ export function Dashboard({
             </section>
           </div>
         )}
+        {leadTrashOpen &&
+          (() => {
+            const urgentCount = trashedLeads.filter((lead) => {
+              const left = trashDaysLeft(
+                lead.deleted_at ?? lead.created_at,
+                Date.now(),
+                LEAD_TRASH_RETENTION_DAYS,
+              );
+              return left !== null && left <= 7;
+            }).length;
+            return (
+              <div
+                className="adm-trash-veil"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Thùng rác khách hàng"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setLeadTrashOpen(false);
+                }}
+              >
+                <section className="adm-trash-panel">
+                  <header className="adm-trash-head">
+                    <div>
+                      <p className="adm-eyebrow">SEA TRIP · Thùng rác</p>
+                      <h2>Khách hàng · {trashedLeads.length} mục</h2>
+                      <p>
+                        Dữ liệu khách được giữ {LEAD_TRASH_RETENTION_DAYS} ngày
+                        kể từ lúc xóa rồi hệ thống tự xóa vĩnh viễn. Khôi phục
+                        để đưa lại vào danh sách chăm sóc.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="adm-trash-close"
+                      aria-label="Đóng thùng rác khách hàng"
+                      onClick={() => setLeadTrashOpen(false)}
+                    >
+                      ×
+                    </button>
+                  </header>
+                  <div className="adm-trash-summary" role="status">
+                    <div>
+                      <span>Đang giữ</span>
+                      <strong>{trashedLeads.length}</strong>
+                    </div>
+                    <div data-urgent={urgentCount > 0}>
+                      <span>Sắp xóa ≤ 7 ngày</span>
+                      <strong>{urgentCount}</strong>
+                    </div>
+                    <div>
+                      <span>Chu kỳ giữ</span>
+                      <strong>{LEAD_TRASH_RETENTION_DAYS} ngày</strong>
+                    </div>
+                  </div>
+                  {leadTrashLoading ? (
+                    <p className="adm-empty">Đang tải Thùng rác…</p>
+                  ) : trashedLeads.length === 0 ? (
+                    <p className="adm-empty">
+                      Thùng rác trống. Khách hàng bạn xóa sẽ nằm ở đây đủ{" "}
+                      {LEAD_TRASH_RETENTION_DAYS} ngày trước khi tự xóa vĩnh
+                      viễn.
+                    </p>
+                  ) : (
+                    <ul className="adm-trash-list">
+                      {trashedLeads.map((lead) => {
+                        const name = String(
+                          lead.data.fullName ??
+                            lead.data.name ??
+                            "Khách hàng",
+                        );
+                        const phone = textOf(lead.data.phone);
+                        const email = textOf(lead.data.email);
+                        const deletedAt =
+                          lead.deleted_at ?? lead.created_at;
+                        const left = trashDaysLeft(
+                          deletedAt,
+                          Date.now(),
+                          LEAD_TRASH_RETENTION_DAYS,
+                        );
+                        const deleteAtMs = trashDeleteAtMs(
+                          deletedAt,
+                          LEAD_TRASH_RETENTION_DAYS,
+                        );
+                        const ratio = trashElapsedRatio(
+                          deletedAt,
+                          Date.now(),
+                          LEAD_TRASH_RETENTION_DAYS,
+                        );
+                        const urgent = left !== null && left <= 7;
+                        const initial = (
+                          name.trim().charAt(0).toUpperCase() || "?"
+                        ).slice(0, 1);
+                        return (
+                          <li
+                            key={lead.id}
+                            className="adm-trash-item"
+                            data-urgent={urgent}
+                          >
+                            <div
+                              className="adm-trash-thumb adm-trash-thumb--lead"
+                              aria-hidden="true"
+                            >
+                              {initial}
+                            </div>
+                            <div className="adm-trash-body">
+                              <h3>{name}</h3>
+                              <p className="adm-lead-trash-contact">
+                                {phone || "Chưa có SĐT"} ·{" "}
+                                {email || "Chưa có email"}
+                              </p>
+                              <p className="adm-trash-dates">
+                                Xóa lúc: {formatLeadDateTime(deletedAt)} · Tự
+                                xóa vĩnh viễn:{" "}
+                                {deleteAtMs
+                                  ? formatLeadDateTime(
+                                      new Date(deleteAtMs).toISOString(),
+                                    )
+                                  : "—"}
+                              </p>
+                              <div
+                                className="adm-trash-bar"
+                                role="progressbar"
+                                aria-valuemin={0}
+                                aria-valuemax={LEAD_TRASH_RETENTION_DAYS}
+                                aria-valuenow={
+                                  left === null
+                                    ? undefined
+                                    : LEAD_TRASH_RETENTION_DAYS - left
+                                }
+                                aria-label={`Còn ${left ?? "?"} ngày trước khi tự xóa`}
+                              >
+                                <span
+                                  style={{
+                                    width: `${Math.round((ratio ?? 0) * 100)}%`,
+                                  }}
+                                />
+                              </div>
+                              <p
+                                className={`adm-trash-countdown${urgent ? " adm-trash-countdown--urgent" : ""}`}
+                              >
+                                {left === null
+                                  ? "Không rõ hạn xóa"
+                                  : left === 0
+                                    ? "Sẽ tự xóa vĩnh viễn trong hôm nay"
+                                    : `Còn ${left} / ${LEAD_TRASH_RETENTION_DAYS} ngày — tự xóa vĩnh viễn`}
+                              </p>
+                            </div>
+                            <div className="adm-trash-actions">
+                              <button
+                                type="button"
+                                className="adm-primary"
+                                disabled={busy}
+                                onClick={() => restoreLeadFromTrash(lead)}
+                              >
+                                Khôi phục
+                              </button>
+                              <button
+                                type="button"
+                                className="adm-danger-ghost"
+                                disabled={busy}
+                                onClick={() => purgeLeadFromTrash(lead)}
+                              >
+                                Xóa vĩnh viễn
+                              </button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                  <footer className="adm-trash-foot">
+                    <span>
+                      Mục trong Thùng rác không hiện ở danh sách chăm sóc, tìm
+                      kiếm hay email thông báo.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setLeadTrashOpen(false)}
+                    >
+                      Đóng thùng rác
+                    </button>
+                  </footer>
+                </section>
+              </div>
+            );
+          })()}
         {homePreview &&
           (() => {
             const d = homePreview.data;

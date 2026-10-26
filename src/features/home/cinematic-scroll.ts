@@ -128,7 +128,6 @@ export async function initCinematicScroll(
     };
   });
 
-  const refresh = () => ScrollTrigger.refresh();
   // Pinning inserts a spacer above the fold. Some browsers keep a tiny scroll
   // offset from that reflow (12px in Chrome), which makes the transparent home
   // header switch to its solid state on a fresh load. Only correct while the

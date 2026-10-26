@@ -35,6 +35,9 @@ export function db() {
     CREATE TABLE IF NOT EXISTS page_views (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL, locale TEXT NOT NULL DEFAULT 'vi', referrer TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT 'direct', device TEXT NOT NULL DEFAULT 'desktop', session_id TEXT NOT NULL DEFAULT '', visitor_id TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL);
     CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views(created_at);
     CREATE INDEX IF NOT EXISTS idx_page_views_path ON page_views(path);
+    CREATE TABLE IF NOT EXISTS web_vitals (id INTEGER PRIMARY KEY AUTOINCREMENT, metric TEXT NOT NULL, value REAL NOT NULL, rating TEXT NOT NULL DEFAULT '', path TEXT NOT NULL, device TEXT NOT NULL DEFAULT 'desktop', navigation_type TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS idx_web_vitals_created ON web_vitals(created_at);
+    CREATE INDEX IF NOT EXISTS idx_web_vitals_metric_created ON web_vitals(metric, created_at);
     CREATE TABLE IF NOT EXISTS cms_versions (scope TEXT PRIMARY KEY, version INTEGER NOT NULL DEFAULT 0);
     INSERT OR IGNORE INTO cms_versions(scope) VALUES('public'),('admin');
     CREATE TABLE IF NOT EXISTS cms_migrations (id TEXT PRIMARY KEY, applied_at TEXT NOT NULL);
@@ -46,6 +49,14 @@ export function db() {
   if (!leadColumns.some((column) => column.name === "read_at")) {
     database.exec("ALTER TABLE leads ADD COLUMN read_at TEXT");
   }
+  // Soft delete: a lead moved to the trash keeps its encrypted payload until
+  // the retention window ends, so the owner can restore it.
+  if (!leadColumns.some((column) => column.name === "deleted_at")) {
+    database.exec("ALTER TABLE leads ADD COLUMN deleted_at TEXT");
+  }
+  database.exec(
+    "CREATE INDEX IF NOT EXISTS idx_leads_deleted ON leads(deleted_at)",
+  );
   // Additive migration for installations created before the activity page.
   // SQLite has no "ADD COLUMN IF NOT EXISTS", so inspect first. Old audit rows
   // keep status='success' (they were only written after a successful mutation)

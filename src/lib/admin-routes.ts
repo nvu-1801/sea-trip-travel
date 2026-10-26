@@ -16,6 +16,7 @@ export const ADMIN_SECTION_PATHS = {
   settings: "/admin/settings",
   leads: "/admin/leads",
   activity: "/admin/activity",
+  health: "/admin/health",
   account: "/admin/account",
 } as const;
 
