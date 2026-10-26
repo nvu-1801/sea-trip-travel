@@ -7804,3 +7804,275 @@ select {
 }
 
 .adm-unread-badge { margin-left: auto; min-width: 22px; padding: 2px 6px; border-radius: 999px; background: #be123c; color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
+
+.adm-notice--ok {
+  border-color: #abefc6;
+  background: #ecfdf3;
+  color: #067647;
+}
+.adm-notice--warn {
+  border-color: #fedf89;
+  background: #fffaeb;
+  color: #b54708;
+}
+
+/* ---- Bảo mật · Sao lưu ---- */
+.adm-backup {
+  margin-top: 18px;
+}
+.adm-backup-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.adm-backup-head h2 {
+  margin: 2px 0 6px;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+.adm-backup-head p {
+  margin: 0;
+  max-width: 74ch;
+  color: #6e5c68;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.adm-backup-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.adm-backup-empty {
+  margin-top: 16px;
+  border: 1px dashed #f0c9d9;
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: #fff8fb;
+}
+.adm-backup-empty strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.adm-backup-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: #6e5c68;
+  line-height: 1.7;
+}
+.adm-backup-empty code,
+.adm-backup-notes code {
+  font-size: 11.5px;
+  background: #fdf0f5;
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.adm-backup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.adm-backup-stat {
+  display: grid;
+  gap: 2px;
+  border: 1px solid #f2dde7;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px 14px;
+  min-width: 0;
+}
+.adm-backup-stat > span {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9c8694;
+}
+.adm-backup-stat > strong {
+  font-size: 13.5px;
+  color: #2c1c27;
+  overflow-wrap: anywhere;
+}
+.adm-backup-stat > strong[data-tone="warn"] {
+  color: #b54708;
+}
+.adm-backup-stat > strong[data-tone="good"] {
+  color: #067647;
+}
+.adm-backup-stat > small {
+  font-size: 11px;
+  color: #8b7684;
+  overflow-wrap: anywhere;
+}
+.adm-backup-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid #cfe4ff;
+  border-radius: 13px;
+  background: #f3f8ff;
+}
+.adm-backup-progress strong {
+  display: block;
+  font-size: 13.5px;
+}
+.adm-backup-progress small {
+  color: #5c6b80;
+  font-size: 11.5px;
+}
+.adm-backup-spinner {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid #bcd7ff;
+  border-top-color: #2e90fa;
+  animation: adm-backup-spin 0.9s linear infinite;
+}
+@keyframes adm-backup-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.adm-backup-table-wrap {
+  margin-top: 16px;
+  overflow-x: auto;
+  border: 1px solid #f2dde7;
+  border-radius: 14px;
+  background: #fff;
+}
+.adm-backup-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  min-width: 720px;
+}
+.adm-backup-table th,
+.adm-backup-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #faf0f5;
+  vertical-align: top;
+}
+.adm-backup-table th {
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9c8694;
+  background: #fffafc;
+}
+.adm-backup-table tr:last-child td {
+  border-bottom: 0;
+}
+.adm-backup-table tr[data-tone="bad"] td {
+  background: #fff8f7;
+}
+.adm-backup-table td strong {
+  display: block;
+}
+.adm-backup-table td small {
+  display: block;
+  margin-top: 2px;
+  color: #8b7684;
+  font-size: 11px;
+}
+.adm-backup-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.adm-backup-badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 10.5px;
+  font-weight: 800;
+  background: #f2f4f7;
+  color: #667085;
+}
+.adm-backup-badge--done {
+  background: #e8f6ee;
+  color: #067647;
+}
+.adm-backup-badge--queued,
+.adm-backup-badge--running,
+.adm-backup-badge--verifying {
+  background: #e8f0fe;
+  color: #2e5cfa;
+}
+.adm-backup-badge--failed {
+  background: #fceae8;
+  color: #b42318;
+}
+.adm-backup-check {
+  font-size: 11.5px;
+  color: #667085;
+}
+.adm-backup-check[data-ok="true"] {
+  color: #067647;
+  font-weight: 700;
+}
+.adm-backup-notes {
+  margin-top: 16px;
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: #6e5c68;
+  line-height: 1.7;
+}
+.adm-backup-notes p {
+  margin: 0;
+}
+.adm-backup-warning {
+  border-left: 3px solid #f0b45c;
+  padding-left: 10px;
+  color: #8a5a12;
+}
+.adm-backup-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgb(33 10 22 / 0.45);
+  backdrop-filter: blur(5px);
+}
+.adm-backup-dialog {
+  width: min(440px, 100%);
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid #f2dde7;
+  border-radius: 18px;
+  background: #fffafc;
+  box-shadow: 0 30px 80px rgb(33 10 22 / 0.35);
+}
+.adm-backup-dialog h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.adm-backup-dialog p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #6e5c68;
+  line-height: 1.7;
+}
+.adm-backup-dialog label {
+  display: grid;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.adm-backup-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+@media (max-width: 720px) {
+  .adm-backup-head {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,16 @@
+[Unit]
+Description=SEA TRIP scheduled SQLite + uploads backup
+Documentation=file:@APP_DIR@/bin/backup/README.md
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+Environment=BACKUP_CONFIG=@APP_DIR@/.backup.env
+ExecStart=@MANAGE@ run --kind auto
+Nice=19
+IOSchedulingClass=idle
+IOSchedulingPriority=7
+TimeoutStartSec=2h
+# Exit 75 = another backup/restore is running; that is not a failed run.
+SuccessExitStatus=75

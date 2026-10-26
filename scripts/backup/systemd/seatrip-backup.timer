@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the SEA TRIP backup on the 1st and 16th at 03:00 Asia/Bangkok
+Documentation=file:@APP_DIR@/bin/backup/README.md
+
+[Timer]
+OnCalendar=@CALENDAR@
+Persistent=true
+AccuracySec=1min
+Unit=seatrip-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -16,6 +16,7 @@ import { ThemePanel } from "./theme-panel";
 import type { ThemeId } from "@/config/themes";
 import { Overview } from "./overview";
 import { ActivityCheck } from "./activity-check";
+import { BackupPanel } from "./backup-panel";
 import { HomeSections } from "./home-sections";
 import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
 import { HomeFeaturedEditor } from "./home-featured-editor";
@@ -2437,6 +2438,7 @@ export function Dashboard({
         ) : tab === "activity" ? (
           <ActivityCheck />
         ) : tab === "account" ? (
+          <>
           <section className="adm-panel adm-security">
             <div className="adm-security-head">
               <span className="adm-security-shield" aria-hidden="true">
@@ -2565,6 +2567,8 @@ export function Dashboard({
               </button>
             </form>
           </section>
+          {csrf ? <BackupPanel csrf={csrf} /> : null}
+          </>
         ) : tab === "leads" ? (
           <>
             <div className="adm-stats">

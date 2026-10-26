@@ -13,10 +13,12 @@ services:
       CMS_ENABLED: "1"
       CMS_DB_PATH: /app/data/seatrip.sqlite
       CMS_UPLOAD_DIR: /app/data/uploads
+      CMS_BACKUP_DIR: /app/backups
     ports:
       - "127.0.0.1:${APP_BIND_PORT:-3080}:3000"
     volumes:
       - content:/app/data
+      - ${APP_BACKUP_DIR:-../backups}:/app/backups:ro
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777

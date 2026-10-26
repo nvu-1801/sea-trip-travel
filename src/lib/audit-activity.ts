@@ -84,6 +84,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "lead-update": "Cập nhật yêu cầu tư vấn",
   "lead-mail-retry": "Gửi lại email tư vấn",
   "lead-delete": "Xóa yêu cầu tư vấn",
+  "backup-create": "Tạo bản sao lưu",
+  "backup-download": "Tải bản sao lưu",
   "content-save-failed": "Lưu nội dung thất bại",
   "role-change": "Thay đổi quyền người dùng",
   "permission-change": "Thay đổi quyền truy cập",
@@ -210,6 +212,12 @@ export function activityTargetLabel(raw: Pick<RawActivity, "action" | "target" |
   if (action === "lead-update" || action === "lead-mail-retry" || action === "lead-delete") {
     const leadId = stringValue(details.leadId);
     return leadId ? `Yêu cầu tư vấn · ${leadId}` : "Yêu cầu tư vấn";
+  }
+
+  if (action === "backup-create" || action === "backup-download") {
+    return raw.target && raw.target !== "reauth" && raw.target !== "rate-limit"
+      ? `Sao lưu dữ liệu · ${raw.target}`
+      : "Sao lưu dữ liệu";
   }
 
   const [collection] = raw.target.split("/");
