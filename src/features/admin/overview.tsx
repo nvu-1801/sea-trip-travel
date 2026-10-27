@@ -613,7 +613,7 @@ export function Overview({ csrf }: { csrf: string }) {
           <Sparkline values={trend.map((entry) => entry.views)} stroke="#e0005a" />
         </Kpi>
         <Kpi
-          icon="globe"
+          icon="users"
           tone="teal"
           label="Người vào web hôm nay"
           value={loading && !stats ? "—" : fmt.format(stats?.today.visitors ?? 0)}
@@ -622,7 +622,7 @@ export function Overview({ csrf }: { csrf: string }) {
           <Sparkline values={trend.map((entry) => entry.visitors)} stroke="#0e7a5f" />
         </Kpi>
         <Kpi
-          icon="leads"
+          icon="mail"
           tone="violet"
           label="Leads hôm nay"
           value={loading && !stats ? "—" : fmt.format(stats?.today.leads ?? 0)}
@@ -633,7 +633,7 @@ export function Overview({ csrf }: { csrf: string }) {
           </div>
         </Kpi>
         <Kpi
-          icon="trophy"
+          icon="target"
           tone="amber"
           label="Tỉ lệ chốt"
           value={`${stats?.totals.conversion ?? 0}%`}

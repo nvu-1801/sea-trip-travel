@@ -34,6 +34,8 @@ export type AdminIconName =
   | "edit"
   | "trash"
   | "eye"
+  | "users"
+  | "target"
   | "restore"
   | "plus"
   | "phone"
@@ -213,6 +215,20 @@ const PATHS: Record<AdminIconName, ReactNode> = {
     <>
       <path d="M3 12s3.2-6 9-6 9 6 9 6-3.2 6-9 6-9-6-9-6Z" />
       <circle cx="12" cy="12" r="2.6" />
+    </>
+  ),
+  users: (
+    <>
+      <circle cx="9.2" cy="8.2" r="3.1" />
+      <path d="M3.6 19.4c0-2.9 2.5-5 5.6-5s5.6 2.1 5.6 5" />
+      <path d="M15.8 5.6a3 3 0 0 1 0 5.2M17.2 14.9c1.9.7 3.2 2.4 3.2 4.5" />
+    </>
+  ),
+  target: (
+    <>
+      <circle cx="12" cy="12" r="8.4" />
+      <circle cx="12" cy="12" r="4.4" />
+      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
     </>
   ),
   restore: (
