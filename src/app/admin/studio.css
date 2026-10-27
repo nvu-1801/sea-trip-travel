@@ -10689,3 +10689,470 @@ select {
 .adm-customer-switch input:checked + i::after {
   transform: translateX(18px);
 }
+
+/* ==========================================================================
+   Sức khỏe website · bản làm mới giao diện
+   Gọn hơn, phân cấp rõ hơn: thanh thời gian liền khối, hero có dải số liệu
+   riêng, card có icon, danh sách lỗi và modal dùng chung một kiểu nút.
+   ========================================================================== */
+
+/* --- Thanh thời gian + làm mới ------------------------------------------- */
+.adm-health > .adm-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid #f2dde7;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #fff, #fffafc);
+  box-shadow: 0 16px 38px -32px rgb(72 16 43 / 0.55);
+}
+.adm-health > .adm-toolbar::before {
+  content: "Khoảng thời gian tốc độ";
+  margin-right: 2px;
+  color: #b08093;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.adm-health .adm-period {
+  padding: 3px;
+  border: 0;
+  border-radius: 13px;
+  background: #f9eff4;
+}
+.adm-health .adm-period button {
+  min-height: 34px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #7c6875;
+  font-size: 12px;
+  font-weight: 650;
+}
+.adm-health .adm-period button[data-active="true"] {
+  border-color: #e0005a;
+  background: #e0005a;
+  color: #fff;
+  box-shadow: 0 10px 20px -14px rgb(224 0 90 / 0.9);
+}
+.adm-health-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  margin-left: auto;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+.adm-health-refresh::before {
+  content: "↻";
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* --- Hero: trạng thái, điểm 4 phần và dải số liệu ------------------------ */
+.adm-health-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 20px;
+  padding: 20px 22px;
+  border-radius: 22px;
+}
+.adm-health-grade {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  font-size: 21px;
+}
+.adm-health-hero-copy h2 {
+  font-size: 23px;
+}
+.adm-health-hero-chart {
+  gap: 16px;
+}
+.adm-health-hero-legend {
+  min-width: 186px;
+  gap: 6px;
+}
+.adm-health-hero-legend li {
+  font-size: 12px;
+}
+.adm-health-hero-legend small {
+  font-size: 11.5px;
+}
+.adm-health-hero-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 22px;
+  margin: 0;
+  padding-top: 13px;
+  border-top: 1px solid #f2dfe8;
+}
+.adm-health-hero-meta span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #7c6875;
+  font-size: 11.5px;
+}
+.adm-health-hero-meta strong {
+  color: #2c1c27;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+/* --- Card: icon, số liệu và các dòng fact -------------------------------- */
+.adm-health-cards {
+  gap: 16px;
+}
+.adm-health-card {
+  gap: 11px;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 14px 36px -30px rgb(72 16 43 / 0.5);
+}
+.adm-health-card > header {
+  justify-content: flex-start;
+  gap: 9px;
+}
+.adm-health-card > header .adm-health-eyebrow {
+  flex: 1;
+}
+.adm-health-card-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: #fff1f6;
+  color: #b0175a;
+}
+.adm-health-card[data-status="good"] .adm-health-card-icon {
+  background: #e8f7f2;
+  color: #0e7a5f;
+}
+.adm-health-card[data-status="warn"] .adm-health-card-icon {
+  background: #fff4e2;
+  color: #a4660a;
+}
+.adm-health-card[data-status="bad"] .adm-health-card-icon {
+  background: #fdeceb;
+  color: #b42318;
+}
+.adm-health-card .adm-health-value {
+  margin-top: 2px;
+  font-size: clamp(28px, 2.4vw, 34px);
+  font-variant-numeric: tabular-nums;
+}
+.adm-health-card--backup .adm-health-value {
+  font-size: clamp(24px, 2vw, 30px);
+}
+.adm-health-bar {
+  height: 10px;
+  background: #f8eef3;
+  box-shadow: inset 0 1px 2px rgb(72 16 43 / 0.06);
+}
+.adm-health-facts {
+  gap: 7px;
+  padding-top: 12px;
+}
+.adm-health-facts dd {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Tốc độ: 5 chỉ số trên một hàng khi card đủ rộng --------------------- */
+.adm-health-vitals {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@container (min-width: 420px) {
+  .adm-health-vitals {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@container (max-width: 300px) {
+  .adm-health-vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.adm-health-vital {
+  gap: 2px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #fffafc;
+}
+.adm-health-vital strong {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.adm-health-vital small {
+  font-size: 9.5px;
+  line-height: 1.35;
+}
+
+/* --- SEO: vòng điểm, liên kết bản dịch và nút xem chi tiết --------------- */
+.adm-health-seo-top {
+  gap: 16px;
+}
+.adm-health-seo-top .adm-health-value {
+  font-size: clamp(26px, 2.1vw, 32px);
+}
+.adm-health-inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #f2dbe6;
+  border-radius: 999px;
+  background: #fff;
+  color: #a81455;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+.adm-health-inline-link:hover {
+  border-color: #e0005a;
+  background: #fff1f6;
+}
+.adm-health-panel {
+  padding: 20px 22px;
+  border-radius: 20px;
+}
+.adm-health-panel-head h2 {
+  font-size: 18px;
+}
+.adm-health-panel-open {
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 999px;
+  font-weight: 750;
+}
+
+/* --- Danh sách việc cần xử lý -------------------------------------------- */
+.adm-health-issues li {
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  border-radius: 12px;
+  transition: background 160ms ease;
+}
+.adm-health-issues li:hover {
+  background: #fff8fb;
+}
+.adm-health-issues strong {
+  font-size: 13px;
+}
+.adm-health-issues small {
+  font-size: 11.5px;
+}
+.adm-health-count {
+  min-width: 30px;
+  padding: 3px 8px;
+  font-variant-numeric: tabular-nums;
+}
+.adm-health-fix {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 750;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+.adm-health-fix--quiet {
+  border-color: #f2e3ea;
+  background: #fff;
+}
+.adm-health-fix--quiet:hover {
+  border-color: #e0005a;
+  background: #fff1f6;
+}
+
+/* --- Máy chủ: 4 ô số liệu liền mạch -------------------------------------- */
+.adm-health-machine {
+  gap: 0;
+  padding: 6px;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #fff, #fffafc);
+}
+.adm-health-machine > div {
+  padding: 12px 16px;
+  border-left: 1px solid #f4e3ec;
+}
+.adm-health-machine > div:first-child {
+  border-left: 0;
+}
+.adm-health-machine strong {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.adm-health-machine small {
+  font-size: 10.5px;
+}
+
+/* --- Modal chi tiết ------------------------------------------------------- */
+.adm-health-modal {
+  width: min(720px, 100%);
+  border-radius: 24px;
+}
+.adm-health-modal-head {
+  padding: 22px 24px 16px;
+  background: linear-gradient(120deg, #fff, #fff7fa);
+}
+.adm-health-modal-head h2 {
+  font-size: 20px;
+}
+.adm-health-modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 19px;
+}
+.adm-health-modal-body {
+  gap: 16px;
+  padding: 18px 24px 22px;
+  scrollbar-width: thin;
+  scrollbar-color: #e7c4d4 transparent;
+}
+.adm-health-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+.adm-health-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.adm-health-modal-body::-webkit-scrollbar-thumb {
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #e7c4d4;
+}
+.adm-health-modal-list {
+  border-color: #f4e3ec;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.adm-health-modal-list li {
+  gap: 14px;
+  padding: 12px 14px;
+  transition: background 160ms ease;
+}
+.adm-health-modal-list li:hover {
+  background: #fff8fb;
+}
+.adm-health-modal-list strong {
+  font-size: 13px;
+}
+.adm-health-modal-list small {
+  font-size: 11px;
+}
+.adm-health-modal-list .adm-health-fix {
+  gap: 4px;
+  min-width: 68px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #f0d3e0;
+  border-radius: 999px;
+  background: #fff;
+  color: #a81455;
+  font-size: 11.5px;
+  font-weight: 750;
+  text-decoration: none;
+}
+.adm-health-modal-list .adm-health-fix::after {
+  content: "↗";
+  font-size: 9px;
+  opacity: 0.65;
+}
+.adm-health-modal-list .adm-health-fix:hover {
+  border-color: #e0005a;
+  background: #fff1f6;
+}
+.adm-health-modal-actions {
+  gap: 10px;
+  padding: 14px 24px;
+  background: linear-gradient(0deg, #fff, #fffafc);
+}
+.adm-health-modal-actions .adm-primary,
+.adm-health-modal-actions > button:not(.adm-health-modal-back) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.adm-health-modal-actions .adm-primary {
+  gap: 5px;
+}
+.adm-health-modal-actions .adm-primary::after {
+  content: "→";
+  font-size: 13px;
+}
+
+/* --- Hẹp: hero và modal xuống hàng --------------------------------------- */
+@media (max-width: 1180px) {
+  .adm-health-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .adm-health-hero-chart,
+  .adm-health-hero-alerts {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 760px) {
+  .adm-health > .adm-toolbar::before {
+    display: none;
+  }
+  .adm-health-hero {
+    padding: 17px;
+  }
+  .adm-health-hero-meta {
+    gap: 8px 16px;
+  }
+  .adm-health-card {
+    padding: 16px;
+  }
+  .adm-health-modal {
+    border-radius: 20px;
+  }
+  .adm-health-modal-head,
+  .adm-health-modal-body,
+  .adm-health-modal-actions {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .adm-health-modal-list li {
+    align-items: flex-start;
+  }
+  .adm-health-modal-actions > span {
+    display: none;
+  }
+  .adm-health-modal-actions .adm-primary,
+  .adm-health-modal-actions > button:not(.adm-health-modal-back) {
+    flex: 1 1 auto;
+  }
+}
+@media (max-width: 420px) {
+  .adm-health-hero-meta strong {
+    font-size: 15px;
+  }
+  .adm-health-vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

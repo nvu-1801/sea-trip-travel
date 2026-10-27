@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { AdminIcon } from "./admin-icons";
 import {
   budgetStatus,
   formatBytes,
@@ -814,6 +815,9 @@ export function HealthCheck({ csrf }: { csrf: string }) {
           <div className="adm-health-cards" aria-busy={loading}>
             <section className="adm-health-card" data-status={storageStatus(storage!)}>
               <header>
+                <span className="adm-health-card-icon" aria-hidden="true">
+                  <AdminIcon name="media" size={15} />
+                </span>
                 <p className="adm-health-eyebrow">Dung lượng</p>
                 <StatusPill status={storageStatus(storage!)} />
               </header>
@@ -909,6 +913,9 @@ export function HealthCheck({ csrf }: { csrf: string }) {
 
             <section className="adm-health-card adm-health-card--backup" data-status={data.backup.status}>
               <header>
+                <span className="adm-health-card-icon" aria-hidden="true">
+                  <AdminIcon name="restore" size={15} />
+                </span>
                 <p className="adm-health-eyebrow">Sao lưu</p>
                 <StatusPill status={data.backup.status} />
               </header>
@@ -964,6 +971,9 @@ export function HealthCheck({ csrf }: { csrf: string }) {
 
             <section className="adm-health-card" data-status={speedStatus(data)}>
               <header>
+                <span className="adm-health-card-icon" aria-hidden="true">
+                  <AdminIcon name="activity" size={15} />
+                </span>
                 <p className="adm-health-eyebrow">Tốc độ tải</p>
                 <StatusPill status={speedStatus(data)} />
               </header>
@@ -1009,6 +1019,9 @@ export function HealthCheck({ csrf }: { csrf: string }) {
 
             <section className="adm-health-card" data-status={seo!.status}>
               <header>
+                <span className="adm-health-card-icon" aria-hidden="true">
+                  <AdminIcon name="search" size={15} />
+                </span>
                 <p className="adm-health-eyebrow">SEO</p>
                 <StatusPill status={seo!.status} />
               </header>
