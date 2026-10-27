@@ -21,6 +21,7 @@ import { BackupPanel } from "./backup-panel";
 import { HomeSections } from "./home-sections";
 import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
 import { HomeFeaturedEditor } from "./home-featured-editor";
+import { CustomerStoriesEditor } from "./customer-stories-editor";
 import type { HomeSectionMeta } from "@/lib/home-sections";
 import { HOME_SECTIONS } from "@/lib/home-sections";
 import {
@@ -63,7 +64,7 @@ import { homeSectionDraft } from "@/lib/admin-home-draft";
 import { AdminIcon, type AdminIconName } from "./admin-icons";
 import { SearchIcon, CloseIcon } from "@/components/ui/icons";
 import { searchKey } from "@/lib/search";
-import { isPlaceholderSlug } from "@/lib/public-slug";
+import { isPlaceholderSlug, slugFollowsTitle, slugFromTitle } from "@/lib/public-slug";
 import {
   ADMIN_SEARCH_GROUP_LABELS,
   rankAdminSearch,
@@ -105,6 +106,36 @@ type Lead = {
 function formatLeadDay(value: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+}
+
+/**
+ * Live slug preview for a brand-new article or category. While the record still
+ * carries the Studio placeholder (`noi-dung-…`), every title edit re-derives
+ * the public URL, so the field reads `cam-nang-du-lich/<slug>` before saving.
+ * A slug the owner typed by hand is left untouched.
+ */
+function withLiveSlug(
+  previous: Record<string, EditorValue>,
+  next: Record<string, EditorValue>,
+  tab: "articles" | "categories",
+  editable: boolean,
+): Record<string, EditorValue> {
+  // A published record owns its URL: never rewrite it outside a placeholder.
+  if (!editable) return next;
+  const titleField = tab === "categories" ? "name" : "title";
+  const nextSlug = String(next.slug ?? "");
+  // The owner edited the slug in this keystroke.
+  if (nextSlug !== String(previous.slug ?? "")) return next;
+  if (!slugFollowsTitle(nextSlug, previous[titleField], "article")) return next;
+  const base = slugFromTitle(next[titleField]);
+  if (!base || base === nextSlug) return next;
+  const patched: Record<string, EditorValue> = { ...next, slug: base };
+  if (
+    tab === "categories" &&
+    String(previous.path ?? "") === `/danh-muc/${String(previous.slug ?? "")}`
+  )
+    patched.path = `/danh-muc/${base}`;
+  return patched;
 }
 
 /** Stable, readable timestamp for the admin card. */
@@ -3770,6 +3801,27 @@ export function Dashboard({
                           setDirty(true);
                         }}
                       />
+                    ) : homeModal.key === "customers" ? (
+                      <CustomerStoriesEditor
+                        value={
+                          (selected.data.customers ?? {}) as Record<
+                            string,
+                            unknown
+                          >
+                        }
+                        references={references}
+                        onUploadImage={uploadImage}
+                        onChange={(customers) => {
+                          setSelected({
+                            ...selected,
+                            data: {
+                              ...selected.data,
+                              customers: customers as EditorValue,
+                            },
+                          });
+                          setDirty(true);
+                        }}
+                      />
                     ) : (
                       <Editor
                         value={{
@@ -4067,9 +4119,19 @@ export function Dashboard({
                 slugEditable={isPlaceholderSlug(selected.data.slug)}
                 onUploadImage={uploadImage}
                 onChange={(data) => {
+                  const next = data as Record<string, EditorValue>;
                   setSelected({
                     ...selected,
-                    data: data as Record<string, EditorValue>,
+                    data:
+                      tab === "articles" || tab === "categories"
+                        ? withLiveSlug(
+                            selected.data,
+                            next,
+                            tab,
+                            selected.revision === 0 ||
+                              isPlaceholderSlug(selected.data.slug),
+                          )
+                        : next,
                   });
                   setDirty(true);
                 }}

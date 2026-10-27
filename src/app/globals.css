@@ -1292,6 +1292,101 @@ html[data-motion-paused="true"] .stt-seq[data-revealed="true"] > * {
   font-weight: 800;
   color: var(--color-primary-strong);
 }
+.stt-card-discount {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: linear-gradient(135deg, #e0005a 0%, #ff5c99 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  box-shadow:
+    0 8px 18px rgb(224 0 90 / 0.32),
+    inset 0 1px 0 rgb(255 255 255 / 0.28);
+}
+.stt-card-price-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  margin-top: 2px;
+}
+.stt-card-price-original {
+  color: var(--color-subtle);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--color-subtle) 70%, transparent);
+}
+.tour-price-discount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.tour-price-discount-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: linear-gradient(135deg, #e0005a 0%, #ff5c99 100%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+.tour-price-original {
+  color: var(--color-subtle);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: line-through;
+}
+.tour-package-price {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 7px;
+}
+.tour-package-original {
+  color: var(--color-subtle);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: line-through;
+}
+.tour-package-badge {
+  border-radius: 999px;
+  padding: 2px 6px;
+  background: #ffe4ef;
+  color: #b8004a;
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+@media (max-width: 640px) {
+  .stt-card-discount {
+    top: 10px;
+    right: 10px;
+    min-width: 42px;
+    padding: 4px 9px;
+    font-size: 11px;
+  }
+  .tour-package-price {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+}
 .stt-card-cta {
   display: inline-flex;
   align-items: center;

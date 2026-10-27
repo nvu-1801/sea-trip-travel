@@ -22,6 +22,7 @@ import type { TravelArticle } from "../src/domain/article";
 import { defaultSettings } from "../src/server/cms/settings";
 import { MAX_HOME_DESTINATIONS } from "../src/domain/destination";
 import { getFeaturedTours } from "../src/lib/data/tours";
+import { slugFromTitle } from "../src/lib/public-slug";
 test("default CMS social links preserve the hotline-derived Zalo contact", () => {
   assert.ok(
     defaultSettings.socialLinks.some((link) =>
@@ -1226,6 +1227,25 @@ test("a Studio placeholder slug becomes readable and the old URL redirects", () 
   );
 });
 
+test("a title-derived slug that already exists gets a numeric suffix", () => {
+  const source = list("articles").find((row) => row.state !== "deleted")!;
+  const title = "Kinh nghiệm du lịch Quy Nhơn – Phú Yên thử slug";
+  const base = slugFromTitle(title);
+  assert.ok(base);
+  const draft = (id: string) => ({
+    ...source.data,
+    id,
+    slug: base,
+    title,
+  });
+  save("articles", draft("art_slug_auto_a"), 0, "save");
+  save("articles", draft("art_slug_auto_b"), 0, "save");
+  const savedA = list("articles").find((row) => row.id === "art_slug_auto_a")!;
+  const savedB = list("articles").find((row) => row.id === "art_slug_auto_b")!;
+  assert.equal(savedA.data.slug, base);
+  assert.equal(savedB.data.slug, `${base}-2`);
+});
+
 test("the slug migration renames placeholders and follows references", () => {
   const insert = db().prepare(
     "INSERT INTO records(collection,id,data,published,state,revision,updated_at) VALUES(?,?,?,?,?,?,?)",
@@ -1316,5 +1336,45 @@ test("the slug migration renames placeholders and follows references", () => {
   assert.deepEqual(
     (liveLanding.data.featured as Record<string, unknown>).tourIds,
     ["ha-giang-3-ngay-2-dem"],
+  );
+});
+
+test("customer videos only accept safe YouTube URLs", () => {
+  const row = list("landing")[0];
+  const base = row.data as Record<string, unknown>;
+  const invalid = {
+    ...base,
+    customers: {
+      enabled: true,
+      videos: [
+        {
+          id: "video_bad",
+          title: "Video kiểm thử",
+          youtubeUrl: "javascript:alert(1)",
+        },
+      ],
+    },
+  };
+  assert.throws(
+    () => save("landing", invalid, row.revision, "save"),
+    /YouTube/,
+  );
+  const iframe = {
+    ...base,
+    customers: {
+      enabled: true,
+      videos: [
+        {
+          id: "video_bad",
+          title: "Video kiểm thử",
+          youtubeUrl:
+            "<iframe src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\"></iframe>",
+        },
+      ],
+    },
+  };
+  assert.throws(
+    () => save("landing", iframe, row.revision, "save"),
+    /YouTube/,
   );
 });

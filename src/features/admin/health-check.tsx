@@ -94,6 +94,162 @@ function overallStatus(data: HealthPayload): HealthStatus {
   return "good";
 }
 
+/* ---- Tổng quan: một vòng điểm gộp 4 mảng, thay vì báo đỏ mọi lúc ---- */
+
+type HealthArea = {
+  key: "seo" | "storage" | "speed" | "backup";
+  label: string;
+  status: HealthStatus;
+  weight: number;
+  value: string;
+};
+
+type CriticalItem = {
+  key: string;
+  title: string;
+  detail: string;
+  href?: string;
+};
+
+function healthAreas(data: HealthPayload): HealthArea[] {
+  const speed = data.speed;
+  const backup = data.backup;
+  return [
+    {
+      key: "seo",
+      label: "SEO",
+      status: data.seo.status,
+      weight: 40,
+      value: `${data.seo.score}/100`,
+    },
+    {
+      key: "storage",
+      label: "Dung lượng",
+      status: storageStatus(data.storage),
+      weight: 20,
+      value: data.storage.available
+        ? formatBytes(data.storage.dataBytes)
+        : "Không đọc được",
+    },
+    {
+      key: "speed",
+      label: "Tốc độ",
+      status: speedStatus(data),
+      weight: 20,
+      value: speed.hasData
+        ? `${numberFormat.format(speed.samples)} lượt đo`
+        : "Chưa đủ dữ liệu",
+    },
+    {
+      key: "backup",
+      label: "Sao lưu",
+      status: backup.status,
+      weight: 20,
+      value: backup.configured
+        ? backup.lastSuccess
+          ? shortWhen(backup.lastSuccess.at)
+          : "Chưa có bản thành công"
+        : "Chưa cài đặt",
+    },
+  ];
+}
+
+/** SEO already scores 0–100; the other areas map their band to a 0–100 value. */
+function healthScore(areas: HealthArea[], seoScore: number): number {
+  let weight = 0;
+  let points = 0;
+  for (const area of areas) {
+    const value =
+      area.key === "seo"
+        ? seoScore
+        : area.status === "good"
+          ? 100
+          : area.status === "warn"
+            ? 60
+            : area.status === "bad"
+              ? 0
+              : null;
+    if (value === null) continue;
+    weight += area.weight;
+    points += value * area.weight;
+  }
+  if (weight === 0) return seoScore;
+  return Math.round(points / weight);
+}
+
+function HealthGauge({
+  areas,
+  score,
+}: {
+  areas: HealthArea[];
+  score: number;
+}) {
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  const totalWeight = areas.reduce((sum, area) => sum + area.weight, 0) || 1;
+  const gap = 5;
+  const segments = areas.map((area, index) => {
+    const start = areas
+      .slice(0, index)
+      .reduce((sum, item) => sum + item.weight, 0);
+    const length = (area.weight / totalWeight) * circumference;
+    return {
+      key: area.key,
+      status: area.status,
+      dash: Math.max(1, length - gap),
+      offset: -(start / totalWeight) * circumference,
+    };
+  });
+  const tone: HealthStatus =
+    score >= 80 ? "good" : score >= 55 ? "warn" : "bad";
+  return (
+    <svg
+      viewBox="0 0 110 110"
+      className="adm-health-gauge"
+      role="img"
+      aria-label={`Điểm sức khỏe tổng hợp ${score} trên 100`}
+    >
+      <circle
+        cx="55"
+        cy="55"
+        r={radius}
+        fill="none"
+        stroke="#f6e4ec"
+        strokeWidth="10"
+      />
+      <g transform="rotate(-90 55 55)">
+        {segments.map((segment) => (
+          <circle
+            key={segment.key}
+            cx="55"
+            cy="55"
+            r={radius}
+            fill="none"
+            strokeWidth="10"
+            strokeLinecap="round"
+            strokeDasharray={`${segment.dash} ${circumference - segment.dash}`}
+            strokeDashoffset={segment.offset}
+            data-status={segment.status}
+            className="adm-health-gauge-seg"
+          />
+        ))}
+      </g>
+      <text
+        x="55"
+        y="56"
+        textAnchor="middle"
+        className="adm-health-gauge-no"
+        data-status={tone}
+      >
+        {score}
+      </text>
+      <text x="55" y="70" textAnchor="middle" className="adm-health-gauge-sub">
+        /100
+      </text>
+    </svg>
+  );
+}
+
 function ScoreRing({
   score,
   status,
@@ -338,6 +494,12 @@ function HealthDetailModal({
                   </p>
                 </div>
               </div>
+              <p className="adm-health-modal-explain">
+                <strong>SEO là gì?</strong> Là cách giúp trang tour xuất hiện khi
+                khách tìm trên Google. Điểm càng cao, khách càng dễ thấy tour
+                của mình mà không tốn phí quảng cáo — mỗi nhóm lỗi bên dưới là
+                một việc nhỏ để tăng điểm đó.
+              </p>
               {state.issues.length > 0 ? (
                 <ul className="adm-health-modal-groups">
                   {state.issues.map((entry) => (
@@ -490,6 +652,58 @@ export function HealthCheck({ csrf }: { csrf: string }) {
     ].filter((segment) => segment.bytes > 0);
   }, [storage]);
 
+  // The hero only turns red for operational failures or high-severity SEO
+  // blockers. Everything else is reported calmly with the 4-part gauge, so a
+  // healthy site shows a green check instead of a permanent alarm.
+  const areas = data ? healthAreas(data) : [];
+  const score = data ? healthScore(areas, data.seo.score) : 0;
+  const criticalItems: CriticalItem[] = [];
+  if (data) {
+    if (storageStatus(data.storage) === "bad") {
+      criticalItems.push({
+        key: "storage",
+        title: "Dung lượng gần đầy",
+        detail: `${numberFormat.format(Math.round(storagePercent))}% hạn mức ${formatBytes(PROJECT_STORAGE_LIMIT_BYTES)} · ${formatBytes(data.storage.dataBytes)}`,
+        href: "/admin/media",
+      });
+    }
+    if (speedStatus(data) === "bad") {
+      criticalItems.push({
+        key: "speed",
+        title: "Tốc độ tải chậm",
+        detail: `p75 vượt ngưỡng trong ${data.speed.days} ngày · ${numberFormat.format(data.speed.samples)} mẫu`,
+      });
+    }
+    if (data.backup.status === "bad") {
+      criticalItems.push({
+        key: "backup",
+        title: "Sao lưu có sự cố",
+        detail:
+          data.backup.warnings[0] ??
+          data.backup.note ??
+          "Bản gần nhất không thành công.",
+        href: "/admin/account#backup",
+      });
+    }
+  }
+  const overall = data ? overallStatus(data) : "unknown";
+  const heroTone: HealthStatus =
+    criticalItems.length > 0
+      ? "bad"
+      : overall === "good"
+        ? "good"
+        : overall === "unknown"
+          ? "unknown"
+          : "warn";
+  const headline =
+    criticalItems.length > 0
+      ? "Có vấn đề cần xử lý"
+      : overall === "good"
+        ? "Website đang khỏe"
+        : overall === "unknown"
+          ? "Đang thu thập dữ liệu"
+          : "Website đang ổn định";
+
   return (
     <div className="adm-health">
       <div className="adm-toolbar">
@@ -535,31 +749,55 @@ export function HealthCheck({ csrf }: { csrf: string }) {
         </p>
       ) : (
         <>
-          <div className="adm-health-hero" data-status={overallStatus(data)}>
+          <div className="adm-health-hero" data-status={heroTone}>
             <span className="adm-health-grade" aria-hidden="true">
-              {overallStatus(data) === "good"
-                ? "✓"
-                : overallStatus(data) === "bad"
-                  ? "!"
-                  : "•"}
+              {heroTone === "good" ? "✓" : heroTone === "bad" ? "!" : "•"}
             </span>
             <div className="adm-health-hero-copy">
               <p className="adm-health-eyebrow">Tổng quan</p>
-              <h2>
-                {overallStatus(data) === "good"
-                  ? "Website đang khỏe"
-                  : overallStatus(data) === "bad"
-                    ? "Có vấn đề cần xử lý"
-                    : overallStatus(data) === "warn"
-                      ? "Cần chú ý vài điểm"
-                      : "Đang thu thập dữ liệu"}
-              </h2>
+              <h2>{headline}</h2>
               <p>
                 Đo lúc{" "}
                 {new Date(data.generatedAt).toLocaleString("vi-VN")} · cập nhật
                 mỗi lần bấm Làm mới.
               </p>
             </div>
+            {criticalItems.length > 0 ? (
+              <ul className="adm-health-hero-alerts">
+                {criticalItems.slice(0, 3).map((item) => (
+                  <li key={item.key}>
+                    <span className="adm-health-severity" aria-hidden="true" />
+                    <div>
+                      <strong>{item.title}</strong>
+                      <small>{item.detail}</small>
+                    </div>
+                    {item.href ? (
+                      <Link className="adm-health-fix" href={item.href}>
+                        Mở
+                      </Link>
+                    ) : null}
+                  </li>
+                ))}
+                {criticalItems.length > 3 ? (
+                  <li className="adm-health-hero-more">
+                    +{criticalItems.length - 3} nhóm khác
+                  </li>
+                ) : null}
+              </ul>
+            ) : (
+              <div className="adm-health-hero-chart">
+                <HealthGauge areas={areas} score={score} />
+                <ul className="adm-health-hero-legend" aria-label="Điểm từng phần">
+                  {areas.map((area) => (
+                    <li key={area.key} data-status={area.status}>
+                      <i aria-hidden="true" />
+                      <span>{area.label}</span>
+                      <small title={area.value}>{area.value}</small>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="adm-health-hero-meta">
               <span>
                 <strong>{numberFormat.format(storage!.uploadFiles)}</strong> ảnh
@@ -792,6 +1030,20 @@ export function HealthCheck({ csrf }: { csrf: string }) {
                   </button>
                 </div>
               </div>
+              <details className="adm-health-seo-help">
+                <summary>SEO là gì?</summary>
+                <div>
+                  <p>
+                    SEO là cách giúp trang tour hiện lên khi khách tìm trên
+                    Google — miễn phí, không cần chạy quảng cáo.
+                  </p>
+                  <ul>
+                    <li>Tiêu đề và mô tả rõ ràng: khách hiểu ngay và bấm vào.</li>
+                    <li>Ảnh có mô tả, đường dẫn dễ đọc: Google tin trang hơn.</li>
+                    <li>Bản dịch EN: đón thêm khách quốc tế.</li>
+                  </ul>
+                </div>
+              </details>
               <button
                 type="button"
                 className="adm-health-cta adm-health-cta--button"
@@ -813,7 +1065,7 @@ export function HealthCheck({ csrf }: { csrf: string }) {
                   {seo!.issues.length === 0 &&
                   data.backup.warnings.length === 0
                     ? "Không phát hiện lỗi trong lần kiểm tra này."
-                    : "Sắp theo mức ưu tiên. Bấm “Sửa” để mở đúng nội dung."}
+                    : "Sắp theo mức ưu tiên — sửa để khách dễ tìm thấy tour trên Google hơn. Bấm “Sửa” để mở đúng nội dung."}
                 </p>
               </div>
               <div className="adm-health-panel-actions">

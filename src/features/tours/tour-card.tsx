@@ -60,6 +60,14 @@ export function TourCard({
           )}
         />
         <span aria-hidden="true" className="stt-card-scrim" />
+        {tour.discountLabel ? (
+          <span
+            className="stt-card-discount"
+            aria-label={tour.discountAria ?? undefined}
+          >
+            {tour.discountLabel}
+          </span>
+        ) : null}
         <div className="pointer-events-none absolute left-3 top-3 flex max-w-[calc(100%-5.5rem)] flex-wrap gap-1.5">
           {tour.badge ? (
             <span className="stt-card-badge">
@@ -116,15 +124,25 @@ export function TourCard({
         <div className="stt-card-foot">
           <div>
             <p className="stt-card-price-label">{tour.referencePriceText}</p>
-            <p
-              className={
-                tour.priceIsContact
-                  ? "stt-card-price-contact"
-                  : "stt-card-price"
-              }
-            >
-              {tour.priceLabel}
-            </p>
+            <div className="stt-card-price-stack">
+              {tour.priceOriginalLabel ? (
+                <span
+                  className="stt-card-price-original"
+                  aria-label={tour.priceOriginalAria ?? undefined}
+                >
+                  {tour.priceOriginalLabel}
+                </span>
+              ) : null}
+              <p
+                className={
+                  tour.priceIsContact
+                    ? "stt-card-price-contact"
+                    : "stt-card-price"
+                }
+              >
+                {tour.priceLabel}
+              </p>
+            </div>
           </div>
           <span className="stt-card-cta">
             {tour.viewDetailsText}

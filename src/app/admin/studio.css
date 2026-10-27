@@ -8354,7 +8354,7 @@ select {
 }
 .adm-health-vitals {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: 6px;
 }
 .adm-health-vital {
@@ -8603,20 +8603,9 @@ select {
 .adm-health-machine > div[data-status="bad"] strong {
   color: #b42318;
 }
-@media (max-width: 1100px) {
-  .adm-health-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .adm-health-card:last-child {
-    grid-column: 1 / -1;
-  }
-}
 @media (max-width: 760px) {
   .adm-health-cards {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .adm-health-card:last-child {
-    grid-column: auto;
   }
   .adm-health-machine {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -9232,7 +9221,15 @@ select {
   color: #b54708;
 }
 .adm-health-cards {
-  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+  /* Laptop widths get a calm 2×2 block; four columns only appear when each
+     card still has ~340px. Squeezing four cards at 1280–1500 clipped the SEO
+     number and turned every vitals hint into two lines. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 1600px) {
+  .adm-health-cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 .adm-health-card--backup {
   background:
@@ -9881,4 +9878,814 @@ select {
     align-items: flex-start;
     text-align: left;
   }
+}
+
+/* ---- Sức khỏe: nhịp responsive cho card và hero ---- */
+/* Cards size themselves against the grid column, so the SEO ring, the
+   status pill and the fact rows reflow from the card width instead of the
+   viewport width. */
+.adm-health-card {
+  container-type: inline-size;
+}
+.adm-health-seo-top {
+  flex-wrap: wrap;
+}
+.adm-health-seo-top .adm-health-value {
+  font-size: clamp(22px, 1.7vw, 30px);
+}
+@container (max-width: 420px) {
+  .adm-health-card > header {
+    flex-wrap: wrap;
+  }
+  .adm-health-seo-top {
+    gap: 10px;
+  }
+  .adm-health-ring {
+    width: 88px;
+    height: 88px;
+  }
+  .adm-health-seo-top .adm-health-value {
+    font-size: 25px;
+  }
+  .adm-health-vital {
+    padding: 8px 9px;
+  }
+  .adm-health-vital small {
+    font-size: 9.5px;
+  }
+}
+@media (max-width: 1180px) {
+  .adm-health-hero {
+    flex-wrap: wrap;
+  }
+  .adm-health-hero-copy {
+    flex: 1 1 240px;
+  }
+  .adm-health-hero-meta {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 760px) {
+  .adm-health-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .adm-health-card {
+    padding: 16px;
+  }
+  .adm-health-panel {
+    padding: 16px;
+  }
+  .adm-health-panel-head {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .adm-health-panel-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .adm-health-issues li {
+    align-items: center;
+    row-gap: 8px;
+  }
+  .adm-health-issues li > div {
+    flex-basis: calc(100% - 40px);
+  }
+  .adm-health-machine {
+    padding: 14px 16px;
+  }
+}
+@media (max-width: 420px) {
+  .adm-health-hero {
+    padding: 16px;
+  }
+  .adm-health-grade {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 20px;
+  }
+  .adm-health-hero-copy h2 {
+    font-size: 19px;
+  }
+  .adm-health-issues .adm-health-fix {
+    min-height: 32px;
+    line-height: 30px;
+    padding: 0 10px;
+  }
+  .adm-health-vitals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---- Tổng quan: vòng điểm 4 phần + danh sách sự cố nghiêm trọng ---- */
+.adm-health-hero[data-status="good"] {
+  border-color: #c9eddd;
+  background:
+    radial-gradient(120% 180% at 0% 0%, #e9faf1 0%, transparent 55%),
+    linear-gradient(120deg, #fff, #f7fdfa);
+}
+.adm-health-hero[data-status="warn"] {
+  border-color: #f2e0bd;
+  background:
+    radial-gradient(120% 180% at 0% 0%, #fff7e7 0%, transparent 55%),
+    linear-gradient(120deg, #fff, #fffdf8);
+}
+.adm-health-hero[data-status="unknown"] {
+  background:
+    radial-gradient(120% 180% at 0% 0%, #f7f4f6 0%, transparent 55%),
+    linear-gradient(120deg, #fff, #fbf9fa);
+}
+.adm-health-hero-copy {
+  flex: 1 1 240px;
+}
+.adm-health-hero-chart {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+}
+.adm-health-gauge {
+  flex: none;
+  width: 92px;
+  height: 92px;
+}
+.adm-health-gauge-seg {
+  transition: stroke 200ms ease;
+}
+.adm-health-gauge-seg[data-status="good"] {
+  stroke: #0e7a5f;
+}
+.adm-health-gauge-seg[data-status="warn"] {
+  stroke: #d18b1f;
+}
+.adm-health-gauge-seg[data-status="bad"] {
+  stroke: #c0392b;
+}
+.adm-health-gauge-seg[data-status="unknown"] {
+  stroke: #d9c6d0;
+}
+.adm-health-gauge-no {
+  fill: #24141c;
+  font-size: 24px;
+  font-weight: 800;
+}
+.adm-health-gauge-no[data-status="warn"] {
+  fill: #a4660a;
+}
+.adm-health-gauge-no[data-status="bad"] {
+  fill: #b42318;
+}
+.adm-health-gauge-sub {
+  fill: #8b7684;
+  font-size: 9.5px;
+  font-weight: 600;
+}
+.adm-health-hero-legend {
+  display: grid;
+  gap: 5px;
+  min-width: 172px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.adm-health-hero-legend li {
+  display: grid;
+  grid-template-columns: 7px auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: #5e4a55;
+  font-size: 11.5px;
+}
+.adm-health-hero-legend i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c3b3bb;
+}
+.adm-health-hero-legend li[data-status="good"] i {
+  background: #0e7a5f;
+}
+.adm-health-hero-legend li[data-status="warn"] i {
+  background: #d18b1f;
+}
+.adm-health-hero-legend li[data-status="bad"] i {
+  background: #c0392b;
+}
+.adm-health-hero-legend small {
+  overflow: hidden;
+  color: #8b7684;
+  font-size: 11px;
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.adm-health-hero-alerts {
+  display: grid;
+  flex: 1 1 300px;
+  gap: 8px;
+  max-width: 430px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.adm-health-hero-alerts li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid #f6d5d0;
+  border-radius: 12px;
+  background: #fff;
+}
+.adm-health-hero-alerts li > div {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.adm-health-hero-alerts strong {
+  color: #3b2730;
+  font-size: 12px;
+  font-weight: 750;
+}
+.adm-health-hero-alerts small {
+  color: #8b7684;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.adm-health-hero-alerts .adm-health-severity {
+  margin-top: 0;
+  background: #c0392b;
+}
+.adm-health-hero-alerts .adm-health-fix {
+  align-self: center;
+}
+.adm-health-hero-alerts .adm-health-hero-more {
+  display: block;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: #8b7684;
+  font-size: 11px;
+}
+
+/* ---- SEO: giải thích cho người không biết SEO ---- */
+.adm-health-seo-help {
+  margin-top: 2px;
+  padding-top: 9px;
+  border-top: 1px dashed #f2dfe8;
+  color: #6c5a66;
+  font-size: 11.5px;
+}
+.adm-health-seo-help summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #a81455;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+.adm-health-seo-help summary::-webkit-details-marker {
+  display: none;
+}
+.adm-health-seo-help summary::after {
+  content: "+";
+  margin-left: auto;
+  color: #c9a4b5;
+  font-size: 13px;
+  font-weight: 800;
+}
+.adm-health-seo-help[open] summary::after {
+  content: "−";
+}
+.adm-health-seo-help p {
+  margin: 8px 0 6px;
+  line-height: 1.6;
+}
+.adm-health-seo-help ul {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding-left: 16px;
+  line-height: 1.55;
+}
+.adm-health-modal-explain {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #f6e4ec;
+  border-radius: 12px;
+  background: #fffafc;
+  color: #6c5a66;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.adm-health-modal-explain strong {
+  color: #3b2730;
+}
+@media (max-width: 1180px) {
+  .adm-health-hero-alerts {
+    max-width: none;
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 760px) {
+  .adm-health-hero-chart {
+    width: 100%;
+  }
+  .adm-health-hero-legend {
+    flex: 1;
+    min-width: 0;
+  }
+}
+/* ---- Tour pricing: sale/original pairs + derived discount preview ---- */
+.adm-price-row {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 2.4fr) auto;
+}
+.adm-price-pairs {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.adm-price-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+.adm-price-pair .adm-field {
+  margin-bottom: 0;
+}
+.adm-price-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  border-radius: 8px;
+  padding: 6px 9px;
+  background: #f0faf6;
+  color: #0d6b4d;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.adm-price-preview[data-tone="good"] span:first-child {
+  font-weight: 800;
+}
+.adm-price-preview[data-tone="warn"] {
+  background: #fff8eb;
+  color: #8a5a12;
+}
+.adm-price-preview s {
+  color: #8b7684;
+  font-weight: 500;
+}
+.adm-price-preview strong {
+  font-weight: 800;
+  color: #b8004a;
+}
+@media (max-width: 900px) {
+  .adm-price-row {
+    grid-template-columns: 1fr;
+  }
+  .adm-price-actions {
+    margin-top: 0;
+  }
+}
+@media (max-width: 640px) {
+  .adm-price-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Admin: Khách hàng & dấu ấn hành trình ---- */
+.adm-customer-editor {
+  display: grid;
+  gap: 16px;
+}
+.adm-customer-toggles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.adm-customer-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #f2dfe8;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+}
+.adm-customer-toggle[data-on="true"] {
+  border-color: #f3b9ce;
+  background: #fff8fb;
+}
+.adm-customer-toggle-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #fff1f6;
+  color: #c4004e;
+}
+.adm-customer-toggle-copy {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.adm-customer-toggle-copy strong {
+  color: #3b2730;
+  font-size: 11.5px;
+  font-weight: 750;
+}
+.adm-customer-toggle-copy small {
+  overflow: hidden;
+  color: #8b7684;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-customer-switch {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 21px;
+}
+.adm-customer-switch input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.adm-customer-switch i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: #eadfe5;
+  transition: background 180ms ease;
+}
+.adm-customer-switch i::after {
+  content: "";
+  display: block;
+  width: 17px;
+  height: 17px;
+  margin: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(72 16 43 / 0.3);
+  transition: transform 180ms ease;
+}
+.adm-customer-switch input:checked + i {
+  background: #e0005a;
+}
+.adm-customer-switch input:checked + i::after {
+  transform: translateX(15px);
+}
+.adm-customer-switch input:focus-visible + i {
+  box-shadow: 0 0 0 3px #e0005a22;
+}
+.adm-customer-block {
+  padding: 16px;
+  border: 1px solid #f2dfe8;
+  border-radius: 16px;
+  background: #fff;
+}
+.adm-customer-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.adm-customer-block-head h3 {
+  margin: 0;
+  color: #2a1820;
+  font-size: 13.5px;
+  font-weight: 750;
+}
+.adm-customer-eyebrow {
+  margin: 0 0 2px;
+  color: #b08093;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.adm-customer-count {
+  color: #a81455;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.adm-customer-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid #f0dce6;
+  border-radius: 9px;
+  background: #fff;
+  color: #a81455;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.adm-customer-add:hover:not(:disabled) {
+  border-color: #e0005a;
+  background: #fff6fa;
+}
+.adm-customer-add:disabled {
+  opacity: 0.5;
+}
+.adm-customer-pairs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+.adm-customer-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.adm-customer-field.is-wide {
+  grid-column: 1 / -1;
+}
+.adm-customer-field > span {
+  color: #6e5c68;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.adm-customer-field input,
+.adm-customer-field textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #efdae4;
+  border-radius: 9px;
+  background: #fffdfe;
+  color: #2a1820;
+  font: inherit;
+  font-size: 12px;
+}
+.adm-customer-field textarea {
+  resize: vertical;
+  line-height: 1.55;
+}
+.adm-customer-field input:focus,
+.adm-customer-field textarea:focus {
+  outline: none;
+  border-color: #e0005a;
+  box-shadow: 0 0 0 3px #e0005a12;
+}
+.adm-customer-field small {
+  color: #9b8793;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.adm-customer-field .adm-customer-error {
+  color: #b42318;
+  font-weight: 600;
+}
+.adm-customer-field .adm-customer-ok {
+  color: #0e7a5f;
+  font-weight: 600;
+}
+.adm-customer-empty {
+  margin: 4px 0 0;
+  padding: 14px;
+  border: 1px dashed #f0dce6;
+  border-radius: 12px;
+  background: #fffafc;
+  color: #8b7684;
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+.adm-customer-logos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.adm-customer-logo,
+.adm-customer-video {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #f4e3eb;
+  border-radius: 13px;
+  background: #fffafc;
+}
+.adm-customer-videos {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.adm-customer-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.adm-customer-item-head > span {
+  color: #b08093;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.adm-customer-item-actions {
+  display: flex;
+  gap: 3px;
+}
+.adm-customer-item-actions button {
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0 7px;
+  border: 1px solid #f0dce6;
+  border-radius: 8px;
+  background: #fff;
+  color: #6e5c68;
+  font-size: 11px;
+  font-weight: 700;
+}
+.adm-customer-item-actions button:hover:not(:disabled) {
+  border-color: #e0005a;
+  color: #a81455;
+}
+.adm-customer-item-actions button:disabled {
+  opacity: 0.4;
+}
+.adm-customer-item-actions .adm-customer-remove {
+  color: #b42318;
+}
+.adm-customer-visible {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #6e5c68;
+  font-size: 11px;
+  font-weight: 600;
+}
+.adm-customer-visible input {
+  width: 15px;
+  height: 15px;
+  accent-color: #e0005a;
+}
+.adm-customer-preview {
+  padding: 14px 16px;
+  border: 1px solid #f2dfe8;
+  border-radius: 16px;
+  background:
+    radial-gradient(80% 130% at 100% 0%, #ffe7f1 0%, transparent 60%),
+    #fff;
+}
+.adm-customer-preview > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.adm-customer-preview > header strong {
+  color: #3b2730;
+  font-size: 11.5px;
+  font-weight: 750;
+}
+.adm-customer-preview-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.adm-customer-preview-logos li {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 46px;
+  padding: 6px;
+  border: 1px solid #f4e3eb;
+  border-radius: 9px;
+  background: #fff;
+}
+.adm-customer-preview-logos img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.adm-customer-preview-logos li > span {
+  color: #a81455;
+  font-size: 15px;
+  font-weight: 800;
+}
+.adm-customer-preview-videos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.adm-customer-preview-videos > div {
+  display: grid;
+  gap: 2px;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid #f4e3eb;
+  border-radius: 10px;
+  background: #fff;
+}
+.adm-customer-preview-videos img,
+.adm-customer-preview-play {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background:
+    radial-gradient(80% 100% at 80% 10%, #ff7ca8, transparent 60%),
+    linear-gradient(140deg, #2a1820, #a81455);
+  color: #fff;
+}
+.adm-customer-preview-videos strong {
+  overflow: hidden;
+  padding: 6px 7px 0;
+  color: #3b2730;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-customer-preview-videos small {
+  overflow: hidden;
+  padding: 0 7px 6px;
+  color: #8b7684;
+  font-size: 9.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-customer-preview-empty {
+  margin: 0;
+  color: #8b7684;
+  font-size: 11px;
+}
+@media (max-width: 900px) {
+  .adm-customer-toggles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .adm-customer-logos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .adm-customer-preview-videos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .adm-customer-pairs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .adm-customer-field.is-wide {
+    grid-column: auto;
+  }
+  .adm-customer-block-head {
+    flex-wrap: wrap;
+  }
+}
+
+/* Công tắc admin: track rõ, knob trắng có viền để không đọc thành hình tròn */
+.adm-customer-switch {
+  width: 42px;
+  height: 24px;
+}
+.adm-customer-switch i {
+  border: 1px solid #e7d5df;
+  background: #f2e8ee;
+  box-shadow: inset 0 1px 2px rgb(72 16 43 / 0.06);
+}
+.adm-customer-switch i::after {
+  width: 18px;
+  height: 18px;
+  margin: 2px;
+  box-shadow:
+    0 1px 3px rgb(72 16 43 / 0.28),
+    0 0 0 1px rgb(72 16 43 / 0.04);
+}
+.adm-customer-switch input:checked + i {
+  border-color: #e0005a;
+  background: #e0005a;
+}
+.adm-customer-switch input:checked + i::after {
+  transform: translateX(18px);
 }

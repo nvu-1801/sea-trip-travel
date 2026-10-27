@@ -968,6 +968,44 @@ try {
   }
   check("every home section editor opens without crashing", true);
   await page
+    .getByRole("button", { name: /Sửa khách hàng & dấu ấn/ })
+    .click();
+  const customerDialog = page.getByRole("dialog");
+  await customerDialog.waitFor();
+  check(
+    "customer section editor exposes its visibility toggles",
+    await customerDialog.getByText("Hiển thị section", { exact: true }).isVisible(),
+  );
+  await customerDialog.locator('button[aria-label="Đóng (Esc)"]').click();
+  await customerDialog.waitFor({ state: "hidden" });
+  const landingRows = await (
+    await context.request.get(`${base}/api/admin/content/landing`)
+  ).json();
+  const landingRow = landingRows[0];
+  const badLanding = structuredClone(landingRow.data);
+  badLanding.customers = {
+    enabled: true,
+    videos: [
+      {
+        id: "video_bad",
+        title: "Video kiểm thử",
+        youtubeUrl: "javascript:alert(1)",
+      },
+    ],
+  };
+  const rejected = await context.request.post(
+    `${base}/api/admin/content/landing`,
+    {
+      headers,
+      data: {
+        data: badLanding,
+        revision: landingRow.revision,
+        action: "save",
+      },
+    },
+  );
+  check("unsafe YouTube link is rejected by the CMS", rejected.status() === 400);
+  await page
     .getByRole("navigation", { name: "Quản trị" })
     .getByRole("button", { name: /Cẩm nang/ })
     .click();

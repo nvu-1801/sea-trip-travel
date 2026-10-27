@@ -29,8 +29,12 @@ import {
   type TourIssue,
   type TourSectionKey,
 } from "@/domain/tour-rules";
-import { slugify } from "@/lib/slugify";
-import { isPlaceholderSlug } from "@/lib/public-slug";
+import { discountPercent } from "@/lib/tour-price";
+import {
+  isPlaceholderSlug,
+  slugFollowsTitle,
+  tourSlugFromTitle,
+} from "@/lib/public-slug";
 
 export type TourEditorHandle = {
   /** Returns false (and jumps to the first issue) when the draft is invalid. */
@@ -51,6 +55,35 @@ const newId = (prefix: string) =>
 const optionalText = (value: string) => (value.trim() ? value : undefined);
 
 const NIGHT_LABEL = "Số đêm";
+const vndFormat = new Intl.NumberFormat("vi-VN");
+const formatVnd = (amount: number) => `${vndFormat.format(amount)} ₫`;
+
+function DiscountPreview({
+  current,
+  original,
+}: {
+  current: number;
+  original: number;
+}) {
+  if (original <= 0) return null;
+  const percent = discountPercent(original, current);
+  if (percent) {
+    return (
+      <p className="adm-price-preview" data-tone="good">
+        <span>Giảm {percent}%</span>
+        <s>{formatVnd(original)}</s>
+        <span aria-hidden="true">→</span>
+        <strong>{formatVnd(current)}</strong>
+      </p>
+    );
+  }
+  if (current <= 0) return null;
+  return (
+    <p className="adm-price-preview" data-tone="warn">
+      Giá gốc phải lớn hơn giá hiện tại để hiện giảm giá.
+    </p>
+  );
+}
 
 function enDayFrom(day: AdminRecord, index: number): AdminRecord {
   return {
@@ -135,6 +168,7 @@ export const TourEditor = forwardRef<
   const reviewed = data._enReviewed === true;
   const isContact = data.priceFrom === null || data.priceFrom === undefined;
   const priceAmount = numberOf(rec(data.priceFrom).amount);
+  const originalPriceAmount = numberOf(rec(data.originalPriceFrom).amount);
 
   const categories = useMemo(
     () => new Set((references.categories ?? []).map((option) => option.value)),
@@ -194,6 +228,21 @@ export const TourEditor = forwardRef<
   );
 
   const update = (patch: AdminRecord) => onChange({ ...data, ...patch });
+
+  /**
+   * New tours start with a `noi-dung-…` placeholder. While that placeholder is
+   * still in place, the public URL follows the title the owner types, so the
+   * slug field already reads `/tour/quy-nhon-phu-yen-ghenh-da-dia-1-ngay`.
+   * A slug the owner edited by hand is never overwritten.
+   */
+  const updateTitle = (next: string) => {
+    const patch: AdminRecord = { title: next };
+    if (!locked && slugFollowsTitle(data.slug, title, "tour")) {
+      const derived = tourSlugFromTitle(next);
+      if (derived) patch.slug = derived;
+    }
+    update(patch);
+  };
 
   /* --- General ---------------------------------------------------------- */
 
@@ -501,8 +550,13 @@ export const TourEditor = forwardRef<
               value={title}
               required
               error={showError("title")}
+              hint={
+                textOf(data.slug)
+                  ? `Đường dẫn công khai: /tour/${textOf(data.slug)}`
+                  : undefined
+              }
               onBlur={() => markTouched("title")}
-              onChange={(next) => update({ title: next })}
+              onChange={(next) => updateTitle(next)}
             />
             <TextField
               path="tourCode"
@@ -597,6 +651,7 @@ export const TourEditor = forwardRef<
               để dùng tiếp, không phải nhập lại.
             </p>
           ) : (
+            <>
             <div className="adm-tour-grid-2">
               <NumberField
                 path="priceFrom.amount"
@@ -609,7 +664,7 @@ export const TourEditor = forwardRef<
                 hint={
                   packages.length > 0
                     ? "Tự động bằng giá người lớn thấp nhất trong bảng giá."
-                    : "Hiển thị trên thẻ tour và khối giá."
+                    : "Giá khách thực trả, hiển thị trên thẻ tour và khối giá."
                 }
                 onBlur={() => markTouched("priceFrom.amount")}
                 onChange={(next) =>
@@ -621,22 +676,67 @@ export const TourEditor = forwardRef<
                   })
                 }
               />
-              <TextField
-                path="priceNote"
-                label="Ghi chú giá (tuỳ chọn)"
-                value={textOf(data.priceNote)}
-                multiline
-                rows={2}
-                hint="Ví dụ: giá đã gồm VAT, chưa gồm vé tham quan…"
-                onBlur={() => markTouched("priceNote")}
-                onChange={(next) => {
-                  const nextValue = { ...data };
-                  if (next.trim()) nextValue.priceNote = next;
-                  else delete nextValue.priceNote;
-                  onChange(nextValue);
-                }}
-              />
+              {packages.length === 0 ? (
+                <NumberField
+                  path="originalPriceFrom.amount"
+                  label="Giá gốc (tuỳ chọn)"
+                  value={originalPriceAmount}
+                  min={0}
+                  suffix="₫"
+                  error={showError("originalPriceFrom.amount")}
+                  hint="Để trống nếu không giảm giá. Phần trăm giảm tự tính."
+                  onBlur={() => markTouched("originalPriceFrom.amount")}
+                  onChange={(next) =>
+                    update({
+                      originalPriceFrom:
+                        next > 0
+                          ? { amount: next, currency: "VND" }
+                          : undefined,
+                    })
+                  }
+                />
+              ) : (
+                <TextField
+                  path="priceNote"
+                  label="Ghi chú giá (tuỳ chọn)"
+                  value={textOf(data.priceNote)}
+                  multiline
+                  rows={2}
+                  hint="Ví dụ: giá đã gồm VAT, chưa gồm vé tham quan…"
+                  onBlur={() => markTouched("priceNote")}
+                  onChange={(next) => {
+                    const nextValue = { ...data };
+                    if (next.trim()) nextValue.priceNote = next;
+                    else delete nextValue.priceNote;
+                    onChange(nextValue);
+                  }}
+                />
+              )}
             </div>
+          {!isContact && packages.length === 0 ? (
+              <>
+                <DiscountPreview
+                  current={priceAmount}
+                  original={originalPriceAmount}
+                />
+                <TextField
+                  path="priceNote"
+                  label="Ghi chú giá (tuỳ chọn)"
+                  value={textOf(data.priceNote)}
+                  multiline
+                  rows={2}
+                  hint="Ví dụ: giá đã gồm VAT, chưa gồm vé tham quan…"
+                  onBlur={() => markTouched("priceNote")}
+                  onChange={(next) => {
+                    const nextValue = { ...data };
+                    if (next.trim()) nextValue.priceNote = next;
+                    else delete nextValue.priceNote;
+                    onChange(nextValue);
+                  }}
+                />
+              </>
+            ) : null}
+            </>
           )}
           <p className="adm-hint">
             Giá chi tiết theo từng gói nằm ở phần “Các gói giá” bên dưới. Giá
@@ -935,7 +1035,8 @@ export const TourEditor = forwardRef<
             </div>
             <p className="adm-hint">
               Mỗi gói là một dòng trong bảng giá. Giá người lớn thấp nhất tự
-              động trở thành “Giá từ” ở phần Thông tin chung.
+              động trở thành “Giá từ”. Thêm giá gốc nếu muốn hiện giảm giá —
+              phần trăm được tính tự động từ cặp giá.
             </p>
             {showError("pricingOptions") ? (
               <p className="adm-field-error" role="alert">
@@ -958,30 +1059,93 @@ export const TourEditor = forwardRef<
                   onBlur={() => markTouched(`pricingOptions.${index}.label`)}
                   onChange={(next) => updatePackage(index, { label: next })}
                 />
-                <NumberField
-                  path={`pricingOptions.${index}.adultPrice`}
-                  label="Người lớn"
-                  value={numberOf(option.adultPrice)}
-                  min={1}
-                  suffix="₫"
-                  error={showError(`pricingOptions.${index}.adultPrice`)}
-                  onBlur={() =>
-                    markTouched(`pricingOptions.${index}.adultPrice`)
-                  }
-                  onChange={(next) => updatePackage(index, { adultPrice: next })}
-                />
-                <NumberField
-                  path={`pricingOptions.${index}.childPrice`}
-                  label="Trẻ em"
-                  value={numberOf(option.childPrice)}
-                  min={0}
-                  suffix="₫"
-                  error={showError(`pricingOptions.${index}.childPrice`)}
-                  onBlur={() =>
-                    markTouched(`pricingOptions.${index}.childPrice`)
-                  }
-                  onChange={(next) => updatePackage(index, { childPrice: next })}
-                />
+                <div className="adm-price-pairs">
+                  <div className="adm-price-pair">
+                    <NumberField
+                      path={`pricingOptions.${index}.adultPrice`}
+                      label="Người lớn · giá bán"
+                      value={numberOf(option.adultPrice)}
+                      min={1}
+                      suffix="₫"
+                      error={showError(`pricingOptions.${index}.adultPrice`)}
+                      onBlur={() =>
+                        markTouched(`pricingOptions.${index}.adultPrice`)
+                      }
+                      onChange={(next) =>
+                        updatePackage(index, { adultPrice: next })
+                      }
+                    />
+                    <NumberField
+                      path={`pricingOptions.${index}.originalAdultPrice`}
+                      label="Giá gốc người lớn"
+                      value={numberOf(option.originalAdultPrice)}
+                      min={0}
+                      suffix="₫"
+                      error={showError(
+                        `pricingOptions.${index}.originalAdultPrice`,
+                      )}
+                      hint="Để trống nếu không giảm giá."
+                      onBlur={() =>
+                        markTouched(
+                          `pricingOptions.${index}.originalAdultPrice`,
+                        )
+                      }
+                      onChange={(next) =>
+                        updatePackage(index, {
+                          originalAdultPrice: next > 0 ? next : undefined,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="adm-price-pair">
+                    <NumberField
+                      path={`pricingOptions.${index}.childPrice`}
+                      label="Trẻ em · giá bán"
+                      value={numberOf(option.childPrice)}
+                      min={0}
+                      suffix="₫"
+                      error={showError(`pricingOptions.${index}.childPrice`)}
+                      onBlur={() =>
+                        markTouched(`pricingOptions.${index}.childPrice`)
+                      }
+                      onChange={(next) =>
+                        updatePackage(index, { childPrice: next })
+                      }
+                    />
+                    <NumberField
+                      path={`pricingOptions.${index}.originalChildPrice`}
+                      label="Giá gốc trẻ em"
+                      value={numberOf(option.originalChildPrice)}
+                      min={0}
+                      suffix="₫"
+                      error={showError(
+                        `pricingOptions.${index}.originalChildPrice`,
+                      )}
+                      hint="Chỉ dùng khi có giá trẻ em."
+                      onBlur={() =>
+                        markTouched(
+                          `pricingOptions.${index}.originalChildPrice`,
+                        )
+                      }
+                      onChange={(next) =>
+                        updatePackage(index, {
+                          originalChildPrice: next > 0 ? next : undefined,
+                        })
+                      }
+                    />
+                  </div>
+                  <DiscountPreview
+                    current={numberOf(option.adultPrice)}
+                    original={numberOf(option.originalAdultPrice)}
+                  />
+                  {numberOf(option.childPrice) > 0 &&
+                  numberOf(option.originalChildPrice) > 0 ? (
+                    <DiscountPreview
+                      current={numberOf(option.childPrice)}
+                      original={numberOf(option.originalChildPrice)}
+                    />
+                  ) : null}
+                </div>
                 <div className="adm-list-actions adm-price-actions">
                   <button
                     type="button"
@@ -1594,7 +1758,7 @@ export const TourEditor = forwardRef<
                   <button
                     type="button"
                     onClick={() =>
-                      update({ slug: slugify(title || "tour-moi") })
+                      update({ slug: tourSlugFromTitle(title) || "tour-moi" })
                     }
                   >
                     Tạo từ tiêu đề

@@ -59,9 +59,20 @@ Carousel phủ toàn màn hình đầu và chạy ra sau header trong suốt. Kh
 - Website & footer: tên thương hiệu, hotline, email, địa chỉ, giờ làm việc VI/EN, các liên kết footer VI/EN, mạng xã hội và bật/tắt motion. Các liên kết mạng xã hội được quản lý riêng; kiểm tra lại URL Zalo khi thay hotline.
 - Nội dung VI/EN: các dòng chữ trên trang chủ, liên hệ, chính sách, nhãn và thông điệp giao diện. Tour/bài viết/danh mục/điểm đến có phần bản dịch riêng trong form; chỉ đánh dấu đã duyệt khi thật sự kiểm tra. Khi sửa nguồn chưa có bản dịch CMS, site không âm thầm dùng lại bản dịch seed đã cũ.
 
+### Khách hàng & dấu ấn hành trình
+
+Trong tab **Trang chủ**, mở thẻ **Khách hàng & dấu ấn** (ngay dưới Tour nổi bật). Đây là bằng chứng xã hội do chủ website cung cấp: không tự thêm số khách, đánh giá hay giải thưởng không có thật.
+
+- Bật/tắt cả section, dải logo và nhóm video riêng biệt. Section chỉ xuất hiện khi được bật và có ít nhất một mục đang hiện.
+- Logo: chọn ảnh nền trong suốt từ Thư viện ảnh, nhập tên đơn vị, alt text, link tuỳ chọn; đổi thứ tự bằng ↑ ↓ và ẩn/hiện từng logo. Tối đa 12 logo.
+- Video: dán link YouTube (`watch?v=`, `youtu.be`, `shorts`, `live`, `embed`); hệ thống chỉ nhận ID hợp lệ, không nhận HTML/iframe. Ảnh bìa 16:9 là tuỳ chọn — không có ảnh bìa, card dùng nền thương hiệu. Tối đa 6 video.
+- Trang công khai chỉ tải iframe YouTube sau khi khách bấm play; trước đó không gọi dịch vụ bên thứ ba. Nút “Xem trên YouTube” luôn mở tab mới.
+- Tiêu đề, mô tả, nhãn CTA và link CTA có bản VI/EN. Video/logo không có bản dịch EN sẽ dùng nội dung VI.
+- Thẻ **Xem nhanh** trong form hiển thị đúng logo/video đang bật trước khi lưu nháp hoặc xuất bản.
+
 `Thêm mới` tạo bản nháp theo cấu trúc mẫu, không tự xuất bản. Tour mới được xóa giá, ảnh và nguồn tư liệu của mẫu để chủ quản trị chọn lại. Kiểm tra kỹ nội dung lịch trình trước khi xuất bản.
 
-`Lưu bản nháp` giữ bản public trước đó nếu nội dung đã xuất bản; `Xuất bản thay đổi` cập nhật public ngay. Xem bản nháp đã lưu bằng liên kết xem trước. `Ẩn` gỡ khỏi website; `Thùng rác` cho phép khôi phục thành nháp. Slug tự tạo từ tên khi lưu lần đầu (tour bỏ chữ “Tour” và đổi `2N1Đ` thành `2-ngay-1-dem`). Slug tạm `noi-dung-…` còn sửa được; slug đã có tên thật và mã nội dung được giữ ổn định để bảo toàn liên kết, URL cũ tự chuyển hướng 301 sang URL mới. Khi hai phiên cùng sửa, phiên cũ bị từ chối để tránh lưu đè.
+`Lưu bản nháp` giữ bản public trước đó nếu nội dung đã xuất bản; `Xuất bản thay đổi` cập nhật public ngay. Xem bản nháp đã lưu bằng liên kết xem trước. `Ẩn` gỡ khỏi website; `Thùng rác` cho phép khôi phục thành nháp. Slug tự chạy theo tên ngay khi gõ — tour bỏ chữ “Tour” và đổi `2N1Đ` thành `2-ngay-1-dem`, đường dẫn công khai hiện ngay dưới tiêu đề (ví dụ `/tour/quy-nhon-phu-yen-ghenh-da-dia-1-ngay`); bài cẩm nang cũng vậy. Sửa slug bằng tay thì chuỗi đó được giữ nguyên. Slug đã có tên thật và mã nội dung được giữ ổn định để bảo toàn liên kết, URL cũ tự chuyển hướng 301 sang URL mới. Khi hai phiên cùng sửa, phiên cũ bị từ chối để tránh lưu đè.
 
 ### Gợi ý nội dung tour với ChatGPT
 
@@ -120,10 +131,12 @@ Mở **Kiểm tra hoạt động** ở nhóm đầu tiên của menu Studio. Tra
 
 Mở **Sức khỏe website** ở nhóm đầu tiên của menu Studio. Trang chỉ đọc, không sửa nội dung; số liệu được giữ tối đa 60 giây và có nút **Làm mới**.
 
-- **Dung lượng**: tổng dung lượng thư mục dữ liệu, tách database (SQLite + WAL), ảnh/tệp trong thư mục uploads và phần còn lại — so với hạn mức dự án **5 GB**. Ngưỡng cảnh báo dùng chung 88% (vàng) và 95% (đỏ) của hạn mức. Thư viện ảnh hiển thị cùng hạn mức này ngay dưới số ảnh. Trên Vercel serverless không có volume bền vững nên mục này báo không áp dụng. Ảnh tải lên không còn được tham chiếu trong tour, bài viết hay bản nháp được kiểm tra riêng: khi tổng vượt 10 MB, card Dung lượng hiện khối nhắc xoá kèm lý do (volume nhẹ hơn, sao lưu/khôi phục nhanh hơn); Thư viện ảnh đánh dấu **Chưa dùng** và có nút lọc cùng tên.
+Khối **Tổng quan** chỉ chuyển sang màu đỏ khi có sự cố vận hành thật sự: hạn mức dung lượng ≥95%, tốc độ tải ở mức đỏ hoặc sao lưu lỗi. Khi website bình thường, khối này hiện dấu tích xanh/ổn định kèm **vòng điểm 4 phần** (SEO, dung lượng, tốc độ, sao lưu) để thấy ngay phần nào còn yếu; các con số ảnh/tệp, bản backup và cảnh báo nằm bên phải. Điểm SEO thấp vẫn hiện đầy đủ ở card **SEO** và danh sách việc cần xử lý, không biến cả trang thành báo động đỏ.
+
+- **Dung lượng**: tổng dung lượng thư mục dữ liệu, tách database (SQLite + WAL), ảnh/tệp trong thư mục uploads và phần còn lại — so với hạn mức dự án **5 GB**. Ngưỡng cảnh báo dùng chung 88% (vàng) và 95% (đỏ) của hạn mức. Thư viện ảnh hiển thị cùng hạn mức này ngay dưới số ảnh. Ảnh tải lên không còn được tham chiếu trong tour, bài viết hay bản nháp được kiểm tra riêng: khi tổng vượt 10 MB, card Dung lượng hiện khối nhắc xoá kèm lý do (volume nhẹ hơn, sao lưu/khôi phục nhanh hơn); Thư viện ảnh đánh dấu **Chưa dùng** và có nút lọc cùng tên. Trên Vercel serverless không có volume bền vững nên mục này báo không áp dụng.
 - **Bộ nhớ**: RSS và heap của tiến trình Node, kèm % của hạn mức cảnh báo 5 GB.
 - **Tốc độ tải**: p75 của TTFB, FCP, LCP, INP và CLS từ khách truy cập thật trong 7 hoặc 28 ngày, kèm 5 trang chậm nhất theo LCP. Cần ít nhất 20 lượt đo mới kết luận Tốt/Cần cải thiện; dưới ngưỡng đó trang ghi **Chưa đủ dữ liệu**. Số liệu được gửi ẩn danh: không cookie, không visitor id, không lưu IP; trình duyệt tự động (bot, test) bị bỏ qua.
-- **SEO**: điểm 0–100 theo metadata (title/description, trùng lặp), nội dung/liên kết (ảnh bìa, alt, danh mục rỗng, tour/điểm đến, bài viết thiếu tour liên quan), kỹ thuật (slug tạm, sitemap, robots) và độ phủ bản dịch EN đã duyệt. Mỗi lỗi có số lượng; bấm **Chi tiết** (hoặc **Xem chi tiết … nhóm lỗi** trên card SEO) để mở bảng liệt kê từng trang bị ảnh hưởng, mỗi dòng có nút **Sửa** mở đúng form tour/bài viết/danh mục, còn **Sửa ngay** mở trang đầu tiên. Bấm vào dòng “Bản dịch EN đã duyệt” để xem các trang còn thiếu bản dịch. Điểm ≥80 là Tốt, 55–79 Cần cải thiện, dưới 55 Có vấn đề.
+- **SEO**: điểm 0–100 theo metadata (title/description, trùng lặp), nội dung/liên kết (ảnh bìa, alt, danh mục rỗng, tour/điểm đến, bài viết thiếu tour liên quan), kỹ thuật (slug tạm, sitemap, robots) và độ phủ bản dịch EN đã duyệt. Card SEO có mục **SEO là gì?** giải thích bằng ngôn ngữ thường: giúp khách tìm thấy tour trên Google miễn phí. Mỗi lỗi có số lượng; bấm **Chi tiết** (hoặc **Xem chi tiết … nhóm lỗi** trên card SEO) để mở bảng liệt kê từng trang bị ảnh hưởng, mỗi dòng có nút **Sửa** mở đúng form tour/bài viết/danh mục, còn **Sửa ngay** mở trang đầu tiên. Bấm vào dòng “Bản dịch EN đã duyệt” để xem các trang còn thiếu bản dịch. Điểm ≥80 là Tốt, 55–79 Cần cải thiện, dưới 55 Có vấn đề.
 - Bảng **Máy chủ** hiển thị thời gian hoạt động, bộ nhớ, độ trễ truy vấn database và phiên bản Node — chỉ để chẩn đoán, không phải số liệu kinh doanh.
 
 Không xoá file trực tiếp trong volume để “giảm GB”: xoá ảnh qua **Thư viện ảnh** và dọn tour/bài viết qua **Thùng rác** để hệ thống cập nhật liên kết đúng.

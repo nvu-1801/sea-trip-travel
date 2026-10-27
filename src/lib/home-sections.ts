@@ -91,6 +91,16 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     tip: "Ghim tour thủ công hoặc để tự động theo tuyến.",
   },
   {
+    key: "customers",
+    collection: "landing",
+    title: "Khách hàng & dấu ấn",
+    where: "Dải logo + video khách hàng ngay dưới tour nổi bật",
+    illustration: "/images/hero/coastal-sunset.webp",
+    icon: "users",
+    group: "main",
+    tip: "Bật/tắt section, thêm logo đối tác và video khách hàng; mỗi mục có ảnh, link và thứ tự riêng.",
+  },
+  {
     key: "trust",
     collection: "landing",
     title: "Cam kết dịch vụ",
@@ -207,6 +217,17 @@ export function sectionSummary(meta: HomeSectionMeta, data: unknown): string {
       case "trust": {
         const n = asArray(asRecord(root.trust).items).length;
         return n > 0 ? `${n} cam kết` : "Chưa có cam kết";
+      }
+      case "customers": {
+        const section = asRecord(root.customers);
+        if (section.enabled !== true) return "Đang tắt";
+        const logos = asArray(section.logos).filter(
+          (item) => asRecord(item).visible !== false,
+        ).length;
+        const videos = asArray(section.videos).filter(
+          (item) => asRecord(item).visible !== false,
+        ).length;
+        return `${logos} logo · ${videos} video`;
       }
       case "story": {
         const n = asArray(asRecord(root.story).trips).length;

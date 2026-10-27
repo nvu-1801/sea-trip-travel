@@ -43,6 +43,7 @@ export type AdminIconName =
   | "calendar"
   | "chart"
   | "funnel"
+  | "check"
   | "trophy"
   | "new"
   | "globe"
@@ -326,6 +327,7 @@ const PATHS: Record<AdminIconName, ReactNode> = {
       <circle cx="14.5" cy="7.5" r="1" />
     </>
   ),
+  check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
 };
 
 export function AdminIcon({

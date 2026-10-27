@@ -7,7 +7,7 @@ import {
 } from "../src/lib/home-sections";
 
 test("home sections mirror the landing page order with unique keys", () => {
-  assert.equal(HOME_SECTIONS.length, 11);
+  assert.equal(HOME_SECTIONS.length, 12);
   const keys = HOME_SECTIONS.map((section) => section.key);
   assert.equal(new Set(keys).size, keys.length);
   for (const section of HOME_SECTIONS) {
@@ -22,6 +22,7 @@ test("home sections mirror the landing page order with unique keys", () => {
       "finder",
       "explore",
       "featured",
+      "customers",
       "trust",
       "story",
       "regions",
@@ -67,6 +68,20 @@ test("section summaries reflect real record data", () => {
   assert.match(
     sectionSummary(byKey.guides, { guides: { featuredSlug: "bai-viet" } }),
     /bai-viet/,
+  );
+  assert.equal(
+    sectionSummary(byKey.customers, { customers: { enabled: false } }),
+    "Đang tắt",
+  );
+  assert.match(
+    sectionSummary(byKey.customers, {
+      customers: {
+        enabled: true,
+        logos: [{ visible: true }, { visible: false }],
+        videos: [{ visible: true }],
+      },
+    }),
+    /1 logo · 1 video/,
   );
 });
 

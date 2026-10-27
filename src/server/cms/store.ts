@@ -764,23 +764,25 @@ function normalizePublicSlug(
       .filter(Boolean),
   );
   const derive = () => slugBaseFor(collection, slugTitleOf(collection, data));
-
-  if (!previousData) {
-    if (!incoming || isPlaceholderSlug(incoming)) {
-      const base = derive();
+  const base = derive();
+  // A slug that still matches the title is generated, not an editorial
+  // decision: a collision gets `-2` instead of a hard error.
+  const generated =
+    !incoming ||
+    isPlaceholderSlug(incoming) ||
+    (base !== "" && incoming === base);
+  const resolveSlug = () => {
+    if (generated) {
       if (base) data.slug = uniqueSlug(base, taken);
-    } else if (taken.has(incoming)) {
+      return;
+    }
+    if (taken.has(incoming)) {
       throw new Error("Slug/đường dẫn đã tồn tại");
     }
-  } else if (isPlaceholderSlug(stored)) {
-    if (!incoming || isPlaceholderSlug(incoming)) {
-      const base = derive();
-      if (base) data.slug = uniqueSlug(base, taken);
-    } else {
-      if (taken.has(incoming)) throw new Error("Slug/đường dẫn đã tồn tại");
-      data.slug = incoming;
-    }
-  }
+    data.slug = incoming;
+  };
+
+  if (!previousData || isPlaceholderSlug(stored)) resolveSlug();
 
   if (collection === "categories") {
     const storedPath = String(previousData?.path ?? "");
