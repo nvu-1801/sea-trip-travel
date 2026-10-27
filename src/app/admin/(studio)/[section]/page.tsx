@@ -16,6 +16,7 @@ const LABELS: Record<string, string> = {
   settings: "Website & footer",
   leads: "Yêu cầu tư vấn",
   activity: "Kiểm tra hoạt động",
+  health: "Sức khỏe website",
   account: "Bảo mật",
 };
 

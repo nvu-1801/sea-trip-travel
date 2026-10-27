@@ -351,6 +351,8 @@ export async function submitLead(
   console.info(
     `[lead] delivered ${requestId} via ${result.transport} (recipients=${salesRecipients().length})`,
   );
+  // Keep the admin badge truthful and stop an accidental duplicate resend.
+  if (stored) markMail(requestId, "sent");
 
   const success: SubmitLeadResult = {
     status: 200,

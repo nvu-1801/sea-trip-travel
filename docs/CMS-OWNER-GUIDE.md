@@ -97,7 +97,7 @@ Thư viện giữ đủ 28 ảnh gốc, không sửa byte gốc. Ảnh mới nh�
 
 Yêu cầu tư vấn được lưu trước gửi email; SMTP lỗi vẫn giữ được dữ liệu. Tab Tư vấn có trạng thái mới/đã liên hệ/tiềm năng/đã chốt/chưa phù hợp, ghi chú và nút gửi lại email. Chỉ gửi lại sau khi cấu hình SMTP đúng; không tự gửi lại email đã báo thành công. Dữ liệu và ghi chú mã hóa AES-256-GCM trong SQLite.
 
-Danh sách hiện tải 500 lead gần nhất; khi vận hành lượng lớn cần bổ sung phân trang/xuất dữ liệu theo bộ lọc. SQLite lưu toàn bộ bản ghi trong volume/backup, không xóa các lead cũ ngoài danh sách. Xóa dữ liệu khách là thao tác vĩnh viễn có xác nhận.
+Danh sách hiện tải 500 lead gần nhất; khi vận hành lượng lớn cần bổ sung phân trang/xuất dữ liệu theo bộ lọc. SQLite lưu toàn bộ bản ghi trong volume/backup, không xóa các lead cũ ngoài danh sách. Nút **Xóa dữ liệu** chỉ chuyển khách vào **Thùng rác** của tab Tư vấn: dữ liệu còn nguyên (đã mã hóa) trong 60 ngày để khôi phục, hết hạn mới tự xóa vĩnh viễn. Chỉ mục đang ở Thùng rác mới xóa vĩnh viễn được, và thao tác đó có xác nhận riêng.
 
 ## Sao lưu & phục hồi
 
@@ -115,6 +115,17 @@ Mở **Kiểm tra hoạt động** ở nhóm đầu tiên của menu Studio. Tra
 - Quy tắc đánh dấu chỉ dựa trên bằng chứng trong log: thao tác thất bại, xóa dữ liệu, thay đổi mật khẩu/quyền, hoặc từ 3 lần đăng nhập thất bại từ cùng IP trong 15 phút. Trang không kết luận admin có ý định xấu.
 - Log trống, thiếu người thực hiện/IP hoặc tải lỗi đều hiện **Chưa đủ dữ liệu để đánh giá**; không coi thiếu log là hệ thống bình thường.
 - Bản ghi tạo trước khi nâng cấp có thể thiếu người thực hiện/IP. Thao tác chạy trực tiếp trên máy chủ (script quản trị) và khung giờ làm việc của admin chưa được cấu hình nên chưa được đánh giá. Thời gian hiển thị theo giờ Việt Nam.
+
+## Sức khỏe website
+
+Mở **Sức khỏe website** ở nhóm đầu tiên của menu Studio. Trang chỉ đọc, không sửa nội dung; số liệu được giữ tối đa 60 giây và có nút **Làm mới**.
+
+- **Dung lượng**: tổng dung lượng thư mục dữ liệu, tách database (SQLite + WAL), ảnh/tệp trong thư mục uploads và phần còn lại; kèm dung lượng trống của volume. Ngưỡng cảnh báo: dữ liệu từ 1,5 GB (vàng) hoặc 5 GB (đỏ); volume đã dùng từ 88% (vàng) hoặc 95% (đỏ). Trên Vercel serverless không có volume bền vững nên mục này báo không áp dụng.
+- **Tốc độ tải**: p75 của TTFB, FCP, LCP, INP và CLS từ khách truy cập thật trong 7 hoặc 28 ngày, kèm 5 trang chậm nhất theo LCP. Cần ít nhất 20 lượt đo mới kết luận Tốt/Cần cải thiện; dưới ngưỡng đó trang ghi **Chưa đủ dữ liệu**. Số liệu được gửi ẩn danh: không cookie, không visitor id, không lưu IP; trình duyệt tự động (bot, test) bị bỏ qua.
+- **SEO**: điểm 0–100 theo metadata (title/description, trùng lặp), nội dung/liên kết (ảnh bìa, alt, danh mục rỗng, tour/điểm đến, bài viết thiếu tour liên quan), kỹ thuật (slug tạm, sitemap, robots) và độ phủ bản dịch EN đã duyệt. Mỗi lỗi có số lượng và nút **Sửa** mở đúng form tour/bài viết/danh mục. Điểm ≥80 là Tốt, 55–79 Cần cải thiện, dưới 55 Có vấn đề.
+- Bảng **Máy chủ** hiển thị thời gian hoạt động, bộ nhớ, độ trễ truy vấn database và phiên bản Node — chỉ để chẩn đoán, không phải số liệu kinh doanh.
+
+Không xoá file trực tiếp trong volume để “giảm GB”: xoá ảnh qua **Thư viện ảnh** và dọn tour/bài viết qua **Thùng rác** để hệ thống cập nhật liên kết đúng.
 
 ## Trước phát hành
 
