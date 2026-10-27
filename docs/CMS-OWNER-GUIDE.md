@@ -101,7 +101,7 @@ Danh sách hiện tải 500 lead gần nhất; khi vận hành lượng lớn c�
 
 ## Sao lưu & phục hồi
 
-Mục **Bảo mật → Sao lưu & phục hồi** hiển thị lịch (ngày 1 & 16 lúc 03:00 Asia/Bangkok), bản thành công gần nhất, retention, offsite và cho phép tạo backup thủ công / tải bản `.seatar` đã mã hóa sau khi nhập lại mật khẩu. Tạo/tải đều có giới hạn tần suất; mật khẩu không được lưu.
+Mục **Bảo mật → Sao lưu & phục hồi** hiển thị lịch (ngày 1 & 16 lúc 03:00 Asia/Bangkok), bản thành công gần nhất, retention, offsite và cho phép tạo backup thủ công / tải bản `.seatar` đã mã hóa sau khi nhập lại mật khẩu. Tạo/tải đều có giới hạn tần suất; mật khẩu không được lưu. Trang **Sức khỏe website** có thêm card cảnh báo khi backup quá hạn, lỗi hoặc chưa cấu hình offsite.
 
 Hệ thống **không** có nút khôi phục đè production. Khôi phục và kiểm tra chạy bằng CLI trên VPS (`manage.sh verify` / `restore-test`), không đụng dữ liệu thật. Backup cùng VPS không bảo vệ trước reset/mất ổ đĩa: phải sao chép file `.seatar` và khóa `archive.key` ra ngoài. Chi tiết: `docs/BACKUP-RESTORE.md`.
 
@@ -120,9 +120,10 @@ Mở **Kiểm tra hoạt động** ở nhóm đầu tiên của menu Studio. Tra
 
 Mở **Sức khỏe website** ở nhóm đầu tiên của menu Studio. Trang chỉ đọc, không sửa nội dung; số liệu được giữ tối đa 60 giây và có nút **Làm mới**.
 
-- **Dung lượng**: tổng dung lượng thư mục dữ liệu, tách database (SQLite + WAL), ảnh/tệp trong thư mục uploads và phần còn lại; kèm dung lượng trống của volume. Ngưỡng cảnh báo: dữ liệu từ 1,5 GB (vàng) hoặc 5 GB (đỏ); volume đã dùng từ 88% (vàng) hoặc 95% (đỏ). Trên Vercel serverless không có volume bền vững nên mục này báo không áp dụng.
+- **Dung lượng**: tổng dung lượng thư mục dữ liệu, tách database (SQLite + WAL), ảnh/tệp trong thư mục uploads và phần còn lại — so với hạn mức dự án **5 GB**. Ngưỡng cảnh báo dùng chung 88% (vàng) và 95% (đỏ) của hạn mức. Thư viện ảnh hiển thị cùng hạn mức này ngay dưới số ảnh. Trên Vercel serverless không có volume bền vững nên mục này báo không áp dụng.
+- **Bộ nhớ**: RSS và heap của tiến trình Node, kèm % của hạn mức cảnh báo 5 GB.
 - **Tốc độ tải**: p75 của TTFB, FCP, LCP, INP và CLS từ khách truy cập thật trong 7 hoặc 28 ngày, kèm 5 trang chậm nhất theo LCP. Cần ít nhất 20 lượt đo mới kết luận Tốt/Cần cải thiện; dưới ngưỡng đó trang ghi **Chưa đủ dữ liệu**. Số liệu được gửi ẩn danh: không cookie, không visitor id, không lưu IP; trình duyệt tự động (bot, test) bị bỏ qua.
-- **SEO**: điểm 0–100 theo metadata (title/description, trùng lặp), nội dung/liên kết (ảnh bìa, alt, danh mục rỗng, tour/điểm đến, bài viết thiếu tour liên quan), kỹ thuật (slug tạm, sitemap, robots) và độ phủ bản dịch EN đã duyệt. Mỗi lỗi có số lượng và nút **Sửa** mở đúng form tour/bài viết/danh mục. Điểm ≥80 là Tốt, 55–79 Cần cải thiện, dưới 55 Có vấn đề.
+- **SEO**: điểm 0–100 theo metadata (title/description, trùng lặp), nội dung/liên kết (ảnh bìa, alt, danh mục rỗng, tour/điểm đến, bài viết thiếu tour liên quan), kỹ thuật (slug tạm, sitemap, robots) và độ phủ bản dịch EN đã duyệt. Mỗi lỗi có số lượng; bấm **Chi tiết** (hoặc **Xem chi tiết … nhóm lỗi** trên card SEO) để mở bảng liệt kê từng trang bị ảnh hưởng, mỗi dòng có nút **Sửa** mở đúng form tour/bài viết/danh mục, còn **Sửa ngay** mở trang đầu tiên. Bấm vào dòng “Bản dịch EN đã duyệt” để xem các trang còn thiếu bản dịch. Điểm ≥80 là Tốt, 55–79 Cần cải thiện, dưới 55 Có vấn đề.
 - Bảng **Máy chủ** hiển thị thời gian hoạt động, bộ nhớ, độ trễ truy vấn database và phiên bản Node — chỉ để chẩn đoán, không phải số liệu kinh doanh.
 
 Không xoá file trực tiếp trong volume để “giảm GB”: xoá ảnh qua **Thư viện ảnh** và dọn tour/bài viết qua **Thùng rác** để hệ thống cập nhật liên kết đúng.

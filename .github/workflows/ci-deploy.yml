@@ -23,6 +23,7 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test && npm run test:cms
+      - run: npm run verify:backup
       - run: npm run build
       - name: Install browser for verification
         run: |

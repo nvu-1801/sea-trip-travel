@@ -7,9 +7,13 @@ import type { Tour } from "../src/domain/tour";
 import type { TravelArticle } from "../src/domain/article";
 import type { TourCategory } from "../src/domain/category";
 import {
+  budgetStatus,
   deviceOf,
   formatBytes,
+  percentUsed,
   percentile75,
+  PROJECT_MEMORY_LIMIT_BYTES,
+  PROJECT_STORAGE_LIMIT_BYTES,
   ratingFor,
   seoStatus,
 } from "../src/lib/health";
@@ -100,6 +104,15 @@ test("health formatting and thresholds stay stable", () => {
   assert.equal(formatBytes(1536), "1,5 KB");
   assert.equal(formatBytes(5 * 1024 ** 3), "5 GB");
   assert.equal(formatBytes(null), "—");
+  assert.equal(PROJECT_STORAGE_LIMIT_BYTES, 5 * 1024 ** 3);
+  assert.equal(PROJECT_MEMORY_LIMIT_BYTES, 5 * 1024 ** 3);
+  assert.equal(percentUsed(0, PROJECT_STORAGE_LIMIT_BYTES), 0);
+  assert.equal(percentUsed(88, 100), 88);
+  assert.equal(percentUsed(150, 100), 100);
+  assert.equal(percentUsed(1, 0), 0);
+  assert.equal(budgetStatus(50), "good");
+  assert.equal(budgetStatus(88), "warn");
+  assert.equal(budgetStatus(95), "bad");
   assert.equal(percentile75([1, 2, 3, 4]), 3);
   assert.equal(percentile75([4, 1, 3, 2]), 3);
   assert.equal(percentile75([]), null);
@@ -172,6 +185,7 @@ test("missing metadata, placeholder slugs and dead ends are reported", () => {
     "empty-category",
     "sitemap",
     "english-draft",
+    "english-missing",
   ])
     assert.ok(ids.has(expected), `expected issue ${expected}`);
   assert.ok(result.score < 80);
@@ -194,6 +208,41 @@ test("duplicate titles and descriptions are caught", () => {
   assert.ok(duplicate);
   assert.equal(duplicate?.count, 2);
   assert.equal(duplicate?.severity, "high");
+});
+
+test("each issue lists affected pages and links into the editor", () => {
+  const many = Array.from({ length: 30 }, (_, index) =>
+    tour({
+      id: `tour_cap_${index}`,
+      slug: `tour-cap-${index}`,
+      title: `Tour cap ${index}`,
+      seo: undefined,
+    }),
+  );
+  const result = auditSeo({
+    tours: many,
+    articles: [],
+    categories: [],
+    sitemapUrls: 10,
+    englishStatus: () => "draft",
+  });
+  const titles = result.issues.find((issue) => issue.id === "missing-seo-title");
+  assert.ok(titles);
+  assert.equal(titles?.area, "metadata");
+  assert.equal(titles?.count, 30);
+  // The drill-down is capped so the payload stays readable.
+  assert.equal(titles?.items.length, 25);
+  assert.equal(titles?.hidden, 5);
+  assert.equal(titles?.items[0].href, "/admin/tours?edit=tour-cap-0");
+  assert.equal(titles?.items[0].label, "Tour cap 0");
+
+  const english = result.issues.find((issue) => issue.id === "english-draft");
+  assert.ok(english);
+  assert.equal(english?.area, "translation");
+  assert.match(
+    english?.items[0].href ?? "",
+    /^\/admin\/tours\?edit=tour-cap-0#tour-section-translations$/,
+  );
 });
 
 test("storage reports database, uploads and the rest of the data folder", async () => {

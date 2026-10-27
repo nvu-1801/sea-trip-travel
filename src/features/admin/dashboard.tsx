@@ -16,8 +16,8 @@ import { ThemePanel } from "./theme-panel";
 import type { ThemeId } from "@/config/themes";
 import { Overview } from "./overview";
 import { ActivityCheck } from "./activity-check";
-import { BackupPanel } from "./backup-panel";
 import { HealthCheck } from "./health-check";
+import { BackupPanel } from "./backup-panel";
 import { HomeSections } from "./home-sections";
 import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
 import { HomeFeaturedEditor } from "./home-featured-editor";
@@ -34,6 +34,14 @@ import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
 import { LEAD_TRASH_RETENTION_DAYS } from "@/lib/lead-trash";
 import { mediaSelectOptions } from "@/lib/admin-media-options";
 import { adminSectionHref } from "@/lib/admin-routes";
+import {
+  PROJECT_STORAGE_LIMIT_BYTES,
+  STORAGE_WARN_PERCENT,
+  budgetStatus,
+  formatBytes,
+  percentUsed,
+  type HealthStorage,
+} from "@/lib/health";
 import {
   TRASH_RETENTION_DAYS,
   articleCoverSrcOf,
@@ -161,6 +169,18 @@ const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
   { label: "Bán hàng", keys: ["leads"] },
   { label: "Hệ thống", keys: ["messages", "settings", "account"] },
 ];
+/**
+ * The masthead pairs a number with the group name, so each sidebar group
+ * counts from 01 instead of running across the whole menu.
+ */
+function tabPositionOf(key: string): number {
+  const group = TAB_GROUPS.find((entry) => entry.keys.includes(key));
+  if (group) return Math.max(0, group.keys.indexOf(key));
+  return Math.max(
+    0,
+    tabs.findIndex((entry) => entry[0] === key),
+  );
+}
 const TOUR_GROUPS = [
   { duration: "1day", line: "qnpy", title: "Quy Nhơn – Phú Yên · Tour 1 ngày" },
   {
@@ -532,6 +552,7 @@ export function Dashboard({
       }[]
     >([]);
   const [mediaQuery, setMediaQuery] = useState("");
+  const [mediaStorage, setMediaStorage] = useState<HealthStorage | null>(null);
   const [username, setUsername] = useState(""),
     [password, setPassword] = useState(""),
     [showPassword, setShowPassword] = useState(false),
@@ -732,9 +753,12 @@ export function Dashboard({
         setHasUpdates(false);
         return true;
       }
-      const [options, library] = await Promise.all([
+      const [options, library, storage] = await Promise.all([
         api("options"),
         api("media"),
+        next === "media"
+          ? (api("storage").catch(() => null) as Promise<HealthStorage | null>)
+          : Promise.resolve(null),
       ]);
       if (next === "overview") {
         setSelected(null);
@@ -849,8 +873,10 @@ export function Dashboard({
       setDirty(false);
       dirtyFields.current.clear();
       if (next === "leads") setLeads(result);
-      else if (next === "media") setMedia(library);
-      else if (next !== "account") setRows(result);
+      else if (next === "media") {
+        setMedia(library);
+        setMediaStorage(storage);
+      } else if (next !== "account") setRows(result);
       // Quick search / "Tour nổi bật": open the chosen record as soon as the
       // target tab's list arrives.
       const pending = pendingOpen.current;
@@ -958,14 +984,20 @@ export function Dashboard({
   }
   async function refreshMediaLibrary() {
     try {
-      const library = (await api("media")) as {
-        id: string;
-        name: string;
-        alt: string;
-        src: string;
-        original: boolean;
-      }[];
+      const [library, storage] = await Promise.all([
+        api("media") as Promise<
+          {
+            id: string;
+            name: string;
+            alt: string;
+            src: string;
+            original: boolean;
+          }[]
+        >,
+        api("storage?fresh=1").catch(() => null) as Promise<HealthStorage | null>,
+      ]);
       setMedia(library);
+      setMediaStorage(storage);
       setReferences((current) => ({
         ...current,
         media: mediaSelectOptions(library),
@@ -1575,7 +1607,10 @@ export function Dashboard({
       `${item.alt} ${item.name} ${item.src}`.toLowerCase().includes(needle),
     );
   })();
-  const tabPosition = tabs.findIndex((entry) => entry[0] === tab);
+  const tabPosition = tabPositionOf(tab);
+  const mediaStoragePercent = mediaStorage
+    ? percentUsed(mediaStorage.dataBytes, PROJECT_STORAGE_LIMIT_BYTES)
+    : 0;
   const tabGroup =
     TAB_GROUPS.find((group) => group.keys.includes(tab))?.label ?? "Studio";
 
@@ -2570,7 +2605,7 @@ export function Dashboard({
           )
         ) : tab === "account" ? (
           <>
-          <section className="adm-panel adm-security">
+            <section className="adm-panel adm-security">
             <div className="adm-security-head">
               <span className="adm-security-shield" aria-hidden="true">
                 <svg
@@ -2697,8 +2732,8 @@ export function Dashboard({
                 {busy ? "Đang cập nhật…" : "Cập nhật mật khẩu"}
               </button>
             </form>
-          </section>
-          {csrf ? <BackupPanel csrf={csrf} /> : null}
+            </section>
+            {csrf ? <BackupPanel csrf={csrf} /> : null}
           </>
         ) : tab === "leads" ? (
           <>
@@ -3241,7 +3276,43 @@ export function Dashboard({
                   metadata và không phóng lớn ảnh nhỏ.
                 </p>
               </div>
-              <span className="adm-media-count">{media.length} ảnh</span>
+              <div className="adm-media-meta">
+                <span className="adm-media-count">{media.length} ảnh</span>
+                {mediaStorage?.available ? (
+                  <div
+                    className="adm-media-storage"
+                    data-status={budgetStatus(mediaStoragePercent)}
+                  >
+                    <span className="adm-media-storage-kicker">
+                      Dung lượng dự án
+                    </span>
+                    <span className="adm-media-storage-line">
+                      <strong>
+                        {formatBytes(mediaStorage.dataBytes)} /{" "}
+                        {formatBytes(PROJECT_STORAGE_LIMIT_BYTES)}
+                      </strong>
+                      <small>
+                        {Math.round(mediaStoragePercent)}% hạn mức · cảnh báo
+                        từ {STORAGE_WARN_PERCENT}%
+                      </small>
+                    </span>
+                    <span
+                      className="adm-media-storage-bar"
+                      role="img"
+                      aria-label={`Đã dùng ${Math.round(mediaStoragePercent)}% hạn mức ${formatBytes(PROJECT_STORAGE_LIMIT_BYTES)}`}
+                    >
+                      <span style={{ width: `${mediaStoragePercent}%` }} />
+                    </span>
+                    <small>
+                      Ảnh &amp; tệp {formatBytes(mediaStorage.uploadsBytes)} ·
+                      database{" "}
+                      {formatBytes(
+                        mediaStorage.databaseBytes + mediaStorage.walBytes,
+                      )}
+                    </small>
+                  </div>
+                ) : null}
+              </div>
             </header>
 
             <div className="adm-media-toolbar">

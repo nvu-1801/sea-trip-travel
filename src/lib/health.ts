@@ -49,6 +49,29 @@ export const STORAGE_WARN_PERCENT = 88;
 export const STORAGE_BAD_PERCENT = 95;
 export const VITALS_RETENTION_DAYS = 90;
 
+/**
+ * Budget the Studio reports against instead of the host volume. The VPS disk
+ * is far larger than the project needs, so "39% of 96 GB" told the owner
+ * nothing useful; 5 GB is the number the site is allowed to grow into.
+ */
+export const PROJECT_STORAGE_LIMIT_BYTES = 5 * 1024 ** 3;
+/** Same 5 GB ceiling for the Node process before the memory card warns. */
+export const PROJECT_MEMORY_LIMIT_BYTES = 5 * 1024 ** 3;
+
+/** Share of a budget already used, clamped to 0–100 for bars and labels. */
+export function percentUsed(usedBytes: number, limitBytes: number): number {
+  if (!Number.isFinite(usedBytes) || !Number.isFinite(limitBytes) || limitBytes <= 0)
+    return 0;
+  return Math.max(0, Math.min(100, (usedBytes / limitBytes) * 100));
+}
+
+/** Same 88/95 bands as storage, applied to any percentage of a budget. */
+export function budgetStatus(percent: number): HealthStatus {
+  if (percent >= STORAGE_BAD_PERCENT) return "bad";
+  if (percent >= STORAGE_WARN_PERCENT) return "warn";
+  return "good";
+}
+
 export type HealthStorage = {
   available: boolean;
   note: string | null;
@@ -81,13 +104,37 @@ export type HealthSpeed = {
   worstPages: { path: string; value: number; samples: number }[];
 };
 
+/** Where the fix lives, so the Studio can group and label findings. */
+export type HealthSeoArea = "metadata" | "content" | "technical" | "translation";
+
+export const HEALTH_SEO_AREA_LABELS: Record<HealthSeoArea, string> = {
+  metadata: "Thẻ meta",
+  content: "Nội dung & liên kết",
+  technical: "Kỹ thuật",
+  translation: "Bản dịch EN",
+};
+
+/** One affected page (or file) behind an issue count. */
+export type HealthSeoIssueItem = {
+  label: string;
+  detail: string | null;
+  href: string | null;
+  /** Public URL opened in a new tab instead of an in-Studio editor. */
+  external?: boolean;
+};
+
 export type HealthSeoIssue = {
   id: string;
+  area: HealthSeoArea;
   severity: "high" | "medium" | "low";
   title: string;
   detail: string;
   count: number;
   href: string | null;
+  /** Affected pages, capped by the audit so the payload stays small. */
+  items: HealthSeoIssueItem[];
+  /** How many affected pages are not listed in `items`. */
+  hidden: number;
 };
 
 export type HealthSeo = {
@@ -108,12 +155,50 @@ export type HealthServer = {
   dbLatencyMs: number | null;
 };
 
+export type HealthBackup = {
+  configured: boolean;
+  note: string | null;
+  schedule: string | null;
+  timezone: string | null;
+  count: number;
+  totalBytes: number;
+  retentionKeep: number | null;
+  lastSuccess: {
+    id: string;
+    kind: string;
+    at: string;
+    bytes: number | null;
+  } | null;
+  lastAttempt: {
+    id: string;
+    kind: string;
+    status: string;
+    at: string;
+    error: string | null;
+  } | null;
+  lastVerify: { id: string; at: string; ok: boolean } | null;
+  lastRestoreTest: {
+    id: string;
+    at: string;
+    ok: boolean;
+    durationMs: number | null;
+    partial: boolean;
+  } | null;
+  offsite: { configured: boolean; status: string; at: string | null };
+  encryption: boolean;
+  freeBytes: number | null;
+  ageDays: number | null;
+  status: HealthStatus;
+  warnings: string[];
+};
+
 export type HealthPayload = {
   generatedAt: string;
   server: HealthServer;
   storage: HealthStorage;
   speed: HealthSpeed;
   seo: HealthSeo;
+  backup: HealthBackup;
 };
 
 const numberFormat = new Intl.NumberFormat("vi-VN", {

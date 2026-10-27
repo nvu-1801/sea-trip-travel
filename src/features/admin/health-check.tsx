@@ -1,13 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
+  budgetStatus,
   formatBytes,
   formatMetricValue,
+  HEALTH_SEO_AREA_LABELS,
+  percentUsed,
+  PROJECT_MEMORY_LIMIT_BYTES,
+  PROJECT_STORAGE_LIMIT_BYTES,
+  seoStatus,
   statusLabel,
-  STORAGE_BAD_PERCENT,
   STORAGE_WARN_PERCENT,
   type HealthPayload,
+  type HealthSeoArea,
+  type HealthSeoIssue,
   type HealthStatus,
   type HealthStorage,
 } from "@/lib/health";
@@ -25,6 +33,26 @@ function duration(seconds: number): string {
   return `${minutes} phút`;
 }
 
+function shortWhen(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function msLabel(value: number | null | undefined): string {
+  if (!value || !Number.isFinite(value)) return "—";
+  if (value < 1000) return `${value} ms`;
+  if (value < 60_000) return `${Math.round(value / 100) / 10} giây`;
+  return `${Math.floor(value / 60_000)} phút ${Math.round((value % 60_000) / 1000)} giây`;
+}
+
 function StatusPill({ status }: { status: HealthStatus }) {
   return (
     <span className="adm-health-pill" data-status={status}>
@@ -36,19 +64,8 @@ function StatusPill({ status }: { status: HealthStatus }) {
 
 function storageStatus(storage: HealthStorage): HealthStatus {
   if (!storage.available) return "unknown";
-  if (
-    storage.dataBytes >= 5 * 1024 ** 3 ||
-    (storage.volumeUsedPercent !== null &&
-      storage.volumeUsedPercent >= STORAGE_BAD_PERCENT)
-  )
-    return "bad";
-  if (
-    storage.dataBytes >= 1.5 * 1024 ** 3 ||
-    (storage.volumeUsedPercent !== null &&
-      storage.volumeUsedPercent >= STORAGE_WARN_PERCENT)
-  )
-    return "warn";
-  return "good";
+  // The project budget is the 5 GB ceiling, not the (much larger) host disk.
+  return budgetStatus(percentUsed(storage.dataBytes, PROJECT_STORAGE_LIMIT_BYTES));
 }
 
 function speedStatus(data: HealthPayload): HealthStatus {
@@ -60,6 +77,19 @@ function speedStatus(data: HealthPayload): HealthStatus {
   if (known.length === 0) return "unknown";
   if (known.some((metric) => metric.status === "bad")) return "bad";
   if (known.some((metric) => metric.status === "warn")) return "warn";
+  return "good";
+}
+
+function overallStatus(data: HealthPayload): HealthStatus {
+  const values = [
+    storageStatus(data.storage),
+    speedStatus(data),
+    data.seo.status,
+    data.backup.status,
+  ];
+  if (values.includes("bad")) return "bad";
+  if (values.includes("warn")) return "warn";
+  if (values.every((value) => value === "unknown")) return "unknown";
   return "good";
 }
 
@@ -135,6 +165,237 @@ function SpeedTile({
   );
 }
 
+const SEVERITY_LABEL = {
+  high: "Ưu tiên cao",
+  medium: "Trung bình",
+  low: "Thấp",
+} as const;
+
+type DetailIssue = Omit<HealthSeoIssue, "area"> & {
+  area?: HealthSeoArea;
+  areaLabel?: string;
+};
+
+type DetailState =
+  | {
+      view: "overview";
+      issues: HealthSeoIssue[];
+      score: number;
+      pages: number;
+      translation: { reviewed: number; total: number };
+    }
+  | { view: "issue"; issue: DetailIssue; back: boolean };
+
+/**
+ * Drill-down drawer for a health finding: the summary row only shows a count,
+ * so this lists every affected page and deep-links straight into the editor
+ * that fixes it.
+ */
+function HealthDetailModal({
+  state,
+  onClose,
+  onSelect,
+  onBack,
+}: {
+  state: DetailState;
+  onClose: () => void;
+  onSelect: (issue: HealthSeoIssue) => void;
+  onBack: () => void;
+}) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = overflow;
+      if (previous instanceof HTMLElement) previous.focus();
+    };
+  }, [onClose]);
+
+  const issue = state.view === "issue" ? state.issue : null;
+  const headingId = "adm-health-detail-title";
+
+  return (
+    <div
+      className="adm-modal-veil"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="adm-health-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={headingId}
+      >
+        <header className="adm-health-modal-head">
+          <div>
+            <p className="adm-health-eyebrow">
+              {issue
+                ? (issue.areaLabel ??
+                  (issue.area ? HEALTH_SEO_AREA_LABELS[issue.area] : "Chi tiết"))
+                : "Chi tiết lỗi SEO"}
+            </p>
+            <h2 id={headingId}>
+              {state.view === "issue"
+                ? state.issue.title
+                : `${state.issues.length} nhóm lỗi cần xử lý`}
+            </h2>
+          </div>
+          <button
+            ref={closeRef}
+            type="button"
+            className="adm-health-modal-close"
+            aria-label="Đóng chi tiết"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </header>
+
+        <div className="adm-health-modal-body">
+          {state.view === "issue" ? (
+            <>
+              <p className="adm-health-modal-detail">{state.issue.detail}</p>
+              <div className="adm-health-modal-meta">
+                <span
+                  className="adm-health-modal-severity"
+                  data-severity={state.issue.severity}
+                >
+                  {SEVERITY_LABEL[state.issue.severity]}
+                </span>
+                <span>
+                  {state.issue.count} mục
+                  {state.issue.items.length > 0
+                    ? ` · hiển thị ${state.issue.items.length}`
+                    : ""}
+                </span>
+              </div>
+              {state.issue.items.length > 0 ? (
+                <ul className="adm-health-modal-list">
+                  {state.issue.items.map((item, index) => (
+                    <li key={`${item.label}-${index}`}>
+                      <div>
+                        <strong>{item.label}</strong>
+                        {item.detail ? <small>{item.detail}</small> : null}
+                      </div>
+                      {item.href ? (
+                        item.external ? (
+                          <a
+                            href={item.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="adm-health-fix"
+                          >
+                            Mở
+                          </a>
+                        ) : (
+                          <Link
+                            href={item.href}
+                            className="adm-health-fix"
+                            onClick={onClose}
+                          >
+                            Sửa
+                          </Link>
+                        )
+                      ) : null}
+                    </li>
+                  ))}
+                  {state.issue.hidden > 0 ? (
+                    <li className="adm-health-modal-more">
+                      +{state.issue.hidden} mục khác chưa liệt kê — xử lý các mục
+                      trên rồi làm mới để xem tiếp.
+                    </li>
+                  ) : null}
+                </ul>
+              ) : (
+                <p className="adm-health-modal-empty">
+                  Lỗi nằm ở cấu hình hệ thống, không gắn với một trang cụ thể.
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="adm-health-modal-score">
+                <ScoreRing
+                  score={state.score}
+                  status={seoStatus(state.score)}
+                />
+                <div>
+                  <strong>{state.issues.length} nhóm lỗi</strong>
+                  <p>
+                    {state.pages} trang đã kiểm tra · bản dịch EN{" "}
+                    {state.translation.reviewed}/{state.translation.total} đã
+                    duyệt. Chọn một nhóm để xem từng trang và mở đúng chỗ sửa.
+                  </p>
+                </div>
+              </div>
+              {state.issues.length > 0 ? (
+                <ul className="adm-health-modal-groups">
+                  {state.issues.map((entry) => (
+                    <li key={entry.id}>
+                      <button type="button" onClick={() => onSelect(entry)}>
+                        <span
+                          className="adm-health-severity"
+                          data-severity={entry.severity}
+                          aria-hidden="true"
+                        />
+                        <span className="adm-health-modal-group-copy">
+                          <strong>{entry.title}</strong>
+                          <small>
+                            {HEALTH_SEO_AREA_LABELS[entry.area]} · {entry.detail}
+                          </small>
+                        </span>
+                        <span className="adm-health-count">{entry.count}</span>
+                        <span className="adm-health-modal-chevron" aria-hidden="true">
+                          →
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="adm-health-modal-empty">
+                  Không phát hiện lỗi trong lần kiểm tra này.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
+        <footer className="adm-health-modal-actions">
+          {issue && state.view === "issue" && state.back ? (
+            <button
+              type="button"
+              className="adm-health-modal-back"
+              onClick={onBack}
+            >
+              ← Tất cả nhóm lỗi
+            </button>
+          ) : (
+            <span />
+          )}
+          {issue?.href ? (
+            <Link href={issue.href} className="adm-primary" onClick={onClose}>
+              Sửa ngay
+            </Link>
+          ) : null}
+          <button type="button" onClick={onClose}>
+            Đóng
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
 export function HealthCheck({ csrf }: { csrf: string }) {
   const [days, setDays] = useState(7);
   const [refresh, setRefresh] = useState(0);
@@ -171,6 +432,38 @@ export function HealthCheck({ csrf }: { csrf: string }) {
   const storage = data?.storage;
   const seo = data?.seo;
   const speed = data?.speed;
+  const storagePercent = storage
+    ? percentUsed(storage.dataBytes, PROJECT_STORAGE_LIMIT_BYTES)
+    : 0;
+  const memoryPercent = data
+    ? percentUsed(data.server.rssBytes, PROJECT_MEMORY_LIMIT_BYTES)
+    : 0;
+
+  const [detail, setDetail] = useState<DetailState | null>(null);
+  const closeDetail = useCallback(() => setDetail(null), []);
+  const openOverview = useCallback(() => {
+    if (!data) return;
+    setDetail({
+      view: "overview",
+      issues: data.seo.issues,
+      score: data.seo.score,
+      pages: data.seo.pages,
+      translation: data.seo.translation,
+    });
+  }, [data]);
+  const openIssue = useCallback(
+    (issue: DetailIssue, back = false) => {
+      setDetail({ view: "issue", issue, back });
+    },
+    [],
+  );
+  const openTranslation = useCallback(() => {
+    const translation = data?.seo.issues.find(
+      (issue) => issue.area === "translation",
+    );
+    if (translation) openIssue(translation);
+    else openOverview();
+  }, [data, openIssue, openOverview]);
 
   const usedSegments = useMemo(() => {
     if (!storage) return [];
@@ -241,6 +534,44 @@ export function HealthCheck({ csrf }: { csrf: string }) {
         </p>
       ) : (
         <>
+          <div className="adm-health-hero" data-status={overallStatus(data)}>
+            <span className="adm-health-grade" aria-hidden="true">
+              {overallStatus(data) === "good"
+                ? "✓"
+                : overallStatus(data) === "bad"
+                  ? "!"
+                  : "•"}
+            </span>
+            <div className="adm-health-hero-copy">
+              <p className="adm-health-eyebrow">Tổng quan</p>
+              <h2>
+                {overallStatus(data) === "good"
+                  ? "Website đang khỏe"
+                  : overallStatus(data) === "bad"
+                    ? "Có vấn đề cần xử lý"
+                    : overallStatus(data) === "warn"
+                      ? "Cần chú ý vài điểm"
+                      : "Đang thu thập dữ liệu"}
+              </h2>
+              <p>
+                Đo lúc{" "}
+                {new Date(data.generatedAt).toLocaleString("vi-VN")} · cập nhật
+                mỗi lần bấm Làm mới.
+              </p>
+            </div>
+            <div className="adm-health-hero-meta">
+              <span>
+                <strong>{numberFormat.format(storage!.uploadFiles)}</strong> ảnh
+                &amp; tệp
+              </span>
+              <span>
+                <strong>{data.backup.count}</strong> bản backup
+              </span>
+              <span data-tone={data.backup.warnings.length > 0 ? "warn" : "good"}>
+                <strong>{data.backup.warnings.length}</strong> cảnh báo
+              </span>
+            </div>
+          </div>
           <div className="adm-health-cards" aria-busy={loading}>
             <section className="adm-health-card" data-status={storageStatus(storage!)}>
               <header>
@@ -278,23 +609,79 @@ export function HealthCheck({ csrf }: { csrf: string }) {
                   <dd>{formatBytes(storage!.uploadsBytes)}</dd>
                 </div>
                 <div>
-                  <dt>Volume còn trống</dt>
+                  <dt>Hạn mức dự án</dt>
                   <dd>
-                    {storage!.volumeFreeBytes === null
-                      ? "Không xác định"
-                      : `${formatBytes(storage!.volumeFreeBytes)} / ${formatBytes(storage!.volumeTotalBytes)}`}
+                    {storage!.available
+                      ? `${formatBytes(storage!.dataBytes)} / ${formatBytes(PROJECT_STORAGE_LIMIT_BYTES)}`
+                      : "Không xác định"}
                   </dd>
                 </div>
               </dl>
-              {storage!.volumeUsedPercent !== null ? (
+              {storage!.available ? (
                 <p className="adm-health-note">
-                  Volume đã dùng {storage!.volumeUsedPercent}% · ngưỡng cảnh báo{" "}
+                  Đã dùng {numberFormat.format(Math.round(storagePercent))}% hạn
+                  mức {formatBytes(PROJECT_STORAGE_LIMIT_BYTES)} · cảnh báo từ{" "}
                   {STORAGE_WARN_PERCENT}%.
                 </p>
               ) : null}
               {storage!.note ? (
                 <p className="adm-health-note adm-health-note--muted">{storage!.note}</p>
               ) : null}
+            </section>
+
+            <section className="adm-health-card adm-health-card--backup" data-status={data.backup.status}>
+              <header>
+                <p className="adm-health-eyebrow">Sao lưu</p>
+                <StatusPill status={data.backup.status} />
+              </header>
+              <strong className="adm-health-value">
+                {data.backup.configured
+                  ? data.backup.lastSuccess
+                    ? shortWhen(data.backup.lastSuccess.at)
+                    : "Chưa có bản thành công"
+                  : "Chưa cài đặt"}
+              </strong>
+              <p className="adm-health-note">
+                {data.backup.configured
+                  ? `${data.backup.count} bản · ${formatBytes(data.backup.totalBytes)} · giữ ${data.backup.retentionKeep ?? 3} bản tự động`
+                  : data.backup.note ?? "Chưa cài đặt sao lưu trên máy chủ."}
+              </p>
+              <dl className="adm-health-facts">
+                <div>
+                  <dt>Lịch</dt>
+                  <dd>
+                    {data.backup.schedule
+                      ? "Ngày 1 & 16 · 03:00"
+                      : "Chưa có timer"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Offsite</dt>
+                  <dd>
+                    {data.backup.offsite.configured
+                      ? data.backup.offsite.status
+                      : "Chưa cấu hình"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Thử phục hồi</dt>
+                  <dd>
+                    {data.backup.lastRestoreTest
+                      ? `${data.backup.lastRestoreTest.ok ? "Đạt" : "Lỗi"} · ${msLabel(data.backup.lastRestoreTest.durationMs)}`
+                      : "Chưa đo"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Mã hóa</dt>
+                  <dd>{data.backup.encryption ? "AES-256-GCM" : "Chưa xác nhận"}</dd>
+                </div>
+              </dl>
+              <p className="adm-health-note adm-health-note--muted">
+                Dung lượng trống nơi lưu: {formatBytes(data.backup.freeBytes)}
+              </p>
+              <Link className="adm-health-cta" href="/admin/account#backup">
+                Mở Sao lưu &amp; phục hồi →
+              </Link>
             </section>
 
             <section className="adm-health-card" data-status={speedStatus(data)}>
@@ -354,12 +741,27 @@ export function HealthCheck({ csrf }: { csrf: string }) {
                   <p className="adm-health-note">
                     {seo!.pages} trang · sitemap {seo!.sitemapUrls ?? "—"} URL
                   </p>
-                  <p className="adm-health-note">
+                  <button
+                    type="button"
+                    className="adm-health-inline-link"
+                    onClick={openTranslation}
+                  >
                     Bản dịch EN đã duyệt: {seo!.translation.reviewed}/
                     {seo!.translation.total}
-                  </p>
+                    <span aria-hidden="true"> →</span>
+                  </button>
                 </div>
               </div>
+              <button
+                type="button"
+                className="adm-health-cta adm-health-cta--button"
+                onClick={openOverview}
+              >
+                {seo!.issues.length > 0
+                  ? `Xem chi tiết ${seo!.issues.length} nhóm lỗi`
+                  : "Mở báo cáo SEO"}
+                <span aria-hidden="true"> →</span>
+              </button>
             </section>
           </div>
 
@@ -368,16 +770,43 @@ export function HealthCheck({ csrf }: { csrf: string }) {
               <div>
                 <h2>Việc cần xử lý cho SEO</h2>
                 <p>
-                  {seo!.issues.length === 0
+                  {seo!.issues.length === 0 &&
+                  data.backup.warnings.length === 0
                     ? "Không phát hiện lỗi trong lần kiểm tra này."
                     : "Sắp theo mức ưu tiên. Bấm “Sửa” để mở đúng nội dung."}
                 </p>
               </div>
-              <span className="adm-health-panel-count">
-                {seo!.issues.reduce((sum, issue) => sum + issue.count, 0)} mục
-              </span>
+              <div className="adm-health-panel-actions">
+                <span className="adm-health-panel-count">
+                  {seo!.issues.reduce((sum, issue) => sum + issue.count, 0) +
+                    data.backup.warnings.length}{" "}
+                  mục
+                </span>
+                {seo!.issues.length > 0 ? (
+                  <button
+                    type="button"
+                    className="adm-health-panel-open"
+                    onClick={openOverview}
+                  >
+                    Xem chi tiết
+                  </button>
+                ) : null}
+              </div>
             </header>
             <ul className="adm-health-issues">
+              {data.backup.warnings.map((warning, index) => (
+                <li key={`backup-${index}`} data-severity="medium">
+                  <span className="adm-health-severity" aria-hidden="true" />
+                  <div>
+                    <strong>Sao lưu dữ liệu</strong>
+                    <small>{warning}</small>
+                  </div>
+                  <span className="adm-health-count">!</span>
+                  <Link href="/admin/account#backup" className="adm-health-fix">
+                    Mở
+                  </Link>
+                </li>
+              ))}
               {seo!.issues.map((issue) => (
                 <li key={issue.id} data-severity={issue.severity}>
                   <span className="adm-health-severity" aria-hidden="true" />
@@ -386,6 +815,13 @@ export function HealthCheck({ csrf }: { csrf: string }) {
                     <small>{issue.detail}</small>
                   </div>
                   <span className="adm-health-count">{issue.count}</span>
+                  <button
+                    type="button"
+                    className="adm-health-fix adm-health-fix--quiet"
+                    onClick={() => openIssue(issue)}
+                  >
+                    Chi tiết
+                  </button>
                   {issue.href ? (
                     <a href={issue.href} className="adm-health-fix">
                       Sửa
@@ -393,7 +829,8 @@ export function HealthCheck({ csrf }: { csrf: string }) {
                   ) : null}
                 </li>
               ))}
-              {seo!.issues.length === 0 ? (
+              {seo!.issues.length === 0 &&
+              data.backup.warnings.length === 0 ? (
                 <li data-severity="none">
                   <span className="adm-health-severity" aria-hidden="true" />
                   <div>
@@ -414,10 +851,14 @@ export function HealthCheck({ csrf }: { csrf: string }) {
               <strong>{duration(data.server.uptimeSeconds)}</strong>
               <small>thời gian hoạt động</small>
             </div>
-            <div>
+            <div data-status={budgetStatus(memoryPercent)}>
               <p className="adm-health-eyebrow">Bộ nhớ</p>
               <strong>{formatBytes(data.server.rssBytes)}</strong>
-              <small>RSS · heap {formatBytes(data.server.heapUsedBytes)}</small>
+              <small>
+                RSS · heap {formatBytes(data.server.heapUsedBytes)} ·{" "}
+                {numberFormat.format(Math.round(memoryPercent))}% hạn mức{" "}
+                {formatBytes(PROJECT_MEMORY_LIMIT_BYTES)}
+              </small>
             </div>
             <div>
               <p className="adm-health-eyebrow">Database</p>
@@ -444,6 +885,15 @@ export function HealthCheck({ csrf }: { csrf: string }) {
           </section>
         </>
       )}
+
+      {detail ? (
+        <HealthDetailModal
+          state={detail}
+          onClose={closeDetail}
+          onSelect={(issue) => openIssue(issue, true)}
+          onBack={openOverview}
+        />
+      ) : null}
     </div>
   );
 }

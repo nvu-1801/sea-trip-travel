@@ -533,6 +533,19 @@ try {
     .getByRole("heading", { name: "Sức khỏe website", exact: true })
     .waitFor();
   await page.getByText("Dung lượng", { exact: true }).first().waitFor();
+  check(
+    "health storage compares against the 5 GB project budget",
+    /\/ 5 GB$/.test(
+      (
+        await page
+          .locator(".adm-health-card")
+          .first()
+          .locator(".adm-health-facts dd")
+          .last()
+          .innerText()
+      ).trim(),
+    ),
+  );
   const health = await (
     await context.request.get(`${base}/api/admin/health?days=7`)
   ).json();
@@ -1087,6 +1100,17 @@ try {
     .getByRole("heading", { name: "Thư viện ảnh", exact: true })
     .waitFor();
   check("quick search switches admin tabs", true);
+  await page.locator(".adm-media-storage").waitFor();
+  check(
+    "media library shows the 5 GB project budget",
+    /\/ 5 GB/.test(await page.locator(".adm-media-storage").innerText()),
+  );
+  check(
+    "media tab counts its chapter inside the sidebar group",
+    (
+      await page.locator(".adm-masthead-chapter-no").first().innerText()
+    ).trim() === "07",
+  );
   await page.keyboard.press("Control+k");
   await quickAgain.waitFor();
   await page.keyboard.press("Escape");

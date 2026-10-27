@@ -5,6 +5,7 @@ import {
   VITAL_LABELS,
   VITAL_ORDER,
   VITAL_THRESHOLDS,
+  type HealthBackup,
   type HealthPayload,
   type HealthSeo,
   type HealthSpeed,
@@ -13,6 +14,7 @@ import {
 import { measureStorage } from "./disk";
 import { auditSeo } from "./seo";
 import { getSpeed } from "./vitals";
+import { backupHealth } from "./backup";
 
 const CACHE_MS = 60_000;
 const cache = new Map<
@@ -33,6 +35,28 @@ const emptyStorage: HealthStorage = {
   volumeFreeBytes: null,
   volumeUsedPercent: null,
 };
+
+function emptyBackup(note: string): HealthBackup {
+  return {
+    configured: false,
+    note,
+    schedule: null,
+    timezone: null,
+    count: 0,
+    totalBytes: 0,
+    retentionKeep: null,
+    lastSuccess: null,
+    lastAttempt: null,
+    lastVerify: null,
+    lastRestoreTest: null,
+    offsite: { configured: false, status: "not-configured", at: null },
+    encryption: false,
+    freeBytes: null,
+    ageDays: null,
+    status: "unknown",
+    warnings: [],
+  };
+}
 
 function emptySpeed(days: number): HealthSpeed {
   return {
@@ -63,11 +87,14 @@ function failedSeo(): HealthSeo {
     issues: [
       {
         id: "audit-failed",
+        area: "technical",
         severity: "high",
         title: "Không chạy được kiểm tra SEO",
         detail: "Nội dung published chưa đọc được. Thử làm mới sau ít phút.",
         count: 1,
         href: null,
+        items: [],
+        hidden: 0,
       },
     ],
   };
@@ -105,9 +132,13 @@ export async function healthReport(days = 7): Promise<HealthPayload> {
   const cached = cache.get(days);
   if (cached && Date.now() - cached.at < CACHE_MS) return cached.value;
 
-  const [storage, speed] = await Promise.all([
+  const [storage, speed, backup] = await Promise.all([
     safe(() => measureStorage(), emptyStorage),
     safe(async () => getSpeed(days), emptySpeed(days)),
+    safe(
+      () => backupHealth(),
+      emptyBackup("Không đọc được trạng thái sao lưu."),
+    ),
   ]);
   const seo = safeSync(() => auditSeo(), failedSeo());
   const memory = process.memoryUsage();
@@ -124,6 +155,7 @@ export async function healthReport(days = 7): Promise<HealthPayload> {
     storage,
     speed,
     seo,
+    backup,
   };
   cache.set(days, { at: Date.now(), value });
   return value;
