@@ -10,6 +10,7 @@ import { handle, jsonBody, reply } from "@/server/cms/http";
 import { z } from "zod";
 import { tours } from "@/content";
 import { heroPhotos } from "@/domain/home-hero";
+import { mediaUsage } from "@/server/media/usage";
 const directory = () =>
   process.env.CMS_UPLOAD_DIR ?? path.join(cmsDataDir(), "uploads");
 export async function GET(request: Request) {
@@ -32,6 +33,8 @@ export async function GET(request: Request) {
           ]),
       ).values(),
     ];
+    const usage = await mediaUsage();
+    const unused = new Set(usage.unusedNames);
     const uploaded = (
       db().prepare("SELECT * FROM media ORDER BY created_at DESC").all() as {
         name: string;
@@ -40,6 +43,8 @@ export async function GET(request: Request) {
       ...item,
       src: `/api/media/${item.name}`,
       original: false,
+      used: !unused.has(item.name),
+      bytes: usage.sizes[item.name] ?? 0,
     }));
     return reply([
       ...uploaded,

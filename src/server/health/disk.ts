@@ -104,6 +104,7 @@ export async function measureStorage(options?: {
       volumeTotalBytes: null,
       volumeFreeBytes: null,
       volumeUsedPercent: null,
+      unusedMedia: null,
     };
 
   const dbPath =
@@ -148,5 +149,6 @@ export async function measureStorage(options?: {
     volumeTotalBytes: volume ? Math.round(volume.total) : null,
     volumeFreeBytes: volume ? Math.round(volume.free) : null,
     volumeUsedPercent: volume?.usedPercent ?? null,
+    unusedMedia: null,
   };
 }

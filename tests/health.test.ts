@@ -14,6 +14,7 @@ import {
   percentile75,
   PROJECT_MEMORY_LIMIT_BYTES,
   PROJECT_STORAGE_LIMIT_BYTES,
+  UNUSED_MEDIA_WARN_BYTES,
   ratingFor,
   seoStatus,
 } from "../src/lib/health";
@@ -106,6 +107,7 @@ test("health formatting and thresholds stay stable", () => {
   assert.equal(formatBytes(null), "—");
   assert.equal(PROJECT_STORAGE_LIMIT_BYTES, 5 * 1024 ** 3);
   assert.equal(PROJECT_MEMORY_LIMIT_BYTES, 5 * 1024 ** 3);
+  assert.equal(UNUSED_MEDIA_WARN_BYTES, 10 * 1024 ** 2);
   assert.equal(percentUsed(0, PROJECT_STORAGE_LIMIT_BYTES), 0);
   assert.equal(percentUsed(88, 100), 88);
   assert.equal(percentUsed(150, 100), 100);

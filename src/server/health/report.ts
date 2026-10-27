@@ -12,6 +12,7 @@ import {
   type HealthStorage,
 } from "@/lib/health";
 import { measureStorage } from "./disk";
+import { mediaUsage } from "@/server/media/usage";
 import { auditSeo } from "./seo";
 import { getSpeed } from "./vitals";
 import { backupHealth } from "./backup";
@@ -34,6 +35,7 @@ const emptyStorage: HealthStorage = {
   volumeTotalBytes: null,
   volumeFreeBytes: null,
   volumeUsedPercent: null,
+  unusedMedia: null,
 };
 
 function emptyBackup(note: string): HealthBackup {
@@ -132,13 +134,14 @@ export async function healthReport(days = 7): Promise<HealthPayload> {
   const cached = cache.get(days);
   if (cached && Date.now() - cached.at < CACHE_MS) return cached.value;
 
-  const [storage, speed, backup] = await Promise.all([
+  const [storage, speed, backup, media] = await Promise.all([
     safe(() => measureStorage(), emptyStorage),
     safe(async () => getSpeed(days), emptySpeed(days)),
     safe(
       () => backupHealth(),
       emptyBackup("Không đọc được trạng thái sao lưu."),
     ),
+    safe(() => mediaUsage(), null),
   ]);
   const seo = safeSync(() => auditSeo(), failedSeo());
   const memory = process.memoryUsage();
@@ -152,7 +155,16 @@ export async function healthReport(days = 7): Promise<HealthPayload> {
       heapUsedBytes: memory.heapUsed,
       dbLatencyMs: dbLatency(),
     },
-    storage,
+    storage: media
+      ? {
+          ...storage,
+          unusedMedia: {
+            count: media.unusedNames.length + media.orphanNames.length,
+            bytes: media.unusedBytes,
+            orphanCount: media.orphanNames.length,
+          },
+        }
+      : storage,
     speed,
     seo,
     backup,

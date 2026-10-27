@@ -58,6 +58,9 @@ export const PROJECT_STORAGE_LIMIT_BYTES = 5 * 1024 ** 3;
 /** Same 5 GB ceiling for the Node process before the memory card warns. */
 export const PROJECT_MEMORY_LIMIT_BYTES = 5 * 1024 ** 3;
 
+/** Unused uploads start showing as a cleanup task after 10 MB. */
+export const UNUSED_MEDIA_WARN_BYTES = 10 * 1024 ** 2;
+
 /** Share of a budget already used, clamped to 0–100 for bars and labels. */
 export function percentUsed(usedBytes: number, limitBytes: number): number {
   if (!Number.isFinite(usedBytes) || !Number.isFinite(limitBytes) || limitBytes <= 0)
@@ -84,6 +87,15 @@ export type HealthStorage = {
   volumeTotalBytes: number | null;
   volumeFreeBytes: number | null;
   volumeUsedPercent: number | null;
+  /**
+   * Uploaded files no record references. `null` when the check could not run
+   * (the disk scan itself can still be available).
+   */
+  unusedMedia: {
+    count: number;
+    bytes: number;
+    orphanCount: number;
+  } | null;
 };
 
 export type HealthSpeedMetric = {

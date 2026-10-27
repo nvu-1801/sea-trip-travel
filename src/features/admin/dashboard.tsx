@@ -559,9 +559,12 @@ export function Dashboard({
         alt: string;
         src: string;
         original: boolean;
+        used?: boolean;
+        bytes?: number;
       }[]
     >([]);
   const [mediaQuery, setMediaQuery] = useState("");
+  const [mediaUnusedOnly, setMediaUnusedOnly] = useState(false);
   const [mediaStorage, setMediaStorage] = useState<HealthStorage | null>(null);
   const [username, setUsername] = useState(""),
     [password, setPassword] = useState(""),
@@ -1004,6 +1007,8 @@ export function Dashboard({
             alt: string;
             src: string;
             original: boolean;
+            used?: boolean;
+            bytes?: number;
           }[]
         >,
         api("storage?fresh=1").catch(() => null) as Promise<HealthStorage | null>,
@@ -1614,11 +1619,22 @@ export function Dashboard({
   const tabLabel = tabs.find((t) => t[0] === tab)?.[1] ?? tab;
   const filteredMedia = (() => {
     const needle = mediaQuery.trim().toLowerCase();
-    if (!needle) return media;
-    return media.filter((item) =>
-      `${item.alt} ${item.name} ${item.src}`.toLowerCase().includes(needle),
-    );
+    return media.filter((item) => {
+      if (mediaUnusedOnly && (item.original || item.used !== false))
+        return false;
+      if (!needle) return true;
+      return `${item.alt} ${item.name} ${item.src}`
+        .toLowerCase()
+        .includes(needle);
+    });
   })();
+  const unusedMedia = media.filter(
+    (item) => !item.original && item.used === false,
+  );
+  const unusedMediaBytes = unusedMedia.reduce(
+    (sum, item) => sum + (item.bytes ?? 0),
+    0,
+  );
   const tabPosition = tabPositionOf(tab);
   const mediaStoragePercent = mediaStorage
     ? percentUsed(mediaStorage.dataBytes, PROJECT_STORAGE_LIMIT_BYTES)
@@ -3322,6 +3338,12 @@ export function Dashboard({
                         mediaStorage.databaseBytes + mediaStorage.walBytes,
                       )}
                     </small>
+                    {unusedMedia.length > 0 ? (
+                      <small className="adm-media-unused-line">
+                        {unusedMedia.length} ảnh chưa dùng ·{" "}
+                        {formatBytes(unusedMediaBytes)}
+                      </small>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -3347,6 +3369,17 @@ export function Dashboard({
                   </button>
                 ) : null}
               </label>
+              {unusedMedia.length > 0 ? (
+                <button
+                  type="button"
+                  className="adm-media-unused-filter"
+                  aria-pressed={mediaUnusedOnly}
+                  data-active={mediaUnusedOnly}
+                  onClick={() => setMediaUnusedOnly((value) => !value)}
+                >
+                  Chưa dùng · {unusedMedia.length}
+                </button>
+              ) : null}
               {mediaQuery ? (
                 <span className="adm-media-filter-count">
                   {filteredMedia.length}/{media.length} ảnh
@@ -3355,7 +3388,7 @@ export function Dashboard({
             </div>
 
             <div className="adm-media-grid">
-              {!mediaQuery ? (
+              {!mediaQuery && !mediaUnusedOnly ? (
                 <label className="adm-media-upload-card">
                   <span className="adm-media-upload-icon">
                     <AdminIcon name="image" size={28} />
@@ -3413,6 +3446,9 @@ export function Dashboard({
                     >
                       {item.original ? "Ảnh gốc" : "Tải lên"}
                     </span>
+                    {!item.original && item.used === false ? (
+                      <span className="adm-media-unused">Chưa dùng</span>
+                    ) : null}
                   </div>
 
                   <div className="adm-media-body">
@@ -3544,7 +3580,9 @@ export function Dashboard({
               </p>
             ) : filteredMedia.length === 0 ? (
               <p className="adm-media-empty">
-                Không tìm thấy ảnh phù hợp. Thử từ khóa khác.
+                {mediaUnusedOnly
+                  ? "Mọi ảnh tải lên đều đang được dùng."
+                  : "Không tìm thấy ảnh phù hợp. Thử từ khóa khác."}
               </p>
             ) : null}
           </section>

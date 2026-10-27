@@ -13,6 +13,7 @@ import {
   seoStatus,
   statusLabel,
   STORAGE_WARN_PERCENT,
+  UNUSED_MEDIA_WARN_BYTES,
   type HealthPayload,
   type HealthSeoArea,
   type HealthSeoIssue,
@@ -616,6 +617,18 @@ export function HealthCheck({ csrf }: { csrf: string }) {
                       : "Không xác định"}
                   </dd>
                 </div>
+                {storage!.unusedMedia && storage!.unusedMedia.count > 0 ? (
+                  <div>
+                    <dt>Ảnh không dùng</dt>
+                    <dd>
+                      {numberFormat.format(storage!.unusedMedia.count)} ảnh ·{" "}
+                      {formatBytes(storage!.unusedMedia.bytes)}
+                      {storage!.unusedMedia.orphanCount > 0
+                        ? ` · ${numberFormat.format(storage!.unusedMedia.orphanCount)} tệp ngoài thư viện`
+                        : ""}
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
               {storage!.available ? (
                 <p className="adm-health-note">
@@ -623,6 +636,33 @@ export function HealthCheck({ csrf }: { csrf: string }) {
                   mức {formatBytes(PROJECT_STORAGE_LIMIT_BYTES)} · cảnh báo từ{" "}
                   {STORAGE_WARN_PERCENT}%.
                 </p>
+              ) : null}
+              {storage!.unusedMedia &&
+              storage!.unusedMedia.bytes > UNUSED_MEDIA_WARN_BYTES ? (
+                <div className="adm-health-cleanup" role="note">
+                  <strong>
+                    {numberFormat.format(storage!.unusedMedia.count)} ảnh không
+                    dùng · {formatBytes(storage!.unusedMedia.bytes)}
+                  </strong>
+                  <p>
+                    Ảnh không còn xuất hiện trên web nhưng vẫn nằm trong volume
+                    và mỗi bản sao lưu. Xoá bớt giúp volume nhẹ hơn, sao
+                    lưu/khôi phục nhanh hơn và thư viện dễ chọn đúng ảnh.
+                  </p>
+                  <p className="adm-health-cleanup-note">
+                    Chỉ ảnh không được tham chiếu ở bất kỳ tour, bài viết hay bản
+                    nháp nào mới bị tính; API xoá vẫn chặn ảnh đang dùng.
+                  </p>
+                  {storage!.unusedMedia.orphanCount > 0 ? (
+                    <p className="adm-health-cleanup-note">
+                      {numberFormat.format(storage!.unusedMedia.orphanCount)} tệp
+                      không còn trong thư viện — cần dọn trên máy chủ.
+                    </p>
+                  ) : null}
+                  <Link className="adm-health-cta" href="/admin/media">
+                    Mở Thư viện ảnh để xoá →
+                  </Link>
+                </div>
               ) : null}
               {storage!.note ? (
                 <p className="adm-health-note adm-health-note--muted">{storage!.note}</p>
