@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isYouTubeUrl } from "@/lib/youtube";
+import { FEATURED_CATEGORY_FALLBACK } from "@/lib/featured";
 import { imageAssetSchema } from "./common";
 
 const suggestionSchema = z.object({
@@ -126,9 +127,32 @@ export const landingSchema = z.object({
     .default({ items: [] }),
   featured: z
     .object({
+      /** Route/region shown on the homepage; legacy rows fall back to the focus route. */
+      categoryId: z
+        .string()
+        .min(1)
+        .max(80)
+        .default(FEATURED_CATEGORY_FALLBACK),
+      /** Mirror of the active scope, kept for older rows/readers. */
       tourIds: z.array(z.string().min(1).max(80)).max(8).default([]),
+      /** Optional: legacy rows derive the mode from `tourIds`. */
+      mode: z.enum(["auto", "manual"]).optional(),
+      /** Everything is stored per route so switching route never erases a list. */
+      scopes: z
+        .record(
+          z.string().min(1).max(80),
+          z.object({
+            mode: z.enum(["auto", "manual"]).default("auto"),
+            tourIds: z.array(z.string().min(1).max(80)).max(8).default([]),
+            title: z.string().max(160).optional(),
+            titleEn: z.string().max(160).optional(),
+            eyebrow: z.string().max(80).optional(),
+            eyebrowEn: z.string().max(80).optional(),
+          }),
+        )
+        .default({}),
     })
-    .default({ tourIds: [] }),
+    .default({ categoryId: FEATURED_CATEGORY_FALLBACK, tourIds: [], scopes: {} }),
   guides: z
     .object({
       featuredSlug: z.string().max(120).default(""),

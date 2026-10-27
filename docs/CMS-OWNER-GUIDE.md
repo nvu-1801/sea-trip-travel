@@ -59,6 +59,16 @@ Carousel phủ toàn màn hình đầu và chạy ra sau header trong suốt. Kh
 - Website & footer: tên thương hiệu, hotline, email, địa chỉ, giờ làm việc VI/EN, các liên kết footer VI/EN, mạng xã hội và bật/tắt motion. Các liên kết mạng xã hội được quản lý riêng; kiểm tra lại URL Zalo khi thay hotline.
 - Nội dung VI/EN: các dòng chữ trên trang chủ, liên hệ, chính sách, nhãn và thông điệp giao diện. Tour/bài viết/danh mục/điểm đến có phần bản dịch riêng trong form; chỉ đánh dấu đã duyệt khi thật sự kiểm tra. Khi sửa nguồn chưa có bản dịch CMS, site không âm thầm dùng lại bản dịch seed đã cũ.
 
+### Tour nổi bật
+
+Mở tab **Trang chủ** → thẻ **Tour nổi bật**. Đầu editor là danh sách tour sẽ hiển thị trên website, kèm số thứ tự, thời lượng/giá và cảnh báo nếu tour còn là bản nháp.
+
+- **Tuyến/vùng**: chọn tuyến đang cấu hình (Quy Nhơn – Phú Yên, Miền Bắc, Miền Trung…). Mỗi tuyến có cấu hình riêng — đổi tuyến rồi quay lại vẫn giữ danh sách cũ.
+- **Tự động**: hệ thống chọn tour của tuyến (nửa tour trong ngày, nửa tour dài ngày), tối đa 7 tour. **Ghim thủ công**: danh sách và thứ tự do bạn quyết định; nút “Ghim danh sách này” điền sẵn đúng các tour đang hiển thị.
+- **Thêm tour**: chỉ hiện tour thuộc tuyến đang chọn, tìm theo tên, ẩn tour đã có. Không tạo tour mới ở đây. Đủ 7 tour thì nút khoá và có nhắc bỏ bớt.
+- Tiêu đề khối tự lấy theo tên tuyến; có thể nhập tiêu đề/eyebrow VI–EN riêng. Nút CTA trên website luôn trỏ về trang của tuyến đang chọn.
+- **Xem trước** trong editor cho biết đúng tiêu đề, thứ tự thẻ và chế độ sẽ xuất bản. Lưu nháp hoặc xuất bản như các section khác.
+
 ### Khách hàng & dấu ấn hành trình
 
 Trong tab **Trang chủ**, mở thẻ **Khách hàng & dấu ấn** (ngay dưới Tour nổi bật). Đây là bằng chứng xã hội do chủ website cung cấp: không tự thêm số khách, đánh giá hay giải thưởng không có thật.

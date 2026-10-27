@@ -1038,6 +1038,12 @@ export const TourEditor = forwardRef<
               động trở thành “Giá từ”. Thêm giá gốc nếu muốn hiện giảm giá —
               phần trăm được tính tự động từ cặp giá.
             </p>
+            {isContact ? (
+              <p className="adm-hint">
+                Tour đang ở chế độ “Liên hệ tư vấn”: giá gốc và giá bán vẫn được
+                giữ để dùng lại, nhưng website sẽ không hiện giá hoặc giảm giá.
+              </p>
+            ) : null}
             {showError("pricingOptions") ? (
               <p className="adm-field-error" role="alert">
                 {showError("pricingOptions")}
@@ -1134,16 +1140,20 @@ export const TourEditor = forwardRef<
                       }
                     />
                   </div>
-                  <DiscountPreview
-                    current={numberOf(option.adultPrice)}
-                    original={numberOf(option.originalAdultPrice)}
-                  />
-                  {numberOf(option.childPrice) > 0 &&
-                  numberOf(option.originalChildPrice) > 0 ? (
-                    <DiscountPreview
-                      current={numberOf(option.childPrice)}
-                      original={numberOf(option.originalChildPrice)}
-                    />
+                  {!isContact ? (
+                    <>
+                      <DiscountPreview
+                        current={numberOf(option.adultPrice)}
+                        original={numberOf(option.originalAdultPrice)}
+                      />
+                      {numberOf(option.childPrice) > 0 &&
+                      numberOf(option.originalChildPrice) > 0 ? (
+                        <DiscountPreview
+                          current={numberOf(option.childPrice)}
+                          original={numberOf(option.originalChildPrice)}
+                        />
+                      ) : null}
+                    </>
                   ) : null}
                 </div>
                 <div className="adm-list-actions adm-price-actions">

@@ -20,10 +20,10 @@ import { HealthCheck } from "./health-check";
 import { BackupPanel } from "./backup-panel";
 import { HomeSections } from "./home-sections";
 import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
-import { HomeFeaturedEditor } from "./home-featured-editor";
+import { HomeFeaturedEditor, type FeaturedEditorTour } from "./home-featured-editor";
 import { CustomerStoriesEditor } from "./customer-stories-editor";
 import type { HomeSectionMeta } from "@/lib/home-sections";
-import { HOME_SECTIONS } from "@/lib/home-sections";
+import { HOME_SECTIONS, HOME_GROUPS } from "@/lib/home-sections";
 import {
   ToastStack,
   ConfirmModal,
@@ -61,6 +61,7 @@ import {
 import type { HeroConfig } from "@/domain/home-hero";
 import { AssetImage } from "@/components/ui/asset-image";
 import { homeSectionDraft } from "@/lib/admin-home-draft";
+import { descendantCategoryIds } from "@/lib/featured";
 import { AdminIcon, type AdminIconName } from "./admin-icons";
 import { SearchIcon, CloseIcon } from "@/components/ui/icons";
 import { searchKey } from "@/lib/search";
@@ -81,12 +82,6 @@ type RecordRow = {
   updated_at: string;
 };
 /** Read-only lineup the public home page uses when nothing is pinned. */
-type AutoFeaturedTour = {
-  key: string;
-  label: string;
-  duration: string | null;
-  price: string | null;
-};
 type Lead = {
   read_at: string | null;
   id: string;
@@ -531,9 +526,6 @@ export function Dashboard({
   const [homeCategories, setHomeCategories] = useState<RegionEditorRow[]>([]);
   const [regionCards, setRegionCards] = useState<RegionEditorRow[]>([]);
   const [homeTours, setHomeTours] = useState<RecordRow[]>([]);
-  const [featuredAuto, setFeaturedAuto] = useState<AutoFeaturedTour[] | null>(
-    null,
-  );
   const [homeModal, setHomeModal] = useState<
     | {
         kind: "hero";
@@ -812,13 +804,12 @@ export function Dashboard({
         return true;
       }
       if (next === "home") {
-        const [heroRows, landingRows, tourRows, categoryRows, autoFeatured] =
+        const [heroRows, landingRows, tourRows, categoryRows] =
           await Promise.all([
             api("content/hero").catch(() => null),
             api("content/landing").catch(() => null),
             api("content/tours").catch(() => null),
             api("home-regions"),
-            api("featured-auto").catch(() => []),
           ]);
         if (
           serial !== loadSerial.current ||
@@ -831,7 +822,6 @@ export function Dashboard({
         });
         setHomeTours((tourRows as RecordRow[] | null) ?? []);
         setHomeCategories(categoryRows as RegionEditorRow[]);
-        setFeaturedAuto((autoFeatured as AutoFeaturedTour[]) ?? []);
         setReferences({
           ...options,
           media: mediaSelectOptions(library),
@@ -1648,6 +1638,16 @@ export function Dashboard({
     return left !== null && left <= 7;
   }).length;
   const tabLabel = tabs.find((t) => t[0] === tab)?.[1] ?? tab;
+  const homeBannerState = homeData.hero
+    ? homeData.hero.state === "published"
+      ? "published"
+      : "draft"
+    : "loading";
+  const homeSectionsState = homeData.landing
+    ? homeData.landing.state === "published"
+      ? "published"
+      : "draft"
+    : "loading";
   const filteredMedia = (() => {
     const needle = mediaQuery.trim().toLowerCase();
     return media.filter((item) => {
@@ -1975,20 +1975,79 @@ export function Dashboard({
     (row) => row.state !== "deleted" && row.data.showOnHome === true,
   ).length;
   const homeSlotsFull = homeEnabledCount >= HOME_DESTINATION_LIMIT;
-  const featuredTourMeta: Record<
-    string,
-    { price: string | null; duration: string | null; state: string }
-  > = {};
-  for (const row of homeTours) {
-    const value = {
-      price: priceLabelOf(row.data),
-      duration: durationBadgeOf(row.data),
-      state: row.state,
+  /**
+   * The featured editor needs the category tree (labels, counts) and a flat
+   * tour list with the fields the cards show. Both are already loaded for the
+   * Home screen, so no extra request is needed.
+   */
+  const featuredEditorCategories = (() => {
+    const live = homeCategories
+      .filter((row) => row.state !== "deleted")
+      .map((row) => ({
+        id: row.id,
+        parentId:
+          typeof row.data.parentId === "string" ? row.data.parentId : null,
+        name: String(row.data.name ?? row.id),
+        path:
+          typeof row.data.path === "string"
+            ? row.data.path
+            : `/danh-muc/${String(row.data.slug ?? "")}`,
+      }));
+    const trail = (id: string) => {
+      const parts: string[] = [];
+      const seen = new Set<string>();
+      let current = live.find((item) => item.id === id);
+      while (current && parts.length < 8 && !seen.has(current.id)) {
+        seen.add(current.id);
+        parts.unshift(current.name);
+        const parentId = current.parentId;
+        current = parentId
+          ? live.find((item) => item.id === parentId)
+          : undefined;
+      }
+      return parts.join(" › ") || id;
     };
-    featuredTourMeta[row.id] = value;
-    const slug = String(row.data.slug ?? "");
-    if (slug) featuredTourMeta[slug] = value;
-  }
+    return live.map((item) => {
+      const ids = new Set(descendantCategoryIds(live, item.id));
+      return {
+        ...item,
+        label: trail(item.id),
+        tourCount: homeTours.filter(
+          (row) =>
+            row.state !== "deleted" &&
+            Array.isArray(row.data.categoryIds) &&
+            row.data.categoryIds.some(
+              (id) => typeof id === "string" && ids.has(id),
+            ),
+        ).length,
+      };
+    });
+  })();
+  const featuredEditorTours: FeaturedEditorTour[] = homeTours
+    .filter((row) => row.state !== "deleted")
+    .map((row) => {
+      const duration = row.data.duration as
+        | Record<string, EditorValue>
+        | undefined;
+      return {
+        slug: String(row.data.slug ?? ""),
+        title: String(row.data.title ?? row.data.slug ?? row.id),
+        categoryIds: Array.isArray(row.data.categoryIds)
+          ? row.data.categoryIds.filter(
+              (value): value is string => typeof value === "string",
+            )
+          : [],
+        duration: {
+          days: typeof duration?.days === "number" ? duration.days : 0,
+          nights: typeof duration?.nights === "number" ? duration.nights : 0,
+        },
+        durationLabel: durationBadgeOf(row.data),
+        priceLabel: priceLabelOf(row.data),
+        state: row.state,
+        image: coverSrcOf(row.data) || null,
+      };
+    })
+    .filter((tour) => tour.slug);
   const homeOrderOf = (row: RecordRow) => {
     const value = row.data.homeOrder;
     return typeof value === "number" && value > 0
@@ -2542,7 +2601,9 @@ export function Dashboard({
                 ? "Theo dõi thao tác quản trị và những điểm cần xem lại."
                 : tab === "health"
                   ? "Dung lượng, tốc độ tải thật và mức độ sẵn sàng SEO."
-                  : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
+                  : tab === "home"
+                    ? "Bố cục, banner và từng khối nội dung — đúng thứ tự khách sẽ trải nghiệm."
+                    : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
             </p>
           </div>
           <div className="adm-masthead-side">
@@ -3621,49 +3682,105 @@ export function Dashboard({
           <>
             <section className="adm-panel adm-home-intro">
               <div className="adm-home-intro-top">
-                <div>
-                  <h2>Các khối trang chủ theo đúng thứ tự hiển thị</h2>
+                <div className="adm-home-intro-copy">
+                  <p className="adm-home-intro-eyebrow">
+                    <span aria-hidden="true">01</span> Landing page studio
+                  </p>
+                  <h2>Trang chủ theo đúng thứ tự hiển thị</h2>
                   <p>
                     Mỗi thẻ là một phần thật trên landing page, chia 3 nhóm Đầu
-                    – Giữa – Cuối trang. Bấm Sửa để mở modal chỉ chứa trường của
-                    phần đó.
+                    – Giữa – Cuối trang. Mở đúng khối để chỉnh, rồi lưu nháp
+                    hoặc xuất bản.
                   </p>
+                  <div className="adm-home-intro-actions">
+                    <a
+                      className="adm-home-view"
+                      href="/vi"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Xem trang chủ <span aria-hidden="true">↗</span>
+                    </a>
+                    <span>Bấm “Sửa” trên từng thẻ để mở đúng phần nội dung.</span>
+                  </div>
                 </div>
-                <div className="adm-home-states" role="status">
-                  <span
-                    className={`adm-badge ${homeData.hero ? (homeData.hero.state === "published" ? "" : "draft") : "draft"}`}
+                <div className="adm-home-status" role="status">
+                  <div
+                    className="adm-home-status-card"
+                    data-state={homeBannerState}
                   >
-                    Banner:{" "}
-                    {homeData.hero
-                      ? homeData.hero.state === "published"
-                        ? "Đang xuất bản"
-                        : "Bản nháp"
-                      : "Đang tải…"}
-                  </span>
-                  <span
-                    className={`adm-badge ${homeData.landing ? (homeData.landing.state === "published" ? "" : "draft") : "draft"}`}
+                    <span className="adm-home-status-icon" aria-hidden="true">
+                      <AdminIcon name="image" size={18} />
+                    </span>
+                    <div>
+                      <small>Banner đầu trang</small>
+                      <strong>
+                        {homeBannerState === "loading"
+                          ? "Đang tải…"
+                          : homeBannerState === "published"
+                            ? "Đang xuất bản"
+                            : "Bản nháp"}
+                      </strong>
+                      <p>
+                        {homeBannerState === "published"
+                          ? "Khách đang thấy phiên bản mới nhất."
+                          : "Lưu nháp an toàn, xuất bản khi sẵn sàng."}
+                      </p>
+                    </div>
+                    <i className="adm-home-status-dot" aria-hidden="true" />
+                  </div>
+                  <div
+                    className="adm-home-status-card"
+                    data-state={homeSectionsState}
                   >
-                    Sections:{" "}
-                    {homeData.landing
-                      ? homeData.landing.state === "published"
-                        ? "Đang xuất bản"
-                        : "Bản nháp"
-                      : "Đang tải…"}
-                  </span>
+                    <span className="adm-home-status-icon" aria-hidden="true">
+                      <AdminIcon name="home" size={18} />
+                    </span>
+                    <div>
+                      <small>Khối nội dung</small>
+                      <strong>
+                        {homeSectionsState === "loading"
+                          ? "Đang tải…"
+                          : homeSectionsState === "published"
+                            ? "Đang xuất bản"
+                            : "Bản nháp"}
+                      </strong>
+                      <p>
+                        {HOME_SECTIONS.length} khối · {HOME_GROUPS.length} nhóm
+                        bố cục
+                      </p>
+                    </div>
+                    <i className="adm-home-status-dot" aria-hidden="true" />
+                  </div>
                 </div>
               </div>
               <ol className="adm-home-steps">
                 <li>
-                  <strong>1 · Xem</strong>
-                  <span>Tìm đúng số thứ tự của khối trên trang</span>
+                  <span className="adm-home-step-no" aria-hidden="true">
+                    1
+                  </span>
+                  <div>
+                    <strong>Chọn khối</strong>
+                    <span>Tìm đúng số thứ tự trên landing page.</span>
+                  </div>
                 </li>
                 <li>
-                  <strong>2 · Sửa</strong>
-                  <span>Mở modal, chỉ sửa trường của khối đó</span>
+                  <span className="adm-home-step-no" aria-hidden="true">
+                    2
+                  </span>
+                  <div>
+                    <strong>Chỉnh nội dung</strong>
+                    <span>Modal chỉ chứa trường của khối đó.</span>
+                  </div>
                 </li>
                 <li>
-                  <strong>3 · Xuất bản</strong>
-                  <span>Lưu nháp để giữ, xuất bản để lên web ngay</span>
+                  <span className="adm-home-step-no" aria-hidden="true">
+                    3
+                  </span>
+                  <div>
+                    <strong>Xuất bản</strong>
+                    <span>Lưu nháp để giữ, xuất bản để lên web.</span>
+                  </div>
                 </li>
               </ol>
             </section>
@@ -3786,9 +3903,8 @@ export function Dashboard({
                             unknown
                           >
                         }
-                        options={references.tours ?? []}
-                        autoTours={featuredAuto ?? []}
-                        meta={featuredTourMeta}
+                        categories={featuredEditorCategories}
+                        tours={featuredEditorTours}
                         onEditTour={editTourFromHome}
                         onChange={(featured) => {
                           setSelected({

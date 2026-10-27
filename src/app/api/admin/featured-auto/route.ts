@@ -1,19 +1,22 @@
 import { requireSession } from "@/server/cms/auth";
 import { handle, reply } from "@/server/cms/http";
 import { getAutomaticFeaturedTours } from "@/lib/data/tours";
+import { FEATURED_LIMIT } from "@/lib/featured";
 
 export const dynamic = "force-dynamic";
 
 /**
- * The six tours the home page is showing while "Tour nổi bật" has no manual
- * pins. The Studio editor lists them read-only so "tự động" is not a mystery
- * number, and each row can jump to the tour form.
+ * The tours the home page shows while “Tour nổi bật” is on automatic. The
+ * Studio editor computes the same list locally; this endpoint remains for
+ * older clients and scripted checks.
  */
 export async function GET(request: Request) {
   return handle(async () => {
     await requireSession(request);
+    const categoryId =
+      new URL(request.url).searchParams.get("categoryId") ?? undefined;
     return reply(
-      getAutomaticFeaturedTours(6, "vi").map((tour) => ({
+      getAutomaticFeaturedTours(FEATURED_LIMIT, "vi", categoryId).map((tour) => ({
         key: tour.slug,
         label: tour.title,
         duration: `${tour.duration.days}N${tour.duration.nights}Đ`,

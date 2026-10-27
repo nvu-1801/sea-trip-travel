@@ -88,7 +88,7 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     illustration: "/images/tours/d7233006cc4fd0f9.jpeg",
     icon: "star",
     group: "main",
-    tip: "Ghim tour thủ công hoặc để tự động theo tuyến.",
+    tip: "Chọn tuyến/vùng, ghim danh sách theo thứ tự hoặc để hệ thống tự chọn.",
   },
   {
     key: "customers",
@@ -211,8 +211,13 @@ export function sectionSummary(meta: HomeSectionMeta, data: unknown): string {
       case "explore":
         return asString(asRecord(root.explore).titleA) || "Tiêu đề đang để trống";
       case "featured": {
-        const ids = asArray(asRecord(root.featured).tourIds);
-        return ids.length > 0 ? `Đang ghim ${ids.length} tour` : "Tự động theo tuyến";
+        const featured = asRecord(root.featured);
+        const ids = asArray(featured.tourIds);
+        const mode =
+          asString(featured.mode) || (ids.length > 0 ? "manual" : "auto");
+        return mode === "manual" && ids.length > 0
+          ? `Đang ghim ${ids.length} tour`
+          : "Tự động theo tuyến";
       }
       case "trust": {
         const n = asArray(asRecord(root.trust).items).length;

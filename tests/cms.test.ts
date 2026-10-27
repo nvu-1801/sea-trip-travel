@@ -21,8 +21,9 @@ import {
 import type { TravelArticle } from "../src/domain/article";
 import { defaultSettings } from "../src/server/cms/settings";
 import { MAX_HOME_DESTINATIONS } from "../src/domain/destination";
-import { getFeaturedTours } from "../src/lib/data/tours";
+import { getFeaturedTours, getAutomaticFeaturedTours } from "../src/lib/data/tours";
 import { slugFromTitle } from "../src/lib/public-slug";
+import { featuredCopy, getFeaturedHome } from "../src/lib/data/featured";
 test("default CMS social links preserve the hotline-derived Zalo contact", () => {
   assert.ok(
     defaultSettings.socialLinks.some((link) =>
@@ -1244,6 +1245,99 @@ test("a title-derived slug that already exists gets a numeric suffix", () => {
   const savedB = list("articles").find((row) => row.id === "art_slug_auto_b")!;
   assert.equal(savedA.data.slug, base);
   assert.equal(savedB.data.slug, `${base}-2`);
+});
+
+test("featured follows the chosen route and keeps every scope's list", () => {
+  const before = list("landing")[0];
+  const north = getAutomaticFeaturedTours(6, "vi", "cat_mien_bac").map(
+    (tour) => tour.slug,
+  );
+  const focus = getAutomaticFeaturedTours(6, "vi").map((tour) => tour.slug);
+  assert.ok(north.length > 0);
+  assert.ok(focus.length >= 2);
+
+  try {
+    save(
+      "landing",
+      {
+        ...before.data,
+        featured: {
+          categoryId: "cat_mien_bac",
+          mode: "auto",
+          tourIds: [north[0]],
+          scopes: {
+            cat_quy_nhon_phu_yen: {
+              mode: "manual",
+              tourIds: [focus[1], focus[0]],
+            },
+            cat_mien_bac: { mode: "auto", tourIds: [north[0]] },
+          },
+        },
+      },
+      before.revision,
+      "publish",
+    );
+
+    // Automatic mode stays inside the selected region and ignores stale pins.
+    const automatic = getFeaturedTours(6, "vi");
+    assert.ok(automatic.length > 0);
+    assert.ok(
+      automatic.every((tour) => tour.categoryIds.includes("cat_mien_bac")),
+    );
+
+    // Heading is derived from the route when the owner leaves it empty.
+    const section = getFeaturedHome("vi");
+    assert.equal(section.categoryId, "cat_mien_bac");
+    assert.equal(section.scope.mode, "auto");
+    const copy = featuredCopy(section, "vi", {
+      eyebrow: "Tuyến trọng tâm",
+      title: "Tour nổi bật",
+      description: "Mặc định",
+    });
+    assert.equal(copy.title, "Tour Miền Bắc nổi bật");
+    assert.equal(copy.eyebrow, "Vùng miền");
+    const copyEn = featuredCopy(section, "en", {
+      eyebrow: "Focus route",
+      title: "Featured tours",
+      description: "Fallback",
+    });
+    assert.equal(copyEn.title.toLowerCase(), "featured northern vietnam tours");
+    assert.equal(copyEn.eyebrow, "Regions");
+
+    // The other route's pins were saved untouched.
+    const stored = list("landing")[0].data.featured as {
+      scopes: Record<string, { tourIds: string[] }>;
+    };
+    assert.deepEqual(stored.scopes.cat_quy_nhon_phu_yen.tourIds, [
+      focus[1],
+      focus[0],
+    ]);
+
+    // Switching the live route back restores that manual order.
+    const current = list("landing")[0];
+    const featured = current.data.featured as Record<string, unknown>;
+    save(
+      "landing",
+      {
+        ...current.data,
+        featured: {
+          ...featured,
+          categoryId: "cat_quy_nhon_phu_yen",
+          mode: "manual",
+          tourIds: [focus[1], focus[0]],
+        },
+      },
+      current.revision,
+      "publish",
+    );
+    assert.deepEqual(
+      getFeaturedTours(6, "vi").map((tour) => tour.slug),
+      [focus[1], focus[0]],
+    );
+  } finally {
+    const current = list("landing")[0];
+    save("landing", before.data, current.revision, "publish");
+  }
 });
 
 test("the slug migration renames placeholders and follows references", () => {

@@ -1,6 +1,6 @@
 import { ROUTES } from "@/config/navigation";
 import { HeadingAccent } from "@/components/ui/heading-accent";
-import { getFeaturedTours } from "@/lib/data/tours";
+import { featuredCopy, getFeaturedHome } from "@/lib/data/featured";
 import { Container, Section } from "@/components/ui/layout";
 import { SectionEyebrow } from "@/components/ui/section-eyebrow";
 import { Reveal, RevealGroup } from "@/components/ui/reveal";
@@ -14,34 +14,33 @@ import { getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 
 /**
- * Featured tours. Prefers the Quy Nhơn – Phú Yên line-up (the site's focus) and
- * tops up from other regions so the section is never thin.
+ * Featured tours. The Studio chooses the route/region and either pins an
+ * ordered list or lets the route pick the line-up; this section only renders
+ * that decision. With no configuration it keeps the original Quy Nhơn – Phú Yên
+ * focus line-up.
  */
 export function FeaturedToursSection({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
-  const tours = getFeaturedTours(6, locale).map((tour) =>
-    toTourCard(tour, locale),
-  );
+  const section = getFeaturedHome(locale);
+  const copy = featuredCopy(section, locale, m.home.featured);
+  const categoryName = section.category?.name ?? "";
+  const ctaHref = section.category?.path ?? ROUTES.quyNhonPhuYen;
+  const tours = section.tours.map((tour) => toTourCard(tour, locale));
 
   return (
     <Section tone="muted" spacing="loose" className="journal-featured">
       <Container>
         <RevealGroup className="intro-centered">
           <SectionEyebrow className="eyebrow-pill">
-            {m.home.featured.eyebrow}
+            {copy.eyebrow}
           </SectionEyebrow>
           <h2>
-            <HeadingAccent
-              text={m.home.featured.title}
-              phrase={
-                locale === "en" ? "Quy Nhon – Phu Yen" : "Quy Nhơn – Phú Yên"
-              }
-            />
+            <HeadingAccent text={copy.title} phrase={categoryName} />
           </h2>
-          <p>{m.home.featured.description}</p>
+          <p>{copy.description}</p>
           <div className="intro-cta">
             <ButtonLink
-              href={localizePath(locale, ROUTES.quyNhonPhuYen)}
+              href={localizePath(locale, ctaHref)}
               variant="secondary"
               className="group"
             >

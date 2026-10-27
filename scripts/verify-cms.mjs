@@ -775,7 +775,7 @@ try {
     .click();
   await page
     .getByRole("heading", {
-      name: "Các khối trang chủ theo đúng thứ tự hiển thị",
+      name: /Trang chủ theo đúng thứ tự/,
     })
     .waitFor();
   await page.getByRole("button", { name: /Sửa tour theo vùng miền/i }).click();
@@ -806,16 +806,16 @@ try {
   });
   await featuredHomeDialog.waitFor();
   check(
-    "home featured editor offers a tour picker",
-    (await featuredHomeDialog
-      .getByText("Chọn tour hiển thị trong khối", { exact: false })
-      .count()) > 0,
+    "home featured editor offers manual pinning",
+    await featuredHomeDialog
+      .getByRole("button", { name: "Ghim thủ công", exact: true })
+      .isVisible(),
   );
   check(
-    "home featured editor lists the automatic six-tour line-up",
+    "home featured editor lists the automatic seven-tour line-up",
     (await featuredHomeDialog
-      .locator(".adm-home-featured-auto .adm-home-featured-list > li")
-      .count()) === 6,
+      .locator(".adm-home-featured-list > li")
+      .count()) === 7,
   );
   check(
     "home featured editor points to the tour form for photos and prices",

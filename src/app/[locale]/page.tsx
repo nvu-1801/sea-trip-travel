@@ -17,6 +17,7 @@ import { GuidesSection } from "@/features/home/guides-section";
 import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { getFeaturedTours } from "@/lib/data/tours";
+import { FEATURED_LIMIT } from "@/lib/featured";
 import { tourTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
@@ -42,7 +43,7 @@ async function resolveLocale(
 
 function homeIndexable(locale: Locale): boolean {
   if (locale === "vi") return true;
-  return getFeaturedTours(6, "en").every((tour) =>
+  return getFeaturedTours(FEATURED_LIMIT, "en").every((tour) =>
     isIndexable(tourTranslationStatus(tour.id, "en"), "en"),
   );
 }
