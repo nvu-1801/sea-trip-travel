@@ -774,6 +774,12 @@ try {
       .count()) > 0,
   );
   check(
+    "home featured editor lists the automatic six-tour line-up",
+    (await featuredHomeDialog
+      .locator(".adm-home-featured-auto .adm-home-featured-list > li")
+      .count()) === 6,
+  );
+  check(
     "home featured editor points to the tour form for photos and prices",
     (await featuredHomeDialog
       .getByText("Sửa tour", { exact: false })

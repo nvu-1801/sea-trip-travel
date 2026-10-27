@@ -59,6 +59,36 @@ export function getToursByCategoryId(
  * With no valid pin, the automatic line-up prefers the Quy Nhơn – Phú Yên
  * focus route and tops up with other regions so the section never looks thin.
  */
+/**
+ * Automatic home line-up, without manual pins: Quy Nhơn – Phú Yên day trips
+ * first, then overnight programmes, topped up from other regions. Shared with
+ * the Studio preview so the editor can show exactly what "tự động" means.
+ */
+export function getAutomaticFeaturedTours(
+  limit = 6,
+  locale: Locale,
+): readonly Tour[] {
+  const all = current_tours();
+  const focus = new Set(getAllDescendantCategoryIds("cat_quy_nhon_phu_yen"));
+  const inFocus = all.filter((tour) =>
+    tour.categoryIds.some((id) => focus.has(id)),
+  );
+  // Show both day trips and overnight programmes as the catalogue grows.
+  const dayLimit = Math.ceil(limit / 2);
+  const diverse = [
+    ...inFocus.filter((tour) => tour.duration.days === 1).slice(0, dayLimit),
+    ...inFocus
+      .filter((tour) => tour.duration.days > 1)
+      .slice(0, limit - dayLimit),
+    ...inFocus,
+    ...all.filter((tour) => !inFocus.includes(tour)),
+  ];
+  const chosen = [
+    ...new Map(diverse.map((tour) => [tour.id, tour])).values(),
+  ].slice(0, limit);
+  return chosen.map((tour) => resolveTour(tour, locale));
+}
+
 export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
   const all = current_tours();
   let pinned: typeof all = [];
@@ -80,26 +110,7 @@ export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
   }
   if (pinned.length > 0)
     return pinned.slice(0, limit).map((tour) => resolveTour(tour, locale));
-  const focus = new Set(getAllDescendantCategoryIds("cat_quy_nhon_phu_yen"));
-  const inFocus = current_tours().filter((tour) =>
-    tour.categoryIds.some((id) => focus.has(id)),
-  );
-  // Show both day trips and overnight programmes as the catalogue grows.
-  const dayLimit = Math.ceil(limit / 2);
-  const diverse = [
-    ...inFocus.filter((tour) => tour.duration.days === 1).slice(0, dayLimit),
-    ...inFocus
-      .filter((tour) => tour.duration.days > 1)
-      .slice(0, limit - dayLimit),
-    ...inFocus,
-    ...current_tours().filter((tour) => !inFocus.includes(tour)),
-  ];
-  const chosen = [
-    ...new Map(
-      [...pinned, ...diverse].map((tour) => [tour.id, tour]),
-    ).values(),
-  ].slice(0, limit);
-  return chosen.map((tour) => resolveTour(tour, locale));
+  return getAutomaticFeaturedTours(limit, locale);
 }
 
 /**

@@ -12,12 +12,20 @@ import { AdmMultiSelect } from "./ui-select";
 export function HomeFeaturedEditor({
   value,
   options,
+  autoTours = [],
   meta = {},
   onChange,
   onEditTour,
 }: {
   value: Record<string, unknown>;
   options: { value: string; label: string }[];
+  /** Published tours the home page picks automatically when nothing is pinned. */
+  autoTours?: {
+    key: string;
+    label: string;
+    duration: string | null;
+    price: string | null;
+  }[];
   /** Price/duration/publication read from the tour list. */
   meta?: Record<
     string,
@@ -41,7 +49,7 @@ export function HomeFeaturedEditor({
   }));
 
   const commit = (next: string[]) =>
-    onChange({ ...value, tourIds: next.slice(0, 8) });
+    onChange({ ...value, tourIds: next.slice(0, 6) });
 
   const move = (index: number, direction: -1 | 1) => {
     const next = [...tourIds];
@@ -55,7 +63,7 @@ export function HomeFeaturedEditor({
     <div className="adm-home-featured">
       <p className="adm-home-featured-lead">
         Chọn tour hiển thị trong khối <strong>“Tour Quy Nhơn – Phú Yên nổi
-        bật”</strong>. Thứ tự ở đây là thứ tự thẻ trên trang chủ.
+        bật”</strong>. Thứ tự ở đây là thứ tự thẻ trên trang chủ, tối đa 6 tour.
       </p>
 
       <AdmMultiSelect
@@ -129,10 +137,43 @@ export function HomeFeaturedEditor({
           ))}
         </ol>
       ) : (
-        <p className="adm-home-featured-empty">
-          Đang để <strong>tự động</strong>: trang chủ chọn 6 tour theo tuyến
-          Quy Nhơn – Phú Yên. Thêm tour bên trên nếu muốn ghim thủ công.
-        </p>
+        <>
+          <p className="adm-home-featured-empty">
+            Đang để <strong>tự động</strong>: trang chủ chọn 6 tour theo tuyến
+            Quy Nhơn – Phú Yên. Thêm tour bên trên nếu muốn ghim thủ công.
+          </p>
+          {autoTours.length > 0 ? (
+            <div className="adm-home-featured-auto">
+              <p className="adm-home-featured-auto-head">
+                {autoTours.length} tour đang hiển thị tự động
+              </p>
+              <ol className="adm-home-featured-list">
+                {autoTours.map((item, index) => (
+                  <li key={item.key}>
+                    <span className="adm-home-featured-num">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="adm-home-featured-copy">
+                      <strong>{item.label}</strong>
+                      <small>
+                        {[item.duration, item.price].filter(Boolean).join(" · ")}
+                      </small>
+                    </div>
+                    <div className="adm-home-featured-actions">
+                      <button
+                        type="button"
+                        className="adm-ghost-link"
+                        onClick={() => onEditTour(item.key)}
+                      >
+                        Sửa tour ↗
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
+        </>
       )}
 
       <p className="adm-hint">

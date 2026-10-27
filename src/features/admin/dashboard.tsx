@@ -79,6 +79,13 @@ type RecordRow = {
   state: string;
   updated_at: string;
 };
+/** Read-only lineup the public home page uses when nothing is pinned. */
+type AutoFeaturedTour = {
+  key: string;
+  label: string;
+  duration: string | null;
+  price: string | null;
+};
 type Lead = {
   read_at: string | null;
   id: string;
@@ -493,6 +500,9 @@ export function Dashboard({
   const [homeCategories, setHomeCategories] = useState<RegionEditorRow[]>([]);
   const [regionCards, setRegionCards] = useState<RegionEditorRow[]>([]);
   const [homeTours, setHomeTours] = useState<RecordRow[]>([]);
+  const [featuredAuto, setFeaturedAuto] = useState<AutoFeaturedTour[] | null>(
+    null,
+  );
   const [homeModal, setHomeModal] = useState<
     | {
         kind: "hero";
@@ -768,12 +778,13 @@ export function Dashboard({
         return true;
       }
       if (next === "home") {
-        const [heroRows, landingRows, tourRows, categoryRows] =
+        const [heroRows, landingRows, tourRows, categoryRows, autoFeatured] =
           await Promise.all([
             api("content/hero").catch(() => null),
             api("content/landing").catch(() => null),
             api("content/tours").catch(() => null),
             api("home-regions"),
+            api("featured-auto").catch(() => []),
           ]);
         if (
           serial !== loadSerial.current ||
@@ -786,6 +797,7 @@ export function Dashboard({
         });
         setHomeTours((tourRows as RecordRow[] | null) ?? []);
         setHomeCategories(categoryRows as RegionEditorRow[]);
+        setFeaturedAuto((autoFeatured as AutoFeaturedTour[]) ?? []);
         setReferences({
           ...options,
           media: mediaSelectOptions(library),
@@ -3706,6 +3718,7 @@ export function Dashboard({
                           >
                         }
                         options={references.tours ?? []}
+                        autoTours={featuredAuto ?? []}
                         meta={featuredTourMeta}
                         onEditTour={editTourFromHome}
                         onChange={(featured) => {
