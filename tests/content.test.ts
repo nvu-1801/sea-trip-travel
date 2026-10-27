@@ -13,6 +13,7 @@ import {
   getTopLevelCategories,
 } from "@/lib/data/categories";
 import {
+  getAutomaticFeaturedTours,
   getFeaturedTours,
   getRelatedTours,
   getTourBySlug,
@@ -252,6 +253,15 @@ describe("tour repository", () => {
     assert.equal(featured.length, 6);
     const focus = getToursByCategoryId("cat_quy_nhon_phu_yen", VI).map((tour) => tour.slug);
     assert.ok(focus.includes(featured[0].slug));
+  });
+
+  it("keeps the automatic line-up inside the chosen region", () => {
+    const north = getAutomaticFeaturedTours(6, VI, "cat_mien_bac");
+    assert.ok(north.length > 0);
+    assert.ok(north.length <= 6);
+    assert.ok(
+      north.every((tour) => tour.categoryIds.includes("cat_mien_bac")),
+    );
   });
 
   it("never includes the current tour in its own related list", () => {

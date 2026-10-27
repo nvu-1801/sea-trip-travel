@@ -65,6 +65,7 @@ export function HomeSections({
                 return (
                   <article
                     key={meta.key}
+                    data-group={meta.group}
                     className={`adm-section-card${meta.linkTab ? " adm-section-card--link" : ""}`}
                   >
                     <div className="adm-section-thumb" aria-hidden="true">
@@ -79,15 +80,24 @@ export function HomeSections({
                           size={16}
                         />
                       </span>
+                      {state ? (
+                        <span className="adm-section-state" data-state={state}>
+                          <i aria-hidden="true" />
+                          {state === "published" ? "Live" : "Nháp"}
+                        </span>
+                      ) : null}
                     </div>
                     <div className="adm-section-body">
+                      {state ? (
+                        <span className="adm-sr-only">
+                          Trạng thái:{" "}
+                          {state === "published"
+                            ? "Đang xuất bản"
+                            : "Bản nháp"}
+                        </span>
+                      ) : null}
                       <div className="adm-section-top">
                         <p className="adm-section-where">{meta.where}</p>
-                        {state === "published" ? (
-                          <span className="adm-badge">Đang xuất bản</span>
-                        ) : state === "draft" ? (
-                          <span className="adm-badge draft">Bản nháp</span>
-                        ) : null}
                       </div>
                       <h3>{meta.title}</h3>
                       <p className="adm-section-summary">
@@ -102,7 +112,8 @@ export function HomeSections({
                       <div className="adm-section-actions">
                         {meta.linkTab ? (
                           <button type="button" onClick={onGoSettings}>
-                            Mở Website & footer ↗
+                            Mở Website &amp; footer{" "}
+                            <span aria-hidden="true">↗</span>
                           </button>
                         ) : (
                           <button
@@ -115,7 +126,8 @@ export function HomeSections({
                                 : onEditSection(meta)
                             }
                           >
-                            Sửa {meta.title.toLowerCase()}
+                            Sửa {meta.title.toLowerCase()}{" "}
+                            <span aria-hidden="true">↗</span>
                           </button>
                         )}
                       </div>

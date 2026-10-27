@@ -6,6 +6,13 @@ import type { Tour } from "@/domain/tour";
 import type { Locale } from "@/i18n/config";
 import { getAllDescendantCategoryIds } from "./internal";
 import { resolveTour } from "./localize";
+import {
+  FEATURED_CATEGORY_FALLBACK,
+  FEATURED_LIMIT,
+  featuredConfigOf,
+  featuredKeys,
+  pickAutomaticFeatured,
+} from "@/lib/featured";
 
 /**
  * Read-only access to current_tours(), resolved for the requested locale.
@@ -59,47 +66,79 @@ export function getToursByCategoryId(
  * With no valid pin, the automatic line-up prefers the Quy Nhơn – Phú Yên
  * focus route and tops up with other regions so the section never looks thin.
  */
-export function getFeaturedTours(limit = 6, locale: Locale): readonly Tour[] {
-  const all = current_tours();
-  let pinned: typeof all = [];
+/**
+ * Automatic home line-up for one route/region: day trips and overnight
+ * programmes from that scope only. Shared with the Studio editor so its
+ * preview and the public homepage use the exact same order.
+ */
+export function getAutomaticFeaturedTours(
+  limit = FEATURED_LIMIT,
+  locale: Locale,
+  categoryId = FEATURED_CATEGORY_FALLBACK,
+): readonly Tour[] {
+  const ids = new Set(getAllDescendantCategoryIds(categoryId));
+  const chosen = pickAutomaticFeatured(current_tours(), ids, limit);
+  return chosen.map((tour) => resolveTour(tour, locale));
+}
+
+function featuredConfig() {
   try {
-    const ids = landingSections().featured.tourIds;
-    if (ids.length > 0) {
+    return featuredConfigOf(landingSections().featured);
+  } catch {
+    return featuredConfigOf(null);
+  }
+}
+
+/**
+ * Home-page feature set. The active scope is read from `landing.featured`:
+ * a manual scope shows exactly the pinned tours in the chosen order (unknown
+ * keys are ignored, falling back to automatic when every pin is gone); an
+ * automatic scope follows the route picked by the owner.
+ */
+export function getFeaturedTours(
+  limit = FEATURED_LIMIT,
+  locale: Locale,
+): readonly Tour[] {
+  const config = featuredConfig();
+  const categoryId =
+    getCategoryIdOrFallback(config.categoryId);
+  const scope = config.scopes[categoryId] ?? {
+    mode: "auto" as const,
+    tourIds: [] as string[],
+  };
+
+  if (scope.mode === "manual") {
+    const keys = featuredKeys(scope.tourIds);
+    if (keys.length > 0) {
+      const all = current_tours();
       const byKey = new Map<string, (typeof all)[number]>();
       for (const tour of all) {
         byKey.set(tour.id, tour);
         byKey.set(tour.slug, tour);
       }
-      pinned = ids.flatMap((key) => {
+      const pinned = keys.flatMap((key) => {
         const tour = byKey.get(key);
         return tour ? [tour] : [];
       });
+      if (pinned.length > 0)
+        return pinned.slice(0, limit).map((tour) => resolveTour(tour, locale));
     }
-  } catch {
-    // fall through to the automatic line-up
   }
-  if (pinned.length > 0)
-    return pinned.slice(0, limit).map((tour) => resolveTour(tour, locale));
-  const focus = new Set(getAllDescendantCategoryIds("cat_quy_nhon_phu_yen"));
-  const inFocus = current_tours().filter((tour) =>
-    tour.categoryIds.some((id) => focus.has(id)),
-  );
-  // Show both day trips and overnight programmes as the catalogue grows.
-  const dayLimit = Math.ceil(limit / 2);
-  const diverse = [
-    ...inFocus.filter((tour) => tour.duration.days === 1).slice(0, dayLimit),
-    ...inFocus
-      .filter((tour) => tour.duration.days > 1)
-      .slice(0, limit - dayLimit),
-    ...inFocus,
-    ...current_tours().filter((tour) => !inFocus.includes(tour)),
-  ];
-  const chosen = [
-    ...new Map(
-      [...pinned, ...diverse].map((tour) => [tour.id, tour]),
-    ).values(),
-  ].slice(0, limit);
-  return chosen.map((tour) => resolveTour(tour, locale));
+
+  return getAutomaticFeaturedTours(limit, locale, categoryId);
+}
+
+/** A deleted/renamed scope should not blank the homepage. */
+function getCategoryIdOrFallback(categoryId: string): string {
+  try {
+    const categories = published<{ id: string }>("categories", []);
+    if (categories.length === 0) return categoryId;
+    return categories.some((category) => category.id === categoryId)
+      ? categoryId
+      : FEATURED_CATEGORY_FALLBACK;
+  } catch {
+    return categoryId;
+  }
 }
 
 /**

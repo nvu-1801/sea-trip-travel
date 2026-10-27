@@ -88,6 +88,15 @@ export const REGION_LABELS: Record<Region, string> = {
   "tay-nguyen": "Tây Nguyên",
 };
 
+/** English labels for headings built outside the message files. */
+export const REGION_LABELS_EN: Record<Region, string> = {
+  "quy-nhon-phu-yen": "Quy Nhon – Phu Yen",
+  "mien-bac": "Northern Vietnam",
+  "mien-trung": "Central Vietnam",
+  "mien-nam": "Southern Vietnam",
+  "tay-nguyen": "Central Highlands",
+};
+
 /** ISO-8601 calendar date, e.g. `2026-03-14`. */
 export const isoDateSchema = z.iso.date();
 export type IsoDate = z.infer<typeof isoDateSchema>;

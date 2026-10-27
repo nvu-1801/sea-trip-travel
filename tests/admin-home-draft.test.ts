@@ -29,3 +29,29 @@ test("hero draft is returned unchanged", () => {
   const saved = { id: "hero", mode: "collage" };
   assert.deepEqual(homeSectionDraft(saved, "hero"), saved);
 });
+
+test("legacy rows open the customer section with nested defaults", () => {
+  const legacy = structuredClone(defaultLanding) as Record<string, unknown>;
+  delete legacy.customers;
+  const draft = homeSectionDraft(legacy, "customers");
+  assert.deepEqual(draft.customers, defaultLanding.customers);
+  assert.equal((draft.customers as { enabled: boolean }).enabled, false);
+  assert.deepEqual((draft.customers as { logos: unknown[] }).logos, []);
+});
+
+test("saved customer flags survive while missing fields fall back", () => {
+  const draft = homeSectionDraft(
+    { customers: { enabled: true, title: "Khách đã lưu" } },
+    "customers",
+  );
+  const customers = draft.customers as {
+    enabled: boolean;
+    title: string;
+    titleEn: string;
+    videos: unknown[];
+  };
+  assert.equal(customers.enabled, true);
+  assert.equal(customers.title, "Khách đã lưu");
+  assert.equal(customers.titleEn, defaultLanding.customers.titleEn);
+  assert.deepEqual(customers.videos, []);
+});

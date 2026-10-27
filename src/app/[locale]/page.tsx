@@ -1,5 +1,6 @@
 import "@/features/home/home-editorial.css";
 import "@/features/home/home-motion.css";
+import "@/features/home/customers.css";
 import { HeadingAccent } from "@/components/ui/heading-accent";
 import { JourneyStory, PlanningSection } from "@/features/home/journey-story";
 import type { Metadata } from "next";
@@ -8,6 +9,7 @@ import { Hero } from "@/features/home/hero";
 import { QuickFinder } from "@/features/home/quick-finder";
 import { ExploreSection } from "@/features/home/explore-section";
 import { FeaturedToursSection } from "@/features/home/featured-tours-section";
+import { CustomerStories } from "@/features/home/customer-stories";
 import { TrustStrip } from "@/features/home/trust-strip";
 import { RegionsSection } from "@/features/home/regions-section";
 import { ValuesSection } from "@/features/home/values-section";
@@ -15,6 +17,7 @@ import { GuidesSection } from "@/features/home/guides-section";
 import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { getFeaturedTours } from "@/lib/data/tours";
+import { FEATURED_LIMIT } from "@/lib/featured";
 import { tourTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
@@ -40,7 +43,7 @@ async function resolveLocale(
 
 function homeIndexable(locale: Locale): boolean {
   if (locale === "vi") return true;
-  return getFeaturedTours(6, "en").every((tour) =>
+  return getFeaturedTours(FEATURED_LIMIT, "en").every((tour) =>
     isIndexable(tourTranslationStatus(tour.id, "en"), "en"),
   );
 }
@@ -92,6 +95,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <QuickFinder locale={locale} />
       <ExploreSection locale={locale} />
       <FeaturedToursSection locale={locale} />
+      <CustomerStories locale={locale} />
       <TrustStrip locale={locale} />
       <JourneyStory locale={locale} />
       <RegionsSection locale={locale} />

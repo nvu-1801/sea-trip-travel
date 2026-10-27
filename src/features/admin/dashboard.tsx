@@ -16,13 +16,14 @@ import { ThemePanel } from "./theme-panel";
 import type { ThemeId } from "@/config/themes";
 import { Overview } from "./overview";
 import { ActivityCheck } from "./activity-check";
-import { BackupPanel } from "./backup-panel";
 import { HealthCheck } from "./health-check";
+import { BackupPanel } from "./backup-panel";
 import { HomeSections } from "./home-sections";
 import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
-import { HomeFeaturedEditor } from "./home-featured-editor";
+import { HomeFeaturedEditor, type FeaturedEditorTour } from "./home-featured-editor";
+import { CustomerStoriesEditor } from "./customer-stories-editor";
 import type { HomeSectionMeta } from "@/lib/home-sections";
-import { HOME_SECTIONS } from "@/lib/home-sections";
+import { HOME_SECTIONS, HOME_GROUPS } from "@/lib/home-sections";
 import {
   ToastStack,
   ConfirmModal,
@@ -34,6 +35,14 @@ import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
 import { LEAD_TRASH_RETENTION_DAYS } from "@/lib/lead-trash";
 import { mediaSelectOptions } from "@/lib/admin-media-options";
 import { adminSectionHref } from "@/lib/admin-routes";
+import {
+  PROJECT_STORAGE_LIMIT_BYTES,
+  STORAGE_WARN_PERCENT,
+  budgetStatus,
+  formatBytes,
+  percentUsed,
+  type HealthStorage,
+} from "@/lib/health";
 import {
   TRASH_RETENTION_DAYS,
   articleCoverSrcOf,
@@ -52,10 +61,11 @@ import {
 import type { HeroConfig } from "@/domain/home-hero";
 import { AssetImage } from "@/components/ui/asset-image";
 import { homeSectionDraft } from "@/lib/admin-home-draft";
+import { descendantCategoryIds } from "@/lib/featured";
 import { AdminIcon, type AdminIconName } from "./admin-icons";
 import { SearchIcon, CloseIcon } from "@/components/ui/icons";
 import { searchKey } from "@/lib/search";
-import { isPlaceholderSlug } from "@/lib/public-slug";
+import { isPlaceholderSlug, slugFollowsTitle, slugFromTitle } from "@/lib/public-slug";
 import {
   ADMIN_SEARCH_GROUP_LABELS,
   rankAdminSearch,
@@ -71,6 +81,7 @@ type RecordRow = {
   state: string;
   updated_at: string;
 };
+/** Read-only lineup the public home page uses when nothing is pinned. */
 type Lead = {
   read_at: string | null;
   id: string;
@@ -90,6 +101,36 @@ type Lead = {
 function formatLeadDay(value: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+}
+
+/**
+ * Live slug preview for a brand-new article or category. While the record still
+ * carries the Studio placeholder (`noi-dung-…`), every title edit re-derives
+ * the public URL, so the field reads `cam-nang-du-lich/<slug>` before saving.
+ * A slug the owner typed by hand is left untouched.
+ */
+function withLiveSlug(
+  previous: Record<string, EditorValue>,
+  next: Record<string, EditorValue>,
+  tab: "articles" | "categories",
+  editable: boolean,
+): Record<string, EditorValue> {
+  // A published record owns its URL: never rewrite it outside a placeholder.
+  if (!editable) return next;
+  const titleField = tab === "categories" ? "name" : "title";
+  const nextSlug = String(next.slug ?? "");
+  // The owner edited the slug in this keystroke.
+  if (nextSlug !== String(previous.slug ?? "")) return next;
+  if (!slugFollowsTitle(nextSlug, previous[titleField], "article")) return next;
+  const base = slugFromTitle(next[titleField]);
+  if (!base || base === nextSlug) return next;
+  const patched: Record<string, EditorValue> = { ...next, slug: base };
+  if (
+    tab === "categories" &&
+    String(previous.path ?? "") === `/danh-muc/${String(previous.slug ?? "")}`
+  )
+    patched.path = `/danh-muc/${base}`;
+  return patched;
 }
 
 /** Stable, readable timestamp for the admin card. */
@@ -161,6 +202,18 @@ const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
   { label: "Bán hàng", keys: ["leads"] },
   { label: "Hệ thống", keys: ["messages", "settings", "account"] },
 ];
+/**
+ * The masthead pairs a number with the group name, so each sidebar group
+ * counts from 01 instead of running across the whole menu.
+ */
+function tabPositionOf(key: string): number {
+  const group = TAB_GROUPS.find((entry) => entry.keys.includes(key));
+  if (group) return Math.max(0, group.keys.indexOf(key));
+  return Math.max(
+    0,
+    tabs.findIndex((entry) => entry[0] === key),
+  );
+}
 const TOUR_GROUPS = [
   { duration: "1day", line: "qnpy", title: "Quy Nhơn – Phú Yên · Tour 1 ngày" },
   {
@@ -529,9 +582,13 @@ export function Dashboard({
         alt: string;
         src: string;
         original: boolean;
+        used?: boolean;
+        bytes?: number;
       }[]
     >([]);
   const [mediaQuery, setMediaQuery] = useState("");
+  const [mediaUnusedOnly, setMediaUnusedOnly] = useState(false);
+  const [mediaStorage, setMediaStorage] = useState<HealthStorage | null>(null);
   const [username, setUsername] = useState(""),
     [password, setPassword] = useState(""),
     [showPassword, setShowPassword] = useState(false),
@@ -732,9 +789,12 @@ export function Dashboard({
         setHasUpdates(false);
         return true;
       }
-      const [options, library] = await Promise.all([
+      const [options, library, storage] = await Promise.all([
         api("options"),
         api("media"),
+        next === "media"
+          ? (api("storage").catch(() => null) as Promise<HealthStorage | null>)
+          : Promise.resolve(null),
       ]);
       if (next === "overview") {
         setSelected(null);
@@ -849,8 +909,10 @@ export function Dashboard({
       setDirty(false);
       dirtyFields.current.clear();
       if (next === "leads") setLeads(result);
-      else if (next === "media") setMedia(library);
-      else if (next !== "account") setRows(result);
+      else if (next === "media") {
+        setMedia(library);
+        setMediaStorage(storage);
+      } else if (next !== "account") setRows(result);
       // Quick search / "Tour nổi bật": open the chosen record as soon as the
       // target tab's list arrives.
       const pending = pendingOpen.current;
@@ -958,14 +1020,22 @@ export function Dashboard({
   }
   async function refreshMediaLibrary() {
     try {
-      const library = (await api("media")) as {
-        id: string;
-        name: string;
-        alt: string;
-        src: string;
-        original: boolean;
-      }[];
+      const [library, storage] = await Promise.all([
+        api("media") as Promise<
+          {
+            id: string;
+            name: string;
+            alt: string;
+            src: string;
+            original: boolean;
+            used?: boolean;
+            bytes?: number;
+          }[]
+        >,
+        api("storage?fresh=1").catch(() => null) as Promise<HealthStorage | null>,
+      ]);
       setMedia(library);
+      setMediaStorage(storage);
       setReferences((current) => ({
         ...current,
         media: mediaSelectOptions(library),
@@ -1568,14 +1638,38 @@ export function Dashboard({
     return left !== null && left <= 7;
   }).length;
   const tabLabel = tabs.find((t) => t[0] === tab)?.[1] ?? tab;
+  const homeBannerState = homeData.hero
+    ? homeData.hero.state === "published"
+      ? "published"
+      : "draft"
+    : "loading";
+  const homeSectionsState = homeData.landing
+    ? homeData.landing.state === "published"
+      ? "published"
+      : "draft"
+    : "loading";
   const filteredMedia = (() => {
     const needle = mediaQuery.trim().toLowerCase();
-    if (!needle) return media;
-    return media.filter((item) =>
-      `${item.alt} ${item.name} ${item.src}`.toLowerCase().includes(needle),
-    );
+    return media.filter((item) => {
+      if (mediaUnusedOnly && (item.original || item.used !== false))
+        return false;
+      if (!needle) return true;
+      return `${item.alt} ${item.name} ${item.src}`
+        .toLowerCase()
+        .includes(needle);
+    });
   })();
-  const tabPosition = tabs.findIndex((entry) => entry[0] === tab);
+  const unusedMedia = media.filter(
+    (item) => !item.original && item.used === false,
+  );
+  const unusedMediaBytes = unusedMedia.reduce(
+    (sum, item) => sum + (item.bytes ?? 0),
+    0,
+  );
+  const tabPosition = tabPositionOf(tab);
+  const mediaStoragePercent = mediaStorage
+    ? percentUsed(mediaStorage.dataBytes, PROJECT_STORAGE_LIMIT_BYTES)
+    : 0;
   const tabGroup =
     TAB_GROUPS.find((group) => group.keys.includes(tab))?.label ?? "Studio";
 
@@ -1881,20 +1975,79 @@ export function Dashboard({
     (row) => row.state !== "deleted" && row.data.showOnHome === true,
   ).length;
   const homeSlotsFull = homeEnabledCount >= HOME_DESTINATION_LIMIT;
-  const featuredTourMeta: Record<
-    string,
-    { price: string | null; duration: string | null; state: string }
-  > = {};
-  for (const row of homeTours) {
-    const value = {
-      price: priceLabelOf(row.data),
-      duration: durationBadgeOf(row.data),
-      state: row.state,
+  /**
+   * The featured editor needs the category tree (labels, counts) and a flat
+   * tour list with the fields the cards show. Both are already loaded for the
+   * Home screen, so no extra request is needed.
+   */
+  const featuredEditorCategories = (() => {
+    const live = homeCategories
+      .filter((row) => row.state !== "deleted")
+      .map((row) => ({
+        id: row.id,
+        parentId:
+          typeof row.data.parentId === "string" ? row.data.parentId : null,
+        name: String(row.data.name ?? row.id),
+        path:
+          typeof row.data.path === "string"
+            ? row.data.path
+            : `/danh-muc/${String(row.data.slug ?? "")}`,
+      }));
+    const trail = (id: string) => {
+      const parts: string[] = [];
+      const seen = new Set<string>();
+      let current = live.find((item) => item.id === id);
+      while (current && parts.length < 8 && !seen.has(current.id)) {
+        seen.add(current.id);
+        parts.unshift(current.name);
+        const parentId = current.parentId;
+        current = parentId
+          ? live.find((item) => item.id === parentId)
+          : undefined;
+      }
+      return parts.join(" › ") || id;
     };
-    featuredTourMeta[row.id] = value;
-    const slug = String(row.data.slug ?? "");
-    if (slug) featuredTourMeta[slug] = value;
-  }
+    return live.map((item) => {
+      const ids = new Set(descendantCategoryIds(live, item.id));
+      return {
+        ...item,
+        label: trail(item.id),
+        tourCount: homeTours.filter(
+          (row) =>
+            row.state !== "deleted" &&
+            Array.isArray(row.data.categoryIds) &&
+            row.data.categoryIds.some(
+              (id) => typeof id === "string" && ids.has(id),
+            ),
+        ).length,
+      };
+    });
+  })();
+  const featuredEditorTours: FeaturedEditorTour[] = homeTours
+    .filter((row) => row.state !== "deleted")
+    .map((row) => {
+      const duration = row.data.duration as
+        | Record<string, EditorValue>
+        | undefined;
+      return {
+        slug: String(row.data.slug ?? ""),
+        title: String(row.data.title ?? row.data.slug ?? row.id),
+        categoryIds: Array.isArray(row.data.categoryIds)
+          ? row.data.categoryIds.filter(
+              (value): value is string => typeof value === "string",
+            )
+          : [],
+        duration: {
+          days: typeof duration?.days === "number" ? duration.days : 0,
+          nights: typeof duration?.nights === "number" ? duration.nights : 0,
+        },
+        durationLabel: durationBadgeOf(row.data),
+        priceLabel: priceLabelOf(row.data),
+        state: row.state,
+        image: coverSrcOf(row.data) || null,
+      };
+    })
+    .filter((tour) => tour.slug);
   const homeOrderOf = (row: RecordRow) => {
     const value = row.data.homeOrder;
     return typeof value === "number" && value > 0
@@ -2448,7 +2601,9 @@ export function Dashboard({
                 ? "Theo dõi thao tác quản trị và những điểm cần xem lại."
                 : tab === "health"
                   ? "Dung lượng, tốc độ tải thật và mức độ sẵn sàng SEO."
-                  : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
+                  : tab === "home"
+                    ? "Bố cục, banner và từng khối nội dung — đúng thứ tự khách sẽ trải nghiệm."
+                    : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
             </p>
           </div>
           <div className="adm-masthead-side">
@@ -2570,7 +2725,7 @@ export function Dashboard({
           )
         ) : tab === "account" ? (
           <>
-          <section className="adm-panel adm-security">
+            <section className="adm-panel adm-security">
             <div className="adm-security-head">
               <span className="adm-security-shield" aria-hidden="true">
                 <svg
@@ -2697,8 +2852,8 @@ export function Dashboard({
                 {busy ? "Đang cập nhật…" : "Cập nhật mật khẩu"}
               </button>
             </form>
-          </section>
-          {csrf ? <BackupPanel csrf={csrf} /> : null}
+            </section>
+            {csrf ? <BackupPanel csrf={csrf} /> : null}
           </>
         ) : tab === "leads" ? (
           <>
@@ -3241,7 +3396,49 @@ export function Dashboard({
                   metadata và không phóng lớn ảnh nhỏ.
                 </p>
               </div>
-              <span className="adm-media-count">{media.length} ảnh</span>
+              <div className="adm-media-meta">
+                <span className="adm-media-count">{media.length} ảnh</span>
+                {mediaStorage?.available ? (
+                  <div
+                    className="adm-media-storage"
+                    data-status={budgetStatus(mediaStoragePercent)}
+                  >
+                    <span className="adm-media-storage-kicker">
+                      Dung lượng dự án
+                    </span>
+                    <span className="adm-media-storage-line">
+                      <strong>
+                        {formatBytes(mediaStorage.dataBytes)} /{" "}
+                        {formatBytes(PROJECT_STORAGE_LIMIT_BYTES)}
+                      </strong>
+                      <small>
+                        {Math.round(mediaStoragePercent)}% hạn mức · cảnh báo
+                        từ {STORAGE_WARN_PERCENT}%
+                      </small>
+                    </span>
+                    <span
+                      className="adm-media-storage-bar"
+                      role="img"
+                      aria-label={`Đã dùng ${Math.round(mediaStoragePercent)}% hạn mức ${formatBytes(PROJECT_STORAGE_LIMIT_BYTES)}`}
+                    >
+                      <span style={{ width: `${mediaStoragePercent}%` }} />
+                    </span>
+                    <small>
+                      Ảnh &amp; tệp {formatBytes(mediaStorage.uploadsBytes)} ·
+                      database{" "}
+                      {formatBytes(
+                        mediaStorage.databaseBytes + mediaStorage.walBytes,
+                      )}
+                    </small>
+                    {unusedMedia.length > 0 ? (
+                      <small className="adm-media-unused-line">
+                        {unusedMedia.length} ảnh chưa dùng ·{" "}
+                        {formatBytes(unusedMediaBytes)}
+                      </small>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             </header>
 
             <div className="adm-media-toolbar">
@@ -3264,6 +3461,17 @@ export function Dashboard({
                   </button>
                 ) : null}
               </label>
+              {unusedMedia.length > 0 ? (
+                <button
+                  type="button"
+                  className="adm-media-unused-filter"
+                  aria-pressed={mediaUnusedOnly}
+                  data-active={mediaUnusedOnly}
+                  onClick={() => setMediaUnusedOnly((value) => !value)}
+                >
+                  Chưa dùng · {unusedMedia.length}
+                </button>
+              ) : null}
               {mediaQuery ? (
                 <span className="adm-media-filter-count">
                   {filteredMedia.length}/{media.length} ảnh
@@ -3272,7 +3480,7 @@ export function Dashboard({
             </div>
 
             <div className="adm-media-grid">
-              {!mediaQuery ? (
+              {!mediaQuery && !mediaUnusedOnly ? (
                 <label className="adm-media-upload-card">
                   <span className="adm-media-upload-icon">
                     <AdminIcon name="image" size={28} />
@@ -3330,6 +3538,9 @@ export function Dashboard({
                     >
                       {item.original ? "Ảnh gốc" : "Tải lên"}
                     </span>
+                    {!item.original && item.used === false ? (
+                      <span className="adm-media-unused">Chưa dùng</span>
+                    ) : null}
                   </div>
 
                   <div className="adm-media-body">
@@ -3461,7 +3672,9 @@ export function Dashboard({
               </p>
             ) : filteredMedia.length === 0 ? (
               <p className="adm-media-empty">
-                Không tìm thấy ảnh phù hợp. Thử từ khóa khác.
+                {mediaUnusedOnly
+                  ? "Mọi ảnh tải lên đều đang được dùng."
+                  : "Không tìm thấy ảnh phù hợp. Thử từ khóa khác."}
               </p>
             ) : null}
           </section>
@@ -3469,49 +3682,105 @@ export function Dashboard({
           <>
             <section className="adm-panel adm-home-intro">
               <div className="adm-home-intro-top">
-                <div>
-                  <h2>Các khối trang chủ theo đúng thứ tự hiển thị</h2>
+                <div className="adm-home-intro-copy">
+                  <p className="adm-home-intro-eyebrow">
+                    <span aria-hidden="true">01</span> Landing page studio
+                  </p>
+                  <h2>Trang chủ theo đúng thứ tự hiển thị</h2>
                   <p>
                     Mỗi thẻ là một phần thật trên landing page, chia 3 nhóm Đầu
-                    – Giữa – Cuối trang. Bấm Sửa để mở modal chỉ chứa trường của
-                    phần đó.
+                    – Giữa – Cuối trang. Mở đúng khối để chỉnh, rồi lưu nháp
+                    hoặc xuất bản.
                   </p>
+                  <div className="adm-home-intro-actions">
+                    <a
+                      className="adm-home-view"
+                      href="/vi"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Xem trang chủ <span aria-hidden="true">↗</span>
+                    </a>
+                    <span>Bấm “Sửa” trên từng thẻ để mở đúng phần nội dung.</span>
+                  </div>
                 </div>
-                <div className="adm-home-states" role="status">
-                  <span
-                    className={`adm-badge ${homeData.hero ? (homeData.hero.state === "published" ? "" : "draft") : "draft"}`}
+                <div className="adm-home-status" role="status">
+                  <div
+                    className="adm-home-status-card"
+                    data-state={homeBannerState}
                   >
-                    Banner:{" "}
-                    {homeData.hero
-                      ? homeData.hero.state === "published"
-                        ? "Đang xuất bản"
-                        : "Bản nháp"
-                      : "Đang tải…"}
-                  </span>
-                  <span
-                    className={`adm-badge ${homeData.landing ? (homeData.landing.state === "published" ? "" : "draft") : "draft"}`}
+                    <span className="adm-home-status-icon" aria-hidden="true">
+                      <AdminIcon name="image" size={18} />
+                    </span>
+                    <div>
+                      <small>Banner đầu trang</small>
+                      <strong>
+                        {homeBannerState === "loading"
+                          ? "Đang tải…"
+                          : homeBannerState === "published"
+                            ? "Đang xuất bản"
+                            : "Bản nháp"}
+                      </strong>
+                      <p>
+                        {homeBannerState === "published"
+                          ? "Khách đang thấy phiên bản mới nhất."
+                          : "Lưu nháp an toàn, xuất bản khi sẵn sàng."}
+                      </p>
+                    </div>
+                    <i className="adm-home-status-dot" aria-hidden="true" />
+                  </div>
+                  <div
+                    className="adm-home-status-card"
+                    data-state={homeSectionsState}
                   >
-                    Sections:{" "}
-                    {homeData.landing
-                      ? homeData.landing.state === "published"
-                        ? "Đang xuất bản"
-                        : "Bản nháp"
-                      : "Đang tải…"}
-                  </span>
+                    <span className="adm-home-status-icon" aria-hidden="true">
+                      <AdminIcon name="home" size={18} />
+                    </span>
+                    <div>
+                      <small>Khối nội dung</small>
+                      <strong>
+                        {homeSectionsState === "loading"
+                          ? "Đang tải…"
+                          : homeSectionsState === "published"
+                            ? "Đang xuất bản"
+                            : "Bản nháp"}
+                      </strong>
+                      <p>
+                        {HOME_SECTIONS.length} khối · {HOME_GROUPS.length} nhóm
+                        bố cục
+                      </p>
+                    </div>
+                    <i className="adm-home-status-dot" aria-hidden="true" />
+                  </div>
                 </div>
               </div>
               <ol className="adm-home-steps">
                 <li>
-                  <strong>1 · Xem</strong>
-                  <span>Tìm đúng số thứ tự của khối trên trang</span>
+                  <span className="adm-home-step-no" aria-hidden="true">
+                    1
+                  </span>
+                  <div>
+                    <strong>Chọn khối</strong>
+                    <span>Tìm đúng số thứ tự trên landing page.</span>
+                  </div>
                 </li>
                 <li>
-                  <strong>2 · Sửa</strong>
-                  <span>Mở modal, chỉ sửa trường của khối đó</span>
+                  <span className="adm-home-step-no" aria-hidden="true">
+                    2
+                  </span>
+                  <div>
+                    <strong>Chỉnh nội dung</strong>
+                    <span>Modal chỉ chứa trường của khối đó.</span>
+                  </div>
                 </li>
                 <li>
-                  <strong>3 · Xuất bản</strong>
-                  <span>Lưu nháp để giữ, xuất bản để lên web ngay</span>
+                  <span className="adm-home-step-no" aria-hidden="true">
+                    3
+                  </span>
+                  <div>
+                    <strong>Xuất bản</strong>
+                    <span>Lưu nháp để giữ, xuất bản để lên web.</span>
+                  </div>
                 </li>
               </ol>
             </section>
@@ -3634,8 +3903,8 @@ export function Dashboard({
                             unknown
                           >
                         }
-                        options={references.tours ?? []}
-                        meta={featuredTourMeta}
+                        categories={featuredEditorCategories}
+                        tours={featuredEditorTours}
                         onEditTour={editTourFromHome}
                         onChange={(featured) => {
                           setSelected({
@@ -3643,6 +3912,27 @@ export function Dashboard({
                             data: {
                               ...selected.data,
                               featured: featured as EditorValue,
+                            },
+                          });
+                          setDirty(true);
+                        }}
+                      />
+                    ) : homeModal.key === "customers" ? (
+                      <CustomerStoriesEditor
+                        value={
+                          (selected.data.customers ?? {}) as Record<
+                            string,
+                            unknown
+                          >
+                        }
+                        references={references}
+                        onUploadImage={uploadImage}
+                        onChange={(customers) => {
+                          setSelected({
+                            ...selected,
+                            data: {
+                              ...selected.data,
+                              customers: customers as EditorValue,
                             },
                           });
                           setDirty(true);
@@ -3945,9 +4235,19 @@ export function Dashboard({
                 slugEditable={isPlaceholderSlug(selected.data.slug)}
                 onUploadImage={uploadImage}
                 onChange={(data) => {
+                  const next = data as Record<string, EditorValue>;
                   setSelected({
                     ...selected,
-                    data: data as Record<string, EditorValue>,
+                    data:
+                      tab === "articles" || tab === "categories"
+                        ? withLiveSlug(
+                            selected.data,
+                            next,
+                            tab,
+                            selected.revision === 0 ||
+                              isPlaceholderSlug(selected.data.slug),
+                          )
+                        : next,
                   });
                   setDirty(true);
                 }}

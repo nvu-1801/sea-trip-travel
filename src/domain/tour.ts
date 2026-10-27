@@ -58,10 +58,23 @@ export const tourSchema = z.object({
     label: z.string().min(1),
     adultPrice: z.number().int().positive(),
     childPrice: z.number().int().nonnegative(),
+    /** Optional list price; a discount only exists when it is above the sale price. */
+    originalAdultPrice: z.number().int().positive().optional(),
+    originalChildPrice: z.number().int().positive().optional(),
   })).default([]),
   gifts: z.array(z.string().min(1)).default([]),
   /** `null` ⇒ "Liên hệ tư vấn". Never render 0 ₫. */
   priceFrom: moneySchema.nullable().default(null),
+  /**
+   * Optional list price for tours without packages. When packages exist this
+   * field is ignored so the card and the package table cannot disagree.
+   */
+  originalPriceFrom: moneySchema
+    .refine((value) => value.amount > 0, {
+      message: "Giá gốc phải lớn hơn 0",
+    })
+    .nullable()
+    .optional(),
   /** Explains what the price does (or does not) include. */
   priceNote: z.string().min(1).optional(),
   /** Bullet list of selling points, 3–6 items is the sweet spot. */

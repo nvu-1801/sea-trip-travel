@@ -34,6 +34,8 @@ export type AdminIconName =
   | "edit"
   | "trash"
   | "eye"
+  | "users"
+  | "target"
   | "restore"
   | "plus"
   | "phone"
@@ -41,6 +43,7 @@ export type AdminIconName =
   | "calendar"
   | "chart"
   | "funnel"
+  | "check"
   | "trophy"
   | "new"
   | "globe"
@@ -215,6 +218,20 @@ const PATHS: Record<AdminIconName, ReactNode> = {
       <circle cx="12" cy="12" r="2.6" />
     </>
   ),
+  users: (
+    <>
+      <circle cx="9.2" cy="8.2" r="3.1" />
+      <path d="M3.6 19.4c0-2.9 2.5-5 5.6-5s5.6 2.1 5.6 5" />
+      <path d="M15.8 5.6a3 3 0 0 1 0 5.2M17.2 14.9c1.9.7 3.2 2.4 3.2 4.5" />
+    </>
+  ),
+  target: (
+    <>
+      <circle cx="12" cy="12" r="8.4" />
+      <circle cx="12" cy="12" r="4.4" />
+      <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
+    </>
+  ),
   restore: (
     <>
       <path d="M4 10a8 8 0 1 1 2 5.3" />
@@ -310,6 +327,7 @@ const PATHS: Record<AdminIconName, ReactNode> = {
       <circle cx="14.5" cy="7.5" r="1" />
     </>
   ),
+  check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
 };
 
 export function AdminIcon({

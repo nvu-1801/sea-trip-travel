@@ -62,6 +62,7 @@ const FIELDS_BY_SECTION: Record<TourSectionKey, readonly string[]> = {
     "destinationIds",
     "contentStatus",
     "priceFrom",
+    "originalPriceFrom",
     "priceNote",
   ],
   media: ["images"],
@@ -118,12 +119,15 @@ const FIELD_LABELS: Record<string, string> = {
   places: "Điểm tham quan",
   accommodation: "Lưu trú",
   priceFrom: "Giá từ",
+  originalPriceFrom: "Giá gốc",
   amount: "Số tiền",
   currency: "Tiền tệ",
   pricingOptions: "Gói giá",
   label: "Nhãn hiển thị",
   adultPrice: "Giá người lớn",
   childPrice: "Giá trẻ em",
+  originalAdultPrice: "Giá gốc người lớn",
+  originalChildPrice: "Giá gốc trẻ em",
   priceNote: "Ghi chú giá",
   gifts: "Quà tặng",
   included: "Đã bao gồm",
@@ -276,12 +280,46 @@ export function collectTourBusinessIssues(
     const lowest = Math.min(
       ...tour.pricingOptions.map((option) => option.adultPrice),
     );
-    if (tour.priceFrom?.amount !== lowest) {
+    // Contact-pricing tours intentionally keep priceFrom = null while the
+    // packages stay in the record, so the lowest-price rule only applies when
+    // a public "from" price exists.
+    if (tour.priceFrom !== null && tour.priceFrom.amount !== lowest) {
       add(
         ["priceFrom", "amount"],
         "Giá từ phải khớp giá thấp nhất trong bảng giá",
       );
     }
+    tour.pricingOptions.forEach((option, index) => {
+      if (
+        option.originalAdultPrice !== undefined &&
+        option.originalAdultPrice <= option.adultPrice
+      ) {
+        add(
+          ["pricingOptions", index, "originalAdultPrice"],
+          "Giá gốc người lớn phải lớn hơn giá người lớn hiện tại",
+        );
+      }
+      if (option.originalChildPrice !== undefined) {
+        if (
+          option.childPrice <= 0 ||
+          option.originalChildPrice <= option.childPrice
+        ) {
+          add(
+            ["pricingOptions", index, "originalChildPrice"],
+            "Giá gốc trẻ em phải lớn hơn giá trẻ em hiện tại",
+          );
+        }
+      }
+    });
+  } else if (
+    tour.originalPriceFrom &&
+    tour.priceFrom &&
+    tour.originalPriceFrom.amount <= tour.priceFrom.amount
+  ) {
+    add(
+      ["originalPriceFrom", "amount"],
+      "Giá gốc phải lớn hơn giá hiện tại",
+    );
   }
 
   const translated = tour._en;

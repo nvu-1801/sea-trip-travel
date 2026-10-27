@@ -7,6 +7,7 @@ import {
   formatMoney,
   hasPublishedPrice,
 } from "@/lib/format";
+import { pricePairDiscount, tourPrice } from "@/lib/tour-price";
 import { SectionHeading } from "@/components/ui/layout";
 import {
   CheckIcon,
@@ -81,12 +82,40 @@ export function TourPriceBlock({
 }) {
   const m = getMessages(locale);
   const hasPrice = hasPublishedPrice(tour.priceFrom);
+  const discount = tourPrice(tour);
+  const hasDiscount = Boolean(discount && discount.percent && discount.original);
 
   return (
     <div className="tour-card-accent rounded-2xl border border-border bg-surface p-5 shadow-soft">
       <p className="text-[0.6875rem] font-bold uppercase tracking-wider text-foreground-subtle">
         {hasPrice ? m.common.priceLabelFrom : m.common.priceLabelContact}
       </p>
+      {hasDiscount ? (
+        <div className="tour-price-discount">
+          <span
+            className="tour-price-discount-badge"
+            aria-label={format(m.common.discountAria, {
+              percent: discount!.percent!,
+            })}
+          >
+            {format(m.common.discountBadge, {
+              percent: discount!.percent!,
+            })}
+          </span>
+          <span
+            className="tour-price-original"
+            aria-label={`${m.common.originalPrice}: ${formatMoney(
+              { amount: discount!.original!, currency: "VND" },
+              locale,
+            )}`}
+          >
+            {formatMoney(
+              { amount: discount!.original!, currency: "VND" },
+              locale,
+            )}
+          </span>
+        </div>
+      ) : null}
       <p
         className={cn(
           "mt-1 font-extrabold text-foreground",
@@ -122,6 +151,7 @@ export function TourPackages({ tour, locale }: { tour: Tour; locale: Locale }) {
   if (!hasPublishedPrice(tour.priceFrom) || tour.pricingOptions.length === 0)
     return null;
   const m = getMessages(locale).tour.packages;
+  const common = getMessages(locale).common;
   const money = (amount: number) =>
     formatMoney({ amount, currency: "VND" }, locale);
   return (
@@ -151,19 +181,61 @@ export function TourPackages({ tour, locale }: { tour: Tour; locale: Locale }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {tour.pricingOptions.map((option) => (
-              <tr key={option.id} className="even:bg-surface-muted/40">
-                <th scope="row" className="p-3 font-semibold sm:p-4">
-                  {option.label}
-                </th>
-                <td className="whitespace-nowrap p-3 font-bold tabular-nums text-primary-strong sm:p-4">
-                  {money(option.adultPrice)}
-                </td>
-                <td className="whitespace-nowrap p-3 tabular-nums sm:p-4">
-                  {money(option.childPrice)}
-                </td>
-              </tr>
-            ))}
+            {tour.pricingOptions.map((option) => {
+              const adult = pricePairDiscount(
+                option.adultPrice,
+                option.originalAdultPrice,
+              );
+              const child = pricePairDiscount(
+                option.childPrice,
+                option.originalChildPrice,
+              );
+              return (
+                <tr key={option.id} className="even:bg-surface-muted/40">
+                  <th scope="row" className="p-3 font-semibold sm:p-4">
+                    {option.label}
+                  </th>
+                  <td className="whitespace-nowrap p-3 font-bold tabular-nums text-primary-strong sm:p-4">
+                    <span className="tour-package-price">
+                      {adult.percent ? (
+                        <span
+                          className="tour-package-original"
+                          aria-label={`${common.originalPrice}: ${money(adult.original!)}`}
+                        >
+                          {money(adult.original!)}
+                        </span>
+                      ) : null}
+                      <strong>{money(option.adultPrice)}</strong>
+                      {adult.percent ? (
+                        <span
+                          className="tour-package-badge"
+                          aria-label={format(common.discountAria, {
+                            percent: adult.percent,
+                          })}
+                        >
+                          {format(common.discountBadge, {
+                            percent: adult.percent,
+                          })}
+                        </span>
+                      ) : null}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap p-3 tabular-nums sm:p-4">
+                    <span className="tour-package-price">
+                      {child.percent ? (
+                        <span
+                          className="tour-package-original"
+                          aria-label={`${common.originalPrice}: ${money(child.original!)}`}
+                        >
+                          {money(child.original!)}
+                        </span>
+                      ) : null}
+                      <strong>{money(option.childPrice)}</strong>
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -2,9 +2,11 @@ import type { Tour } from "@/domain/tour";
 import { formatDestinationNames } from "@/lib/data/destinations";
 import {
   formatDuration,
+  formatMoney,
   formatPriceFrom,
   hasPublishedPrice,
 } from "@/lib/format";
+import { tourPrice } from "@/lib/tour-price";
 import type { Locale } from "@/i18n/config";
 import { format, getMessages } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
@@ -30,6 +32,12 @@ export type TourCardModel = {
   /** "Từ 1.200.000 ₫" / "From 1,200,000 ₫" / "Liên hệ tư vấn" / "Contact us for pricing". */
   priceLabel: string;
   priceIsContact: boolean;
+  /** Original/list price, crossed out. Null when there is no valid discount. */
+  priceOriginalLabel: string | null;
+  priceOriginalAria: string | null;
+  discountPercent: number | null;
+  discountLabel: string | null;
+  discountAria: string | null;
   destinationsLabel: string;
   departureText: string | null;
   highlights: readonly string[];
@@ -45,6 +53,12 @@ export type TourCardModel = {
 export function toTourCard(tour: Tour, locale: Locale): TourCardModel {
   const m = getMessages(locale);
   const departure = tour.departurePoints[0];
+  const price = tourPrice(tour);
+  const discountPercent = price?.percent ?? null;
+  const originalLabel =
+    price && price.original !== null && discountPercent
+      ? formatMoney({ amount: price.original, currency: "VND" }, locale)
+      : null;
 
   return {
     slug: tour.slug,
@@ -55,6 +69,19 @@ export function toTourCard(tour: Tour, locale: Locale): TourCardModel {
     durationDays: tour.duration.days,
     priceLabel: formatPriceFrom(tour.priceFrom, locale),
     priceIsContact: !hasPublishedPrice(tour.priceFrom),
+    priceOriginalLabel: originalLabel,
+    priceOriginalAria: originalLabel
+      ? `${m.common.originalPrice}: ${originalLabel}`
+      : null,
+    discountPercent,
+    discountLabel:
+      discountPercent !== null
+        ? format(m.common.discountBadge, { percent: discountPercent })
+        : null,
+    discountAria:
+      discountPercent !== null
+        ? format(m.common.discountAria, { percent: discountPercent })
+        : null,
     destinationsLabel: formatDestinationNames(tour.destinationIds, locale),
     departureText: departure
       ? format(m.common.departurePrefix, { place: departure })

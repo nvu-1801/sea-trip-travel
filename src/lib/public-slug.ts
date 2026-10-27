@@ -54,6 +54,26 @@ export function tourSlugFromTitle(title: unknown, maxLength = 80): string {
 }
 
 /**
+ * True while a slug is still being generated from the title: either the Studio
+ * placeholder, or the slug derived from the previous title. Editors use this to
+ * keep the URL field following the title as the owner types, and stop as soon
+ * as the slug becomes a real decision (typed by hand or saved).
+ */
+export function slugFollowsTitle(
+  slug: unknown,
+  previousTitle: unknown,
+  kind: "tour" | "article" = "article",
+): boolean {
+  const current = typeof slug === "string" ? slug : "";
+  if (!current || isPlaceholderSlug(current)) return true;
+  const derived =
+    kind === "tour"
+      ? tourSlugFromTitle(previousTitle)
+      : slugFromTitle(previousTitle);
+  return derived !== "" && current === derived;
+}
+
+/**
  * First free slug: `base`, then `base-2`, `base-3`… so two tours with the same
  * name never fight over one URL.
  */

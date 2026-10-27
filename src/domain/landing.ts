@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { isYouTubeUrl } from "@/lib/youtube";
+import { FEATURED_CATEGORY_FALLBACK } from "@/lib/featured";
+import { imageAssetSchema } from "./common";
 
 const suggestionSchema = z.object({
   label: z.string().min(1).max(60),
@@ -35,6 +38,43 @@ const principleSchema = z.object({
   titleEn: z.string().max(120).default(""),
   body: z.string().min(1).max(600),
   bodyEn: z.string().max(600).default(""),
+});
+
+const safeHref = z
+  .string()
+  .max(300)
+  .default("")
+  .refine(
+    (value) => !value || value.startsWith("/") || /^https?:\/\//i.test(value),
+    "Link phải bắt đầu bằng / hoặc https://",
+  );
+
+const customerLogoSchema = z.object({
+  id: z.string().min(1).max(60),
+  name: z.string().min(1).max(120),
+  image: imageAssetSchema.refine(
+    (image) => Boolean(image.src),
+    "Chọn logo từ thư viện ảnh",
+  ),
+  href: safeHref,
+  visible: z.boolean().default(true),
+});
+
+const customerVideoSchema = z.object({
+  id: z.string().min(1).max(60),
+  title: z.string().min(1).max(160),
+  titleEn: z.string().max(160).default(""),
+  body: z.string().max(400).default(""),
+  bodyEn: z.string().max(400).default(""),
+  customer: z.string().max(120).default(""),
+  customerEn: z.string().max(120).default(""),
+  youtubeUrl: z
+    .string()
+    .min(1)
+    .max(400)
+    .refine(isYouTubeUrl, "Link YouTube không hợp lệ"),
+  cover: imageAssetSchema.optional(),
+  visible: z.boolean().default(true),
 });
 
 export const landingSchema = z.object({
@@ -87,15 +127,89 @@ export const landingSchema = z.object({
     .default({ items: [] }),
   featured: z
     .object({
+      /** Route/region shown on the homepage; legacy rows fall back to the focus route. */
+      categoryId: z
+        .string()
+        .min(1)
+        .max(80)
+        .default(FEATURED_CATEGORY_FALLBACK),
+      /** Mirror of the active scope, kept for older rows/readers. */
       tourIds: z.array(z.string().min(1).max(80)).max(8).default([]),
+      /** Optional: legacy rows derive the mode from `tourIds`. */
+      mode: z.enum(["auto", "manual"]).optional(),
+      /** Everything is stored per route so switching route never erases a list. */
+      scopes: z
+        .record(
+          z.string().min(1).max(80),
+          z.object({
+            mode: z.enum(["auto", "manual"]).default("auto"),
+            tourIds: z.array(z.string().min(1).max(80)).max(8).default([]),
+            title: z.string().max(160).optional(),
+            titleEn: z.string().max(160).optional(),
+            eyebrow: z.string().max(80).optional(),
+            eyebrowEn: z.string().max(80).optional(),
+          }),
+        )
+        .default({}),
     })
-    .default({ tourIds: [] }),
+    .default({ categoryId: FEATURED_CATEGORY_FALLBACK, tourIds: [], scopes: {} }),
   guides: z
     .object({
       featuredSlug: z.string().max(120).default(""),
       picks: z.array(z.string().min(1).max(120)).max(3).default([]),
     })
     .default({ featuredSlug: "", picks: [] }),
+  customers: z
+    .object({
+      enabled: z.boolean().default(false),
+      eyebrow: z.string().max(80).default("Khách hàng & đối tác"),
+      eyebrowEn: z.string().max(80).default("Customers & partners"),
+      title: z.string().max(160).default("Dấu ấn sau mỗi hành trình"),
+      titleEn: z.string().max(160).default("Stories from the road"),
+      body: z
+        .string()
+        .max(600)
+        .default(
+          "Những đơn vị đồng hành và chia sẻ trải nghiệm thật cùng SEA TRIP.",
+        ),
+      bodyEn: z
+        .string()
+        .max(600)
+        .default(
+          "The partners and travellers who have joined us along the coast.",
+        ),
+      ctaLabel: z.string().max(80).default("Chia sẻ trải nghiệm"),
+      ctaLabelEn: z.string().max(80).default("Share your story"),
+      ctaHref: safeHref,
+      showLogos: z.boolean().default(true),
+      logosTitle: z.string().max(120).default("Đồng hành cùng SEA TRIP"),
+      logosTitleEn: z.string().max(120).default("In good company"),
+      logos: z.array(customerLogoSchema).max(12).default([]),
+      showVideos: z.boolean().default(true),
+      videosTitle: z.string().max(120).default("Khách kể lại hành trình"),
+      videosTitleEn: z.string().max(120).default("Travellers' stories"),
+      videos: z.array(customerVideoSchema).max(6).default([]),
+    })
+    .default({
+      enabled: false,
+      eyebrow: "Khách hàng & đối tác",
+      eyebrowEn: "Customers & partners",
+      title: "Dấu ấn sau mỗi hành trình",
+      titleEn: "Stories from the road",
+      body: "Những đơn vị đồng hành và chia sẻ trải nghiệm thật cùng SEA TRIP.",
+      bodyEn: "The partners and travellers who have joined us along the coast.",
+      ctaLabel: "Chia sẻ trải nghiệm",
+      ctaLabelEn: "Share your story",
+      ctaHref: "/lien-he",
+      showLogos: true,
+      logosTitle: "Đồng hành cùng SEA TRIP",
+      logosTitleEn: "In good company",
+      logos: [],
+      showVideos: true,
+      videosTitle: "Khách kể lại hành trình",
+      videosTitleEn: "Travellers' stories",
+      videos: [],
+    }),
 });
 
 export type LandingSections = z.infer<typeof landingSchema>;
@@ -175,5 +289,25 @@ export const defaultLanding: LandingSections = landingSchema.parse({
   guides: {
     featuredSlug: "",
     picks: [],
+  },
+  customers: {
+    enabled: false,
+    eyebrow: "Khách hàng & đối tác",
+    eyebrowEn: "Customers & partners",
+    title: "Dấu ấn sau mỗi hành trình",
+    titleEn: "Stories from the road",
+    body: "Những đơn vị đồng hành và chia sẻ trải nghiệm thật cùng SEA TRIP.",
+    bodyEn: "The partners and travellers who have joined us along the coast.",
+    ctaLabel: "Chia sẻ trải nghiệm",
+    ctaLabelEn: "Share your story",
+    ctaHref: "/lien-he",
+    showLogos: true,
+    logosTitle: "Đồng hành cùng SEA TRIP",
+    logosTitleEn: "In good company",
+    logos: [],
+    showVideos: true,
+    videosTitle: "Khách kể lại hành trình",
+    videosTitleEn: "Travellers' stories",
+    videos: [],
   },
 });

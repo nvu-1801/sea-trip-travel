@@ -533,9 +533,27 @@ try {
     .getByRole("heading", { name: "Sức khỏe website", exact: true })
     .waitFor();
   await page.getByText("Dung lượng", { exact: true }).first().waitFor();
+  check(
+    "health storage compares against the 5 GB project budget",
+    /\/ 5 GB$/.test(
+      (
+        await page
+          .locator(".adm-health-card")
+          .first()
+          .locator(".adm-health-facts dd")
+          .last()
+          .innerText()
+      ).trim(),
+    ),
+  );
   const health = await (
     await context.request.get(`${base}/api/admin/health?days=7`)
   ).json();
+  check(
+    "health reports the unused-media check",
+    health.storage?.unusedMedia?.count === 0 &&
+      health.storage?.unusedMedia?.bytes === 0,
+  );
   check(
     "health page reports the data volume",
     health.storage?.available === true && health.storage?.dataBytes > 0,
@@ -571,6 +589,10 @@ try {
   const library = await (
     await context.request.get(`${base}/api/admin/media`)
   ).json();
+  check(
+    "a fresh upload is marked unused",
+    library.find((item) => item.id === asset.id)?.used === false,
+  );
   const expectedPhotos = new Set(
     tours.flatMap((row) => row.data.images.map((photo) => photo.src)).filter(Boolean),
   );
@@ -600,11 +622,40 @@ try {
       })
     ).status() === 409,
   );
+  const linkedLibrary = await (
+    await context.request.get(`${base}/api/admin/media`)
+  ).json();
+  check(
+    "a referenced upload is marked used",
+    linkedLibrary.find((item) => item.id === asset.id)?.used === true,
+  );
   check(
     "uploaded image serves safely",
     (await context.request.get(`${base}${asset.src}`)).headers()[
       "content-type"
     ] === "image/webp",
+  );
+  const spareImage = await sharp({
+    create: { width: 30, height: 20, channels: 3, background: "#1177aa" },
+  })
+    .png()
+    .toBuffer();
+  const spareUpload = await context.request.post(`${base}/api/admin/media`, {
+    headers: {
+      ...headers,
+      "content-type": "image/png",
+      "x-image-alt": encodeURIComponent("Ảnh chưa dùng QA"),
+    },
+    data: spareImage,
+  });
+  assert.equal(spareUpload.status(), 201, await spareUpload.text());
+  const spare = await spareUpload.json();
+  const spareLibrary = await (
+    await context.request.get(`${base}/api/admin/media`)
+  ).json();
+  check(
+    "an image never used stays unused",
+    spareLibrary.find((item) => item.id === spare.id)?.used === false,
   );
   const invalid = await context.request.post(`${base}/api/admin/media`, {
     headers: { ...headers, "content-type": "image/png" },
@@ -724,7 +775,7 @@ try {
     .click();
   await page
     .getByRole("heading", {
-      name: "Các khối trang chủ theo đúng thứ tự hiển thị",
+      name: /Trang chủ theo đúng thứ tự/,
     })
     .waitFor();
   await page.getByRole("button", { name: /Sửa tour theo vùng miền/i }).click();
@@ -755,10 +806,16 @@ try {
   });
   await featuredHomeDialog.waitFor();
   check(
-    "home featured editor offers a tour picker",
+    "home featured editor offers manual pinning",
+    await featuredHomeDialog
+      .getByRole("button", { name: "Ghim thủ công", exact: true })
+      .isVisible(),
+  );
+  check(
+    "home featured editor lists the automatic seven-tour line-up",
     (await featuredHomeDialog
-      .getByText("Chọn tour hiển thị trong khối", { exact: false })
-      .count()) > 0,
+      .locator(".adm-home-featured-list > li")
+      .count()) === 7,
   );
   check(
     "home featured editor points to the tour form for photos and prices",
@@ -910,6 +967,44 @@ try {
     await dialog.waitFor({ state: "hidden" });
   }
   check("every home section editor opens without crashing", true);
+  await page
+    .getByRole("button", { name: /Sửa khách hàng & dấu ấn/ })
+    .click();
+  const customerDialog = page.getByRole("dialog");
+  await customerDialog.waitFor();
+  check(
+    "customer section editor exposes its visibility toggles",
+    await customerDialog.getByText("Hiển thị section", { exact: true }).isVisible(),
+  );
+  await customerDialog.locator('button[aria-label="Đóng (Esc)"]').click();
+  await customerDialog.waitFor({ state: "hidden" });
+  const landingRows = await (
+    await context.request.get(`${base}/api/admin/content/landing`)
+  ).json();
+  const landingRow = landingRows[0];
+  const badLanding = structuredClone(landingRow.data);
+  badLanding.customers = {
+    enabled: true,
+    videos: [
+      {
+        id: "video_bad",
+        title: "Video kiểm thử",
+        youtubeUrl: "javascript:alert(1)",
+      },
+    ],
+  };
+  const rejected = await context.request.post(
+    `${base}/api/admin/content/landing`,
+    {
+      headers,
+      data: {
+        data: badLanding,
+        revision: landingRow.revision,
+        action: "save",
+      },
+    },
+  );
+  check("unsafe YouTube link is rejected by the CMS", rejected.status() === 400);
   await page
     .getByRole("navigation", { name: "Quản trị" })
     .getByRole("button", { name: /Cẩm nang/ })
@@ -1087,6 +1182,25 @@ try {
     .getByRole("heading", { name: "Thư viện ảnh", exact: true })
     .waitFor();
   check("quick search switches admin tabs", true);
+  await page.locator(".adm-media-storage").waitFor();
+  check(
+    "media library shows the 5 GB project budget",
+    /\/ 5 GB/.test(await page.locator(".adm-media-storage").innerText()),
+  );
+  check(
+    "media library marks the unused upload",
+    (await page.locator(".adm-media-unused").count()) >= 1,
+  );
+  check(
+    "media library offers the unused filter",
+    (await page.locator(".adm-media-unused-filter").count()) === 1,
+  );
+  check(
+    "media tab counts its chapter inside the sidebar group",
+    (
+      await page.locator(".adm-masthead-chapter-no").first().innerText()
+    ).trim() === "07",
+  );
   await page.keyboard.press("Control+k");
   await quickAgain.waitFor();
   await page.keyboard.press("Escape");
