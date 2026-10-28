@@ -71,14 +71,14 @@ Mở tab **Trang chủ** → thẻ **Tour nổi bật**. Đầu editor là danh 
 
 ### Khách hàng & dấu ấn hành trình
 
-Trong tab **Trang chủ**, mở thẻ **Khách hàng & dấu ấn** (ngay dưới Tour nổi bật). Đây là bằng chứng xã hội do chủ website cung cấp: không tự thêm số khách, đánh giá hay giải thưởng không có thật.
+Trong tab **Trang chủ**, mở thẻ **Khách hàng & dấu ấn hành trình** (ngay dưới Tour nổi bật). Đây là bằng chứng xã hội do chủ website cung cấp: không tự thêm số khách, đánh giá hay giải thưởng không có thật.
 
 - Bật/tắt cả section, dải logo và nhóm video riêng biệt. Section chỉ xuất hiện khi được bật và có ít nhất một mục đang hiện.
 - Logo: chọn ảnh nền trong suốt từ Thư viện ảnh, nhập tên đơn vị, alt text, link tuỳ chọn; đổi thứ tự bằng ↑ ↓ và ẩn/hiện từng logo. Tối đa 12 logo.
 - Video: dán link YouTube (`watch?v=`, `youtu.be`, `shorts`, `live`, `embed`); hệ thống chỉ nhận ID hợp lệ, không nhận HTML/iframe. Ảnh bìa 16:9 là tuỳ chọn — không có ảnh bìa, card dùng nền thương hiệu. Tối đa 6 video.
-- Trang công khai chỉ tải iframe YouTube sau khi khách bấm play; trước đó không gọi dịch vụ bên thứ ba. Nút “Xem trên YouTube” luôn mở tab mới.
+- Trang công khai chỉ tải iframe YouTube sau khi khách bấm play; trước đó không gọi dịch vụ bên thứ ba. Mỗi lúc chỉ một video được phát. Nút “Xem trên YouTube” luôn mở tab mới.
 - Tiêu đề, mô tả, nhãn CTA và link CTA có bản VI/EN. Video/logo không có bản dịch EN sẽ dùng nội dung VI.
-- Thẻ **Xem nhanh** trong form hiển thị đúng logo/video đang bật trước khi lưu nháp hoặc xuất bản.
+- Thẻ **Xem nhanh** trong form hiển thị tiêu đề, mô tả, CTA và đúng logo/video đang bật trước khi lưu nháp hoặc xuất bản.
 
 `Thêm mới` tạo bản nháp theo cấu trúc mẫu, không tự xuất bản. Tour mới được xóa giá, ảnh và nguồn tư liệu của mẫu để chủ quản trị chọn lại. Kiểm tra kỹ nội dung lịch trình trước khi xuất bản.
 
@@ -119,6 +119,10 @@ Thư viện giữ đủ 28 ảnh gốc, không sửa byte gốc. Ảnh mới nh�
 Yêu cầu tư vấn được lưu trước gửi email; SMTP lỗi vẫn giữ được dữ liệu. Tab Tư vấn có trạng thái mới/đã liên hệ/tiềm năng/đã chốt/chưa phù hợp, ghi chú và nút gửi lại email. Chỉ gửi lại sau khi cấu hình SMTP đúng; không tự gửi lại email đã báo thành công. Dữ liệu và ghi chú mã hóa AES-256-GCM trong SQLite.
 
 Danh sách hiện tải 500 lead gần nhất; khi vận hành lượng lớn cần bổ sung phân trang/xuất dữ liệu theo bộ lọc. SQLite lưu toàn bộ bản ghi trong volume/backup, không xóa các lead cũ ngoài danh sách. Nút **Xóa dữ liệu** chỉ chuyển khách vào **Thùng rác** của tab Tư vấn: dữ liệu còn nguyên (đã mã hóa) trong 60 ngày để khôi phục, hết hạn mới tự xóa vĩnh viễn. Chỉ mục đang ở Thùng rác mới xóa vĩnh viễn được, và thao tác đó có xác nhận riêng.
+
+## Tài chính tour
+
+Tab **Bán hàng → Tài chính tour** theo dõi tiền thực thu, tiền thực chi và lợi nhuận dòng tiền theo kỳ/tour. Từ một yêu cầu tư vấn có thể bấm **Tạo hồ sơ tour** để điền trước tour, ngày và số khách; sau đó nhập giá bán thực tế và từng khoản thu, hoàn tiền, chi phí. Giá bán là giá trị hợp đồng dự kiến, không phải doanh thu; chỉ khoản đã thực thu/thực chi mới vào dòng tiền. Hủy giao dịch là hủy mềm, vẫn giữ lịch sử. Hướng dẫn đầy đủ và giới hạn hiện tại: `docs/ADMIN-TOUR-FINANCE.md`.
 
 ## Sao lưu & phục hồi
 

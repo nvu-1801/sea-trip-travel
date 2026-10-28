@@ -168,6 +168,20 @@
       "description": "Từ tour trong ngày tới hành trình 5 ngày kết hợp hai tỉnh. Chọn theo thời gian bạn có.",
       "cta": "Xem toàn bộ tuyến"
     },
+    "customers": {
+      "play": "Xem video: {title}",
+      "watch": "Xem trên YouTube",
+      "story": "Xem câu chuyện",
+      "fallbackTitle": "Video khách hàng",
+      "partners": {
+        "one": "{count} đối tác",
+        "other": "{count} đối tác"
+      },
+      "stories": {
+        "one": "{count} câu chuyện",
+        "other": "{count} câu chuyện"
+      }
+    },
     "regions": {
       "eyebrow": "Tour trong nước",
       "title": "Chọn theo vùng miền",

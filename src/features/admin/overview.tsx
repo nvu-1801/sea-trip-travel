@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { AdminIcon, type AdminIconName } from "./admin-icons";
 
@@ -19,6 +20,16 @@ type Stats = {
   devices: { name: string; value: number }[];
   locales: { name: string; value: number }[];
   recentLeads?: { status: string; created_at: string }[];
+  finance?: {
+    from: string;
+    to: string;
+    receipts: number;
+    refunds: number;
+    revenue: number;
+    expenses: number;
+    profit: number;
+    contractValue: number;
+  };
 };
 
 const fmt = new Intl.NumberFormat("vi-VN");
@@ -652,6 +663,43 @@ export function Overview({ csrf }: { csrf: string }) {
           </div>
         </Kpi>
       </div>
+
+      {stats?.finance ? (
+        <section className="adm-panel adm-fin-overview">
+          <PanelHeader
+            eyebrow="Tài chính tháng này"
+            title="Dòng tiền thực tế"
+            description="Chỉ tính khoản đã thực thu và đã thực chi; giá trị hợp đồng được tách riêng."
+            aside={
+              <Link className="adm-panel-pill" href="/admin/finance">
+                Mở Tài chính tour →
+              </Link>
+            }
+          />
+          <div className="adm-fin-detail-kpis adm-fin-overview-grid">
+            <span>
+              Thu ròng
+              <strong>{fmtVND.format(stats.finance.revenue)} ₫</strong>
+            </span>
+            <span>
+              Chi thực tế
+              <strong>{fmtVND.format(stats.finance.expenses)} ₫</strong>
+            </span>
+            <span data-negative={stats.finance.profit < 0 ? "true" : undefined}>
+              Lợi nhuận dòng tiền
+              <strong>{fmtVND.format(stats.finance.profit)} ₫</strong>
+            </span>
+            <span>
+              Giá trị hợp đồng
+              <strong>{fmtVND.format(stats.finance.contractValue)} ₫</strong>
+            </span>
+          </div>
+          <p className="adm-fin-note">
+            {stats.finance.from} → {stats.finance.to}. Đây là dòng tiền, không
+            phải báo cáo kế toán hoặc lãi cuối cùng của từng chuyến.
+          </p>
+        </section>
+      ) : null}
 
       <div className="adm-overview-main">
         <section className="adm-panel adm-panel--chart">

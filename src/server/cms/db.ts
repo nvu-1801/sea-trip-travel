@@ -32,6 +32,43 @@ export function db() {
     CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY, action TEXT NOT NULL, target TEXT NOT NULL, created_at TEXT NOT NULL, actor TEXT, ip TEXT, status TEXT NOT NULL DEFAULT 'success', details TEXT);
     CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, name TEXT NOT NULL, alt TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, created_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS leads (id TEXT PRIMARY KEY, data TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'new', note TEXT NOT NULL DEFAULT '', mail_status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS tour_bookings (
+      id TEXT PRIMARY KEY,
+      request_id TEXT NOT NULL UNIQUE,
+      lead_id TEXT,
+      tour_slug TEXT NOT NULL,
+      tour_title TEXT NOT NULL DEFAULT '',
+      travel_date TEXT NOT NULL,
+      party_size INTEGER NOT NULL DEFAULT 1 CHECK(party_size > 0),
+      sale_amount INTEGER NOT NULL DEFAULT 0 CHECK(sale_amount >= 0),
+      status TEXT NOT NULL DEFAULT 'confirmed' CHECK(status IN ('confirmed','completed','cancelled')),
+      note TEXT NOT NULL DEFAULT '',
+      revision INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_tour_bookings_travel ON tour_bookings(travel_date, status);
+    CREATE INDEX IF NOT EXISTS idx_tour_bookings_lead ON tour_bookings(lead_id);
+    CREATE INDEX IF NOT EXISTS idx_tour_bookings_slug ON tour_bookings(tour_slug);
+    CREATE TABLE IF NOT EXISTS tour_finance_entries (
+      id TEXT PRIMARY KEY,
+      request_id TEXT NOT NULL UNIQUE,
+      booking_id TEXT REFERENCES tour_bookings(id) ON DELETE SET NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('receipt','refund','expense')),
+      amount INTEGER NOT NULL CHECK(amount > 0),
+      entry_date TEXT NOT NULL,
+      method TEXT NOT NULL DEFAULT 'cash',
+      category TEXT NOT NULL DEFAULT 'other',
+      description TEXT NOT NULL DEFAULT '',
+      actual INTEGER NOT NULL DEFAULT 1,
+      revision INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT,
+      deleted_reason TEXT NOT NULL DEFAULT ''
+    );
+    CREATE INDEX IF NOT EXISTS idx_tour_finance_entries_booking_date ON tour_finance_entries(booking_id, entry_date);
+    CREATE INDEX IF NOT EXISTS idx_tour_finance_entries_date ON tour_finance_entries(entry_date, kind);
     CREATE TABLE IF NOT EXISTS backup_runs (
       id TEXT PRIMARY KEY,
       kind TEXT NOT NULL,
@@ -98,7 +135,13 @@ export function db() {
   );
   // Database triggers make invalidation atomic with the write, including writes
   // from another Node process. Drafts must never invalidate public snapshots.
-  for (const table of ["records", "media", "leads"]) {
+  for (const table of [
+    "records",
+    "media",
+    "leads",
+    "tour_bookings",
+    "tour_finance_entries",
+  ]) {
     for (const operation of ["INSERT", "UPDATE", "DELETE"]) {
       database.exec(`CREATE TRIGGER IF NOT EXISTS live_${table}_${operation}
         AFTER ${operation} ON ${table} BEGIN

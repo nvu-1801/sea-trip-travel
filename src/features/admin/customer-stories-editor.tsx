@@ -129,6 +129,15 @@ function newId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID().slice(0, 8).replaceAll("-", "")}`;
 }
 
+/** Mirrors the server's safe link rule so the owner sees the same message. */
+function linkIssue(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.startsWith("/") || /^https?:\/\//i.test(trimmed)
+    ? ""
+    : "Link phải bắt đầu bằng / hoặc https://";
+}
+
 function Field({
   label,
   hint,
@@ -375,7 +384,13 @@ export function CustomerStoriesEditor({
               maxLength={300}
               onChange={(event) => commit({ ctaHref: event.target.value })}
               placeholder="/lien-he"
+              aria-invalid={Boolean(linkIssue(section.ctaHref))}
             />
+            {linkIssue(section.ctaHref) ? (
+              <small className="adm-customer-error">
+                {linkIssue(section.ctaHref)}
+              </small>
+            ) : null}
           </Field>
         </div>
       </section>
@@ -418,7 +433,9 @@ export function CustomerStoriesEditor({
           </p>
         ) : (
           <div className="adm-customer-logos">
-            {section.logos.map((logo, index) => (
+            {section.logos.map((logo, index) => {
+              const hrefIssue = linkIssue(logo.href);
+              return (
               <article className="adm-customer-logo" key={logo.id || index}>
                 <div className="adm-customer-item-head">
                   <span>Logo {String(index + 1).padStart(2, "0")}</span>
@@ -442,6 +459,7 @@ export function CustomerStoriesEditor({
                     <button
                       type="button"
                       className="adm-customer-remove"
+                      aria-label={`Xoá logo ${index + 1}`}
                       onClick={() => removeLogo(index)}
                     >
                       Xoá
@@ -475,10 +493,19 @@ export function CustomerStoriesEditor({
                   whereUsed="Dải logo khách hàng trên trang chủ"
                 />
                 <div className="adm-customer-pairs">
-                  <Field label="Tên đơn vị">
+                  <Field
+                    label="Tên đơn vị"
+                    hint={
+                      logo.name.trim()
+                        ? undefined
+                        : "Bắt buộc — tên đơn vị hiển thị dưới logo."
+                    }
+                  >
                     <input
                       value={logo.name}
                       maxLength={120}
+                      aria-required="true"
+                      aria-invalid={!logo.name.trim()}
                       onChange={(event) =>
                         updateLogo(index, { name: event.target.value })
                       }
@@ -492,7 +519,11 @@ export function CustomerStoriesEditor({
                         updateLogo(index, { href: event.target.value })
                       }
                       placeholder="https://…"
+                      aria-invalid={Boolean(hrefIssue)}
                     />
+                    {hrefIssue ? (
+                      <small className="adm-customer-error">{hrefIssue}</small>
+                    ) : null}
                   </Field>
                 </div>
                 <label className="adm-customer-visible">
@@ -506,7 +537,8 @@ export function CustomerStoriesEditor({
                   Hiện logo này trên trang chủ
                 </label>
               </article>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
@@ -575,6 +607,7 @@ export function CustomerStoriesEditor({
                       <button
                         type="button"
                         className="adm-customer-remove"
+                        aria-label={`Xoá video ${index + 1}`}
                         onClick={() => removeVideo(index)}
                       >
                         Xoá
@@ -582,10 +615,19 @@ export function CustomerStoriesEditor({
                     </div>
                   </div>
                   <div className="adm-customer-pairs">
-                    <Field label="Tiêu đề">
+                    <Field
+                      label="Tiêu đề"
+                      hint={
+                        video.title.trim()
+                          ? undefined
+                          : "Bắt buộc — tiêu đề hiển thị trên card."
+                      }
+                    >
                       <input
                         value={video.title}
                         maxLength={160}
+                        aria-required="true"
+                        aria-invalid={!video.title.trim()}
                         onChange={(event) =>
                           updateVideo(index, { title: event.target.value })
                         }
@@ -708,11 +750,17 @@ export function CustomerStoriesEditor({
 
       <section className="adm-customer-preview">
         <header>
-          <p className="adm-customer-eyebrow">Xem nhanh</p>
-          <strong>
+          <div>
+            <p className="adm-customer-eyebrow">Xem nhanh</p>
+            <strong>
+              {section.title || "Dấu ấn sau mỗi hành trình"}
+            </strong>
+            {section.eyebrow ? <small>{section.eyebrow}</small> : null}
+          </div>
+          <span>
             {section.enabled ? "Đang bật" : "Đang tắt"} · {visibleLogos.length}{" "}
             logo · {visibleVideos.length} video
-          </strong>
+          </span>
           <div className="adm-preview-lang" role="group" aria-label="Ngôn ngữ xem nhanh">
             <button
               type="button"
@@ -730,6 +778,14 @@ export function CustomerStoriesEditor({
             </button>
           </div>
         </header>
+        {section.body ? (
+          <p className="adm-customer-preview-body">{section.body}</p>
+        ) : null}
+        {section.ctaLabel && section.ctaHref ? (
+          <span className="adm-customer-preview-cta">
+            {section.ctaLabel} <span aria-hidden="true">→</span>
+          </span>
+        ) : null}
         {visibleLogos.length > 0 ? (
           <ul className="adm-customer-preview-logos">
             {visibleLogos.map((logo) => (

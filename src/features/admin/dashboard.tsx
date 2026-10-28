@@ -15,6 +15,7 @@ import { HeroEditor } from "./hero-editor";
 import { ThemePanel } from "./theme-panel";
 import type { ThemeId } from "@/config/themes";
 import { Overview } from "./overview";
+import { TourFinance } from "./tour-finance";
 import { ActivityCheck } from "./activity-check";
 import { HealthCheck } from "./health-check";
 import { BackupPanel } from "./backup-panel";
@@ -184,6 +185,7 @@ const tabs = [
   ["messages", "Nội dung VI / EN", "messages"],
   ["settings", "Website & footer", "settings"],
   ["leads", "Yêu cầu tư vấn", "leads"],
+  ["finance", "Tài chính tour", "money"],
   ["activity", "Kiểm tra hoạt động", "activity"],
   ["health", "Sức khỏe website", "chart"],
   ["account", "Bảo mật", "account"],
@@ -222,7 +224,7 @@ const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
       "media",
     ],
   },
-  { label: "Bán hàng", keys: ["leads"] },
+  { label: "Bán hàng", keys: ["leads", "finance"] },
   { label: "Hệ thống", keys: ["messages", "settings", "account"] },
 ];
 /**
@@ -435,6 +437,22 @@ const GUIDES: Record<string, Guide> = {
     pitfalls:
       "Không tự gửi lại email đã báo thành công; SMTP lỗi vẫn giữ được dữ liệu khách. Mục trong Thùng rác không hiện ở danh sách, tìm kiếm hay email.",
   },
+  finance: {
+    purpose:
+      "Theo dõi tiền thực thu, tiền thực chi và lợi nhuận dòng tiền theo tour. Giá bán trên hồ sơ là giá trị hợp đồng dự kiến, không phải tiền đã thu.",
+    steps: [
+      "Chọn kỳ báo cáo, tour và trạng thái; số liệu tính theo ngày thực thu/chi.",
+      "Bấm Tạo hồ sơ tour, chọn tour, ngày đi, số khách và giá bán thực tế. Có thể bắt đầu từ một yêu cầu tư vấn.",
+      "Mở hồ sơ để thêm khoản thu, hoàn tiền hoặc chi phí; khoản dự kiến không cộng vào dòng tiền.",
+      "Đối chiếu KPI với bảng hồ sơ và các dòng giao dịch; hủy giao dịch sai bằng nút Hủy, không xóa lịch sử.",
+    ],
+    required:
+      "Mỗi giao dịch cần số tiền VND nguyên dương, ngày thực tế và loại rõ ràng; khoản thu/hoàn phải gắn hồ sơ tour.",
+    result:
+      "Doanh thu thực thu, chi thực chi và lợi nhuận dòng tiền cập nhật ngay; lợi nhuận có thể âm. Số liệu không phải báo cáo kế toán hoặc lãi cuối cùng của chuyến.",
+    pitfalls:
+      "Không tự tạo doanh thu từ trạng thái lead hoặc giá niêm yết. Chi phí dự kiến không được cộng vào dòng tiền; hoàn tiền nhập thành khoản riêng.",
+  },
   overview: {
     purpose:
       "Xem nhanh hiệu quả website: lượt xem hôm nay, khách, leads và pipeline kinh doanh.",
@@ -577,7 +595,9 @@ export function Dashboard({
     id: string;
     slug?: string;
   } | null>(
-    initialEdit ? { tab: section, id: initialEdit, slug: initialEdit } : null,
+    initialEdit && section !== "finance"
+      ? { tab: section, id: initialEdit, slug: initialEdit }
+      : null,
   );
   /** Set just before a confirmed document navigation, to skip beforeunload. */
   const skipUnload = useRef(false);
@@ -804,7 +824,11 @@ export function Dashboard({
     const activity = activitySerial.current;
     if (!background) setLoading(true);
     try {
-      if (next === "activity" || next === "health") {
+      if (
+        next === "activity" ||
+        next === "health" ||
+        next === "finance"
+      ) {
         // These pages own their own read-only feeds and filters.
         setSelected(null);
         setDirty(false);
@@ -2577,7 +2601,9 @@ export function Dashboard({
             ) : null}
             <span className="adm-topbar-divider" aria-hidden="true" />
             <div className="adm-topbar-tools">
-              {!["account", "overview", "activity", "health"].includes(tab) && (
+              {!["account", "overview", "activity", "health", "finance"].includes(
+                tab,
+              ) && (
                 <button
                   type="button"
                   className="adm-topbar-icon adm-topbar-refresh"
@@ -2641,9 +2667,11 @@ export function Dashboard({
                 ? "Theo dõi thao tác quản trị và những điểm cần xem lại."
                 : tab === "health"
                   ? "Dung lượng, tốc độ tải thật và mức độ sẵn sàng SEO."
-                  : tab === "home"
-                    ? "Bố cục, banner và từng khối nội dung — đúng thứ tự khách sẽ trải nghiệm."
-                    : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
+                  : tab === "finance"
+                    ? "Tiền thực thu, chi thực tế và lợi nhuận dòng tiền theo tour."
+                    : tab === "home"
+                      ? "Bố cục, banner và từng khối nội dung — đúng thứ tự khách sẽ trải nghiệm."
+                      : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
             </p>
           </div>
           <div className="adm-masthead-side">
@@ -2895,6 +2923,12 @@ export function Dashboard({
             </section>
             {csrf ? <BackupPanel csrf={csrf} /> : null}
           </>
+        ) : tab === "finance" ? (
+          csrf ? (
+            <TourFinance csrf={csrf} initialLeadId={initialEdit ?? ""} />
+          ) : (
+            <p className="adm-empty">Đang tải…</p>
+          )
         ) : tab === "leads" ? (
           <>
             <div className="adm-stats">
@@ -3369,6 +3403,16 @@ export function Dashboard({
                               >
                                 ✓ Lưu chăm sóc
                               </button>
+                              <a
+                                className="adm-lead-finance"
+                                href={adminSectionHref("finance", {
+                                  id: lead.id,
+                                })}
+                                title="Tạo hồ sơ tour từ yêu cầu này"
+                              >
+                                <AdminIcon name="money" size={13} />
+                                Tạo hồ sơ tour
+                              </a>
                               <button
                                 disabled={busy || lead.mail_status === "sent"}
                                 onClick={() =>
