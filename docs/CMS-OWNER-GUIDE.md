@@ -120,6 +120,10 @@ Yêu cầu tư vấn được lưu trước gửi email; SMTP lỗi vẫn giữ 
 
 Danh sách hiện tải 500 lead gần nhất; khi vận hành lượng lớn cần bổ sung phân trang/xuất dữ liệu theo bộ lọc. SQLite lưu toàn bộ bản ghi trong volume/backup, không xóa các lead cũ ngoài danh sách. Nút **Xóa dữ liệu** chỉ chuyển khách vào **Thùng rác** của tab Tư vấn: dữ liệu còn nguyên (đã mã hóa) trong 60 ngày để khôi phục, hết hạn mới tự xóa vĩnh viễn. Chỉ mục đang ở Thùng rác mới xóa vĩnh viễn được, và thao tác đó có xác nhận riêng.
 
+## Tài chính tour
+
+Tab **Bán hàng → Tài chính tour** theo dõi tiền thực thu, tiền thực chi và lợi nhuận dòng tiền theo kỳ/tour. Từ một yêu cầu tư vấn có thể bấm **Tạo hồ sơ tour** để điền trước tour, ngày và số khách; sau đó nhập giá bán thực tế và từng khoản thu, hoàn tiền, chi phí. Giá bán là giá trị hợp đồng dự kiến, không phải doanh thu; chỉ khoản đã thực thu/thực chi mới vào dòng tiền. Hủy giao dịch là hủy mềm, vẫn giữ lịch sử. Hướng dẫn đầy đủ và giới hạn hiện tại: `docs/ADMIN-TOUR-FINANCE.md`.
+
 ## Sao lưu & phục hồi
 
 Mục **Bảo mật → Sao lưu & phục hồi** hiển thị lịch (ngày 1 & 16 lúc 03:00 Asia/Bangkok), bản thành công gần nhất, retention, offsite và cho phép tạo backup thủ công / tải bản `.seatar` đã mã hóa sau khi nhập lại mật khẩu. Tạo/tải đều có giới hạn tần suất; mật khẩu không được lưu. Trang **Sức khỏe website** có thêm card cảnh báo khi backup quá hạn, lỗi hoặc chưa cấu hình offsite.
