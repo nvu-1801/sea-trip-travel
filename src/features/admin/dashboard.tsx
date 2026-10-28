@@ -23,6 +23,9 @@ import { HomeSections } from "./home-sections";
 import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
 import { HomeFeaturedEditor, type FeaturedEditorTour } from "./home-featured-editor";
 import { CustomerStoriesEditor } from "./customer-stories-editor";
+import { TranslationPanel } from "./translation-panel";
+import type { TranslationKind } from "@/domain/translation";
+import { isLandingTranslationSection } from "@/domain/translation";
 import type { HomeSectionMeta } from "@/lib/home-sections";
 import { HOME_SECTIONS, HOME_GROUPS } from "@/lib/home-sections";
 import {
@@ -187,6 +190,26 @@ const tabs = [
   ["health", "Sức khỏe website", "chart"],
   ["account", "Bảo mật", "account"],
 ] as const;
+
+/** Record forms whose VI fields have an English counterpart in the same row. */
+function translationKindForTab(tab: string): TranslationKind | null {
+  switch (tab) {
+    case "tours":
+      return "tour";
+    case "articles":
+      return "article";
+    case "categories":
+      return "category";
+    case "destinations":
+      return "destination";
+    case "settings":
+      return "settings";
+    case "hero":
+      return "hero";
+    default:
+      return null;
+  }
+}
 const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
   { label: null, keys: ["overview", "activity", "health"] },
   {
@@ -1210,6 +1233,23 @@ export function Dashboard({
     }
     void navigateTo(entry.tab, { id: entry.id ?? "", slug: entry.slug });
   }
+  /**
+   * Writes an editor-generated record (translation, preview-only helpers) into
+   * the open form. Functional update keeps a translation response from
+   * clobbering a keystroke that landed while the request was in flight.
+   */
+  function updateSelectedData(next: Record<string, unknown>) {
+    setSelected((current) =>
+      current
+        ? {
+            ...current,
+            data: next as Record<string, EditorValue>,
+          }
+        : current,
+    );
+    setDirty(true);
+  }
+
   async function save(
     action: string,
     collection: string = tab,
@@ -3900,6 +3940,26 @@ export function Dashboard({
                     role="group"
                     aria-label={`Nội dung phần ${homeModal.title}`}
                   >
+                    {homeModal.kind === "hero" ? (
+                      <TranslationPanel
+                        key={`translate:hero:${homeModal.title}`}
+                        kind="hero"
+                        data={selected.data}
+                        csrf={csrf ?? ""}
+                        disabled={busy || uploadCount > 0}
+                        onChange={updateSelectedData}
+                      />
+                    ) : isLandingTranslationSection(homeModal.key) ? (
+                      <TranslationPanel
+                        key={`translate:landing:${homeModal.key}`}
+                        kind="landing"
+                        section={homeModal.key}
+                        data={selected.data}
+                        csrf={csrf ?? ""}
+                        disabled={busy || uploadCount > 0}
+                        onChange={updateSelectedData}
+                      />
+                    ) : null}
                     {notice && (
                       <p className="adm-field-error" role="alert">
                         {notice}
@@ -4206,6 +4266,16 @@ export function Dashboard({
               </div>
             )}
             {editorActions()}
+            {translationKindForTab(tab) ? (
+              <TranslationPanel
+                key={`translate:${tab}:${selected.id}`}
+                kind={translationKindForTab(tab)!}
+                data={selected.data}
+                csrf={csrf ?? ""}
+                disabled={busy || uploadCount > 0}
+                onChange={updateSelectedData}
+              />
+            ) : null}
             {(tab === "tours" || tab === "articles") && (
               <DraftPreview
                 key={`${tab}:${selected.id}`}

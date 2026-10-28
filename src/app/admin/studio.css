@@ -6309,6 +6309,79 @@ select {
 .adm-en-block[open] > summary {
   margin-bottom: 14px;
 }
+/* Shared VI → EN translation control (all Studio content forms). */
+.adm-translate {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 22px;
+  padding: 16px 18px;
+  border: 1px solid #f0c9da;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 100% 0, #fff0f7 0, transparent 55%),
+    #fffdfd;
+  scroll-margin-top: var(--adm-edit-offset, 160px);
+}
+.adm-translate-head {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.adm-translate-head h3 {
+  margin: 2px 0 4px;
+  font-size: 16px;
+  color: #7d123f;
+}
+.adm-translate-head .adm-hint {
+  margin: 0;
+  max-width: 62ch;
+}
+.adm-translate-button {
+  flex: 0 0 auto;
+  min-height: 40px;
+  white-space: nowrap;
+}
+.adm-translate-note {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid #e6dfe4;
+  background: #fbf8fa;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #5f4d59;
+}
+.adm-translate-note[data-tone="busy"] {
+  border-color: #cfe0f2;
+  background: #f3f9ff;
+  color: #295b86;
+}
+.adm-translate-note[data-tone="success"] {
+  border-color: #bfe3d1;
+  background: #f2fbf6;
+  color: #146a45;
+}
+.adm-translate-note[data-tone="warning"] {
+  border-color: #efd59a;
+  background: #fffaec;
+  color: #7a5711;
+}
+.adm-translate-note[data-tone="error"] {
+  border-color: #f2b7b7;
+  background: #fff5f5;
+  color: #a32222;
+}
+@media (max-width: 760px) {
+  .adm-translate {
+    padding: 13px;
+  }
+  .adm-translate-button {
+    width: 100%;
+  }
+}
+
 .adm-tour-consult {
   display: grid;
   gap: 10px;
@@ -8450,6 +8523,32 @@ select {
 }
 .adm-draft-preview > summary { cursor: pointer; font-size: 14px; font-weight: 700; color: #a30047; }
 .adm-draft-preview > .adm-hint { margin: 12px 0; }
+.adm-preview-lang {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 3px;
+  border: 1px solid #f2dde7;
+  border-radius: 999px;
+  background: #fff;
+}
+.adm-preview-lang button {
+  min-height: 30px;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 12px;
+  background: transparent;
+}
+.adm-preview-lang button[aria-pressed="true"] {
+  background: #a30047;
+  color: #fff;
+}
+.adm-draft-preview-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #7a5711;
+}
 .adm-draft-page {
   max-width: 760px;
   margin: 18px auto 0;

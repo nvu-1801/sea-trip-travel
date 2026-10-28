@@ -94,6 +94,7 @@ export function db() {
     CREATE TABLE IF NOT EXISTS cms_versions (scope TEXT PRIMARY KEY, version INTEGER NOT NULL DEFAULT 0);
     INSERT OR IGNORE INTO cms_versions(scope) VALUES('public'),('admin');
     CREATE TABLE IF NOT EXISTS cms_migrations (id TEXT PRIMARY KEY, applied_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS translation_usage (period TEXT PRIMARY KEY, chars INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS content_redirects (from_path TEXT PRIMARY KEY, to_path TEXT NOT NULL, created_at TEXT NOT NULL);
     PRAGMA user_version=1;`);
   const leadColumns = database.prepare("PRAGMA table_info(leads)").all() as {
