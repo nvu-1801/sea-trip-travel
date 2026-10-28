@@ -1472,3 +1472,61 @@ test("customer videos only accept safe YouTube URLs", () => {
     /YouTube/,
   );
 });
+
+test("translated settings and tour fields survive save and reload", () => {
+  const settingsRow = list("settings")[0];
+  const settingsData = settingsRow.data as Record<string, unknown>;
+  const contact = settingsData.contact as Record<string, unknown>;
+  const seo = settingsData.seo as Record<string, unknown>;
+  save(
+    "settings",
+    {
+      ...settingsData,
+      contact: { ...contact, workingHoursEn: "Mon–Sun, 8:00–18:00" },
+      seo: { ...seo, homeTitleEn: "Saved English home title" },
+    },
+    settingsRow.revision,
+    "save",
+  );
+  const reloadedSettings = list("settings")[0].data as Record<string, unknown>;
+  assert.equal(
+    (reloadedSettings.contact as Record<string, unknown>).workingHoursEn,
+    "Mon–Sun, 8:00–18:00",
+  );
+  assert.equal(
+    (reloadedSettings.seo as Record<string, unknown>).homeTitleEn,
+    "Saved English home title",
+  );
+
+  const tourRow = list("tours").find(
+    (row) =>
+      row.state === "published" &&
+      typeof row.data.summary === "string" &&
+      Array.isArray(row.data.categoryIds) &&
+      Boolean(row.data.duration) &&
+      typeof row.data.updatedAt === "string",
+  );
+  assert.ok(tourRow, "expected a complete published tour");
+  const tourData = tourRow.data as Record<string, unknown>;
+  const candidate = {
+    ...tourData,
+    _en: {
+      ...((tourData._en as Record<string, unknown> | undefined) ?? {}),
+      title: "Saved English tour title",
+    },
+  };
+  const checked = schemas.tours.safeParse(candidate);
+  assert.ok(
+    checked.success,
+    checked.success ? "" : JSON.stringify(checked.error.issues),
+  );
+  save("tours", candidate, tourRow.revision, "save");
+  const reloadedTour = list("tours").find((row) => row.id === tourRow.id);
+  const reloadedEn = reloadedTour?.data._en as Record<string, unknown> | undefined;
+  assert.equal(reloadedEn?.title, "Saved English tour title");
+  assert.equal(
+    (reloadedTour?.data.slug as string) ?? "",
+    String(tourData.slug ?? ""),
+    "translation never changes the slug",
+  );
+});

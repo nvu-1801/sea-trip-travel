@@ -68,6 +68,24 @@ src/
 **Dữ liệu dùng chung (slug, id, danh mục, điểm đến, giá, tiền tệ, số ngày/đêm,
 `src` ảnh) không bao giờ nằm trong file dịch** — chúng tồn tại duy nhất một chỗ.
 
+## 3.1. Xem nhanh VI / EN ngay trong form (Studio)
+
+Các form có bản dịch đều có nút chuyển **Tiếng Việt / English** để xem trước mà
+không cần xuất bản:
+
+- **Tour / Cẩm nang**: khối *Xem trước bản nháp* có nút VI/EN; trường nào chưa
+  có bản EN sẽ tự rơi về tiếng Việt, và có ghi chú nhắc trường đang thiếu.
+- **Điểm đến**: thẻ xem trước (Khám phá + thẻ tour) đổi ngôn ngữ theo nút
+  VI/EN ngay trong mục ảnh.
+- **Khách hàng & dấu ấn**: khối *Xem nhanh* đổi tiêu đề/khách hàng của video
+  sang bản EN nếu đã nhập.
+- **Hero**: mỗi tab ngôn ngữ có khối *Xem nhanh* hiển thị đúng badge, tiêu đề,
+  mô tả, nhãn nút và chú thích slide của ngôn ngữ đó.
+
+Bản xem nhanh chỉ đọc dữ liệu đang sửa trong form (kể cả phần chưa lưu) và không
+gọi dịch vụ dịch bên ngoài. Bản EN vẫn phải nhập/sửa tay và bấm Lưu như bình
+thường; chỉ đánh dấu `_enReviewed` khi bạn đã kiểm tra nội dung.
+
 ## 4. Bật index cho bản tiếng Anh
 
 Một trang tiếng Anh **chỉ được index** khi bản dịch của bản ghi gốc có
