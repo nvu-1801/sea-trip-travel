@@ -979,12 +979,9 @@ export function TourFinance({
           <p className="adm-fin-range">
             <span>Kỳ đang xem</span>
             <strong>
-              {dateLabel(from)} → {dateLabel(to)}
+              {dateLabel(from)} → trước {dateLabel(to)}
             </strong>
-            <small>
-              {report?.pagination.total ?? 0} hồ sơ · {report?.bookingCount ?? 0}{" "}
-              trong kỳ
-            </small>
+            <small>{report?.bookingCount ?? 0} hồ sơ trong kỳ</small>
           </p>
         </div>
 
@@ -1004,7 +1001,7 @@ export function TourFinance({
             </small>
           </label>
           <label className="adm-fin-field">
-            <span>Đến ngày</span>
+            <span>Đến trước ngày</span>
             <input
               type="date"
               value={to}
@@ -1124,7 +1121,9 @@ export function TourFinance({
           tone="violet"
           label="Giá trị hợp đồng"
           value={loading && !report ? "—" : money(report?.contractValue ?? 0)}
-          foot={`${report?.bookingCount ?? 0} hồ sơ · ${currentPeriod.from} → ${currentPeriod.to}`}
+          foot={`${report?.bookingCount ?? 0} hồ sơ · ${dateLabel(
+            currentPeriod.from,
+          )} → trước ${dateLabel(currentPeriod.to)}`}
         />
       </div>
 

@@ -26,6 +26,30 @@
   --journal-title-size: clamp(32px, 3.4vw, 52px);
   --journal-title-weight: 600;
 }
+
+/* The home header floats over the carousel, so the draft-translation banner
+   cannot sit in normal flow at y=0 — it would be painted underneath the logo
+   and menu. Keep it over the hero (so the header still has photography behind
+   it) but start it below the fixed bar. Heights mirror page-hero.css. */
+.stt-home-translation-notice {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 30;
+  /* Header is h-16 (64px) + 1px brandline + 1px border. */
+  padding-top: 4.125rem;
+}
+@media (min-width: 640px) {
+  .stt-home-translation-notice {
+    /* Header is h-18 (72px) + 1px brandline + 1px border. */
+    padding-top: 4.625rem;
+  }
+}
+@media print {
+  .stt-home-translation-notice {
+    position: static;
+    padding-top: 0;
+  }
+}
 .home-brand-background {
   position: fixed;
   inset: 0;

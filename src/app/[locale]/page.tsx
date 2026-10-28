@@ -90,7 +90,11 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <div className="home-brand-background" aria-hidden="true">
         <span className="home-brand-wordmark">SEA TRIP</span>
       </div>
-      {indexable ? null : <TranslationNotice locale={locale} />}
+      {indexable ? null : (
+        <div className="stt-home-translation-notice">
+          <TranslationNotice locale={locale} />
+        </div>
+      )}
       <Hero locale={locale} />
       <QuickFinder locale={locale} />
       <ExploreSection locale={locale} />

@@ -3,6 +3,7 @@
 import {
   HOME_GROUPS,
   HOME_SECTIONS,
+  sectionPreview,
   sectionSummary,
   type HomeSectionMeta,
 } from "@/lib/home-sections";
@@ -44,11 +45,18 @@ export function HomeSections({
         return (
           <section key={group.key} className="adm-home-group">
             <header className="adm-home-group-head">
-              <div>
-                <h3>{group.title}</h3>
-                <p>{group.hint}</p>
+              <div className="adm-home-group-copy">
+                <span
+                  className="adm-home-group-mark"
+                  data-group={group.key}
+                  aria-hidden="true"
+                />
+                <div>
+                  <h3>{group.title}</h3>
+                  <p>{group.hint}</p>
+                </div>
               </div>
-              <span className="adm-tour-group-count">
+              <span className="adm-tour-group-count adm-home-group-count">
                 {items.length} phần
               </span>
             </header>
@@ -62,11 +70,16 @@ export function HomeSections({
                       ? heroState
                       : landingState;
                 const missing = meta.collection !== null && !data;
+                const preview = sectionPreview(
+                  meta,
+                  meta.key === "footer" ? {} : data,
+                );
                 return (
                   <article
                     key={meta.key}
                     data-group={meta.group}
                     className={`adm-section-card${meta.linkTab ? " adm-section-card--link" : ""}`}
+                    aria-label={`${meta.title}: ${preview.text}`}
                   >
                     <div className="adm-section-thumb" aria-hidden="true">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -100,15 +113,33 @@ export function HomeSections({
                         <p className="adm-section-where">{meta.where}</p>
                       </div>
                       <h3>{meta.title}</h3>
+                      <div
+                        className="adm-section-content"
+                        data-empty={missing ? "true" : undefined}
+                      >
+                        <span className="adm-section-content-label">
+                          Nội dung đang hiển thị
+                        </span>
+                        <p>{missing ? "Đang tải nội dung…" : preview.text}</p>
+                        {!missing && preview.meta ? (
+                          <small>{preview.meta}</small>
+                        ) : null}
+                      </div>
                       <p className="adm-section-summary">
-                        {missing
-                          ? "Đang tải…"
-                          : sectionSummary(
-                              meta,
-                              meta.key === "footer" ? {} : data,
-                            )}
+                        <span className="adm-section-summary-dot" aria-hidden="true" />
+                        <span>
+                          {missing
+                            ? "Đang tải…"
+                            : sectionSummary(
+                                meta,
+                                meta.key === "footer" ? {} : data,
+                              )}
+                        </span>
                       </p>
-                      <p className="adm-section-tip">{meta.tip}</p>
+                      <p className="adm-section-tip">
+                        <span>Gợi ý</span>
+                        {meta.tip}
+                      </p>
                       <div className="adm-section-actions">
                         {meta.linkTab ? (
                           <button type="button" onClick={onGoSettings}>

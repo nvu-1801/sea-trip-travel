@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   HOME_GROUPS,
   HOME_SECTIONS,
+  sectionPreview,
   sectionSummary,
 } from "../src/lib/home-sections";
 
@@ -85,8 +86,7 @@ test("section summaries reflect real record data", () => {
   );
 });
 
-test("home sections carry admin display metadata (icon, group, tip)", () => {
-  assert.deepEqual(
+test("home sections carry admin display metadata (icon, group, tip)", () => {  assert.deepEqual(
     HOME_GROUPS.map((group) => group.key),
     ["top", "main", "bottom"],
   );
@@ -110,5 +110,50 @@ test("home sections carry admin display metadata (icon, group, tip)", () => {
       (section) => section.key,
     ),
     ["guides", "planning", "footer"],
+  );
+});
+
+test("section previews surface the real copy and never crash on empty data", () => {
+  const byKey = Object.fromEntries(
+    HOME_SECTIONS.map((section) => [section.key, section]),
+  );
+  for (const section of HOME_SECTIONS) {
+    const preview = sectionPreview(section, {});
+    assert.equal(typeof preview.text, "string");
+    assert.ok(preview.text.length > 0, `${section.key} needs preview copy`);
+    assert.equal(typeof preview.meta, "string");
+    assert.deepEqual(sectionPreview(section, null), sectionPreview(section, {}));
+  }
+  assert.equal(
+    sectionPreview(byKey.hero, {
+      vi: { titleLine1: "Chạm vào", titleLine2: "miền biển" },
+    }).text,
+    "Chạm vào miền biển",
+  );
+  assert.equal(
+    sectionPreview(byKey.explore, {
+      explore: { titleA: "Chạm vào", titleB: "một miền" },
+    }).text,
+    "Chạm vào một miền",
+  );
+  assert.equal(
+    sectionPreview(byKey.trust, {
+      trust: { items: [{ title: "Giá công khai" }] },
+    }).text,
+    "Giá công khai",
+  );
+  assert.equal(
+    sectionPreview(byKey.featured, {
+      featured: {
+        categoryId: "cat_qnpy",
+        tourIds: ["a", "b"],
+        scopes: { cat_qnpy: { title: "Tour nổi bật Quy Nhơn" } },
+      },
+    }).text,
+    "Tour nổi bật Quy Nhơn",
+  );
+  assert.equal(
+    sectionPreview(byKey.footer, {}).meta,
+    "Sửa trong tab Website & footer",
   );
 });
