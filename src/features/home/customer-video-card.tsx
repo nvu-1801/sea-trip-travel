@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import Image from "next/image";
 import { parseYouTubeUrl } from "@/lib/youtube";
 
@@ -13,19 +10,36 @@ export type CustomerVideo = {
   cover?: { src?: string; alt: string };
 };
 
+export type CustomerVideoLabels = {
+  play: string;
+  watch: string;
+  story: string;
+  fallbackTitle: string;
+};
+
 /**
  * One customer video card.
  *
  * Nothing is requested from YouTube until the visitor presses play: the cover
  * (or brand placeholder) is local, and only then does the nocookie iframe
- * mount. That keeps the first paint fast and avoids a third-party request for
- * every card on the page.
+ * mount. The grid owns which card is playing, so a second click replaces the
+ * first iframe instead of leaving several players running at once.
  */
-export function CustomerVideoCard({ video }: { video: CustomerVideo }) {
-  const [playing, setPlaying] = useState(false);
+export function CustomerVideoCard({
+  video,
+  labels,
+  playing,
+  onPlay,
+}: {
+  video: CustomerVideo;
+  labels: CustomerVideoLabels;
+  playing: boolean;
+  onPlay: () => void;
+}) {
   const parsed = parseYouTubeUrl(video.youtubeUrl);
   if (!parsed) return null;
-  const title = video.title || "Video khách hàng";
+  const title = video.title || labels.fallbackTitle;
+  const playLabel = labels.play.replace("{title}", title);
 
   return (
     <article className="stt-customer-video" data-customer-card>
@@ -43,8 +57,8 @@ export function CustomerVideoCard({ video }: { video: CustomerVideo }) {
           <button
             type="button"
             className="stt-customer-video-cover"
-            aria-label={`Xem video: ${title}`}
-            onClick={() => setPlaying(true)}
+            aria-label={playLabel}
+            onClick={onPlay}
           >
             {video.cover?.src ? (
               <Image
@@ -65,7 +79,7 @@ export function CustomerVideoCard({ video }: { video: CustomerVideo }) {
                 <path d="M8 5.5v13l11-6.5-11-6.5Z" />
               </svg>
             </span>
-            <span className="stt-customer-video-label">Xem câu chuyện</span>
+            <span className="stt-customer-video-label">{labels.story}</span>
           </button>
         )}
       </div>
@@ -78,10 +92,10 @@ export function CustomerVideoCard({ video }: { video: CustomerVideo }) {
         <a
           href={parsed.watchUrl}
           target="_blank"
-          rel="noreferrer"
+          rel="noreferrer noopener"
           className="stt-customer-video-link"
         >
-          Xem trên YouTube <span aria-hidden="true">↗</span>
+          {labels.watch} <span aria-hidden="true">↗</span>
         </a>
       </div>
     </article>

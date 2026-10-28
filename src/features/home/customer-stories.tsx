@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/layout";
 import type { Locale } from "@/i18n/config";
+import { plural } from "@/i18n/messages";
 import { localizePath } from "@/i18n/routing";
+import { getMessages } from "@/i18n/server";
 import { landingSections } from "@/server/cms/store";
 import { parseYouTubeUrl } from "@/lib/youtube";
-import { CustomerVideoCard } from "./customer-video-card";
+import { CustomerVideoGrid } from "./customer-video-grid";
 
 /**
  * Customer proof: partner logos + real traveller videos.
@@ -22,6 +24,7 @@ export function CustomerStories({ locale }: { locale: Locale }) {
   }
   if (!section?.enabled) return null;
 
+  const m = getMessages(locale);
   const en = locale === "en";
   const text = (vi: string, english: string) => (en ? english || vi : vi);
   const logos = (section.logos ?? []).filter(
@@ -44,6 +47,12 @@ export function CustomerStories({ locale }: { locale: Locale }) {
   const ctaHref = section.ctaHref?.trim();
   const internal = Boolean(ctaHref?.startsWith("/"));
   const ctaLabel = text(section.ctaLabel, section.ctaLabelEn);
+  const labels = {
+    play: m.home.customers.play,
+    watch: m.home.customers.watch,
+    story: m.home.customers.story,
+    fallbackTitle: m.home.customers.fallbackTitle,
+  };
 
   return (
     <section
@@ -80,7 +89,7 @@ export function CustomerStories({ locale }: { locale: Locale }) {
                   href={ctaHref}
                   className="stt-customers-cta"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
                 >
                   {ctaLabel} <span aria-hidden="true">↗</span>
                 </a>
@@ -93,9 +102,7 @@ export function CustomerStories({ locale }: { locale: Locale }) {
           <div className="stt-customers-block">
             <div className="stt-customers-block-head">
               <h3>{text(section.logosTitle, section.logosTitleEn)}</h3>
-              <span>
-                {logos.length} {en ? "partners" : "đối tác"}
-              </span>
+              <span>{plural(m.home.customers.partners, logos.length)}</span>
             </div>
             <ul className="stt-customers-logos">
               {logos.map((logo) => {
@@ -119,7 +126,7 @@ export function CustomerStories({ locale }: { locale: Locale }) {
                       href.startsWith("/") ? (
                         <Link href={localizePath(locale, href)}>{body}</Link>
                       ) : (
-                        <a href={href} target="_blank" rel="noreferrer">
+                        <a href={href} target="_blank" rel="noreferrer noopener">
                           {body}
                         </a>
                       )
@@ -137,15 +144,9 @@ export function CustomerStories({ locale }: { locale: Locale }) {
           <div className="stt-customers-block">
             <div className="stt-customers-block-head">
               <h3>{text(section.videosTitle, section.videosTitleEn)}</h3>
-              <span>
-                {videos.length} {en ? "stories" : "câu chuyện"}
-              </span>
+              <span>{plural(m.home.customers.stories, videos.length)}</span>
             </div>
-            <div className="stt-customers-videos">
-              {videos.map((video) => (
-                <CustomerVideoCard key={video.id} video={video} />
-              ))}
-            </div>
+            <CustomerVideoGrid videos={videos} labels={labels} />
           </div>
         ) : null}
       </Container>

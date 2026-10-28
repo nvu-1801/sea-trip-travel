@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { localizePath, stripLocaleFromPath, switchLocalePath } from "@/i18n/routing";
-import { getMessages } from "@/i18n/messages";
+import { getMessages, plural } from "@/i18n/messages";
 import { tourTranslations } from "@/content/locales/en";
 import { getTourBySlug, getTourSlugs } from "@/lib/data/tours";
 import { tourTranslationStatus } from "@/lib/data/localize";
@@ -69,6 +69,17 @@ describe("message catalogs", () => {
     const vi = keyPaths(getMessages("vi")).sort();
     const en = keyPaths(getMessages("en")).sort();
     assert.deepEqual(en, vi);
+  });
+
+  it("pluralises customer counts in English and keeps Vietnamese unchanged", () => {
+    const vi = getMessages("vi");
+    const en = getMessages("en");
+    assert.equal(plural(en.home.customers.partners, 1), "1 partner");
+    assert.equal(plural(en.home.customers.partners, 2), "2 partners");
+    assert.equal(plural(en.home.customers.stories, 1), "1 story");
+    assert.equal(plural(en.home.customers.stories, 2), "2 stories");
+    assert.equal(plural(vi.home.customers.partners, 1), "1 đối tác");
+    assert.equal(plural(vi.home.customers.stories, 2), "2 câu chuyện");
   });
 
   it("never leaves an empty string in either language", () => {
