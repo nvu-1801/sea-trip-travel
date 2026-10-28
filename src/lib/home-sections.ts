@@ -187,6 +187,146 @@ function asString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+/** One representative line of the copy currently published on the section. */
+export type HomeSectionPreview = {
+  text: string;
+  meta: string;
+};
+
+/**
+ * Card-sized preview of the real editorial copy behind a section. The summary
+ * below it stays a compact count/status; this is the human-readable line the
+ * owner recognises from the website.
+ */
+export function sectionPreview(
+  meta: HomeSectionMeta,
+  data: unknown,
+): HomeSectionPreview {
+  const root = asRecord(data);
+  try {
+    switch (meta.key) {
+      case "hero": {
+        const vi = asRecord(root.vi);
+        const firstSlide = asRecord(asArray(root.slides)[0]);
+        const headline =
+          [asString(vi.titleLine1), asString(vi.titleLine2)]
+            .filter(Boolean)
+            .join(" ") ||
+          asString(vi.badge) ||
+          asString(firstSlide.caption) ||
+          "Banner ảnh đầu trang";
+        const description =
+          asString(vi.description);
+        return { text: headline, meta: description };
+      }
+      case "finder": {
+        const labels = asArray(asRecord(root.finder).suggestions)
+          .map((item) => asString(asRecord(item).label))
+          .filter(Boolean);
+        return {
+          text: labels.join(" · ") || "Quy Nhơn · Phú Yên · Kỳ Co",
+          meta: labels.length ? `${labels.length} gợi ý tìm nhanh` : "",
+        };
+      }
+      case "explore": {
+        const explore = asRecord(root.explore);
+        const title = [asString(explore.titleA), asString(explore.titleB)]
+          .filter(Boolean)
+          .join(" ");
+        return {
+          text: title || "Chạm vào một miền bình yên",
+          meta: asString(explore.body),
+        };
+      }
+      case "featured": {
+        const featured = asRecord(root.featured);
+        const scope = asRecord(
+          asRecord(featured.scopes)[asString(featured.categoryId)],
+        );
+        const tourIds = asArray(featured.tourIds);
+        const title =
+          asString(scope.title) ||
+          [asString(scope.eyebrow), "Tour nổi bật"].filter(Boolean).join(" · ");
+        return {
+          text: title,
+          meta: tourIds.length
+            ? `${tourIds.length} tour đang ghim trên trang chủ`
+            : "Tự động chọn tour theo tuyến đang xem",
+        };
+      }
+      case "customers": {
+        const customers = asRecord(root.customers);
+        return {
+          text: asString(customers.title) || "Dấu ấn sau mỗi hành trình",
+          meta: asString(customers.body),
+        };
+      }
+      case "trust": {
+        const items = asArray(asRecord(root.trust).items);
+        const first = asRecord(items[0]);
+        return {
+          text: asString(first.title) || "Cam kết dịch vụ",
+          meta: items.length ? `${items.length} cam kết đang hiển thị` : "",
+        };
+      }
+      case "story": {
+        const trips = asArray(asRecord(root.story).trips);
+        const first = asRecord(trips[0]);
+        return {
+          text: asString(first.title) || "Một ngày đổi gió",
+          meta: asString(first.body),
+        };
+      }
+      case "regions": {
+        const regions = asRecord(root.regions);
+        const title = [asString(regions.titleA), asString(regions.titleB)]
+          .filter(Boolean)
+          .join(" ");
+        return {
+          text: title || "Một Việt Nam, muôn điều để nhớ",
+          meta: asString(regions.intro),
+        };
+      }
+      case "values": {
+        const values = asRecord(root.values);
+        const principle = asRecord(asArray(values.principles)[0]);
+        return {
+          text: asString(values.badge) || "Đi chậm, chọn kỹ, nhớ lâu",
+          meta: asString(principle.title),
+        };
+      }
+      case "guides": {
+        const guides = asRecord(root.guides);
+        const featuredSlug = asString(guides.featuredSlug);
+        const picks = asArray(guides.picks);
+        return {
+          text: featuredSlug
+            ? `Bài tiêu điểm: ${featuredSlug}`
+            : "Tự động chọn bài mới nhất",
+          meta: picks.length ? `${picks.length} bài viết phụ đang ghim` : "",
+        };
+      }
+      case "planning": {
+        const questions = asArray(asRecord(root.planning).questions);
+        const first = asRecord(questions[0]);
+        return {
+          text: asString(first.q) || "Chọn chuyến đi thế nào cho phù hợp?",
+          meta: asString(first.a),
+        };
+      }
+      case "footer":
+        return {
+          text: "Logo, hotline, địa chỉ và mạng xã hội",
+          meta: "Sửa trong tab Website & footer",
+        };
+      default:
+        return { text: meta.title, meta: meta.where };
+    }
+  } catch {
+    return { text: meta.title, meta: meta.where };
+  }
+}
+
 /**
  * One-line live summary of what a section currently shows on the website.
  * Never throws and never returns empty — falls back to a neutral hint.
