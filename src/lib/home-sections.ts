@@ -93,7 +93,7 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
   {
     key: "customers",
     collection: "landing",
-    title: "Khách hàng & dấu ấn",
+    title: "Khách hàng & dấu ấn hành trình",
     where: "Dải logo + video khách hàng ngay dưới tour nổi bật",
     illustration: "/images/hero/coastal-sunset.webp",
     icon: "users",

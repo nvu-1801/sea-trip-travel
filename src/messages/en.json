@@ -168,6 +168,20 @@
       "description": "From day tours to five-day journeys combining both provinces. Choose by the time you have.",
       "cta": "See the whole route"
     },
+    "customers": {
+      "play": "Play video: {title}",
+      "watch": "Watch on YouTube",
+      "story": "Watch the story",
+      "fallbackTitle": "Customer video",
+      "partners": {
+        "one": "{count} partner",
+        "other": "{count} partners"
+      },
+      "stories": {
+        "one": "{count} story",
+        "other": "{count} stories"
+      }
+    },
     "regions": {
       "eyebrow": "Vietnam tours",
       "title": "Choose by region",
