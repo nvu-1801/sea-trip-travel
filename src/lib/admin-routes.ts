@@ -15,6 +15,7 @@ export const ADMIN_SECTION_PATHS = {
   messages: "/admin/messages",
   settings: "/admin/settings",
   leads: "/admin/leads",
+  finance: "/admin/finance",
   activity: "/admin/activity",
   health: "/admin/health",
   account: "/admin/account",
