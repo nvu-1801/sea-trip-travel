@@ -1005,6 +1005,55 @@ try {
     },
   );
   check("unsafe YouTube link is rejected by the CMS", rejected.status() === 400);
+
+  await page
+    .getByRole("navigation", { name: "Quản trị" })
+    .getByRole("button", { name: /Tài chính tour/ })
+    .click();
+  await page
+    .getByRole("heading", { name: "Tài chính tour", exact: true })
+    .waitFor();
+  await page.getByText("Doanh thu thực thu", { exact: true }).waitFor();
+  check("finance tab renders its cash-flow KPIs", true);
+  await page.getByRole("button", { name: "Tạo hồ sơ tour" }).click();
+  const financeDialog = page.getByRole("dialog");
+  await financeDialog.waitFor();
+  const tourSelect = financeDialog.getByLabel(/^Tour/);
+  await tourSelect.selectOption({ index: 1 });
+  await financeDialog
+    .getByLabel("Giá bán thực tế (VND)")
+    .fill("12000000");
+  await financeDialog
+    .getByRole("button", { name: "Tạo hồ sơ", exact: true })
+    .click();
+  await page.getByText("Chi tiết hồ sơ", { exact: true }).waitFor();
+  check("finance creates a booking and opens its detail", true);
+  await financeDialog.getByLabel("Số tiền (VND)").fill("3000000");
+  await financeDialog
+    .getByRole("button", { name: "Thêm giao dịch" })
+    .click();
+  await financeDialog.getByText("3.000.000 ₫", { exact: false }).first().waitFor();
+  check("finance records a receipt and updates the detail", true);
+  await financeDialog.getByRole("button", { name: "Sửa", exact: true }).first().click();
+  await financeDialog.getByLabel("Số tiền (VND)").fill("4000000");
+  await financeDialog
+    .getByRole("button", { name: "Cập nhật giao dịch" })
+    .click();
+  await financeDialog.getByText("4.000.000 ₫", { exact: false }).first().waitFor();
+  check("finance edits a transaction in place", true);
+  await financeDialog.locator('button[aria-label="Đóng"]').click();
+  await financeDialog.waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "Chi phí chung" }).click();
+  const generalDialog = page.getByRole("dialog");
+  await generalDialog.waitFor();
+  check(
+    "finance offers a general expense form",
+    await generalDialog
+      .getByRole("heading", { name: "Chi phí chung", exact: true })
+      .isVisible(),
+  );
+  await generalDialog.locator('button[aria-label="Đóng"]').click();
+  await generalDialog.waitFor({ state: "hidden" });
   await page
     .getByRole("navigation", { name: "Quản trị" })
     .getByRole("button", { name: /Cẩm nang/ })

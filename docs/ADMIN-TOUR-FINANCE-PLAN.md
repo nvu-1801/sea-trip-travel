@@ -2,6 +2,8 @@
 
 Ngày lập: 27/10/2026. Repo: nvu-1801/sea-trip-travel. Tài liệu bàn giao cho agent tiếp tục; đây là kế hoạch, chưa phải tính năng đã hoàn thành.
 
+> Cập nhật 28/10/2026: MVP đã triển khai trên nhánh `feat/admin-tour-finance` — xem hướng dẫn vận hành trong `docs/ADMIN-TOUR-FINANCE.md`. Các mục bên dưới vẫn là định hướng dài hạn; phần chưa làm được ghi trong mục giới hạn của tài liệu vận hành.
+
 ## 1. Trạng thái và quy trình tiếp tục
 - Đọc AGENTS.md ở main hiện tại trước khi làm, kiểm tra main, PR #18 và thay đổi mới; không dựa cố định vào SHA cũ. Tại lúc lập, main là 54818ce3fd4772efbc0dd699882e23bced2bb609; PR #18 còn mở. Không trộn công việc của PR đó vào tính năng.
 - Tạo nhánh `feat/admin-tour-finance` từ origin/main mới nhất, hoặc tên khác nếu trùng. Triển khai từng bước, giữ nguyên dữ liệu hiện có. Chạy `npm run verify:preflight -- --full` trước bất kỳ push nào. Tạo PR, chờ CI đúng SHA; chỉ merge nếu đủ các kiểm tra bắt buộc. Theo dõi CI/deploy main và health theo AGENTS.md. Không bypass gate. Nếu không thực hiện được, ghi rõ blocker, commit/nhánh, lệnh còn thiếu.
