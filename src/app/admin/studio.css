@@ -8450,6 +8450,32 @@ select {
 }
 .adm-draft-preview > summary { cursor: pointer; font-size: 14px; font-weight: 700; color: #a30047; }
 .adm-draft-preview > .adm-hint { margin: 12px 0; }
+.adm-preview-lang {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 3px;
+  border: 1px solid #f2dde7;
+  border-radius: 999px;
+  background: #fff;
+}
+.adm-preview-lang button {
+  min-height: 30px;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 12px;
+  background: transparent;
+}
+.adm-preview-lang button[aria-pressed="true"] {
+  background: #a30047;
+  color: #fff;
+}
+.adm-draft-preview-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #7a5711;
+}
 .adm-draft-page {
   max-width: 760px;
   margin: 18px auto 0;

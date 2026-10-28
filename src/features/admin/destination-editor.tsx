@@ -191,6 +191,7 @@ export const DestinationEditor = forwardRef<
 ) {
   const [attempted, setAttempted] = useState(false);
   const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
+  const [previewLocale, setPreviewLocale] = useState<"vi" | "en">("vi");
 
   const data = rec(value);
   const name = textOf(data.name);
@@ -205,6 +206,11 @@ export const DestinationEditor = forwardRef<
   const en = rec(data._en);
   const hasEnglish = Boolean(data._en && typeof data._en === "object");
   const reviewed = data._enReviewed === true;
+  const previewName = previewLocale === "en" ? textOf(en.name) || name : name;
+  const previewSummary =
+    previewLocale === "en" ? textOf(en.summary) || summary : summary;
+  const previewProvince =
+    previewLocale === "en" ? textOf(en.province) || province : province;
 
   const otherEnabled = siblings.filter(
     (row) =>
@@ -479,6 +485,22 @@ export const DestinationEditor = forwardRef<
           where="ảnh và mô tả dùng trên thẻ Khám phá + thẻ tour"
           errors={booked("media")}
         >
+          <div className="adm-preview-lang" role="group" aria-label="Ngôn ngữ thẻ xem trước">
+            <button
+              type="button"
+              aria-pressed={previewLocale === "vi"}
+              onClick={() => setPreviewLocale("vi")}
+            >
+              Tiếng Việt
+            </button>
+            <button
+              type="button"
+              aria-pressed={previewLocale === "en"}
+              onClick={() => setPreviewLocale("en")}
+            >
+              English
+            </button>
+          </div>
           <div className="adm-destination-media">
             <ImageField
               sizeGuide="Ảnh điểm đến: nên từ 1600 × 1200 px (4:3). Giữ cảnh chính ở giữa để phù hợp nhiều khung cắt."
@@ -511,10 +533,10 @@ export const DestinationEditor = forwardRef<
                   />
                 </div>
                 <div className="adm-card-preview-copy">
-                  <strong>{name || "Chưa có tên"}</strong>
-                  <span>{province || "Chưa có tỉnh/thành"}</span>
+                  <strong>{previewName || "Chưa có tên"}</strong>
+                  <span>{previewProvince || "Chưa có tỉnh/thành"}</span>
                   <p>
-                    {summary ||
+                    {previewSummary ||
                       "Chưa có tóm tắt — thẻ sẽ không có dòng mô tả."}
                   </p>
                 </div>
@@ -625,9 +647,9 @@ export const DestinationEditor = forwardRef<
                 <span>
                   {slot ? `0${slot} / KHÁM PHÁ` : "CHƯA BẬT KHÁM PHÁ"}
                 </span>
-                <strong>{name || "Chưa có tên"}</strong>
-                <span>{province || "Chưa có tỉnh/thành"}</span>
-                <p>{summary || "Chưa có tóm tắt."}</p>
+                <strong>{previewName || "Chưa có tên"}</strong>
+                <span>{previewProvince || "Chưa có tỉnh/thành"}</span>
+                <p>{previewSummary || "Chưa có tóm tắt."}</p>
               </div>
             </article>
             <p className="adm-hint">
