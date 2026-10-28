@@ -230,6 +230,97 @@ async function fetchJson(
   return body;
 }
 
+const WEEKDAYS = [
+  "Chủ nhật",
+  "Thứ Hai",
+  "Thứ Ba",
+  "Thứ Tư",
+  "Thứ Năm",
+  "Thứ Sáu",
+  "Thứ Bảy",
+];
+
+/** "2026-10-28" → "Thứ Tư, 28/10/2026" — đọc ngày nhanh, không lệch múi giờ. */
+function weekdayLabel(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
+  const date = new Date(`${value}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return "";
+  const [, month, day] = value.split("-");
+  return `${WEEKDAYS[date.getUTCDay()]}, ${day}/${month}/${value.slice(0, 4)}`;
+}
+
+/** "12000000" → "= 12.000.000 đ" để thấy ngay số tiền đang gõ. */
+function amountHint(value: string): string {
+  const digits = value.replace(/[^\d]/g, "");
+  if (!digits) return "";
+  const amount = Number(digits);
+  if (!Number.isFinite(amount) || amount <= 0) return "";
+  return `= ${VND.format(amount)} đ`;
+}
+
+const FINANCE_GUIDE_STEPS = [
+  "Chọn kỳ ở thanh trên (Tháng này / Tháng trước / Năm nay, hoặc tự nhập Từ ngày – Đến ngày) rồi lọc theo tour và trạng thái.",
+  "Bấm Tạo hồ sơ tour: chọn tour, ngày đi, số khách, giá bán thực tế. Có thể bắt đầu từ một yêu cầu tư vấn để điền sẵn.",
+  "Trong hồ sơ, ghi từng khoản Thu tiền / Hoàn tiền / Chi phí kèm ngày thực tế và phương thức thanh toán.",
+  "Khoản chi chưa phát sinh thì bỏ chọn “Đã thực chi”. Chi phí không thuộc tour nào (marketing, lương, văn phòng) ghi ở nút Chi phí chung.",
+  "Ghi nhầm thì bấm Sửa để cập nhật, hoặc Hủy để vô hiệu giao dịch — lịch sử vẫn được giữ để đối soát.",
+  "Đối chiếu 4 thẻ KPI với bảng hồ sơ: Doanh thu thực thu − Chi thực tế = Lợi nhuận dòng tiền.",
+];
+
+const FINANCE_GUIDE_RULES = [
+  [
+    "Giá bán ≠ tiền đã thu",
+    "Giá bán là giá trị hợp đồng dự kiến; chỉ khoản Thu tiền mới vào doanh thu thực thu.",
+  ],
+  [
+    "Dự kiến không vào dòng tiền",
+    "Chi phí dự kiến vẫn được lưu để theo dõi nhưng không bị trừ khỏi lợi nhuận.",
+  ],
+  [
+    "Dòng tiền, không phải lãi kế toán",
+    "Số liệu tính theo ngày thực thu/chi, chưa gồm công nợ, khấu hao hay thuế.",
+  ],
+];
+
+/**
+ * Hướng dẫn ngay trên trang: giữ mặc định đóng để bảng số liệu không bị đẩy
+ * xuống, nhưng luôn hiện một dòng mời mở. Bản đầy đủ vẫn nằm ở panel Hướng dẫn
+ * của Studio (nút ? trên masthead).
+ */
+function FinanceGuide() {
+  return (
+    <details className="adm-fin-guide">
+      <summary>
+        <span className="adm-fin-guide-badge" aria-hidden="true">
+          ?
+        </span>
+        <span className="adm-fin-guide-summary">
+          <strong>Hướng dẫn sử dụng Tài chính tour</strong>
+          <small>6 bước nhập liệu · 3 điều cần nhớ</small>
+        </span>
+        <span className="adm-fin-guide-open" aria-hidden="true">
+          Xem hướng dẫn
+        </span>
+      </summary>
+      <div className="adm-fin-guide-body">
+        <ol>
+          {FINANCE_GUIDE_STEPS.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+        <div className="adm-fin-guide-rules">
+          {FINANCE_GUIDE_RULES.map(([title, body]) => (
+            <p key={title}>
+              <strong>{title}</strong>
+              <span>{body}</span>
+            </p>
+          ))}
+        </div>
+      </div>
+    </details>
+  );
+}
+
 function Kpi({
   icon,
   tone,
@@ -832,118 +923,155 @@ export function TourFinance({
 
   const totals = report?.totals;
   const currentPeriod = report?.period ?? { from, to };
+  const monthNow = monthRange();
+  const monthPrevious = monthRange(-1);
+  const yearNow = yearRange();
+  const activePreset = (range: { from: string; to: string }) =>
+    range.from === from && range.to === to;
 
   return (
     <div className="adm-fin" aria-busy={loading}>
+      <FinanceGuide />
+
       <div className="adm-fin-toolbar">
-        <div className="adm-fin-presets" role="group" aria-label="Kỳ báo cáo">
+        <div className="adm-fin-toolbar-top">
+          <div className="adm-fin-presets" role="group" aria-label="Kỳ báo cáo">
+            <button
+              type="button"
+              aria-pressed={activePreset(monthNow)}
+              data-active={activePreset(monthNow) ? "true" : undefined}
+              onClick={() => {
+                const range = monthRange();
+                setFrom(range.from);
+                setTo(range.to);
+                setPage(1);
+              }}
+            >
+              Tháng này
+            </button>
+            <button
+              type="button"
+              aria-pressed={activePreset(monthPrevious)}
+              data-active={activePreset(monthPrevious) ? "true" : undefined}
+              onClick={() => {
+                const range = monthRange(-1);
+                setFrom(range.from);
+                setTo(range.to);
+                setPage(1);
+              }}
+            >
+              Tháng trước
+            </button>
+            <button
+              type="button"
+              aria-pressed={activePreset(yearNow)}
+              data-active={activePreset(yearNow) ? "true" : undefined}
+              onClick={() => {
+                const range = yearRange();
+                setFrom(range.from);
+                setTo(range.to);
+                setPage(1);
+              }}
+            >
+              Năm nay
+            </button>
+          </div>
+          <p className="adm-fin-range">
+            <span>Kỳ đang xem</span>
+            <strong>
+              {dateLabel(from)} → {dateLabel(to)}
+            </strong>
+            <small>
+              {report?.pagination.total ?? 0} hồ sơ · {report?.bookingCount ?? 0}{" "}
+              trong kỳ
+            </small>
+          </p>
+        </div>
+
+        <div className="adm-fin-toolbar-filters">
+          <label className="adm-fin-field">
+            <span>Từ ngày</span>
+            <input
+              type="date"
+              value={from}
+              onChange={(event) => {
+                setFrom(event.target.value);
+                setPage(1);
+              }}
+            />
+            <small className="adm-fin-field-hint" aria-hidden="true">
+              {weekdayLabel(from)}
+            </small>
+          </label>
+          <label className="adm-fin-field">
+            <span>Đến ngày</span>
+            <input
+              type="date"
+              value={to}
+              onChange={(event) => {
+                setTo(event.target.value);
+                setPage(1);
+              }}
+            />
+            <small className="adm-fin-field-hint" aria-hidden="true">
+              {weekdayLabel(to)}
+            </small>
+          </label>
+          <label className="adm-fin-field">
+            <span>Tour</span>
+            <select
+              value={tour}
+              onChange={(event) => {
+                setTour(event.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">Tất cả tour</option>
+              {(report?.tours ?? []).map((item) => (
+                <option key={item.slug} value={item.slug}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="adm-fin-field">
+            <span>Trạng thái</span>
+            <select
+              value={status}
+              onChange={(event) => {
+                setStatus(event.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">Tất cả</option>
+              <option value="confirmed">Đã xác nhận</option>
+              <option value="completed">Hoàn tất</option>
+              <option value="cancelled">Đã hủy</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="adm-fin-toolbar-actions">
           <button
             type="button"
+            className="adm-fin-secondary"
             onClick={() => {
-              const range = monthRange();
-              setFrom(range.from);
-              setTo(range.to);
-              setPage(1);
+              setGeneralError("");
+              setGeneralOpen(true);
             }}
+            disabled={busy}
           >
-            Tháng này
+            <AdminIcon name="money" size={15} /> Chi phí chung
           </button>
           <button
             type="button"
-            onClick={() => {
-              const range = monthRange(-1);
-              setFrom(range.from);
-              setTo(range.to);
-              setPage(1);
-            }}
+            className="adm-fin-new"
+            onClick={openCreate}
+            disabled={busy}
           >
-            Tháng trước
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const range = yearRange();
-              setFrom(range.from);
-              setTo(range.to);
-              setPage(1);
-            }}
-          >
-            Năm nay
+            <AdminIcon name="plus" size={15} /> Tạo hồ sơ tour
           </button>
         </div>
-        <label className="adm-fin-field">
-          <span>Từ ngày</span>
-          <input
-            type="date"
-            value={from}
-            onChange={(event) => {
-              setFrom(event.target.value);
-              setPage(1);
-            }}
-          />
-        </label>
-        <label className="adm-fin-field">
-          <span>Đến ngày</span>
-          <input
-            type="date"
-            value={to}
-            onChange={(event) => {
-              setTo(event.target.value);
-              setPage(1);
-            }}
-          />
-        </label>
-        <label className="adm-fin-field">
-          <span>Tour</span>
-          <select
-            value={tour}
-            onChange={(event) => {
-              setTour(event.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="">Tất cả tour</option>
-            {(report?.tours ?? []).map((item) => (
-              <option key={item.slug} value={item.slug}>
-                {item.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="adm-fin-field">
-          <span>Trạng thái</span>
-          <select
-            value={status}
-            onChange={(event) => {
-              setStatus(event.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="">Tất cả</option>
-            <option value="confirmed">Đã xác nhận</option>
-            <option value="completed">Hoàn tất</option>
-            <option value="cancelled">Đã hủy</option>
-          </select>
-        </label>
-        <button
-          type="button"
-          className="adm-fin-secondary"
-          onClick={() => {
-            setGeneralError("");
-            setGeneralOpen(true);
-          }}
-          disabled={busy}
-        >
-          <AdminIcon name="money" size={15} /> Chi phí chung
-        </button>
-        <button
-          type="button"
-          className="adm-fin-new"
-          onClick={openCreate}
-          disabled={busy}
-        >
-          <AdminIcon name="plus" size={15} /> Tạo hồ sơ tour
-        </button>
       </div>
 
       {error ? (
@@ -1174,6 +1302,9 @@ export function TourFinance({
                   placeholder="VD: 500000"
                   disabled={busy}
                 />
+                <small className="adm-fin-field-hint" aria-hidden="true">
+                  {amountHint(general.amount)}
+                </small>
               </label>
               <label className="adm-fin-field">
                 <span>Ngày chi</span>
@@ -1188,6 +1319,9 @@ export function TourFinance({
                   }
                   disabled={busy}
                 />
+                <small className="adm-fin-field-hint" aria-hidden="true">
+                  {weekdayLabel(general.date)}
+                </small>
               </label>
               <label className="adm-fin-field">
                 <span>Nhóm chi</span>
@@ -1315,21 +1449,7 @@ export function TourFinance({
               </div>
             ) : null}
             <div className="adm-fin-form-grid">
-              <label className="adm-fin-field">
-                <span>Yêu cầu tư vấn (tuỳ chọn)</span>
-                <select
-                  value={form.leadId}
-                  onChange={(event) => pickLead(event.target.value)}
-                  disabled={busy}
-                >
-                  <option value="">Không gắn yêu cầu</option>
-                  {leads.map((lead) => (
-                    <option key={lead.id} value={lead.id}>
-                      {lead.name} · {dateLabel(lead.travelDate)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <p className="adm-fin-form-title">Hồ sơ tour</p>
               <label className="adm-fin-field">
                 <span>Tour *</span>
                 <select
@@ -1365,6 +1485,9 @@ export function TourFinance({
                   disabled={busy}
                   required
                 />
+                <small className="adm-fin-field-hint" aria-hidden="true">
+                  {weekdayLabel(form.travelDate)}
+                </small>
               </label>
               <label className="adm-fin-field">
                 <span>Số khách *</span>
@@ -1384,21 +1507,6 @@ export function TourFinance({
                 />
               </label>
               <label className="adm-fin-field">
-                <span>Giá bán thực tế (VND)</span>
-                <input
-                  inputMode="numeric"
-                  value={form.saleAmount}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      saleAmount: event.target.value,
-                    }))
-                  }
-                  placeholder="VD: 12000000"
-                  disabled={busy}
-                />
-              </label>
-              <label className="adm-fin-field">
                 <span>Trạng thái</span>
                 <select
                   value={form.status}
@@ -1414,6 +1522,41 @@ export function TourFinance({
                   <option value="completed">Hoàn tất</option>
                   <option value="cancelled">Đã hủy</option>
                 </select>
+              </label>
+
+              <p className="adm-fin-form-title">Nguồn khách & thanh toán</p>
+              <label className="adm-fin-field">
+                <span>Yêu cầu tư vấn (tuỳ chọn)</span>
+                <select
+                  value={form.leadId}
+                  onChange={(event) => pickLead(event.target.value)}
+                  disabled={busy}
+                >
+                  <option value="">Không gắn yêu cầu</option>
+                  {leads.map((lead) => (
+                    <option key={lead.id} value={lead.id}>
+                      {lead.name} · {dateLabel(lead.travelDate)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="adm-fin-field">
+                <span>Giá bán thực tế (VND)</span>
+                <input
+                  inputMode="numeric"
+                  value={form.saleAmount}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      saleAmount: event.target.value,
+                    }))
+                  }
+                  placeholder="VD: 12000000"
+                  disabled={busy}
+                />
+                <small className="adm-fin-field-hint" aria-hidden="true">
+                  {amountHint(form.saleAmount)}
+                </small>
               </label>
               <label className="adm-fin-field adm-fin-field--wide">
                 <span>Ghi chú nội bộ</span>
@@ -1514,6 +1657,7 @@ export function TourFinance({
                 </div>
 
                 <div className="adm-fin-form-grid">
+                  <p className="adm-fin-form-title">Thông tin hồ sơ</p>
                   <label className="adm-fin-field">
                     <span>Trạng thái</span>
                     <select
@@ -1544,6 +1688,9 @@ export function TourFinance({
                       }
                       disabled={busy}
                     />
+                    <small className="adm-fin-field-hint" aria-hidden="true">
+                      {weekdayLabel(edit.travelDate)}
+                    </small>
                   </label>
                   <label className="adm-fin-field">
                     <span>Số khách</span>
@@ -1574,6 +1721,9 @@ export function TourFinance({
                       }
                       disabled={busy}
                     />
+                    <small className="adm-fin-field-hint" aria-hidden="true">
+                      {amountHint(edit.saleAmount)}
+                    </small>
                   </label>
                   <label className="adm-fin-field adm-fin-field--wide">
                     <span>Ghi chú nội bộ</span>
@@ -1662,6 +1812,9 @@ export function TourFinance({
                         placeholder="VD: 5000000"
                         disabled={busy}
                       />
+                      <small className="adm-fin-field-hint" aria-hidden="true">
+                        {amountHint(entry.amount)}
+                      </small>
                     </label>
                     <label className="adm-fin-field">
                       <span>Ngày</span>
@@ -1676,6 +1829,9 @@ export function TourFinance({
                         }
                         disabled={busy}
                       />
+                      <small className="adm-fin-field-hint" aria-hidden="true">
+                        {weekdayLabel(entry.date)}
+                      </small>
                     </label>
                     <label className="adm-fin-field">
                       <span>Phương thức</span>

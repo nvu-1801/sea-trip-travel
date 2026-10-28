@@ -418,17 +418,19 @@ const GUIDES: Record<string, Guide> = {
     purpose:
       "Theo dõi tiền thực thu, tiền thực chi và lợi nhuận dòng tiền theo tour. Giá bán trên hồ sơ là giá trị hợp đồng dự kiến, không phải tiền đã thu.",
     steps: [
-      "Chọn kỳ báo cáo, tour và trạng thái; số liệu tính theo ngày thực thu/chi.",
-      "Bấm Tạo hồ sơ tour, chọn tour, ngày đi, số khách và giá bán thực tế. Có thể bắt đầu từ một yêu cầu tư vấn.",
-      "Mở hồ sơ để thêm khoản thu, hoàn tiền hoặc chi phí; khoản dự kiến không cộng vào dòng tiền.",
-      "Đối chiếu KPI với bảng hồ sơ và các dòng giao dịch; hủy giao dịch sai bằng nút Hủy, không xóa lịch sử.",
+      "Chọn kỳ báo cáo bằng Tháng này / Tháng trước / Năm nay, hoặc tự nhập Từ ngày – Đến ngày; bộ lọc tour và trạng thái áp cho cả KPI lẫn bảng hồ sơ.",
+      "Bấm Tạo hồ sơ tour: chọn tour, ngày đi, số khách, giá bán thực tế. Bắt đầu từ một yêu cầu tư vấn để điền sẵn tên khách và ngày đi.",
+      "Mở hồ sơ để ghi từng khoản Thu tiền / Hoàn tiền / Chi phí kèm ngày thực tế, phương thức thanh toán và diễn giải.",
+      "Chi phí chưa phát sinh thì bỏ chọn “Đã thực chi”; chi phí không thuộc tour nào (marketing, lương, văn phòng) ghi ở nút Chi phí chung.",
+      "Ghi nhầm thì bấm Sửa để cập nhật, hoặc Hủy để vô hiệu giao dịch. Bảng luôn giữ lịch sử để đối soát thay vì xóa dòng.",
+      "Đối chiếu 4 thẻ KPI với bảng hồ sơ: Doanh thu thực thu − Chi thực tế = Lợi nhuận dòng tiền; bấm Xem ở từng hồ sơ để kiểm tra chi tiết.",
     ],
     required:
-      "Mỗi giao dịch cần số tiền VND nguyên dương, ngày thực tế và loại rõ ràng; khoản thu/hoàn phải gắn hồ sơ tour.",
+      "Mỗi giao dịch cần số tiền VND nguyên dương, ngày thực tế và loại rõ ràng; khoản thu/hoàn phải gắn hồ sơ tour. Hồ sơ cần tour, ngày đi và số khách.",
     result:
-      "Doanh thu thực thu, chi thực chi và lợi nhuận dòng tiền cập nhật ngay; lợi nhuận có thể âm. Số liệu không phải báo cáo kế toán hoặc lãi cuối cùng của chuyến.",
+      "Doanh thu thực thu, chi thực chi và lợi nhuận dòng tiền cập nhật ngay; lợi nhuận có thể âm. Số liệu là dòng tiền, không phải báo cáo kế toán hoặc lãi cuối cùng của chuyến.",
     pitfalls:
-      "Không tự tạo doanh thu từ trạng thái lead hoặc giá niêm yết. Chi phí dự kiến không được cộng vào dòng tiền; hoàn tiền nhập thành khoản riêng.",
+      "Không tự tạo doanh thu từ trạng thái lead hoặc giá niêm yết. Chi phí dự kiến không được cộng vào dòng tiền; hoàn tiền nhập thành khoản riêng. Hồ sơ trùng tour và ngày đi sẽ hiện cảnh báo trước khi tạo.",
   },
   overview: {
     purpose:
