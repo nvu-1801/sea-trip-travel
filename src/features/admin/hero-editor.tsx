@@ -187,6 +187,29 @@ export function HeroEditor({
             })
           }
         />
+        <div className="adm-hero-copy-preview" lang={language}>
+          <p className="adm-eyebrow">
+            Xem nhanh {language === "vi" ? "tiếng Việt" : "tiếng Anh"}
+          </p>
+          <strong>{value[language].badge}</strong>
+          <h4>
+            {value[language].titleLine1} {value[language].titleLine2}
+          </h4>
+          <p>{value[language].description}</p>
+          <small>
+            {value[language].primaryLabel || "Nút chính"} ·{" "}
+            {value[language].secondaryLabel || "Nút phụ"}
+          </small>
+          <ul>
+            {value.slides.map((slide) => (
+              <li key={slide.id}>
+                {language === "en"
+                  ? slide.captionEn || slide.caption
+                  : slide.caption}
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
       {value.mode === "carousel" ? (
         <>
