@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { defaultLanding } from "@/domain/landing";
 import { parseYouTubeUrl } from "@/lib/youtube";
 import { AdminIcon } from "./admin-icons";
@@ -196,6 +196,7 @@ export function CustomerStoriesEditor({
 }) {
   const section = readSection(value);
   const media = references.media ?? [];
+  const [previewLocale, setPreviewLocale] = useState<"vi" | "en">("vi");
   const commit = (patch: Partial<Section>) => onChange({ ...value, ...patch });
 
   const updateLogo = (index: number, patch: Partial<Logo>) =>
@@ -712,6 +713,22 @@ export function CustomerStoriesEditor({
             {section.enabled ? "Đang bật" : "Đang tắt"} · {visibleLogos.length}{" "}
             logo · {visibleVideos.length} video
           </strong>
+          <div className="adm-preview-lang" role="group" aria-label="Ngôn ngữ xem nhanh">
+            <button
+              type="button"
+              aria-pressed={previewLocale === "vi"}
+              onClick={() => setPreviewLocale("vi")}
+            >
+              Tiếng Việt
+            </button>
+            <button
+              type="button"
+              aria-pressed={previewLocale === "en"}
+              onClick={() => setPreviewLocale("en")}
+            >
+              English
+            </button>
+          </div>
         </header>
         {visibleLogos.length > 0 ? (
           <ul className="adm-customer-preview-logos">
@@ -745,8 +762,16 @@ export function CustomerStoriesEditor({
                     <AdminIcon name="star" size={18} />
                   </span>
                 )}
-                <strong>{video.title || "Video chưa đặt tên"}</strong>
-                <small>{video.customer || "Khách hàng"}</small>
+                <strong>
+                  {(previewLocale === "en" ? video.titleEn : video.title) ||
+                    video.title ||
+                    "Video chưa đặt tên"}
+                </strong>
+                <small>
+                  {(previewLocale === "en" ? video.customerEn : video.customer) ||
+                    video.customer ||
+                    "Khách hàng"}
+                </small>
               </div>
             ))}
           </div>
