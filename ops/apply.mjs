@@ -66,7 +66,7 @@ try {
     for (const [id, en] of Object.entries(entries ?? {})) {
       const row = db
         .prepare(
-          "SELECT data,state,revision FROM records WHERE collection=? AND id=?",
+          "SELECT data,published,state,revision FROM records WHERE collection=? AND id=?",
         )
         .get(collection, id);
       if (!row) {
@@ -78,16 +78,24 @@ try {
         continue;
       }
       const data = JSON.parse(row.data);
+      const published = row.published ? JSON.parse(row.published) : null;
       const next = fill(data._en, en);
-      if (JSON.stringify(next) === JSON.stringify(data._en ?? {})) {
+      const nextPublished = published ? fill(published._en, en) : null;
+      const dataChanged = JSON.stringify(next) !== JSON.stringify(data._en ?? {});
+      const publishedChanged =
+        published &&
+        JSON.stringify(nextPublished) !== JSON.stringify(published._en ?? {});
+      if (!dataChanged && !publishedChanged) {
         summary.skipped.push(`${collection}/${id}`);
         continue;
       }
       data._en = next;
+      if (published) published._en = nextPublished;
       db.prepare(
-        "UPDATE records SET data=?, revision=revision+1, updated_at=? WHERE collection=? AND id=?",
+        "UPDATE records SET data=?, published=?, revision=revision+1, updated_at=? WHERE collection=? AND id=?",
       ).run(
         JSON.stringify(data),
+        published ? JSON.stringify(published) : null,
         new Date().toISOString(),
         collection,
         id,
