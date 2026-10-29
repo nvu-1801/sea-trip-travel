@@ -14,11 +14,11 @@ test -n "$cid"
 
 case "$mode" in
   dump)
-    docker cp /tmp/seatrip-dump.mjs "$cid:/tmp/seatrip-dump.mjs"
+    docker cp /tmp/dump.mjs "$cid:/tmp/seatrip-dump.mjs"
     "${compose[@]}" exec -T app node /tmp/seatrip-dump.mjs </dev/null
     ;;
   apply)
-    docker cp /tmp/seatrip-apply.mjs "$cid:/tmp/seatrip-apply.mjs"
+    docker cp /tmp/apply.mjs "$cid:/tmp/seatrip-apply.mjs"
     docker cp /tmp/seatrip-apply.json "$cid:/tmp/seatrip-apply.json"
     "${compose[@]}" exec -T app node /tmp/seatrip-apply.mjs </dev/null
     ;;
