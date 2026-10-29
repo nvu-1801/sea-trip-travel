@@ -15,7 +15,9 @@ import { mkdirSync, readFileSync } from "node:fs";
  * - skips records that are deleted or unchanged, so a rerun is a no-op.
  */
 const file = process.env.CMS_DB_PATH || "/app/data/seatrip.sqlite";
-const input = JSON.parse(readFileSync("/tmp/seatrip-apply.json", "utf8"));
+const input = JSON.parse(
+  readFileSync("/app/data/seatrip-apply.json", "utf8"),
+);
 const db = new DatabaseSync(file);
 db.exec("PRAGMA busy_timeout=10000");
 mkdirSync("/app/data", { recursive: true });
