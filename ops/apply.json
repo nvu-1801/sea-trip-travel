@@ -96,6 +96,12 @@
           "Pine forest road",
           "Mang Den Mother Mary",
           "Toong Dam Lake"
+        ],
+        "returnPoints": [
+          "Quy Nhon"
+        ],
+        "transport": [
+          "Car"
         ]
       },
       "tour_bai_dua_san_ca_1n": {
@@ -162,6 +168,12 @@
           "Stand-up paddleboarding at Bai Dua",
           "Check-in at Bai Dua",
           "Group photo of guests"
+        ],
+        "returnPoints": [
+          "Nhon Ly"
+        ],
+        "transport": [
+          "Speedboat from Nhon Ly"
         ]
       },
       "tour_mb_hn_hl_4n3d": {
@@ -1069,6 +1081,12 @@
           "Mang Lang Church",
           "Ghenh Da Dia",
           "Nghinh Phong Tower"
+        ],
+        "returnPoints": [
+          "Quy Nhon"
+        ],
+        "transport": [
+          "Car"
         ]
       },
       "tour_qn_4n3d": {
@@ -1248,6 +1266,40 @@
           "Guests checking in at Nhon Ly embankment",
           "Guests checking in at Ky Co",
           "Guests checking in at Eo Gio"
+        ],
+        "returnPoints": [
+          "Phu Cat Airport (UIH)"
+        ],
+        "transport": [
+          "Tourist car",
+          "Cu Lao Xanh speedboat",
+          "Ky Co shuttle"
+        ],
+        "pricingOptions": [
+          {
+            "id": "package_0",
+            "label": "Without hotel",
+            "adultPrice": 2440000,
+            "childPrice": 1464000
+          },
+          {
+            "id": "package_1",
+            "label": "3-star hotel",
+            "adultPrice": 3410000,
+            "childPrice": 2046000
+          },
+          {
+            "id": "package_2",
+            "label": "4-star hotel",
+            "adultPrice": 3860000,
+            "childPrice": 2316000
+          },
+          {
+            "id": "package_3",
+            "label": "5-star hotel",
+            "adultPrice": 4010000,
+            "childPrice": 2406000
+          }
         ]
       },
       "tour_qn_cu_lao_xanh_1n": {
@@ -1322,6 +1374,14 @@
           "Cu Lao Xanh Tourist Area",
           "Check-in at Cu Lao Xanh",
           "Cu Lao Xanh scenery"
+        ],
+        "returnPoints": [
+          "Quy Nhon"
+        ],
+        "transport": [
+          "Car",
+          "Speedboat",
+          "Island shuttle"
         ]
       },
       "tour_qn_hon_kho_1n": {
@@ -1468,7 +1528,14 @@
         "seo": {
           "title": "Ky Co - Eo Gio 1 Day Tour",
           "description": "Discover the Ky Co – Eo Gio 1 Day Tour with Sea Trip Travel. Experience the blue sea, check in at beautiful spots, visit Nhon Ly, and enjoy Quy Nhon seafood."
-        }
+        },
+        "returnPoints": [
+          "Quy Nhon"
+        ],
+        "transport": [
+          "Car",
+          "Ky Co shuttle"
+        ]
       },
       "tour_qn_ky_co_eo_gio_hon_kho_1n": {
         "title": "Ky Co – Eo Gio – Hon Kho 1 Day",
@@ -1543,6 +1610,14 @@
           "Ky Co Tourist Area",
           "Phuong Mai Sand Hill",
           "Eo Gio"
+        ],
+        "returnPoints": [
+          "Quy Nhon"
+        ],
+        "transport": [
+          "Car",
+          "Shuttle",
+          "Hon Kho speedboat"
         ]
       },
       "tour_qn_py_3n2d": {
@@ -1697,6 +1772,39 @@
           "Guests checking in at Mang Lang Church",
           "Guests checking in at Ghenh Da Dia",
           "Guests checking in at Thap Nhan"
+        ],
+        "returnPoints": [
+          "Phu Cat Airport (UIH)"
+        ],
+        "transport": [
+          "Tourist car",
+          "Ky Co shuttle"
+        ],
+        "pricingOptions": [
+          {
+            "id": "package_0",
+            "label": "Without hotel",
+            "adultPrice": 2290000,
+            "childPrice": 1374000
+          },
+          {
+            "id": "package_1",
+            "label": "3-star hotel",
+            "adultPrice": 2939999,
+            "childPrice": 1764000
+          },
+          {
+            "id": "package_2",
+            "label": "4-star hotel",
+            "adultPrice": 3240000,
+            "childPrice": 1944000
+          },
+          {
+            "id": "package_3",
+            "label": "5-star hotel",
+            "adultPrice": 3340000,
+            "childPrice": 2004000
+          }
         ]
       },
       "tour_qn_py_4n3d": {
@@ -1871,6 +1979,39 @@
         "priceNote": "The starting price applies to the package without hotel and excludes VAT. Hotel and breakfast depend on the selected package; please confirm benefits and price at the time of consultation.",
         "imageAlts": [
           "Guests checking in at Eo Gio"
+        ],
+        "returnPoints": [
+          "Phu Cat Airport (UIH)"
+        ],
+        "transport": [
+          "Tourist car",
+          "Ky Co shuttle"
+        ],
+        "pricingOptions": [
+          {
+            "id": "package_0",
+            "label": "Without hotel",
+            "adultPrice": 2440000,
+            "childPrice": 1464000
+          },
+          {
+            "id": "package_1",
+            "label": "3-star hotel",
+            "adultPrice": 3090000,
+            "childPrice": 1854000
+          },
+          {
+            "id": "package_2",
+            "label": "4-star hotel",
+            "adultPrice": 3390000,
+            "childPrice": 2034000
+          },
+          {
+            "id": "package_3",
+            "label": "5-star hotel",
+            "adultPrice": 3490000,
+            "childPrice": 2094000
+          }
         ]
       },
       "tour_qn_py_4n3d_tien_py": {
@@ -2046,6 +2187,39 @@
         "priceNote": "The starting price applies to the package without hotel and excludes VAT. Hotel and breakfast depend on the selected package; please confirm benefits and price at the time of consultation.",
         "imageAlts": [
           "Guests checking in at Ky Co"
+        ],
+        "returnPoints": [
+          "Tuy Hoa Airport (TBB)"
+        ],
+        "transport": [
+          "Tourist car",
+          "Ky Co shuttle"
+        ],
+        "pricingOptions": [
+          {
+            "id": "package_0",
+            "label": "Without hotel",
+            "adultPrice": 2440000,
+            "childPrice": 1464000
+          },
+          {
+            "id": "package_1",
+            "label": "3-star hotel",
+            "adultPrice": 3090000,
+            "childPrice": 1854000
+          },
+          {
+            "id": "package_2",
+            "label": "4-star hotel",
+            "adultPrice": 3390000,
+            "childPrice": 2034000
+          },
+          {
+            "id": "package_3",
+            "label": "5-star hotel",
+            "adultPrice": 3490000,
+            "childPrice": 2094000
+          }
         ]
       },
       "tour_qn_py_5n4d": {
@@ -2274,6 +2448,12 @@
           "Mang Lang Church",
           "Thanh Luong Pagoda",
           "Nghinh Phong Tower"
+        ],
+        "returnPoints": [
+          "Quy Nhon"
+        ],
+        "transport": [
+          "Car"
         ]
       },
       "tour_tay_son_ham_ho_1n": {
@@ -2352,6 +2532,13 @@
           "Ham Ho",
           "Ancient Well",
           "Inside the Museum"
+        ],
+        "returnPoints": [
+          "Quy Nhon"
+        ],
+        "transport": [
+          "Car",
+          "One-way boat on the Kut River"
         ]
       },
       "tour_tn_buon_ma_thuot_3n2d": {
