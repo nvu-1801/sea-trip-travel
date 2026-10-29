@@ -59,6 +59,9 @@ const stamp = new Date().toISOString().replace(/[:.]/g, "-");
 const backup = `/app/data/translations-backup-${stamp}.sqlite`;
 db.exec(`VACUUM INTO '${backup.replaceAll("'", "''")}'`);
 
+const review = new Set(
+  Array.isArray(input.reviewed) ? input.reviewed.map(String) : [],
+);
 const summary = { backup, updated: [], skipped: [], missing: [] };
 db.exec("BEGIN IMMEDIATE");
 try {
@@ -81,16 +84,30 @@ try {
       const published = row.published ? JSON.parse(row.published) : null;
       const next = fill(data._en, en);
       const nextPublished = published ? fill(published._en, en) : null;
-      const dataChanged = JSON.stringify(next) !== JSON.stringify(data._en ?? {});
+      const shouldReview =
+        review.has(`${collection}/${id}`) &&
+        Object.keys(next).length > 0 &&
+        data._enReviewed !== true;
+      const dataChanged =
+        JSON.stringify(next) !== JSON.stringify(data._en ?? {}) || shouldReview;
       const publishedChanged =
         published &&
-        JSON.stringify(nextPublished) !== JSON.stringify(published._en ?? {});
+        (JSON.stringify(nextPublished) !== JSON.stringify(published._en ?? {}) ||
+          (review.has(`${collection}/${id}`) &&
+            Object.keys(nextPublished ?? {}).length > 0 &&
+            published._enReviewed !== true));
       if (!dataChanged && !publishedChanged) {
         summary.skipped.push(`${collection}/${id}`);
         continue;
       }
       data._en = next;
-      if (published) published._en = nextPublished;
+      if (shouldReview) data._enReviewed = true;
+      if (published) {
+        published._en = nextPublished;
+        if (publishedChanged && review.has(`${collection}/${id}`)) {
+          published._enReviewed = true;
+        }
+      }
       db.prepare(
         "UPDATE records SET data=?, published=?, revision=revision+1, updated_at=? WHERE collection=? AND id=?",
       ).run(
