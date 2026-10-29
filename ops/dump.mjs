@@ -17,10 +17,14 @@ const payload = {
 for (const collection of collections) {
   payload.records[collection] = db
     .prepare(
-      "SELECT id,state,revision,updated_at,data FROM records WHERE collection=? ORDER BY id",
+      "SELECT id,state,revision,updated_at,data,published FROM records WHERE collection=? ORDER BY id",
     )
     .all(collection)
-    .map((row) => ({ ...row, data: JSON.parse(row.data) }));
+    .map((row) => ({
+      ...row,
+      data: JSON.parse(row.data),
+      published: row.published ? JSON.parse(row.published) : null,
+    }));
 }
 
 process.stdout.write(JSON.stringify(payload));

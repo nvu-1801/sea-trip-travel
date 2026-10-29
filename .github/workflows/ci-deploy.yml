@@ -87,6 +87,12 @@ jobs:
           scp -i ~/.ssh/deploy -P "$VPS_PORT" -o StrictHostKeyChecking=yes \
             ops/dump.mjs ops/apply.mjs ops/remote.sh \
             "$VPS_USER@$VPS_HOST:/tmp/"
+          if [ -f ops/apply.json ]; then
+            scp -i ~/.ssh/deploy -P "$VPS_PORT" -o StrictHostKeyChecking=yes \
+              ops/apply.json "$VPS_USER@$VPS_HOST:/tmp/seatrip-apply.json"
+            ssh -i ~/.ssh/deploy -p "$VPS_PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes \
+              "$VPS_USER@$VPS_HOST" "bash /tmp/remote.sh apply '$APP_DIR'" | tee apply-result.json
+          fi
           ssh -i ~/.ssh/deploy -p "$VPS_PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes \
             "$VPS_USER@$VPS_HOST" "bash /tmp/remote.sh dump '$APP_DIR'" > content-dump.json
           node -e 'const d=require("./content-dump.json"); if(!d.records||!d.records.tours) process.exit(1); console.log("dump ok:", Object.keys(d.records).map(k=>k+"="+d.records[k].length).join(" "))'
@@ -94,7 +100,10 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: content-dump
-          path: content-dump.json
+          path: |
+            content-dump.json
+            apply-result.json
+          if-no-files-found: ignore
           retention-days: 3
       - name: Remove temporary private key
         if: always()
