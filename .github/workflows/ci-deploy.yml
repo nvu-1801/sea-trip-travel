@@ -55,6 +55,51 @@ jobs:
             sleep 2
           done
           exit 1
+  content-ops:
+    # Temporary, branch-scoped maintenance job for the English-overlay backfill.
+    # It never deploys and is removed before merge.
+    if: github.event_name == 'pull_request' && github.head_ref == 'ops/content-translations'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      APP_DIR: ${{ vars.VPS_APP_DIR }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prepare verified SSH transport
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          [[ "$VPS_HOST" =~ ^[a-zA-Z0-9.-]+$ && "$VPS_USER" =~ ^[a-zA-Z0-9_-]+$ && "$VPS_PORT" =~ ^[0-9]+$ ]]
+          [[ "$APP_DIR" =~ ^/[a-zA-Z0-9_/-]+$ ]]
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy ~/.ssh/known_hosts
+      - name: Dump or apply English overlays
+        run: |
+          set -euo pipefail
+          scp -i ~/.ssh/deploy -P "$VPS_PORT" -o StrictHostKeyChecking=yes \
+            ops/dump.mjs ops/apply.mjs ops/remote.sh \
+            "$VPS_USER@$VPS_HOST:/tmp/"
+          ssh -i ~/.ssh/deploy -p "$VPS_PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            "$VPS_USER@$VPS_HOST" "bash /tmp/remote.sh dump '$APP_DIR'" > content-dump.json
+          node -e 'const d=require("./content-dump.json"); if(!d.records||!d.records.tours) process.exit(1); console.log("dump ok:", Object.keys(d.records).map(k=>k+"="+d.records[k].length).join(" "))'
+      - name: Upload content dump
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: content-dump
+          path: content-dump.json
+          retention-days: 3
+      - name: Remove temporary private key
+        if: always()
+        run: rm -f ~/.ssh/deploy
+
   deploy:
     needs: check
     if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
