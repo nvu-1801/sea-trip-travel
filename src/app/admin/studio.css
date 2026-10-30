@@ -9593,6 +9593,7 @@ select {
   border-radius: 999px;
   font-size: 12px;
   background: transparent;
+  white-space: nowrap;
 }
 .adm-preview-lang button[aria-pressed="true"] {
   background: #a30047;
@@ -13597,10 +13598,17 @@ select {
 .adm-customer-field textarea[aria-invalid="true"] {
   border-color: var(--color-danger, #b42318);
 }
-.adm-customer-preview > header > div {
+.adm-customer-preview > header > div:first-child {
   display: grid;
   gap: 2px;
   min-width: 0;
+}
+
+.adm-customer-preview > header .adm-preview-lang {
+  flex: none;
+  align-self: center;
+  margin-top: 0;
+  white-space: nowrap;
 }
 .adm-customer-preview > header strong {
   color: var(--color-foreground, #241a20);
@@ -15857,4 +15865,31 @@ select {
   border-color: #d9c3b8;
   background: #fff8f3;
   color: #211621;
+}
+
+/* The update notice has an action button, not a square close control. */
+.adm-notice > button:not([aria-label]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: auto;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #e6c6d6;
+  border-radius: 10px;
+  background: #fff;
+  color: #211621;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.adm-notice > button:not([aria-label]):hover:not(:disabled) {
+  border-color: #d9aebe;
+  background: #fff4f8;
+  color: #a3185a;
 }

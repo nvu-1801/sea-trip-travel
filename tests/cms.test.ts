@@ -52,6 +52,7 @@ import {
   fillMissingMediaSources,
   saveHomeRegions,
   migrateContent,
+  CUSTOMER_SAMPLE_DATA_MIGRATION,
   CUSTOMER_VIDEO_FIRST_MIGRATION,
   MEDIA_SOURCE_MIGRATION,
   redirectTarget,
@@ -788,6 +789,48 @@ test("a deploy moves the chosen customer film to the front once", () => {
       customers: { videos: { id: string }[] };
     };
     assert.equal(saved.customers.videos[0].id, target);
+  }
+
+  restoreStoredRow("landing", landing.id, before);
+});
+
+test("a deploy seeds the verified customer sample into an empty section once", () => {
+  const landing = list("landing")[0];
+  const before = readStoredRow("landing", landing.id);
+  writeStoredRow("landing", landing.id, {
+    customers: {
+      enabled: false,
+      showLogos: false,
+      showVideos: false,
+      logos: [],
+      videos: [],
+    },
+  });
+  db()
+    .prepare("DELETE FROM cms_migrations WHERE id=?")
+    .run(CUSTOMER_SAMPLE_DATA_MIGRATION);
+
+  assert.equal(migrateContent(), 1);
+  const stored = readStoredRow("landing", landing.id);
+  for (const key of ["data", "published"] as const) {
+    const saved = JSON.parse(stored[key]!) as {
+      customers: {
+        enabled: boolean;
+        showLogos: boolean;
+        showVideos: boolean;
+        logos: unknown[];
+        videos: { id: string }[];
+      };
+    };
+    assert.equal(saved.customers.logos.length, 10);
+    assert.equal(saved.customers.videos.length, 6);
+    assert.equal(saved.customers.enabled, true);
+    assert.equal(saved.customers.showLogos, true);
+    assert.equal(saved.customers.showVideos, true);
+    assert.equal(
+      saved.customers.videos[0].id,
+      "demo-video-phu-yen-ngo-le-tan",
+    );
   }
 
   restoreStoredRow("landing", landing.id, before);
