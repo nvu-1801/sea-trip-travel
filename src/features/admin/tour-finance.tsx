@@ -7,9 +7,12 @@ import type {
   FinanceKind,
   PaymentMethod,
 } from "@/domain/tour-finance";
+import { CloseIcon } from "@/components/ui/icons";
 import { AdminIcon } from "./admin-icons";
 import { AdminDatePicker } from "./admin-date-picker";
 import { MoneyTextInput } from "./money-input";
+import { AdmFilterSelect, AdmSelect } from "./ui-select";
+import { tourSlugForLead } from "@/lib/lead-tour";
 import { ConfirmModal, type ConfirmRequest } from "./notify";
 
 type Option = { value: string; label: string };
@@ -18,6 +21,7 @@ type LeadOption = {
   id: string;
   name: string;
   tourSlug: string;
+  interest: string;
   travelDate: string;
   partySize: number | null;
   status: string;
@@ -130,6 +134,23 @@ const METHOD_LABEL: Record<PaymentMethod, string> = {
   card: "Thẻ",
   other: "Khác",
 };
+const STATUS_OPTIONS = Object.entries(STATUS_LABEL).map(([value, label]) => ({
+  value,
+  label,
+}));
+const KIND_OPTIONS = Object.entries(KIND_LABEL).map(([value, label]) => ({
+  value,
+  label,
+}));
+const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABEL).map(
+  ([value, label]) => ({ value, label }),
+);
+const METHOD_OPTIONS = Object.entries(METHOD_LABEL).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+
 const ACTION_LABEL: Record<string, string> = {
   "finance-booking-create": "Tạo hồ sơ",
   "finance-booking-update": "Sửa hồ sơ",
@@ -553,11 +574,10 @@ export function TourFinance({
     ])
       .then(([options, leadRows]) => {
         if (!alive) return;
-        setTours(
-          Array.isArray(options.tours)
-            ? (options.tours as Option[])
-            : [],
-        );
+        const tourOptions = Array.isArray(options.tours)
+          ? (options.tours as Option[])
+          : [];
+        setTours(tourOptions);
         const mappedLeads = (Array.isArray(leadRows) ? leadRows : []).map(
           (row) => {
             const value = row as {
@@ -570,6 +590,7 @@ export function TourFinance({
               id: value.id,
               name: String(data.fullName ?? data.name ?? "Khách"),
               tourSlug: typeof data.tourSlug === "string" ? data.tourSlug : "",
+              interest: typeof data.interest === "string" ? data.interest : "",
               travelDate:
                 typeof data.travelDate === "string" ? data.travelDate : "",
               partySize:
@@ -589,7 +610,8 @@ export function TourFinance({
             setForm((current) => ({
               ...current,
               leadId: lead.id,
-              tourSlug: lead.tourSlug || current.tourSlug,
+              tourSlug:
+                tourSlugForLead(lead, tourOptions) || current.tourSlug,
               travelDate: lead.travelDate || current.travelDate,
               partySize: lead.partySize
                 ? String(lead.partySize)
@@ -638,6 +660,8 @@ export function TourFinance({
     if (!createOpen && !detailOpen && !generalOpen) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || busy) return;
+      // Let a custom select close its own popover first.
+      if (document.querySelector(".adm-select-pop, .adm-filter-pop")) return;
       if (detailOpen) requestCloseDetail();
       else if (generalOpen) setGeneralOpen(false);
       else setCreateOpen(false);
@@ -666,7 +690,7 @@ export function TourFinance({
     setForm((current) => ({
       ...current,
       leadId: id,
-      tourSlug: lead?.tourSlug || current.tourSlug,
+      tourSlug: tourSlugForLead(lead, tours) || current.tourSlug,
       travelDate: lead?.travelDate || current.travelDate,
       partySize: lead?.partySize ? String(lead.partySize) : current.partySize,
     }));
@@ -1014,38 +1038,39 @@ export function TourFinance({
               {weekdayLabel(to)}
             </small>
           </div>
-          <label className="adm-fin-field">
+          <div className="adm-fin-field">
             <span>Tour</span>
-            <select
+            <AdmFilterSelect
               value={tour}
-              onChange={(event) => {
-                setTour(event.target.value);
+              label="Tour"
+              options={[
+                { value: "", label: "Tất cả tour" },
+                ...(report?.tours ?? []).map((item) => ({
+                  value: item.slug,
+                  label: item.title,
+                })),
+              ]}
+              onChange={(value) => {
+                setTour(value);
                 setPage(1);
               }}
-            >
-              <option value="">Tất cả tour</option>
-              {(report?.tours ?? []).map((item) => (
-                <option key={item.slug} value={item.slug}>
-                  {item.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="adm-fin-field">
+            />
+          </div>
+          <div className="adm-fin-field">
             <span>Trạng thái</span>
-            <select
+            <AdmFilterSelect
               value={status}
-              onChange={(event) => {
-                setStatus(event.target.value);
+              label="Trạng thái"
+              options={[
+                { value: "", label: "Tất cả" },
+                ...STATUS_OPTIONS,
+              ]}
+              onChange={(value) => {
+                setStatus(value);
                 setPage(1);
               }}
-            >
-              <option value="">Tất cả</option>
-              <option value="confirmed">Đã xác nhận</option>
-              <option value="completed">Hoàn tất</option>
-              <option value="cancelled">Đã hủy</option>
-            </select>
-          </label>
+            />
+          </div>
         </div>
 
         <div className="adm-fin-toolbar-actions">
@@ -1274,7 +1299,7 @@ export function TourFinance({
                 onClick={() => setGeneralOpen(false)}
                 disabled={busy}
               >
-                ×
+                <CloseIcon width={18} height={18} />
               </button>
             </div>
             <p className="adm-fin-note">
@@ -1324,25 +1349,20 @@ export function TourFinance({
                   {weekdayLabel(general.date)}
                 </small>
               </label>
-              <label className="adm-fin-field">
-                <span>Nhóm chi</span>
-                <select
-                  value={general.category}
-                  onChange={(event) =>
-                    setGeneral((current) => ({
-                      ...current,
-                      category: event.target.value as ExpenseCategory,
-                    }))
-                  }
-                  disabled={busy}
-                >
-                  {Object.entries(CATEGORY_LABEL).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <AdmSelect
+                label="Nhóm chi"
+                value={general.category}
+                options={CATEGORY_OPTIONS}
+                showValues={false}
+                searchable={false}
+                className="adm-fin-select"
+                onChange={(value) =>
+                  setGeneral((current) => ({
+                    ...current,
+                    category: value as ExpenseCategory,
+                  }))
+                }
+              />
               <label className="adm-fin-check">
                 <input
                   type="checkbox"
@@ -1419,7 +1439,7 @@ export function TourFinance({
                 onClick={() => setCreateOpen(false)}
                 disabled={busy}
               >
-                ×
+                <CloseIcon width={18} height={18} />
               </button>
             </div>
             <p className="adm-fin-note">
@@ -1451,27 +1471,24 @@ export function TourFinance({
             ) : null}
             <div className="adm-fin-form-grid">
               <p className="adm-fin-form-title">Hồ sơ tour</p>
-              <label className="adm-fin-field">
-                <span>Tour *</span>
-                <select
+              <div className="adm-fin-field adm-fin-select-wrap">
+                <AdmSelect
+                  label="Tour *"
                   value={form.tourSlug}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      tourSlug: event.target.value,
-                    }))
+                  options={tours}
+                  placeholder="Chọn tour"
+                  showValues={false}
+                  className="adm-fin-select"
+                  onChange={(value) =>
+                    setForm((current) => ({ ...current, tourSlug: value }))
                   }
-                  disabled={busy}
-                  required
-                >
-                  <option value="">Chọn tour</option>
-                  {tours.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                />
+                {!form.tourSlug ? (
+                  <small className="adm-fin-field-hint">
+                    Chọn tour khách đã tư vấn để bật nút Tạo hồ sơ.
+                  </small>
+                ) : null}
+              </div>
               <label className="adm-fin-field">
                 <span>Ngày đi *</span>
                 <AdminDatePicker
@@ -1505,40 +1522,36 @@ export function TourFinance({
                   required
                 />
               </label>
-              <label className="adm-fin-field">
-                <span>Trạng thái</span>
-                <select
-                  value={form.status}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      status: event.target.value as BookingStatus,
-                    }))
-                  }
-                  disabled={busy}
-                >
-                  <option value="confirmed">Đã xác nhận</option>
-                  <option value="completed">Hoàn tất</option>
-                  <option value="cancelled">Đã hủy</option>
-                </select>
-              </label>
+              <AdmSelect
+                label="Trạng thái"
+                value={form.status}
+                options={STATUS_OPTIONS}
+                showValues={false}
+                searchable={false}
+                className="adm-fin-select"
+                onChange={(value) =>
+                  setForm((current) => ({
+                    ...current,
+                    status: value as BookingStatus,
+                  }))
+                }
+              />
 
               <p className="adm-fin-form-title">Nguồn khách & thanh toán</p>
-              <label className="adm-fin-field">
-                <span>Yêu cầu tư vấn (tuỳ chọn)</span>
-                <select
-                  value={form.leadId}
-                  onChange={(event) => pickLead(event.target.value)}
-                  disabled={busy}
-                >
-                  <option value="">Không gắn yêu cầu</option>
-                  {leads.map((lead) => (
-                    <option key={lead.id} value={lead.id}>
-                      {lead.name} · {dateLabel(lead.travelDate)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <AdmSelect
+                label="Yêu cầu tư vấn (tuỳ chọn)"
+                value={form.leadId}
+                options={[
+                  { value: "", label: "Không gắn yêu cầu" },
+                  ...leads.map((lead) => ({
+                    value: lead.id,
+                    label: `${lead.name} · ${dateLabel(lead.travelDate)}`,
+                  })),
+                ]}
+                showValues={false}
+                className="adm-fin-select"
+                onChange={pickLead}
+              />
               <label className="adm-fin-field">
                 <span>Giá bán thực tế</span>
                 <MoneyTextInput
@@ -1629,7 +1642,7 @@ export function TourFinance({
                 onClick={requestCloseDetail}
                 disabled={busy}
               >
-                ×
+                <CloseIcon width={18} height={18} />
               </button>
             </div>
             {detailLoading || !detail ? (
@@ -1657,23 +1670,20 @@ export function TourFinance({
 
                 <div className="adm-fin-form-grid">
                   <p className="adm-fin-form-title">Thông tin hồ sơ</p>
-                  <label className="adm-fin-field">
-                    <span>Trạng thái</span>
-                    <select
-                      value={edit.status}
-                      onChange={(event) =>
-                        setEdit((current) => ({
-                          ...current,
-                          status: event.target.value as BookingStatus,
-                        }))
-                      }
-                      disabled={busy}
-                    >
-                      <option value="confirmed">Đã xác nhận</option>
-                      <option value="completed">Hoàn tất</option>
-                      <option value="cancelled">Đã hủy</option>
-                    </select>
-                  </label>
+                  <AdmSelect
+                    label="Trạng thái"
+                    value={edit.status}
+                    options={STATUS_OPTIONS}
+                    showValues={false}
+                    searchable={false}
+                    className="adm-fin-select"
+                    onChange={(value) =>
+                      setEdit((current) => ({
+                        ...current,
+                        status: value as BookingStatus,
+                      }))
+                    }
+                  />
                   <label className="adm-fin-field">
                     <span>Ngày đi</span>
                     <AdminDatePicker
@@ -1778,27 +1788,21 @@ export function TourFinance({
                     </p>
                   ) : null}
                   <div className="adm-fin-form-grid adm-fin-entry-form">
-                    <label className="adm-fin-field">
-                      <span>Loại</span>
-                      <select
-                        value={entry.kind}
-                        onChange={(event) =>
-                          setEntry((current) => ({
-                            ...current,
-                            kind: event.target.value as FinanceKind,
-                            actual:
-                              event.target.value === "expense"
-                                ? current.actual
-                                : true,
-                          }))
-                        }
-                        disabled={busy}
-                      >
-                        <option value="receipt">Thu tiền</option>
-                        <option value="refund">Hoàn tiền</option>
-                        <option value="expense">Chi phí</option>
-                      </select>
-                    </label>
+                    <AdmSelect
+                      label="Loại"
+                      value={entry.kind}
+                      options={KIND_OPTIONS}
+                      showValues={false}
+                      searchable={false}
+                      className="adm-fin-select"
+                      onChange={(value) =>
+                        setEntry((current) => ({
+                          ...current,
+                          kind: value as FinanceKind,
+                          actual: value === "expense" ? current.actual : true,
+                        }))
+                      }
+                    />
                     <label className="adm-fin-field">
                       <span>Số tiền</span>
                       <MoneyTextInput
@@ -1836,48 +1840,36 @@ export function TourFinance({
                         {weekdayLabel(entry.date)}
                       </small>
                     </label>
-                    <label className="adm-fin-field">
-                      <span>Phương thức</span>
-                      <select
-                        value={entry.method}
-                        onChange={(event) =>
-                          setEntry((current) => ({
-                            ...current,
-                            method: event.target.value as PaymentMethod,
-                          }))
-                        }
-                        disabled={busy}
-                      >
-                        {Object.entries(METHOD_LABEL).map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <AdmSelect
+                      label="Phương thức"
+                      value={entry.method}
+                      options={METHOD_OPTIONS}
+                      showValues={false}
+                      searchable={false}
+                      className="adm-fin-select"
+                      onChange={(value) =>
+                        setEntry((current) => ({
+                          ...current,
+                          method: value as PaymentMethod,
+                        }))
+                      }
+                    />
                     {entry.kind === "expense" ? (
                       <>
-                        <label className="adm-fin-field">
-                          <span>Nhóm chi</span>
-                          <select
-                            value={entry.category}
-                            onChange={(event) =>
-                              setEntry((current) => ({
-                                ...current,
-                                category: event.target.value as ExpenseCategory,
-                              }))
-                            }
-                            disabled={busy}
-                          >
-                            {Object.entries(CATEGORY_LABEL).map(
-                              ([value, label]) => (
-                                <option key={value} value={value}>
-                                  {label}
-                                </option>
-                              ),
-                            )}
-                          </select>
-                        </label>
+                        <AdmSelect
+                          label="Nhóm chi"
+                          value={entry.category}
+                          options={CATEGORY_OPTIONS}
+                          showValues={false}
+                          searchable={false}
+                          className="adm-fin-select"
+                          onChange={(value) =>
+                            setEntry((current) => ({
+                              ...current,
+                              category: value as ExpenseCategory,
+                            }))
+                          }
+                        />
                         <label className="adm-fin-check">
                           <input
                             type="checkbox"

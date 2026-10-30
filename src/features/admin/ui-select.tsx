@@ -15,6 +15,8 @@ export function AdmSelect({
   preview,
   onChange,
   showValues = true,
+  searchable = true,
+  className,
 }: {
   label: string;
   value: string;
@@ -24,6 +26,9 @@ export function AdmSelect({
   onChange: (next: string) => void;
   /** Hide raw ids/codes in the dropdown; the label is the user-facing name. */
   showValues?: boolean;
+  /** Short lists (status, payment method) do not need a search field. */
+  searchable?: boolean;
+  className?: string;
 }) {
   const id = useId();
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -57,7 +62,10 @@ export function AdmSelect({
   const img = preview?.(value);
 
   return (
-    <div className="adm-select" ref={wrapRef}>
+    <div
+      className={`adm-select${className ? ` ${className}` : ""}`}
+      ref={wrapRef}
+    >
       <span className="adm-select-label" id={id}>{label}</span>
       <button
         type="button"
@@ -77,13 +85,15 @@ export function AdmSelect({
       </button>
       {open && (
         <div className="adm-select-pop" role="listbox">
-          <input
-            autoFocus
-            placeholder="Tìm kiếm…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            aria-label={`Tìm trong ${label}`}
-          />
+          {searchable ? (
+            <input
+              autoFocus
+              placeholder="Tìm kiếm…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              aria-label={`Tìm trong ${label}`}
+            />
+          ) : null}
           <div className="adm-select-list">
             <button type="button" role="option" aria-selected={!value} onClick={() => { onChange(""); setOpen(false); }}>
               {placeholder}

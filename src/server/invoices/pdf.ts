@@ -318,10 +318,10 @@ export async function buildInvoicePdf(
     ...(options.draft
       ? {
           watermark: {
-            text: "BẢN NHÁP",
+            text: "SEA TRIP TRAVEL",
             color: BRAND,
             opacity: 0.055,
-            fontSize: 54,
+            fontSize: 48,
             bold: true,
             italics: false,
           },

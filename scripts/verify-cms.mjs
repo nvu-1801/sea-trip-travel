@@ -1072,8 +1072,14 @@ try {
   await page.getByRole("button", { name: "Tạo hồ sơ tour" }).click();
   const financeDialog = page.getByRole("dialog");
   await financeDialog.waitFor();
-  const tourSelect = financeDialog.getByLabel(/^Tour/);
-  await tourSelect.selectOption({ index: 1 });
+  const tourSelect = financeDialog.locator(".adm-fin-select", {
+    hasText: "Tour *",
+  });
+  await tourSelect.locator(".adm-select-btn").click();
+  await financeDialog
+    .locator(".adm-select-pop .adm-select-list button")
+    .nth(1)
+    .click();
   await financeDialog
     .getByLabel(/^Giá bán thực tế/)
     .fill("12000000");

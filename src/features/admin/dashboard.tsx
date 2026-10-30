@@ -1164,6 +1164,45 @@ export function Dashboard({
     const id = toastId.current;
     setToasts((current) => [...current.slice(-3), { id, kind, text }]);
   }
+  /**
+   * Lead status/notes are light edits. Save them when the owner leaves the
+   * inbox so they never need to remember the separate "Lưu chăm sóc" button.
+   * Content editors keep their explicit save flow.
+   */
+  async function saveDirtyLeads(): Promise<boolean> {
+    const ids = leads
+      .filter((lead) => dirtyFields.current.has(`lead:${lead.id}`))
+      .map((lead) => lead.id);
+    if (ids.length === 0) return true;
+    try {
+      for (const id of ids) {
+        const lead = leads.find((item) => item.id === id);
+        if (!lead) {
+          dirtyFields.current.delete(`lead:${id}`);
+          continue;
+        }
+        await api("leads", {
+          method: "PATCH",
+          body: JSON.stringify({
+            id,
+            status: lead.status,
+            note: lead.note,
+          }),
+        });
+        dirtyFields.current.delete(`lead:${id}`);
+      }
+      setDirty(dirtyFields.current.size > 0);
+      return true;
+    } catch (error) {
+      pushToast(
+        "error",
+        error instanceof Error
+          ? `Chưa lưu được thay đổi khách hàng: ${error.message}`
+          : "Chưa lưu được thay đổi khách hàng.",
+      );
+      return false;
+    }
+  }
   function rememberInvoice(invoice: InvoiceDocument) {
     const summary = invoiceSummaryOf(invoice);
     setInvoices((current) => {
@@ -1244,8 +1283,9 @@ export function Dashboard({
     open?: { id: string; slug?: string },
   ) {
     setNavOpen(false);
+    if (!(await saveDirtyLeads())) return;
     if (
-      dirty &&
+      dirtyFields.current.size > 0 &&
       !(await requestConfirm({
         title: "Rời màn hình này?",
         body: "Bạn có thay đổi chưa lưu. Rời đi sẽ bỏ các thay đổi đó.",
@@ -1262,8 +1302,9 @@ export function Dashboard({
 
   function leaveToWebsite() {
     void (async () => {
+      if (!(await saveDirtyLeads())) return;
       if (
-        dirty &&
+        dirtyFields.current.size > 0 &&
         !(await requestConfirm({
           title: "Về website?",
           body: "Bạn có thay đổi chưa lưu. Về website sẽ bỏ các thay đổi đó; phiên đăng nhập vẫn được giữ.",
@@ -1280,8 +1321,9 @@ export function Dashboard({
 
   function logoutFromStudio() {
     void (async () => {
+      if (!(await saveDirtyLeads())) return;
       if (
-        dirty &&
+        dirtyFields.current.size > 0 &&
         !(await requestConfirm({
           title: "Đăng xuất khỏi Studio?",
           body: "Bạn có thay đổi chưa lưu. Đăng xuất sẽ bỏ các thay đổi đó.",
@@ -3735,6 +3777,10 @@ export function Dashboard({
                                 href={adminSectionHref("finance", {
                                   id: lead.id,
                                 })}
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  void navigateTo("finance", { id: lead.id });
+                                }}
                                 title="Tạo hồ sơ tour từ yêu cầu này"
                               >
                                 <AdminIcon name="money" size={13} />
@@ -4440,7 +4486,10 @@ export function Dashboard({
             )}
           </>
         ) : tab === "customers" ? (
-          <section className="adm-panel adm-customers-page">
+          <section
+            className="adm-panel adm-customers-page"
+            data-live-editor="content"
+          >
             <header className="adm-customers-page-head">
               <div className="adm-customers-page-heading">
                 <p className="adm-eyebrow">
@@ -4603,7 +4652,7 @@ export function Dashboard({
         ) : tab === "translations" ? (
           <TranslationManager />
         ) : selected ? (
-          <section className="adm-panel adm-edit">
+          <section className="adm-panel adm-edit" data-live-editor="content">
             <div className="adm-editor-header">
               <div className="adm-editor-heading">
                 <button onClick={closeEditor}>← Danh sách</button>
