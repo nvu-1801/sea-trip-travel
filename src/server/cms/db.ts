@@ -69,6 +69,23 @@ export function db() {
     );
     CREATE INDEX IF NOT EXISTS idx_tour_finance_entries_booking_date ON tour_finance_entries(booking_id, entry_date);
     CREATE INDEX IF NOT EXISTS idx_tour_finance_entries_date ON tour_finance_entries(entry_date, kind);
+    CREATE TABLE IF NOT EXISTS invoices (
+      seq INTEGER PRIMARY KEY AUTOINCREMENT,
+      id TEXT NOT NULL UNIQUE,
+      number TEXT NOT NULL UNIQUE,
+      lead_id TEXT REFERENCES leads(id) ON DELETE SET NULL,
+      status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','issued')),
+      payment_status TEXT NOT NULL DEFAULT 'unpaid' CHECK(payment_status IN ('unpaid','partial','paid')),
+      data TEXT NOT NULL,
+      snapshot TEXT,
+      revision INTEGER NOT NULL DEFAULT 1,
+      issued_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      request_token TEXT NOT NULL UNIQUE
+    );
+    CREATE INDEX IF NOT EXISTS idx_invoices_lead ON invoices(lead_id);
+    CREATE INDEX IF NOT EXISTS idx_invoices_created ON invoices(created_at);
     CREATE TABLE IF NOT EXISTS backup_runs (
       id TEXT PRIMARY KEY,
       kind TEXT NOT NULL,
@@ -140,6 +157,7 @@ export function db() {
     "leads",
     "tour_bookings",
     "tour_finance_entries",
+    "invoices",
   ]) {
     for (const operation of ["INSERT", "UPDATE", "DELETE"]) {
       database.exec(`CREATE TRIGGER IF NOT EXISTS live_${table}_${operation}

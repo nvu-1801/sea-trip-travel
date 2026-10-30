@@ -37,6 +37,15 @@ import {
 import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
 import { LEAD_TRASH_RETENTION_DAYS } from "@/lib/lead-trash";
 import { buildLeadGmailComposeHref } from "@/lib/gmail-compose";
+import {
+  formatVnd,
+  INVOICE_PAYMENT_LABELS,
+  INVOICE_STATUS_LABELS,
+  invoiceSummaryOf,
+  type InvoiceDocument,
+  type InvoiceSummary,
+} from "@/domain/invoice";
+import { InvoiceEditor, type InvoiceLead } from "./invoice-editor";
 import { mediaSelectOptions } from "@/lib/admin-media-options";
 import { adminSectionHref } from "@/lib/admin-routes";
 import {
@@ -108,6 +117,21 @@ type Lead = {
 function formatLeadDay(value: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+}
+
+function invoiceLeadOf(lead: Lead): InvoiceLead {
+  const data = lead.data;
+  return {
+    id: lead.id,
+    requestId: textOf(data.requestId),
+    fullName: textOf(data.fullName) || textOf(data.name) || "Khách hàng",
+    phone: textOf(data.phone),
+    email: textOf(data.email),
+    tourTitle: lead.tourTitle ?? "",
+    interest: textOf(data.interest),
+    travelDate: textOf(data.travelDate),
+    partySize: data.partySize ? String(data.partySize) : "",
+  };
 }
 
 /**
@@ -652,6 +676,11 @@ export function Dashboard({
   const [quickLoading, setQuickLoading] = useState(false);
   const [quickActive, setQuickActive] = useState(0);
   const [leads, setLeads] = useState<Lead[]>([]),
+    [invoices, setInvoices] = useState<InvoiceSummary[]>([]),
+    [invoiceEditor, setInvoiceEditor] = useState<{
+      lead: Lead;
+      invoiceId: string | null;
+    } | null>(null),
     [media, setMedia] = useState<
       {
         id: string;
@@ -954,12 +983,16 @@ export function Dashboard({
         setHasUpdates(false);
         return true;
       }
-      const result =
+      const [result, invoiceRows] = await Promise.all([
         next === "leads"
-          ? await api("leads")
+          ? api("leads")
           : next === "media" || next === "account"
-            ? null
-            : await api(`content/${next}`);
+            ? Promise.resolve(null)
+            : api(`content/${next}`),
+        next === "leads"
+          ? api("invoices").catch(() => null)
+          : Promise.resolve(null),
+      ]);
       // Tour grouping needs the category tree: which categories live under
       // the Quy Nhơn – Phú Yên root. Loaded only for the tours tab.
       let categoryTree: { id: string; parentId?: string | null }[] = [];
@@ -1012,8 +1045,12 @@ export function Dashboard({
       setSelected(null);
       setDirty(false);
       dirtyFields.current.clear();
-      if (next === "leads") setLeads(result);
-      else if (next === "media") {
+      if (next === "leads") {
+        setLeads(result);
+        if (Array.isArray(invoiceRows)) {
+          setInvoices(invoiceRows as InvoiceSummary[]);
+        }
+      } else if (next === "media") {
         setMedia(library);
         setMediaStorage(storage);
       } else if (next !== "account") setRows(result);
@@ -1126,6 +1163,15 @@ export function Dashboard({
     toastId.current += 1;
     const id = toastId.current;
     setToasts((current) => [...current.slice(-3), { id, kind, text }]);
+  }
+  function rememberInvoice(invoice: InvoiceDocument) {
+    const summary = invoiceSummaryOf(invoice);
+    setInvoices((current) => {
+      const next = current.some((item) => item.id === summary.id)
+        ? current.map((item) => (item.id === summary.id ? summary : item))
+        : [summary, ...current];
+      return next.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    });
   }
   function dismissToast(id: number) {
     setToasts((current) => current.filter((toast) => toast.id !== id));
@@ -3290,6 +3336,9 @@ export function Dashboard({
                         fullName,
                         tourTitle: lead.tourTitle,
                       });
+                      const leadInvoices = invoices.filter(
+                        (item) => item.leadId === lead.id,
+                      );
                       const tourHref =
                         lead.tourHref === undefined
                           ? tourSlug
@@ -3476,6 +3525,81 @@ export function Dashboard({
                               <p className="adm-lead-message">“{message}”</p>
                             )}
 
+                            <div className="adm-lead-invoices">
+                              <div className="adm-lead-invoices-head">
+                                <span>
+                                  <AdminIcon name="money" size={13} /> Hóa đơn
+                                </span>
+                                <span className="adm-lead-invoices-count">
+                                  {leadInvoices.length}
+                                </span>
+                              </div>
+                              {leadInvoices.length > 0 ? (
+                                <ul className="adm-lead-invoice-list">
+                                  {leadInvoices.map((item) => (
+                                    <li key={item.id}>
+                                      <div className="adm-lead-invoice-top">
+                                        <strong>{item.number}</strong>
+                                        <span
+                                          className="adm-inv-mini-badge"
+                                          data-tone={item.status}
+                                        >
+                                          {INVOICE_STATUS_LABELS[item.status]}
+                                        </span>
+                                        <span
+                                          className="adm-inv-mini-badge"
+                                          data-payment={item.paymentStatus}
+                                        >
+                                          {
+                                            INVOICE_PAYMENT_LABELS[
+                                              item.paymentStatus
+                                            ]
+                                          }
+                                        </span>
+                                      </div>
+                                      <div className="adm-lead-invoice-meta">
+                                        <span>
+                                          Lập {formatLeadDay(item.issueDate)}
+                                        </span>
+                                        <span>Tổng {formatVnd(item.total)}</span>
+                                        <span>
+                                          Còn {formatVnd(item.remaining)}
+                                        </span>
+                                      </div>
+                                      <div className="adm-lead-invoice-actions">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setInvoiceEditor({
+                                              lead,
+                                              invoiceId: item.id,
+                                            })
+                                          }
+                                        >
+                                          Mở
+                                        </button>
+                                        <a
+                                          href={`/api/admin/invoices/${item.id}/pdf`}
+                                          download={`Hoa-don-${item.number}.pdf`}
+                                        >
+                                          Tải PDF
+                                        </a>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="adm-lead-invoice-empty">
+                                  Chưa có hóa đơn. Bấm “Tạo hóa đơn” để lập bản
+                                  đầu tiên.
+                                </p>
+                              )}
+                              <p className="adm-lead-invoice-hint">
+                                Tải hóa đơn PDF, sau đó đính kèm vào thư Gmail
+                                để gửi cho khách.
+                              </p>
+                            </div>
+
                             <div className="adm-lead-foot">
                               {requestId && (
                                 <span className="adm-lead-code">
@@ -3616,6 +3740,19 @@ export function Dashboard({
                                 <AdminIcon name="money" size={13} />
                                 Tạo hồ sơ tour
                               </a>
+                              <button
+                                className="adm-lead-invoice-create"
+                                onClick={() =>
+                                  setInvoiceEditor({
+                                    lead,
+                                    invoiceId: null,
+                                  })
+                                }
+                                title="Lập hóa đơn thương mại từ yêu cầu này"
+                              >
+                                <AdminIcon name="plus" size={13} />
+                                Tạo hóa đơn
+                              </button>
                               <button
                                 disabled={busy || lead.mail_status === "sent"}
                                 onClick={() =>
@@ -5879,6 +6016,18 @@ export function Dashboard({
               </div>
             );
           })()}
+        {invoiceEditor ? (
+          <InvoiceEditor
+            key={`${invoiceEditor.lead.id}-${invoiceEditor.invoiceId ?? "new"}`}
+            lead={invoiceLeadOf(invoiceEditor.lead)}
+            invoiceId={invoiceEditor.invoiceId}
+            csrf={csrf ?? ""}
+            onClose={() => setInvoiceEditor(null)}
+            onSaved={rememberInvoice}
+            notify={pushToast}
+            confirm={requestConfirm}
+          />
+        ) : null}
         <ToastStack items={toasts} onClose={dismissToast} />
         <ConfirmModal
           request={confirmReq}
