@@ -29,6 +29,7 @@ import {
 } from "@/lib/public-slug";
 import { defaultHero, heroSchema } from "@/domain/home-hero";
 import { defaultLanding, landingSchema } from "@/domain/landing";
+import { CUSTOMER_STORIES_DEMO } from "@/features/home/customer-stories-demo";
 import {
   defaultSettings,
   messageSeeds,
@@ -470,7 +471,38 @@ function moveCustomerVideoFirst(payload: unknown): boolean {
   return true;
 }
 
-function reorderCustomerVideos(): number {
+/**
+ * The owner asked to publish the verified 10-logo / 6-video sample on the
+ * live customer section. Only an empty list is filled; any owner-entered
+ * logo, video or copy is left alone.
+ */
+export const CUSTOMER_SAMPLE_DATA_MIGRATION = "customers/sample-data:v1";
+
+function fillCustomerSampleData(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  const customers = (payload as { customers?: unknown }).customers;
+  if (!customers || typeof customers !== "object") return false;
+  const section = customers as Record<string, unknown>;
+  let changed = false;
+  if (!Array.isArray(section.logos) || section.logos.length === 0) {
+    section.logos = CUSTOMER_STORIES_DEMO.logos;
+    changed = true;
+  }
+  if (!Array.isArray(section.videos) || section.videos.length === 0) {
+    section.videos = CUSTOMER_STORIES_DEMO.videos;
+    changed = true;
+  }
+  if (!changed) return false;
+  section.enabled = true;
+  section.showLogos = true;
+  section.showVideos = true;
+  moveCustomerVideoFirst(payload);
+  return true;
+}
+
+function repairLandingRows(
+  repair: (payload: unknown) => boolean,
+): number {
   const rows = db()
     .prepare(
       "SELECT id,data,published FROM records WHERE collection='landing' AND state!='deleted'",
@@ -482,10 +514,8 @@ function reorderCustomerVideos(): number {
     const published = row.published
       ? (JSON.parse(row.published) as unknown)
       : null;
-    const dataChanged = moveCustomerVideoFirst(data);
-    const publishedChanged = published
-      ? moveCustomerVideoFirst(published)
-      : false;
+    const dataChanged = repair(data);
+    const publishedChanged = published ? repair(published) : false;
     if (!dataChanged && !publishedChanged) continue;
     db()
       .prepare(
@@ -500,6 +530,14 @@ function reorderCustomerVideos(): number {
     repaired += 1;
   }
   return repaired;
+}
+
+function reorderCustomerVideos(): number {
+  return repairLandingRows(moveCustomerVideoFirst);
+}
+
+function seedCustomerSampleData(): number {
+  return repairLandingRows(fillCustomerSampleData);
 }
 
 export function repairPlaceholderSlugs(): number {
@@ -583,6 +621,10 @@ function applyPendingMigrations(): number {
   if (!migrationApplied(CUSTOMER_VIDEO_FIRST_MIGRATION)) {
     repaired += reorderCustomerVideos();
     markMigration(CUSTOMER_VIDEO_FIRST_MIGRATION);
+  }
+  if (!migrationApplied(CUSTOMER_SAMPLE_DATA_MIGRATION)) {
+    repaired += seedCustomerSampleData();
+    markMigration(CUSTOMER_SAMPLE_DATA_MIGRATION);
   }
   return repaired;
 }

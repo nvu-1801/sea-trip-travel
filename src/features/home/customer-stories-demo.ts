@@ -18,8 +18,9 @@ import type { LandingSections } from "@/domain/landing";
  * - The source has no per-video description, so `body`/`bodyEn` stay empty and
  *   the card only shows the real title and the partner named in that title.
  *
- * The preset is only ever applied to the Studio form (a draft). It never writes
- * to the CMS record by itself and never publishes anything.
+ * The preset is normally applied only to the Studio form (a draft). A one-time
+ * migration may seed it into an empty CMS record when the owner explicitly asks;
+ * it never overwrites logos, videos or copy the owner already entered.
  */
 
 export type CustomerStoriesDemoLogo = LandingSections["customers"]["logos"][number];
