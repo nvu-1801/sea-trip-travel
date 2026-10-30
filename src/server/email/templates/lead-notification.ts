@@ -3,6 +3,7 @@ import "server-only";
 import type { ContactLead } from "@/domain/lead";
 import { formatDate, formatDateTimeVietnam } from "@/lib/format";
 import { siteConfig } from "@/config/site";
+import { buildLeadGmailComposeHref } from "@/lib/gmail-compose";
 import { escapeHtml, isSafeSiteHref, safeMailtoHref, safeSiteUrl, safeTelHref } from "@/lib/sanitize";
 
 /**
@@ -93,6 +94,12 @@ export function buildLeadNotificationHtml(context: LeadNotificationContext): str
   const { lead, tourTitle, sourceUrl, tourUrl } = context;
   const telHref = safeTelHref(lead.phone);
   const mailHref = safeMailtoHref(lead.email);
+  // Replying opens a Gmail draft in the browser; the website never sends it.
+  const gmailHref = buildLeadGmailComposeHref({
+    email: lead.email,
+    fullName: lead.fullName,
+    tourTitle,
+  });
   const logoUrl = `${siteConfig.url.replace(/\/+$/, "")}/brand/logo-lockup.png`;
   const preheader = `Yêu cầu mới từ ${lead.fullName} · ${lead.phone}`;
 
@@ -226,14 +233,14 @@ export function buildLeadNotificationHtml(context: LeadNotificationContext): str
                       : ""
                   }
                   ${
-                    mailHref
+                    gmailHref
                       ? `<td>
-                          <a href="${escapeHtml(mailHref)}" style="display:inline-block;background:#ffffff;color:#c4004e;border:1px solid #e6c6d6;font:700 15px/1 Arial,Helvetica,sans-serif;padding:13px 22px;border-radius:999px;text-decoration:none;">
-                            Trả lời email
+                          <a href="${escapeHtml(gmailHref)}" style="display:inline-block;background:#ffffff;color:#c4004e;border:1px solid #e6c6d6;font:700 15px/1 Arial,Helvetica,sans-serif;padding:13px 22px;border-radius:999px;text-decoration:none;">
+                            Trả lời bằng Gmail
                           </a>
                         </td>`
                       : `<td style="font:400 13px/1.5 Arial,Helvetica,sans-serif;color:#8b7684;">
-                          Khách không để lại email — vui lòng gọi điện.
+                          Khách chưa cung cấp email — vui lòng gọi điện.
                         </td>`
                   }
                 </tr>
@@ -354,6 +361,11 @@ export function buildLeadNotificationText(context: LeadNotificationContext): str
 
   const tourHref = tourUrl && isSafeSiteHref(tourUrl) ? tourUrl : null;
   const sourceHref = sourceUrl && isSafeSiteHref(sourceUrl) ? sourceUrl : null;
+  const gmailHref = buildLeadGmailComposeHref({
+    email: lead.email,
+    fullName: lead.fullName,
+    tourTitle,
+  });
   const daysLeft = daysUntilTravel(lead.receivedAt, lead.travelDate);
   const urgent = daysLeft !== null && daysLeft >= 0 && daysLeft <= 14;
 
@@ -389,6 +401,7 @@ export function buildLeadNotificationText(context: LeadNotificationContext): str
   );
 
   if (tourHref) lines.push(`Trang tour: ${tourHref}`);
+  if (gmailHref) lines.push(`Trả lời bằng Gmail: ${gmailHref}`);
 
   if (lead.message) {
     lines.push("", "-- NỘI DUNG KHÁCH GỬI --", lead.message);
