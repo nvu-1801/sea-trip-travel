@@ -52,6 +52,7 @@ import {
   fillMissingMediaSources,
   saveHomeRegions,
   migrateContent,
+  CUSTOMER_VIDEO_FIRST_MIGRATION,
   MEDIA_SOURCE_MIGRATION,
   redirectTarget,
   repairPlaceholderSlugs,
@@ -765,6 +766,31 @@ test("a deploy repairs missing image objects even after the v1 migration ran", (
     undefined,
   );
   restoreStoredRow("categories", id, before);
+});
+
+test("a deploy moves the chosen customer film to the front once", () => {
+  const landing = list("landing")[0];
+  const before = readStoredRow("landing", landing.id);
+  const target = "demo-video-phu-yen-ngo-le-tan";
+  writeStoredRow("landing", landing.id, {
+    customers: {
+      videos: [{ id: "first" }, { id: "second" }, { id: "third" }, { id: target }],
+    },
+  });
+  db()
+    .prepare("DELETE FROM cms_migrations WHERE id=?")
+    .run(CUSTOMER_VIDEO_FIRST_MIGRATION);
+
+  assert.equal(migrateContent(), 1);
+  const stored = readStoredRow("landing", landing.id);
+  for (const key of ["data", "published"] as const) {
+    const saved = JSON.parse(stored[key]!) as {
+      customers: { videos: { id: string }[] };
+    };
+    assert.equal(saved.customers.videos[0].id, target);
+  }
+
+  restoreStoredRow("landing", landing.id, before);
 });
 
 test("destination CRUD round-trips draft, publish, unpublish, delete and restore", () => {

@@ -11,6 +11,7 @@ import {
 import { CloseIcon } from "@/components/ui/icons";
 import { AdminDatePicker } from "./admin-date-picker";
 import { AdminIcon } from "./admin-icons";
+import { MoneyTextInput } from "./money-input";
 import type { ConfirmRequest, ToastKind } from "./notify";
 import {
   calculateInvoice,
@@ -95,10 +96,6 @@ function todayInVietnam(): string {
 
 function lineKey(): string {
   return Math.random().toString(36).slice(2, 10);
-}
-
-function digits(value: string): string {
-  return value.replace(/[^\d]/g, "").slice(0, 15);
 }
 
 function numberOrZero(value: string): number {
@@ -214,31 +211,6 @@ function Field({
       {children}
       {hint ? <small>{hint}</small> : null}
     </label>
-  );
-}
-
-function MoneyInput({
-  value,
-  onChange,
-  disabled,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  placeholder?: string;
-}) {
-  return (
-    <div className="adm-inv-money">
-      <input
-        inputMode="numeric"
-        value={value}
-        disabled={disabled}
-        placeholder={placeholder ?? "0"}
-        onChange={(event) => onChange(digits(event.target.value))}
-      />
-      <span>₫</span>
-    </div>
   );
 }
 
@@ -777,11 +749,11 @@ export function InvoiceEditor({
                         </label>
                         <label>
                           <span>Đơn giá</span>
-                          <MoneyInput
+                          <MoneyTextInput
                             value={line.unitPrice}
                             disabled={readOnly || saving}
                             placeholder="Nhập giá thực tế"
-                            onChange={(value) => {
+                            onValueChange={(value) => {
                               const lines = [...form.lines];
                               lines[index] = { ...line, unitPrice: value };
                               setForm({ ...form, lines });
@@ -849,10 +821,12 @@ export function InvoiceEditor({
                 </div>
                 <div className="adm-inv-grid adm-inv-grid--money">
                   <Field label="Giảm giá" hint="Không lớn hơn tạm tính">
-                    <MoneyInput
+                    <MoneyTextInput
                       value={form.discount}
                       disabled={readOnly || saving}
-                      onChange={(value) => setForm({ ...form, discount: value })}
+                      onValueChange={(value) =>
+                        setForm({ ...form, discount: value })
+                      }
                     />
                   </Field>
                   <Field label="Thuế / phí (%)" hint="Ví dụ 8 = 8%">
@@ -869,20 +843,24 @@ export function InvoiceEditor({
                     />
                   </Field>
                   <Field label="Phí khác" hint="Khoản cộng thêm đã thỏa thuận">
-                    <MoneyInput
+                    <MoneyTextInput
                       value={form.fee}
                       disabled={readOnly || saving}
-                      onChange={(value) => setForm({ ...form, fee: value })}
+                      onValueChange={(value) =>
+                        setForm({ ...form, fee: value })
+                      }
                     />
                   </Field>
                   <Field
                     label="Đã thanh toán / đặt cọc"
                     hint="Không đánh dấu đã thanh toán khi chỉ tải PDF"
                   >
-                    <MoneyInput
+                    <MoneyTextInput
                       value={form.paid}
                       disabled={readOnly || saving}
-                      onChange={(value) => setForm({ ...form, paid: value })}
+                      onValueChange={(value) =>
+                        setForm({ ...form, paid: value })
+                      }
                     />
                   </Field>
                 </div>

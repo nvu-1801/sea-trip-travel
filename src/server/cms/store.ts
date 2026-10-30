@@ -444,6 +444,64 @@ export const MEDIA_SOURCE_MIGRATION = "media-sources/categories-articles:v2";
  */
 export const PUBLIC_SLUG_MIGRATION = "slug/readable:v1";
 
+/**
+ * The owner picked the Phú Yên school film as the lead card in the customer
+ * carousel. Existing volumes keep their own order, so move that one card to
+ * the front once; later owner reordering is left alone.
+ */
+export const CUSTOMER_VIDEO_FIRST_MIGRATION = "customers/video-first:v1";
+const CUSTOMER_VIDEO_FIRST_ID = "demo-video-phu-yen-ngo-le-tan";
+
+function moveCustomerVideoFirst(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  const customers = (payload as { customers?: unknown }).customers;
+  if (!customers || typeof customers !== "object") return false;
+  const videos = (customers as { videos?: unknown }).videos;
+  if (!Array.isArray(videos)) return false;
+  const index = videos.findIndex(
+    (video) =>
+      video &&
+      typeof video === "object" &&
+      (video as { id?: unknown }).id === CUSTOMER_VIDEO_FIRST_ID,
+  );
+  if (index <= 0) return false;
+  const [video] = videos.splice(index, 1);
+  videos.unshift(video);
+  return true;
+}
+
+function reorderCustomerVideos(): number {
+  const rows = db()
+    .prepare(
+      "SELECT id,data,published FROM records WHERE collection='landing' AND state!='deleted'",
+    )
+    .all() as { id: string; data: string; published: string | null }[];
+  let repaired = 0;
+  for (const row of rows) {
+    const data = JSON.parse(row.data) as unknown;
+    const published = row.published
+      ? (JSON.parse(row.published) as unknown)
+      : null;
+    const dataChanged = moveCustomerVideoFirst(data);
+    const publishedChanged = published
+      ? moveCustomerVideoFirst(published)
+      : false;
+    if (!dataChanged && !publishedChanged) continue;
+    db()
+      .prepare(
+        "UPDATE records SET data=?,published=?,revision=revision+1,updated_at=? WHERE collection='landing' AND id=?",
+      )
+      .run(
+        JSON.stringify(data),
+        published ? JSON.stringify(published) : null,
+        new Date().toISOString(),
+        row.id,
+      );
+    repaired += 1;
+  }
+  return repaired;
+}
+
 export function repairPlaceholderSlugs(): number {
   const now = new Date().toISOString();
   const renames = new Map<string, string>();
@@ -521,6 +579,10 @@ function applyPendingMigrations(): number {
   if (!migrationApplied(PUBLIC_SLUG_MIGRATION)) {
     repaired += repairPlaceholderSlugs();
     markMigration(PUBLIC_SLUG_MIGRATION);
+  }
+  if (!migrationApplied(CUSTOMER_VIDEO_FIRST_MIGRATION)) {
+    repaired += reorderCustomerVideos();
+    markMigration(CUSTOMER_VIDEO_FIRST_MIGRATION);
   }
   return repaired;
 }

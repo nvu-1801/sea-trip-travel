@@ -73,6 +73,7 @@ button {
 button:hover {
   background: #fff4f8;
   border-color: #e6c6d6;
+  color: #43303c;
 }
 button:disabled {
   cursor: wait;
@@ -5643,17 +5644,17 @@ a.adm-lead-tour:hover .adm-lead-tour-go {
   flex: none;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border: 1px solid #f2dde7;
-  border-radius: 50%;
-  background: #fff;
-  color: #6e5c68;
-}
-.adm-inv-close:hover {
-  border-color: #f0a8c4;
+  border-radius: 11px;
   background: #fff1f6;
-  color: #b8004a;
+  color: #b0215f;
+}
+.adm-inv-close:hover:not(:disabled) {
+  border-color: #e0005a;
+  background: #ffe3ee;
+  color: #a80044;
 }
 .adm-inv-body {
   flex: 1;
@@ -5971,7 +5972,7 @@ a.adm-lead-tour:hover .adm-lead-tour-go {
   gap: 3px;
   min-width: 0;
 }
-.adm-inv-line label > span {
+.adm-inv-line label > span:first-child {
   display: none;
   font-size: 9px;
   font-weight: 700;
@@ -6118,7 +6119,10 @@ a.adm-lead-tour:hover .adm-lead-tour-go {
   color: #fff;
   box-shadow: 0 8px 20px rgb(224 0 90 / 0.22);
 }
-.adm-inv-primary:hover {
+.adm-inv-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c4004e, #e0005a);
+  border-color: #c4004e;
+  color: #fff;
   filter: brightness(1.04);
 }
 .adm-inv-ghost:disabled,
@@ -6174,7 +6178,7 @@ a.adm-lead-tour:hover .adm-lead-tour-go {
   .adm-inv-line-desc {
     grid-column: 1 / -1;
   }
-  .adm-inv-line label > span,
+  .adm-inv-line label > span:first-child,
   .adm-inv-line-total > span {
     display: block;
   }
@@ -13690,6 +13694,38 @@ select {
   font-size: 10px;
   font-weight: 700;
 }
+.adm-fin-select {
+  margin-bottom: 0;
+  gap: 4px;
+}
+.adm-fin-select .adm-select-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-foreground-subtle, #6f5d64);
+}
+.adm-fin-select .adm-select-btn {
+  min-height: 38px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border-color: var(--color-border, #e8d8d2);
+  background: var(--color-surface, #fffdfc);
+  font-size: 12px;
+  font-weight: 600;
+}
+.adm-fin-field .adm-filter {
+  width: 100%;
+}
+.adm-fin-field .adm-filter-btn {
+  width: 100%;
+  min-height: 38px;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border-width: 1px;
+  border-color: var(--color-border, #e8d8d2);
+  background: var(--color-surface, #fffdfc);
+  font-size: 12px;
+}
 .adm-fin-field input,
 .adm-fin-field select,
 .adm-fin-field textarea {
@@ -13958,15 +13994,20 @@ select {
 }
 .adm-fin-modal-head > button {
   flex: none;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--color-border, #e8d8d2);
-  border-radius: 8px;
-  background: var(--color-surface, #fffdfc);
-  color: var(--color-foreground-muted, #6b5a60);
-  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #f2dde7;
+  border-radius: 11px;
+  background: #fff1f6;
+  color: #b0215f;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
+}
+.adm-fin-modal-head > button:hover:not(:disabled) {
+  border-color: #e0005a;
+  background: #ffe3ee;
+  color: #a80044;
 }
 .adm-fin-note {
   margin: 0 0 12px;
@@ -15756,4 +15797,64 @@ select {
   padding: 0;
   border: 0;
   background: transparent;
+}
+
+/* One close control everywhere: white rounded square, warm border, dark X. */
+.adm-inv-close,
+.adm-fin-modal-head > button,
+.adm-section-modal-close,
+.adm-trash-close,
+.adm-health-modal-close,
+.adm-help-head > button,
+.adm-notice > button,
+.adm-toast > button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid #e8d8d2;
+  border-radius: 12px;
+  background: #fff;
+  color: #211621;
+  font-size: 22px;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.adm-inv-close:hover:not(:disabled),
+.adm-fin-modal-head > button:hover:not(:disabled),
+.adm-section-modal-close:hover,
+.adm-trash-close:hover:not(:disabled),
+.adm-health-modal-close:hover:not(:disabled),
+.adm-help-head > button:hover:not(:disabled),
+.adm-notice > button:hover:not(:disabled),
+.adm-toast > button:hover:not(:disabled) {
+  border-color: #d9c3b8;
+  background: #fff8f3;
+  color: #211621;
+}
+
+.adm-toast > button {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+.adm-nav-close {
+  border: 1px solid #e8d8d2;
+  border-radius: 12px;
+  background: #fff;
+  color: #211621;
+}
+
+.adm-nav-close:hover {
+  border-color: #d9c3b8;
+  background: #fff8f3;
+  color: #211621;
 }
