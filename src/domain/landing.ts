@@ -170,13 +170,13 @@ export const landingSchema = z.object({
         .string()
         .max(600)
         .default(
-          "Những đơn vị đồng hành và chia sẻ trải nghiệm thật cùng SEA TRIP.",
+          "Những đơn vị, doanh nghiệp và đoàn khách đã tin chọn SEA TRIP cho hành trình của mình. Mỗi chuyến đi là một câu chuyện được kể lại bằng hình ảnh, video và những chia sẻ chân thành.",
         ),
       bodyEn: z
         .string()
         .max(600)
         .default(
-          "The partners and travellers who have joined us along the coast.",
+          "The companies, organisations and travel groups who chose SEA TRIP for their journey. Every trip is a story told through real photos, films and honest words from the people who travelled.",
         ),
       ctaLabel: z.string().max(80).default("Chia sẻ trải nghiệm"),
       ctaLabelEn: z.string().max(80).default("Share your story"),
@@ -184,11 +184,11 @@ export const landingSchema = z.object({
       showLogos: z.boolean().default(true),
       logosTitle: z.string().max(120).default("Đồng hành cùng SEA TRIP"),
       logosTitleEn: z.string().max(120).default("In good company"),
-      logos: z.array(customerLogoSchema).max(12).default([]),
+      logos: z.array(customerLogoSchema).max(18).default([]),
       showVideos: z.boolean().default(true),
       videosTitle: z.string().max(120).default("Khách kể lại hành trình"),
       videosTitleEn: z.string().max(120).default("Travellers' stories"),
-      videos: z.array(customerVideoSchema).max(6).default([]),
+      videos: z.array(customerVideoSchema).max(12).default([]),
     })
     .default({
       enabled: false,
@@ -196,8 +196,8 @@ export const landingSchema = z.object({
       eyebrowEn: "Customers & partners",
       title: "Dấu ấn sau mỗi hành trình",
       titleEn: "Stories from the road",
-      body: "Những đơn vị đồng hành và chia sẻ trải nghiệm thật cùng SEA TRIP.",
-      bodyEn: "The partners and travellers who have joined us along the coast.",
+      body: "Những đơn vị, doanh nghiệp và đoàn khách đã tin chọn SEA TRIP cho hành trình của mình. Mỗi chuyến đi là một câu chuyện được kể lại bằng hình ảnh, video và những chia sẻ chân thành.",
+      bodyEn: "The companies, organisations and travel groups who chose SEA TRIP for their journey. Every trip is a story told through real photos, films and honest words from the people who travelled.",
       ctaLabel: "Chia sẻ trải nghiệm",
       ctaLabelEn: "Share your story",
       ctaHref: "/lien-he",

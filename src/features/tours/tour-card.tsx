@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AssetImage } from "@/components/ui/asset-image";
-import { ArrowRightIcon, CheckIcon, ClockIcon, MapPinIcon, SparkleIcon } from "@/components/ui/icons";
+import { ArrowRightIcon, CheckIcon, ClockIcon, MapPinIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import type { TourCardModel } from "./tour-card-model";
 
@@ -60,32 +60,69 @@ export function TourCard({
           )}
         />
         <span aria-hidden="true" className="stt-card-scrim" />
-        {tour.discountLabel ? (
-          <span
-            className="stt-card-discount"
-            aria-label={tour.discountAria ?? undefined}
-          >
-            {tour.discountLabel}
-          </span>
-        ) : null}
         <div className="pointer-events-none absolute left-3 top-3 flex max-w-[calc(100%-5.5rem)] flex-wrap gap-1.5">
-          {tour.badge ? (
-            <span className="stt-card-badge">
-              <SparkleIcon className="h-3.5 w-3.5" />
-              {tour.badge}
-            </span>
-          ) : null}
           <span className="stt-card-pill">
             <ClockIcon className="h-3.5 w-3.5 text-primary-strong" />
             {tour.durationLabel}
           </span>
         </div>
-        {!tour.priceIsContact ? (
-          <span className="stt-card-price-float">{tour.priceLabel}</span>
+        {horizontal || tour.badge ? (
+          <div className="pointer-events-none absolute right-3 top-3 z-10">
+            <span
+              className={`stt-card-badge${horizontal ? " stt-card-badge--featured" : ""}`}
+            >
+              {horizontal ? tour.badge || tour.featuredLabel : tour.badge}
+            </span>
+          </div>
         ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col gap-2.5 p-5 sm:p-6">
+      <div
+        className={cn(
+          "flex flex-1 flex-col gap-3 p-5 sm:p-5",
+          horizontal && "stt-card-content-horizontal",
+        )}
+      >
+        <div
+          className={`stt-card-price-panel${tour.priceIsContact ? " is-contact" : ""}`}
+        >
+          <p className="stt-card-price-kicker">
+            {tour.priceIsContact
+              ? tour.referencePriceText
+              : tour.priceFromText}
+          </p>
+          <p
+            className={
+              tour.priceIsContact
+                ? "stt-card-price-contact"
+                : "stt-card-price"
+            }
+          >
+            {tour.priceLabel}
+          </p>
+          {!tour.priceIsContact &&
+          (tour.priceOriginalLabel || tour.discountLabel) ? (
+            <div className="stt-card-price-meta">
+              {tour.priceOriginalLabel ? (
+                <span
+                  className="stt-card-price-original"
+                  aria-label={tour.priceOriginalAria ?? undefined}
+                >
+                  {tour.priceOriginalLabel}
+                </span>
+              ) : null}
+              {tour.discountLabel ? (
+                <span
+                  className="stt-card-price-save"
+                  aria-label={tour.discountAria ?? undefined}
+                >
+                  {tour.discountLabel}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
         {tour.destinationsLabel ? (
           <p className="stt-card-dest">
             <MapPinIcon className="h-3.5 w-3.5" />
@@ -95,7 +132,6 @@ export function TourCard({
 
         <h3 className="stt-card-title">
           <Link href={tour.href} className="transition-colors hover:text-primary-strong">
-            {/* Single stretched hit area for the whole card. */}
             <span className="absolute inset-0 z-10" aria-hidden="true" />
             {tour.title}
           </Link>
@@ -109,9 +145,9 @@ export function TourCard({
               <li key={highlight}>
                 <CheckIcon
                   aria-hidden="true"
-                  className="stt-card-tick h-4 w-4"
+                  className="stt-card-tick h-3.5 w-3.5"
                 />
-                <span className="truncate">{highlight}</span>
+                <span>{highlight}</span>
               </li>
             ))}
           </ul>
@@ -121,33 +157,14 @@ export function TourCard({
           <p className="stt-card-depart">{tour.departureText}</p>
         ) : null}
 
-        <div className="stt-card-foot">
-          <div>
-            <p className="stt-card-price-label">{tour.referencePriceText}</p>
-            <div className="stt-card-price-stack">
-              {tour.priceOriginalLabel ? (
-                <span
-                  className="stt-card-price-original"
-                  aria-label={tour.priceOriginalAria ?? undefined}
-                >
-                  {tour.priceOriginalLabel}
-                </span>
-              ) : null}
-              <p
-                className={
-                  tour.priceIsContact
-                    ? "stt-card-price-contact"
-                    : "stt-card-price"
-                }
-              >
-                {tour.priceLabel}
-              </p>
-            </div>
-          </div>
-          <span className="stt-card-cta">
-            {tour.viewDetailsText}
+        <div className="stt-card-actions">
+          <Link href={tour.consultHref} className="stt-card-consult">
+            {tour.consultText}
             <ArrowRightIcon className="stt-card-arrow h-4 w-4" />
-          </span>
+          </Link>
+          <Link href={tour.href} className="stt-card-details">
+            {tour.viewDetailsText}
+          </Link>
         </div>
       </div>
     </article>

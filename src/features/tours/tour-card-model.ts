@@ -3,7 +3,6 @@ import { formatDestinationNames } from "@/lib/data/destinations";
 import {
   formatDuration,
   formatMoney,
-  formatPriceFrom,
   hasPublishedPrice,
 } from "@/lib/format";
 import { tourPrice } from "@/lib/tour-price";
@@ -29,9 +28,14 @@ export type TourCardModel = {
   durationLabel: string;
   /** Used by the listing sort control. */
   durationDays: number;
-  /** "Từ 1.200.000 ₫" / "From 1,200,000 ₫" / "Liên hệ tư vấn" / "Contact us for pricing". */
+  /** "1.200.000 ₫" / "Liên hệ tư vấn" / "Contact us for pricing". */
   priceLabel: string;
   priceIsContact: boolean;
+  /** Small kicker above a published price. */
+  priceFromText: string;
+  /** Action that opens the tour detail consultation form with the tour prefilled. */
+  consultHref: string;
+  consultText: string;
   /** Original/list price, crossed out. Null when there is no valid discount. */
   priceOriginalLabel: string | null;
   priceOriginalAria: string | null;
@@ -44,6 +48,8 @@ export type TourCardModel = {
   tags: readonly string[];
   /** Editorial pick pill; null hides it. */
   badge: string | null;
+  /** Default badge for the horizontal spotlight card. */
+  featuredLabel: string;
   image?: AssetImageInput;
   /** Small captions, resolved for the locale. */
   referencePriceText: string;
@@ -67,8 +73,13 @@ export function toTourCard(tour: Tour, locale: Locale): TourCardModel {
     summary: tour.summary,
     durationLabel: formatDuration(tour.duration, locale),
     durationDays: tour.duration.days,
-    priceLabel: formatPriceFrom(tour.priceFrom, locale),
+    priceLabel: tour.priceFrom
+      ? formatMoney(tour.priceFrom, locale)
+      : m.common.contactForPricing,
     priceIsContact: !hasPublishedPrice(tour.priceFrom),
+    priceFromText: m.common.priceLabelFrom,
+    consultHref: `${localizePath(locale, `/tour/${tour.slug}`)}#tu-van`,
+    consultText: m.consult.eyebrow,
     priceOriginalLabel: originalLabel,
     priceOriginalAria: originalLabel
       ? `${m.common.originalPrice}: ${originalLabel}`
@@ -89,8 +100,9 @@ export function toTourCard(tour: Tour, locale: Locale): TourCardModel {
     highlights: tour.highlights.slice(0, 3),
     tags: tour.tags,
     badge: tour.badge || null,
+    featuredLabel: m.common.featuredTour,
     image: tour.images[0],
-    referencePriceText: m.common.priceReference,
+    referencePriceText: m.common.priceLabelContact,
     viewDetailsText: m.common.viewDetails,
   };
 }

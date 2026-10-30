@@ -10,6 +10,7 @@ import { handle, jsonBody, reply } from "@/server/cms/http";
 import { z } from "zod";
 import { tours } from "@/content";
 import { heroPhotos } from "@/domain/home-hero";
+import { CUSTOMER_STORIES_MEDIA } from "@/features/home/customer-stories-demo";
 import { mediaUsage } from "@/server/media/usage";
 const directory = () =>
   process.env.CMS_UPLOAD_DIR ?? path.join(cmsDataDir(), "uploads");
@@ -54,6 +55,10 @@ export async function GET(request: Request) {
         name: photo.src.split("/").pop(),
         src: photo.src,
         alt: photo.alt,
+        original: true,
+      })),
+      ...CUSTOMER_STORIES_MEDIA.map((item) => ({
+        ...item,
         original: true,
       })),
     ]);

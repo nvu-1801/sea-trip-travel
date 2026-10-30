@@ -105,6 +105,41 @@ try {
     .waitFor();
   await page.getByRole("button", { name: /Chỉnh sửa/ }).first().waitFor();
   check("admin login works with no default password", true);
+  const sidebarLabels = await page
+    .locator("#adm-sidebar nav .adm-nav-text")
+    .allTextContents();
+  check(
+    "sidebar follows the Studio content order",
+    JSON.stringify(sidebarLabels) ===
+      JSON.stringify([
+        "Tổng quan",
+        "Kiểm tra hoạt động",
+        "Sức khỏe website",
+        "Trang chủ",
+        "Giao diện",
+        "Tour du lịch",
+        "Cẩm nang",
+        "Danh mục",
+        "Điểm đến",
+        "Thư viện ảnh",
+        "Khách hàng & đối tác",
+        "Bản dịch tiếng Anh",
+        "Nội dung VI / EN",
+        "Yêu cầu tư vấn",
+        "Tài chính tour",
+        "Website & footer",
+        "Bảo mật",
+      ]),
+  );
+  const sidebarWidths = await page
+    .locator("#adm-sidebar nav button, #adm-sidebar .adm-nav-group")
+    .evaluateAll((elements) =>
+      [...new Set(elements.map((element) => element.getBoundingClientRect().width))],
+    );
+  check(
+    "sidebar rows and group rules share one width",
+    sidebarWidths.length === 1,
+  );
   const auth = await (
     await context.request.get(`${base}/api/admin/auth`)
   ).json();
@@ -597,7 +632,13 @@ try {
     tours.flatMap((row) => row.data.images.map((photo) => photo.src)).filter(Boolean),
   );
   const originalPhotos = new Set(
-    library.filter((item) => item.original && !item.id.startsWith("hero:"))
+    library
+      .filter(
+        (item) =>
+          item.original &&
+          !item.id.startsWith("hero:") &&
+          !item.id.startsWith("customer-"),
+      )
       .map((item) => item.src),
   );
   check(
@@ -766,7 +807,7 @@ try {
   await page.getByRole("button", { name: "Lưu bản nháp", exact: true }).click();
   await page
     .getByRole("status")
-    .filter({ hasText: "Đã lưu thay đổi" })
+    .filter({ hasText: /Đã lưu .+/ })
     .waitFor();
   check("structured editor saves draft via browser", true);
   await page
@@ -1015,27 +1056,40 @@ try {
     .waitFor();
   await page.getByText("Doanh thu thực thu", { exact: true }).waitFor();
   check("finance tab renders its cash-flow KPIs", true);
+  check(
+    "finance uses the Studio calendar instead of native date inputs",
+    (await page.locator('.adm-fin input[type="date"]').count()) === 0,
+  );
+  const financeDate = page
+    .locator(".adm-fin-toolbar-filters .adm-date-trigger")
+    .first();
+  await financeDate.click();
+  await page.locator(".adm-date-pop").waitFor();
+  check("finance calendar opens as a themed popover", true);
+  await page.keyboard.press("Escape");
+  await page.locator(".adm-date-pop").waitFor({ state: "hidden" });
+  check("finance calendar closes with Escape", true);
   await page.getByRole("button", { name: "Tạo hồ sơ tour" }).click();
   const financeDialog = page.getByRole("dialog");
   await financeDialog.waitFor();
   const tourSelect = financeDialog.getByLabel(/^Tour/);
   await tourSelect.selectOption({ index: 1 });
   await financeDialog
-    .getByLabel("Giá bán thực tế (VND)")
+    .getByLabel(/^Giá bán thực tế/)
     .fill("12000000");
   await financeDialog
     .getByRole("button", { name: "Tạo hồ sơ", exact: true })
     .click();
   await page.getByText("Chi tiết hồ sơ", { exact: true }).waitFor();
   check("finance creates a booking and opens its detail", true);
-  await financeDialog.getByLabel("Số tiền (VND)").fill("3000000");
+  await financeDialog.getByLabel(/^Số tiền/).fill("3000000");
   await financeDialog
     .getByRole("button", { name: "Thêm giao dịch" })
     .click();
   await financeDialog.getByText("3.000.000 ₫", { exact: false }).first().waitFor();
   check("finance records a receipt and updates the detail", true);
   await financeDialog.getByRole("button", { name: "Sửa", exact: true }).first().click();
-  await financeDialog.getByLabel("Số tiền (VND)").fill("4000000");
+  await financeDialog.getByLabel(/^Số tiền/).fill("4000000");
   await financeDialog
     .getByRole("button", { name: "Cập nhật giao dịch" })
     .click();
@@ -1071,7 +1125,7 @@ try {
   await page.getByRole("button", { name: "Lưu bản nháp", exact: true }).click();
   await page
     .getByRole("status")
-    .filter({ hasText: "Đã lưu thay đổi" })
+    .filter({ hasText: /Đã lưu .+/ })
     .waitFor();
   check("article block editor supports headings without JSON", true);
 

@@ -19,6 +19,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Reveal } from "@/components/ui/reveal";
+import type { MaskedLine } from "@/components/motion/word-reveal";
 import { PageHero } from "@/features/shared/page-hero";
 import { CategoryCard } from "./category-card";
 import { TourExplorer } from "./tour-explorer";
@@ -27,6 +28,7 @@ import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { categoryTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
+import { isResolvedTranslationComplete } from "@/lib/translation-coverage";
 import { absoluteUrl } from "@/lib/seo";
 import type { Locale } from "@/i18n/config";
 import { format, getMessages, plural } from "@/i18n/server";
@@ -40,6 +42,20 @@ import { CATEGORY_SEO } from "@/content/seo";
  * `categoryPath` is passed explicitly by each route file rather than read from
  * params, which keeps every category page a fully static prerender.
  */
+
+/**
+ * Put the duration on its own line — "Tour Quy Nhơn" / "1 Ngày" — so the serif
+ * headline never breaks inside the place name ("Tour Quy" / "Nhơn 1 Ngày").
+ * English names ("Quy Nhon 1-Day Tours") and the parent categories (which have
+ * no duration) return a single line and wrap naturally.
+ */
+function heroTitleLines(name: string): MaskedLine[] {
+  const match = name.match(
+    /^(.*\S)\s+((?:nhiều|dài|multi|several|\d+)\s*[- ]?\s*(?:ngày|đêm|day|night)s?.*)$/i,
+  );
+  if (!match) return [{ text: name }];
+  return [{ text: match[1] }, { text: match[2], emphasis: true }];
+}
 
 function crumbsFor(path: string, locale: Locale): Crumb[] {
   const m = getMessages(locale);
@@ -133,9 +149,9 @@ export function CategoryPageView({
       );
 
   const descendantCount = getCategoryAndDescendantIds(category.id).length;
-  const indexable = isIndexable(
-    categoryTranslationStatus(category.id, locale),
-    locale,
+  const fullyTranslated = isResolvedTranslationComplete(
+    "categories",
+    category,
   );
 
   const dayValues = tours.map((tour) => tour.durationDays);
@@ -190,9 +206,16 @@ export function CategoryPageView({
         className="stt-tour-category-hero"
         crumbs={crumbs}
         crumbsLabel={m.common.breadcrumbAria}
-        notice={indexable ? null : <TranslationNotice locale={locale} />}
+        notice={
+          fullyTranslated ? null : (
+            <TranslationNotice
+              locale={locale}
+              viHref={localizePath("vi", category.path)}
+            />
+          )
+        }
         eyebrow={eyebrow}
-        titleLines={[{ text: category.name }]}
+        titleLines={heroTitleLines(category.name)}
         description={category.description}
         actions={
           <>

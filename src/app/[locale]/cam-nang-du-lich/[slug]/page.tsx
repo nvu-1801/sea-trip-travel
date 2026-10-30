@@ -28,6 +28,7 @@ import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { articleTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
+import { isResolvedTranslationComplete } from "@/lib/translation-coverage";
 import { getMessages, plural } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { resolveLocaleFromParams } from "@/i18n/params";
@@ -93,10 +94,7 @@ export default async function ArticlePage({
     notFound();
   }
 
-  const indexable = isIndexable(
-    articleTranslationStatus(article.id, locale),
-    locale,
-  );
+  const fullyTranslated = isResolvedTranslationComplete("articles", article);
 
   const relatedTours = article.relatedTourSlugs
     .map((tourSlug) => getTourBySlug(tourSlug, locale))
@@ -135,7 +133,12 @@ export default async function ArticlePage({
         ])}
       />
 
-      {indexable ? null : <TranslationNotice locale={locale} />}
+      {fullyTranslated ? null : (
+        <TranslationNotice
+          locale={locale}
+          viHref={localizePath("vi", articlePath)}
+        />
+      )}
 
       <Breadcrumbs items={crumbs} ariaLabel={m.common.breadcrumbAria} />
 

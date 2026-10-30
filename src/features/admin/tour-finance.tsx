@@ -8,6 +8,8 @@ import type {
   PaymentMethod,
 } from "@/domain/tour-finance";
 import { AdminIcon } from "./admin-icons";
+import { AdminDatePicker } from "./admin-date-picker";
+import { MoneyTextInput } from "./money-input";
 import { ConfirmModal, type ConfirmRequest } from "./notify";
 
 type Option = { value: string; label: string };
@@ -986,34 +988,32 @@ export function TourFinance({
         </div>
 
         <div className="adm-fin-toolbar-filters">
-          <label className="adm-fin-field">
+          <div className="adm-fin-field">
             <span>Từ ngày</span>
-            <input
-              type="date"
+            <AdminDatePicker
               value={from}
-              onChange={(event) => {
-                setFrom(event.target.value);
+              onChange={(value) => {
+                setFrom(value);
                 setPage(1);
               }}
             />
             <small className="adm-fin-field-hint" aria-hidden="true">
               {weekdayLabel(from)}
             </small>
-          </label>
-          <label className="adm-fin-field">
+          </div>
+          <div className="adm-fin-field">
             <span>Đến trước ngày</span>
-            <input
-              type="date"
+            <AdminDatePicker
               value={to}
-              onChange={(event) => {
-                setTo(event.target.value);
+              onChange={(value) => {
+                setTo(value);
                 setPage(1);
               }}
             />
             <small className="adm-fin-field-hint" aria-hidden="true">
               {weekdayLabel(to)}
             </small>
-          </label>
+          </div>
           <label className="adm-fin-field">
             <span>Tour</span>
             <select
@@ -1288,32 +1288,34 @@ export function TourFinance({
             ) : null}
             <div className="adm-fin-form-grid">
               <label className="adm-fin-field">
-                <span>Số tiền (VND)</span>
-                <input
-                  inputMode="numeric"
+                <span>Số tiền</span>
+                <MoneyTextInput
                   value={general.amount}
-                  onChange={(event) =>
+                  onValueChange={(digits) =>
                     setGeneral((current) => ({
                       ...current,
-                      amount: event.target.value,
+                      amount: digits,
                     }))
                   }
-                  placeholder="VD: 500000"
+                  placeholder="VD: 500.000"
                   disabled={busy}
+                  aria-describedby="fin-general-amount-hint"
                 />
-                <small className="adm-fin-field-hint" aria-hidden="true">
+                <small
+                  className="adm-fin-field-hint"
+                  id="fin-general-amount-hint"
+                >
                   {amountHint(general.amount)}
                 </small>
               </label>
               <label className="adm-fin-field">
                 <span>Ngày chi</span>
-                <input
-                  type="date"
+                <AdminDatePicker
                   value={general.date}
-                  onChange={(event) =>
+                  onChange={(value) =>
                     setGeneral((current) => ({
                       ...current,
-                      date: event.target.value,
+                      date: value,
                     }))
                   }
                   disabled={busy}
@@ -1472,17 +1474,15 @@ export function TourFinance({
               </label>
               <label className="adm-fin-field">
                 <span>Ngày đi *</span>
-                <input
-                  type="date"
+                <AdminDatePicker
                   value={form.travelDate}
-                  onChange={(event) =>
+                  onChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      travelDate: event.target.value,
+                      travelDate: value,
                     }))
                   }
                   disabled={busy}
-                  required
                 />
                 <small className="adm-fin-field-hint" aria-hidden="true">
                   {weekdayLabel(form.travelDate)}
@@ -1540,20 +1540,20 @@ export function TourFinance({
                 </select>
               </label>
               <label className="adm-fin-field">
-                <span>Giá bán thực tế (VND)</span>
-                <input
-                  inputMode="numeric"
+                <span>Giá bán thực tế</span>
+                <MoneyTextInput
                   value={form.saleAmount}
-                  onChange={(event) =>
+                  onValueChange={(digits) =>
                     setForm((current) => ({
                       ...current,
-                      saleAmount: event.target.value,
+                      saleAmount: digits,
                     }))
                   }
-                  placeholder="VD: 12000000"
+                  placeholder="VD: 12.000.000"
                   disabled={busy}
+                  aria-describedby="fin-form-sale-hint"
                 />
-                <small className="adm-fin-field-hint" aria-hidden="true">
+                <small className="adm-fin-field-hint" id="fin-form-sale-hint">
                   {amountHint(form.saleAmount)}
                 </small>
               </label>
@@ -1676,13 +1676,12 @@ export function TourFinance({
                   </label>
                   <label className="adm-fin-field">
                     <span>Ngày đi</span>
-                    <input
-                      type="date"
+                    <AdminDatePicker
                       value={edit.travelDate}
-                      onChange={(event) =>
+                      onChange={(value) =>
                         setEdit((current) => ({
                           ...current,
-                          travelDate: event.target.value,
+                          travelDate: value,
                         }))
                       }
                       disabled={busy}
@@ -1708,19 +1707,22 @@ export function TourFinance({
                     />
                   </label>
                   <label className="adm-fin-field">
-                    <span>Giá bán (VND)</span>
-                    <input
-                      inputMode="numeric"
+                    <span>Giá bán</span>
+                    <MoneyTextInput
                       value={edit.saleAmount}
-                      onChange={(event) =>
+                      onValueChange={(digits) =>
                         setEdit((current) => ({
                           ...current,
-                          saleAmount: event.target.value,
+                          saleAmount: digits,
                         }))
                       }
                       disabled={busy}
+                      aria-describedby="fin-edit-sale-hint"
                     />
-                    <small className="adm-fin-field-hint" aria-hidden="true">
+                    <small
+                      className="adm-fin-field-hint"
+                      id="fin-edit-sale-hint"
+                    >
                       {amountHint(edit.saleAmount)}
                     </small>
                   </label>
@@ -1798,32 +1800,34 @@ export function TourFinance({
                       </select>
                     </label>
                     <label className="adm-fin-field">
-                      <span>Số tiền (VND)</span>
-                      <input
-                        inputMode="numeric"
+                      <span>Số tiền</span>
+                      <MoneyTextInput
                         value={entry.amount}
-                        onChange={(event) =>
+                        onValueChange={(digits) =>
                           setEntry((current) => ({
                             ...current,
-                            amount: event.target.value,
+                            amount: digits,
                           }))
                         }
-                        placeholder="VD: 5000000"
+                        placeholder="VD: 5.000.000"
                         disabled={busy}
+                        aria-describedby="fin-entry-amount-hint"
                       />
-                      <small className="adm-fin-field-hint" aria-hidden="true">
+                      <small
+                        className="adm-fin-field-hint"
+                        id="fin-entry-amount-hint"
+                      >
                         {amountHint(entry.amount)}
                       </small>
                     </label>
                     <label className="adm-fin-field">
                       <span>Ngày</span>
-                      <input
-                        type="date"
+                      <AdminDatePicker
                         value={entry.date}
-                        onChange={(event) =>
+                        onChange={(value) =>
                           setEntry((current) => ({
                             ...current,
-                            date: event.target.value,
+                            date: value,
                           }))
                         }
                         disabled={busy}

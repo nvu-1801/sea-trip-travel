@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ImageField, type UploadedImage } from "./image-picker";
+import { MoneyTextInput } from "./money-input";
 import type { TourIssue } from "@/domain/tour-rules";
 import { describeTourIssue } from "@/domain/tour-rules";
 
@@ -92,14 +93,21 @@ export function Field({
       )}
       {children}
       {error ? (
-        <p className="adm-field-error" role="alert">
+        <p className="adm-field-error" id={id ? `${id}-error` : undefined} role="alert">
           {error}
         </p>
       ) : hint ? (
-        <small className="adm-hint">{hint}</small>
+        <small className="adm-hint" id={id ? `${id}-hint` : undefined}>
+          {hint}
+        </small>
       ) : null}
       {counter ? (
-        <small className="adm-hint adm-counter">{counter}</small>
+        <small
+          className="adm-hint adm-counter"
+          id={id ? `${id}-counter` : undefined}
+        >
+          {counter}
+        </small>
       ) : null}
     </div>
   );
@@ -137,7 +145,13 @@ export function TextField({
   rows?: number;
 }) {
   const id = fieldId(path);
-  const describedBy = error ? `${id}-error` : undefined;
+  const describedBy =
+    [
+      error ? `${id}-error` : !error && hint ? `${id}-hint` : null,
+      maxLength ? `${id}-counter` : null,
+    ]
+      .filter(Boolean)
+      .join(" ") || undefined;
   const common = {
     id,
     value,
@@ -190,6 +204,7 @@ export function NumberField({
   max,
   disabled = false,
   suffix,
+  ariaLabel,
 }: {
   path: string;
   label: string;
@@ -202,28 +217,50 @@ export function NumberField({
   max?: number;
   disabled?: boolean;
   suffix?: string;
+  /** Extra context for repeated labels such as “Giá bán” in each package. */
+  ariaLabel?: string;
 }) {
   const id = fieldId(path);
+  const describedBy =
+    [error ? `${id}-error` : !error && hint ? `${id}-hint` : null]
+      .filter(Boolean)
+      .join(" ") || undefined;
+  const input = (
+    <input
+      id={id}
+      type="number"
+      inputMode="numeric"
+      value={Number.isFinite(value) ? value : 0}
+      min={min}
+      max={max}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy}
+      data-tour-error={error ? "true" : undefined}
+      onBlur={onBlur}
+      onChange={(event) =>
+        onChange(event.target.value === "" ? 0 : Number(event.target.value))
+      }
+    />
+  );
+  const moneyInput = (
+    <MoneyTextInput
+      id={id}
+      value={Number.isFinite(value) ? value : 0}
+      onValueChange={(digits) => onChange(digits ? Number(digits) : 0)}
+      suffix={suffix}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy}
+      data-tour-error={error ? "true" : undefined}
+      onBlur={onBlur}
+    />
+  );
   return (
     <Field id={id} label={label} hint={hint} error={error}>
-      <div className="adm-number-wrap">
-        <input
-          id={id}
-          type="number"
-          inputMode="numeric"
-          value={Number.isFinite(value) ? value : 0}
-          min={min}
-          max={max}
-          disabled={disabled}
-          aria-invalid={error ? true : undefined}
-          data-tour-error={error ? "true" : undefined}
-          onBlur={onBlur}
-          onChange={(event) =>
-            onChange(event.target.value === "" ? 0 : Number(event.target.value))
-          }
-        />
-        {suffix ? <span className="adm-number-suffix">{suffix}</span> : null}
-      </div>
+      {suffix ? moneyInput : <div className="adm-number-wrap">{input}</div>}
     </Field>
   );
 }

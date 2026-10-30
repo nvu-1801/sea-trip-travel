@@ -23,6 +23,7 @@ import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { articleTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
+import { isResolvedTranslationComplete } from "@/lib/translation-coverage";
 import { getMessages, plural } from "@/i18n/server";
 import { localizePath } from "@/i18n/routing";
 import { resolveLocaleFromParams } from "@/i18n/params";
@@ -56,9 +57,12 @@ export default async function GuidesPage({ params }: PageProps<"/[locale]">) {
   const featured = getFeaturedArticle(locale);
   const rest = getNonFeaturedArticles(locale);
   const categories = getTopLevelCategories(locale);
-  const indexable = featured
-    ? isIndexable(articleTranslationStatus(featured.id, locale), locale)
-    : locale === "vi";
+  const allArticles = [...(featured ? [featured] : []), ...rest];
+  const allTranslated =
+    locale === "vi" ||
+    allArticles.every((article) =>
+      isResolvedTranslationComplete("articles", article),
+    );
 
   const crumbs = [
     { label: m.common.home, href: localizePath(locale, "/") },
@@ -91,7 +95,14 @@ export default async function GuidesPage({ params }: PageProps<"/[locale]">) {
       <PageHero
         crumbs={crumbs}
         crumbsLabel={m.common.breadcrumbAria}
-        notice={indexable ? null : <TranslationNotice locale={locale} />}
+        notice={
+          allTranslated ? null : (
+            <TranslationNotice
+              locale={locale}
+              viHref={localizePath("vi", ROUTES.guides)}
+            />
+          )
+        }
         eyebrow={m.guides.heroEyebrow}
         titleLines={[
           { text: m.guides.heroTitleLine1 },

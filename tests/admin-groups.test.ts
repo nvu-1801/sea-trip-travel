@@ -5,9 +5,12 @@ import {
   coverSrcOf,
   durationBadgeOf,
   durationGroupOf,
+  adminTourPriceOf,
+  formatAdminMoney,
   lineGroupOf,
   priceLabelOf,
   qnpyCategoryIds,
+  tourEditorHeading,
   trashDaysLeft,
 } from "../src/lib/admin-tour-groups";
 
@@ -68,4 +71,83 @@ test("price and cover helpers read tour records defensively", () => {
   assert.equal(coverSrcOf({ images: [{ src: "/images/x.webp" }] }), "/images/x.webp");
   assert.equal(coverSrcOf({ images: [] }), null);
   assert.equal(coverSrcOf({}), null);
+});
+
+test("admin prices reuse the public discount derivation", () => {
+  const priced = adminTourPriceOf({
+    priceFrom: { amount: 2440000 },
+    originalPriceFrom: { amount: 3050000 },
+    pricingOptions: [],
+  });
+  assert.deepEqual(priced, {
+    contact: false,
+    current: 2440000,
+    original: 3050000,
+    percent: 20,
+    hiddenPackages: 0,
+  });
+  assert.equal(formatAdminMoney(2440000), "2.440.000 ₫");
+
+  // Package rows win over the legacy top-level original price, exactly like
+  // the public card. The package tied to the "from" price supplies the badge.
+  const packaged = adminTourPriceOf({
+    priceFrom: { amount: 2440000 },
+    originalPriceFrom: { amount: 9990000 },
+    pricingOptions: [
+      {
+        id: "pkg_a",
+        label: "Tiêu chuẩn",
+        adultPrice: 2440000,
+        childPrice: 0,
+        originalAdultPrice: 3050000,
+      },
+    ],
+  });
+  assert.equal(packaged.original, 3050000);
+  assert.equal(packaged.percent, 20);
+});
+
+test("contact-priced tours never become 0 ₫ in the admin list", () => {
+  assert.deepEqual(adminTourPriceOf({ priceFrom: null }), {
+    contact: true,
+    current: null,
+    original: null,
+    percent: null,
+    hiddenPackages: 0,
+  });
+  assert.deepEqual(adminTourPriceOf({ priceFrom: { amount: 0 } }), {
+    contact: true,
+    current: null,
+    original: null,
+    percent: null,
+    hiddenPackages: 0,
+  });
+  assert.equal(priceLabelOf({ priceFrom: { amount: 0 } }), null);
+
+  // Packages saved while the tour is still in contact mode are counted so the
+  // Studio list can explain why no price is shown.
+  assert.deepEqual(
+    adminTourPriceOf({
+      priceFrom: null,
+      pricingOptions: [
+        { id: "pkg_a", adultPrice: 2440000 },
+        { id: "pkg_b", adultPrice: 0 },
+      ],
+    }),
+    {
+      contact: true,
+      current: null,
+      original: null,
+      percent: null,
+      hiddenPackages: 1,
+    },
+  );
+});
+
+test("the editor heading distinguishes new, unnamed and named tours", () => {
+  assert.equal(tourEditorHeading({ title: "Quy Nhơn 4 ngày 3 đêm" }, false), "Quy Nhơn 4 ngày 3 đêm");
+  assert.equal(tourEditorHeading({ title: "" }, true), "Tạo tour mới");
+  assert.equal(tourEditorHeading({ title: "Nội dung mới" }, true), "Tạo tour mới");
+  assert.equal(tourEditorHeading({ title: "" }, false), "Tour chưa có tên");
+  assert.equal(tourEditorHeading({ title: "  " }, false), "Tour chưa có tên");
 });

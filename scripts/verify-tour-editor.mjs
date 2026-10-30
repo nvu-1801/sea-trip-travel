@@ -123,8 +123,34 @@ try {
   const title = page.locator("#tour-field-title");
   await title.waitFor();
   const originalTitle = await title.inputValue();
+  check(
+    "editor masthead shows the opened tour name",
+    (await page.locator(".adm-masthead h1").innerText()).trim() ===
+      originalTitle,
+  );
+  check(
+    "editor masthead names the section and edit mode",
+    (await page.locator(".adm-masthead-label").innerText()).includes(
+      "Tour du lịch / Sửa tour",
+    ),
+  );
+  check(
+    "editor topbar also shows the opened tour name",
+    (await page.locator(".adm-topbar-section").innerText()).trim() ===
+      originalTitle,
+  );
   const draftTitle = "Tour đang sửa xem trước chưa lưu";
   await title.fill(draftTitle);
+  await page.waitForFunction(
+    (expected) =>
+      document.querySelector(".adm-masthead h1")?.textContent?.trim() ===
+      expected,
+    draftTitle,
+  );
+  check(
+    "editor masthead follows a title being typed",
+    (await page.locator(".adm-masthead h1").innerText()).trim() === draftTitle,
+  );
   await page
     .getByRole("button", { name: "Xem trước đang sửa", exact: true })
     .click();
@@ -294,12 +320,22 @@ try {
     "cancel restores saved content and keeps editor open",
     (await title.inputValue()) === originalTitle,
   );
+  check(
+    "editor masthead follows the restored title",
+    (await page.locator(".adm-masthead h1").innerText()).trim() ===
+      originalTitle,
+  );
   await title.fill("Tour thử lưu nháp từ thanh bám cuộn");
   await page.getByRole("button", { name: "Lưu bản nháp", exact: true }).click();
   await page
-    .getByRole("button", { name: /Chỉnh sửa/ })
-    .first()
+    .getByRole("status")
+    .filter({ hasText: /Đã lưu .+/ })
     .waitFor();
+  check(
+    "saving keeps the editor open and names the updated tour",
+    (await page.locator(".adm-masthead h1").innerText()).trim() ===
+      "Tour thử lưu nháp từ thanh bám cuộn",
+  );
   const saved = await (
     await context.request.get(`${base}/api/admin/content/tours`)
   ).json();
@@ -307,6 +343,17 @@ try {
     "sticky save persists only a draft and preserves public snapshot",
     saved.find((r) => r.id === editedTour.id).data.title ===
       "Tour thử lưu nháp từ thanh bám cuộn",
+  );
+  await page.getByRole("button", { name: /Danh sách/ }).click();
+  await page
+    .getByRole("button", { name: /Chỉnh sửa/ })
+    .first()
+    .waitFor();
+  await page.locator(".adm-tour-card").first().waitFor();
+  check(
+    "returning to the list restores the masthead to Tour du lịch",
+    (await page.locator(".adm-masthead h1").innerText()).trim() ===
+      "Tour du lịch",
   );
   await visitor.goto(`${base}/tour/${editedTour.data.slug}`);
   await visitor

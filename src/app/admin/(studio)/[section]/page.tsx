@@ -6,12 +6,14 @@ import { isAdminSection } from "@/lib/admin-routes";
 
 const LABELS: Record<string, string> = {
   home: "Trang chủ",
+  customers: "Khách hàng & dấu ấn hành trình",
   theme: "Giao diện",
   tours: "Tour du lịch",
   articles: "Cẩm nang",
   categories: "Danh mục",
   destinations: "Điểm đến",
   media: "Thư viện ảnh",
+  translations: "Bản dịch tiếng Anh",
   messages: "Nội dung VI / EN",
   settings: "Website & footer",
   leads: "Yêu cầu tư vấn",

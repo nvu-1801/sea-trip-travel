@@ -230,7 +230,7 @@ try {
     .click();
   await admin
     .getByRole("status")
-    .filter({ hasText: "Đã lưu thay đổi" })
+    .filter({ hasText: /Đã lưu .+/ })
     .waitFor();
   const edited = (await current()).data;
   check(
