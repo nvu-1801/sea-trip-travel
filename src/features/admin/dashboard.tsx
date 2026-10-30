@@ -36,6 +36,7 @@ import {
 } from "./notify";
 import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
 import { LEAD_TRASH_RETENTION_DAYS } from "@/lib/lead-trash";
+import { buildLeadGmailComposeHref } from "@/lib/gmail-compose";
 import { mediaSelectOptions } from "@/lib/admin-media-options";
 import { adminSectionHref } from "@/lib/admin-routes";
 import {
@@ -454,11 +455,11 @@ const GUIDES: Record<string, Guide> = {
   },
   leads: {
     purpose:
-      "Chăm sóc yêu cầu tư vấn: trạng thái, ghi chú nội bộ, gửi lại email, thùng rác.",
+      "Chăm sóc yêu cầu tư vấn: trả lời bằng Gmail, trạng thái, ghi chú nội bộ, gửi lại thông báo cho sale, thùng rác.",
     steps: [
       "Tìm theo tên hoặc số điện thoại ở ô tìm kiếm.",
       "Đổi trạng thái (Mới/Đã liên hệ/Tiềm năng/Đã chốt/Chưa phù hợp) rồi bấm Lưu chăm sóc.",
-      "Ghi chú nội bộ được mã hóa; chỉ bấm Gửi lại email sau khi SMTP đã cấu hình đúng.",
+      "Ghi chú nội bộ được mã hóa; bấm Trả lời bằng Gmail để soạn thư cho khách, chỉ bấm Gửi lại thông báo cho sale sau khi SMTP đã cấu hình đúng.",
       "Xóa dữ liệu khách sẽ chuyển vào Thùng rác 60 ngày — khôi phục được trước khi bị xóa vĩnh viễn.",
     ],
     required:
@@ -3262,6 +3263,7 @@ export function Dashboard({
                 return (
                   <div className="adm-lead-list">
                     {filtered.map((lead) => {
+                      const fullName = textOf(lead.data.fullName);
                       const name = String(
                         lead.data.fullName ?? lead.data.name ?? "Khách mới",
                       );
@@ -3283,6 +3285,11 @@ export function Dashboard({
                         lead.data.locale === "en" ? "English" : "Tiếng Việt";
                       const tourSlug = textOf(lead.data.tourSlug);
                       const tourTitle = lead.tourTitle || tourSlug;
+                      const gmailHref = buildLeadGmailComposeHref({
+                        email,
+                        fullName,
+                        tourTitle: lead.tourTitle,
+                      });
                       const tourHref =
                         lead.tourHref === undefined
                           ? tourSlug
@@ -3337,21 +3344,48 @@ export function Dashboard({
                                       Chưa có SĐT
                                     </span>
                                   )}
-                                  {email ? (
-                                    <a
-                                      className="adm-lead-chip"
-                                      href={`mailto:${email}`}
-                                    >
-                                      <AdminIcon name="mail" size={13} />
-                                      <span>{email}</span>
-                                    </a>
+                                  {gmailHref ? (
+                                    <>
+                                      <a
+                                        className="adm-lead-chip"
+                                        href={gmailHref}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title={`Mở Gmail để trả lời ${email}`}
+                                      >
+                                        <AdminIcon name="mail" size={13} />
+                                        <span>{email}</span>
+                                      </a>
+                                      <a
+                                        className="adm-lead-chip adm-lead-gmail"
+                                        href={gmailHref}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title="Mở bản soạn thư Gmail cho khách"
+                                      >
+                                        <AdminIcon name="mail" size={13} />
+                                        <span>Trả lời bằng Gmail</span>
+                                      </a>
+                                    </>
                                   ) : (
-                                    <span
-                                      className="adm-lead-chip"
-                                      data-muted="true"
-                                    >
-                                      Chưa có email
-                                    </span>
+                                    <>
+                                      {email && (
+                                        <span
+                                          className="adm-lead-chip"
+                                          data-muted="true"
+                                          title="Email khách chưa hợp lệ nên chưa thể mở Gmail"
+                                        >
+                                          <AdminIcon name="mail" size={13} />
+                                          <span>{email}</span>
+                                        </span>
+                                      )}
+                                      <span
+                                        className="adm-lead-chip"
+                                        data-muted="true"
+                                      >
+                                        Khách chưa cung cấp email
+                                      </span>
+                                    </>
                                   )}
                                 </div>
                               </div>
@@ -3593,12 +3627,13 @@ export function Dashboard({
                                     await load();
                                     pushToast(
                                       "success",
-                                      "Đã gửi lại email thông báo.",
+                                      "Đã gửi lại thông báo cho sale.",
                                     );
                                   })
                                 }
+                                title="Gửi lại email thông báo nội bộ cho sale (không phải trả lời khách)"
                               >
-                                Gửi lại email
+                                Gửi lại thông báo cho sale
                               </button>
                               <button
                                 className="adm-danger-ghost"

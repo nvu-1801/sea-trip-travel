@@ -187,7 +187,7 @@ Workspace / Zoho / email theo domain) và không phát sinh chi phí mới. Ki�
 │  Mã yêu cầu #STT-20261013-6474                            │
 │  Tiếp nhận lúc 13/10/2026 lúc 11:31 (GMT+7)               │
 │                                                           │
-│  [ Gọi 0987 654 321 ]   ( Trả lời email )                 │
+│  [ Gọi 0987 654 321 ]   ( Trả lời bằng Gmail )            │
 │  ^ nút chữ, không phụ thuộc ảnh                           │
 │                                                           │
 │  THÔNG TIN KHÁCH                                          │
@@ -219,8 +219,9 @@ Workspace / Zoho / email theo domain) và không phát sinh chi phí mới. Ki�
 | Không JavaScript / form | Không có `<script>`, không có `<form>` |
 | Escape dữ liệu khách | `escapeHtml()` trên **mọi** giá trị; không nội suy HTML thô |
 | `href` an toàn | `safeTelHref`, `safeMailtoHref`, `isSafeSiteHref` — kiểm tra lại trong template trước khi ghi `href` |
+| Trả lời khách bằng Gmail | `buildLeadGmailComposeHref()` mở bản soạn thư trong tab mới; website không gửi thay sale, không cần mật khẩu/OAuth Gmail |
 | `From` thuộc domain xác minh | `MAIL_FROM_EMAIL` + SPF/DKIM/DMARC |
-| `Reply-To` chỉ từ email hợp lệ | Chỉ set khi email của khách qua được regex |
+| `Reply-To` chỉ từ email hợp lệ | Chỉ set khi email của khách qua được regex; nút Gmail không thay thế `Reply-To` của ứng dụng email |
 | Không dùng email khách làm `From` | `From` luôn là `MAIL_FROM_*,` |
 | Có plain-text fallback | `buildLeadNotificationText()` |
 | Preheader | Chuỗi ẩn, hiển thị ở phần xem trước của hộp thư |

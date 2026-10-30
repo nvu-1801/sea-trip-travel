@@ -82,7 +82,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "media-update": "Sửa mô tả ảnh",
   "media-delete": "Xóa ảnh",
   "lead-update": "Cập nhật yêu cầu tư vấn",
-  "lead-mail-retry": "Gửi lại email tư vấn",
+  "lead-mail-retry": "Gửi lại thông báo cho sale",
   "lead-delete": "Xóa yêu cầu tư vấn",
   "backup-create": "Tạo bản sao lưu",
   "backup-download": "Tải bản sao lưu",

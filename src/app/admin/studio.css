@@ -5039,6 +5039,7 @@ a.adm-image-action:hover {
 .adm-lead-card {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
+  min-width: 0;
   gap: 22px;
   border: 1px solid #f2dde7;
   border-radius: 18px;
@@ -5122,6 +5123,16 @@ a.adm-lead-chip:hover {
   border-style: dashed;
   color: #a08d99;
   font-weight: 500;
+}
+a.adm-lead-gmail {
+  border-color: #f4b3cc;
+  background: #fff1f6;
+  color: #b8004a;
+}
+a.adm-lead-gmail:hover {
+  border-color: #e0005a;
+  background: #ffe3ee;
+  color: #a80044;
 }
 .adm-lead-pill {
   flex: none;
@@ -5413,6 +5424,10 @@ a.adm-lead-tour:hover .adm-lead-tour-go {
   background: #e8f0fe;
   color: #2e5cfa;
 }
+.adm-lead-info,
+.adm-lead-care {
+  min-width: 0;
+}
 .adm-lead-care {
   display: grid;
   gap: 12px;
@@ -5438,12 +5453,14 @@ a.adm-lead-tour:hover .adm-lead-tour-go {
 .adm-lead-actions {
   display: flex;
   flex-wrap: wrap;
+  min-width: 0;
   gap: 8px;
 }
 .adm-lead-actions button {
   flex: 1 1 auto;
+  min-width: 0;
   font-size: 12.5px;
-  white-space: nowrap;
+  white-space: normal;
 }
 .adm-danger-ghost {
   color: #b42318 !important;

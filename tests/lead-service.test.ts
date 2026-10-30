@@ -152,12 +152,52 @@ describe("lead notification email", () => {
     assert.ok(html.includes("mailto:khach%40example.com"));
   });
 
+  it("offers a Gmail compose link addressed to the customer", () => {
+    const html = buildLeadNotificationHtml({
+      lead: makeLead(),
+      tourTitle: "Quy Nhơn – Kỳ Co",
+    });
+    assert.ok(html.includes("Trả lời bằng Gmail"));
+
+    const match = html.match(/href="(https:\/\/mail\.google\.com[^"]+)"/);
+    assert.ok(match, "the notification must contain a Gmail compose link");
+    const href = match[1].replace(/&amp;/g, "&");
+    const url = new URL(href);
+    assert.equal(url.searchParams.get("to"), "khach@example.com");
+    assert.equal(
+      url.searchParams.get("su"),
+      "Sea Trip Travel – Tư vấn Quy Nhơn – Kỳ Co",
+    );
+    const body = url.searchParams.get("body") ?? "";
+    assert.ok(body.startsWith("Chào Nguyễn Văn A,"));
+    assert.ok(body.includes("Trân trọng,"));
+    // Internal-only fields must not leak into a customer-facing draft.
+    assert.ok(!body.includes("STT-20260115-ABCD"));
+    assert.ok(!body.toLowerCase().includes("ghi chú"));
+  });
+
   it("omits the reply action and says so when there is no email", () => {
     const html = buildLeadNotificationHtml({
       lead: makeLead({ email: undefined }),
     });
     assert.ok(!html.includes("mailto:"));
-    assert.match(html, /Khách không để lại email/);
+    assert.ok(!html.includes("mail.google.com"));
+    assert.match(html, /Khách chưa cung cấp email/);
+  });
+
+  it("omits both reply links when the stored email is malformed", () => {
+    const html = buildLeadNotificationHtml({
+      lead: makeLead({ email: "not-an-email" }),
+    });
+    assert.ok(!html.includes("mailto:"));
+    assert.ok(!html.includes("mail.google.com"));
+    assert.match(html, /Khách chưa cung cấp email/);
+  });
+
+  it("adds the Gmail link to the plain-text fallback", () => {
+    const text = buildLeadNotificationText({ lead: makeLead() });
+    assert.ok(text.includes("Trả lời bằng Gmail: https://mail.google.com/mail/"));
+    assert.ok(text.includes("to=khach%40example.com"));
   });
 
   it("includes the request code and a Vietnam-time timestamp", () => {

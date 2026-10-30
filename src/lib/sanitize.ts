@@ -1,4 +1,7 @@
 import { siteConfig } from "@/config/runtime-site";
+import { isValidEmailAddress } from "./email-address";
+
+export { isValidEmailAddress };
 
 /**
  * Output-safety helpers.
@@ -33,8 +36,7 @@ export function safeTelHref(phone: string): string | null {
 export function safeMailtoHref(
   email: string | undefined | null,
 ): string | null {
-  if (!email) return null;
-  if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return null;
+  if (!isValidEmailAddress(email)) return null;
   // encodeURIComponent leaves no room for a second header or a scheme break-out.
   return `mailto:${encodeURIComponent(email)}`;
 }
