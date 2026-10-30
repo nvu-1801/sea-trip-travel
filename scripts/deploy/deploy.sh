@@ -34,6 +34,10 @@ if test -n "$previous"; then
   # this pre-deploy copy (and vice versa). These files are never retention-pruned.
   exec 8>"$app_dir/backup.lock"
   if flock -w 600 8; then
+    # VACUUM INTO refuses to overwrite. A retry of the same SHA can leave this
+    # file behind after a failed deploy, so remove it before taking the copy.
+    "${compose[@]}" exec -T -e BACKUP_PATH="$backup" app node -e \
+      'const fs=require("node:fs");try{fs.unlinkSync(process.env.BACKUP_PATH)}catch(error){if(error.code!=="ENOENT")throw error}' </dev/null
     "${compose[@]}" exec -T -e BACKUP_PATH="$backup" app node scripts/admin.mjs backup </dev/null
     cid=$("${compose[@]}" ps -q app </dev/null)
     docker cp "$cid:$backup" "$app_dir/backups/pre-$sha.sqlite"
