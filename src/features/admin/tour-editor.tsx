@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useState,
@@ -479,32 +480,117 @@ export const TourEditor = forwardRef<
     count,
     errors: sectionIssues(key).length,
   }));
+  const navByKey = new Map(nav.map((item) => [item.key, item]));
+  const navGroups: { label: string; keys: TourSectionKey[] }[] = [
+    {
+      label: "Nội dung chính",
+      keys: ["general", "media", "overview", "highlights", "itinerary"],
+    },
+    {
+      label: "Bán & vận hành",
+      keys: ["pricing", "services", "notes", "logistics"],
+    },
+    {
+      label: "Hiển thị & hỗ trợ",
+      keys: ["seo", "translations", "consult", "advanced"],
+    },
+  ];
+  const navKeys = nav.map((item) => item.key).join("|");
+  const [activeSection, setActiveSection] = useState<TourSectionKey | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const sections = navKeys
+      .split("|")
+      .map((key) => document.getElementById(`tour-section-${key}`))
+      .filter((element): element is HTMLElement => Boolean(element));
+    if (!sections.length) return;
+    const update = () => {
+      const main = document.querySelector<HTMLElement>(".adm-main");
+      const stickyOffset =
+        (main
+          ? parseFloat(
+              getComputedStyle(main).getPropertyValue("--adm-edit-offset"),
+            )
+          : 0) || 160;
+      const threshold = Math.max(
+        stickyOffset + 40,
+        Math.round(window.innerHeight * 0.42),
+      );
+      let current = sections[0];
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= threshold) current = section;
+        else break;
+      }
+      setActiveSection(
+        current.id.replace("tour-section-", "") as TourSectionKey,
+      );
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [navKeys]);
 
   return (
     <div className="adm-tour-editor">
       <nav className="adm-tour-nav" aria-label="Các phần nội dung tour">
-        <p className="adm-eyebrow">Nội dung tour</p>
-        {nav.map((item) => (
-          <a
-            key={item.key}
-            href={`#tour-section-${item.key}`}
-            onClick={(event) => {
-              event.preventDefault();
-              const section = document.getElementById(
-                `tour-section-${item.key}`,
+        <header className="adm-tour-nav-head">
+          <p className="adm-eyebrow">Nội dung tour</p>
+          <span className="adm-tour-nav-total">{nav.length} phần</span>
+        </header>
+        {navGroups.map((group) => (
+          <div className="adm-tour-nav-group" key={group.label}>
+            <p className="adm-tour-nav-group-label">{group.label}</p>
+            {group.keys.map((key) => {
+              const item = navByKey.get(key);
+              if (!item) return null;
+              return (
+                <a
+                  key={item.key}
+                  href={`#tour-section-${item.key}`}
+                  data-active={
+                    activeSection === item.key ? "true" : undefined
+                  }
+                  aria-current={
+                    activeSection === item.key ? "location" : undefined
+                  }
+                  title={
+                    item.errors > 0
+                      ? `${item.label} · ${item.errors} lỗi cần sửa`
+                      : typeof item.count === "number" && item.count > 0
+                        ? `${item.label} · ${item.count} mục`
+                        : item.label
+                  }
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setActiveSection(item.key);
+                    const section = document.getElementById(
+                      `tour-section-${item.key}`,
+                    );
+                    if (section instanceof HTMLDetailsElement)
+                      section.open = true;
+                    section?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                    history.replaceState(
+                      null,
+                      "",
+                      `#tour-section-${item.key}`,
+                    );
+                  }}
+                >
+                  <span className="adm-tour-nav-label">{item.label}</span>
+                  {item.errors > 0 ? (
+                    <span className="adm-error-pill">{item.errors}</span>
+                  ) : typeof item.count === "number" && item.count > 0 ? (
+                    <span className="adm-tour-nav-count">{item.count}</span>
+                  ) : null}
+                </a>
               );
-              if (section instanceof HTMLDetailsElement) section.open = true;
-              section?.scrollIntoView({ behavior: "smooth", block: "start" });
-              history.replaceState(null, "", `#tour-section-${item.key}`);
-            }}
-          >
-            <span className="adm-tour-nav-label">{item.label}</span>
-            {item.errors > 0 ? (
-              <span className="adm-error-pill">{item.errors}</span>
-            ) : typeof item.count === "number" && item.count > 0 ? (
-              <span className="adm-tour-nav-count">{item.count}</span>
-            ) : null}
-          </a>
+            })}
+          </div>
         ))}
         <div className="adm-tour-nav-actions">
           <button
@@ -645,11 +731,29 @@ export const TourEditor = forwardRef<
             </label>
           </div>
           {isContact ? (
-            <p className="adm-hint">
-              Trang sẽ hiển thị “Liên hệ tư vấn” và tạm ẩn giá. Các gói ở phần
-              “Các gói giá” vẫn được giữ nguyên — chuyển lại “Có giá công khai”
-              để dùng tiếp, không phải nhập lại.
-            </p>
+            <>
+              {packages.some((option) => numberOf(option.adultPrice) > 0) ? (
+                <div className="adm-price-hidden" role="status">
+                  <strong>
+                    Có {packages.length} gói giá đang bị ẩn vì tour đang ở chế
+                    độ “Liên hệ tư vấn”.
+                  </strong>
+                  <p>
+                    Bật “Có giá công khai” để hiển thị giá gốc, giá bán và %
+                    giảm trên thẻ tour và trang chi tiết. Dữ liệu gói không bị
+                    mất.
+                  </p>
+                  <button type="button" onClick={() => setContactMode(false)}>
+                    Bật giá công khai
+                  </button>
+                </div>
+              ) : null}
+              <p className="adm-hint">
+                Trang sẽ hiển thị “Liên hệ tư vấn” và tạm ẩn giá. Các gói ở
+                phần “Các gói giá” vẫn được giữ nguyên — chuyển lại “Có giá
+                công khai” để dùng tiếp, không phải nhập lại.
+              </p>
+            </>
           ) : (
             <>
             <div className="adm-tour-grid-2">
@@ -1055,7 +1159,7 @@ export const TourEditor = forwardRef<
               </p>
             ) : null}
             {packages.map((option, index) => (
-              <div className="adm-price-row" key={textOf(option.id) || index}>
+              <div className="adm-price-card" key={textOf(option.id) || index}>
                 <TextField
                   path={`pricingOptions.${index}.label`}
                   label="Nhãn gói"
@@ -1066,13 +1170,24 @@ export const TourEditor = forwardRef<
                   onChange={(next) => updatePackage(index, { label: next })}
                 />
                 <div className="adm-price-pairs">
-                  <div className="adm-price-pair">
+                  <div
+                    className="adm-price-pair"
+                    role="group"
+                    aria-label={`Giá người lớn · gói ${index + 1}`}
+                  >
                     <NumberField
                       path={`pricingOptions.${index}.adultPrice`}
-                      label="Người lớn · giá bán"
+                      label="Người lớn · Giá bán"
+                      ariaLabel="Giá bán người lớn"
                       value={numberOf(option.adultPrice)}
                       min={1}
                       suffix="₫"
+                      hint={
+                        numberOf(option.adultPrice) > 0 &&
+                        numberOf(option.adultPrice) < 100000
+                          ? "Giá dưới 100.000₫ — kiểm tra lại đơn vị VND, có thể thiếu số 0."
+                          : undefined
+                      }
                       error={showError(`pricingOptions.${index}.adultPrice`)}
                       onBlur={() =>
                         markTouched(`pricingOptions.${index}.adultPrice`)
@@ -1084,6 +1199,7 @@ export const TourEditor = forwardRef<
                     <NumberField
                       path={`pricingOptions.${index}.originalAdultPrice`}
                       label="Giá gốc người lớn"
+                      ariaLabel="Giá gốc người lớn"
                       value={numberOf(option.originalAdultPrice)}
                       min={0}
                       suffix="₫"
@@ -1103,10 +1219,15 @@ export const TourEditor = forwardRef<
                       }
                     />
                   </div>
-                  <div className="adm-price-pair">
+                  <div
+                    className="adm-price-pair"
+                    role="group"
+                    aria-label={`Giá trẻ em · gói ${index + 1}`}
+                  >
                     <NumberField
                       path={`pricingOptions.${index}.childPrice`}
-                      label="Trẻ em · giá bán"
+                      label="Trẻ em · Giá bán"
+                      ariaLabel="Giá bán trẻ em"
                       value={numberOf(option.childPrice)}
                       min={0}
                       suffix="₫"
@@ -1121,6 +1242,7 @@ export const TourEditor = forwardRef<
                     <NumberField
                       path={`pricingOptions.${index}.originalChildPrice`}
                       label="Giá gốc trẻ em"
+                      ariaLabel="Giá gốc trẻ em"
                       value={numberOf(option.originalChildPrice)}
                       min={0}
                       suffix="₫"
@@ -1140,20 +1262,26 @@ export const TourEditor = forwardRef<
                       }
                     />
                   </div>
-                  {!isContact ? (
-                    <>
-                      <DiscountPreview
-                        current={numberOf(option.adultPrice)}
-                        original={numberOf(option.originalAdultPrice)}
-                      />
-                      {numberOf(option.childPrice) > 0 &&
-                      numberOf(option.originalChildPrice) > 0 ? (
-                        <DiscountPreview
-                          current={numberOf(option.childPrice)}
-                          original={numberOf(option.originalChildPrice)}
-                        />
-                      ) : null}
-                    </>
+                </div>
+                <div
+                  className="adm-price-preview-row"
+                  data-hidden={isContact ? "true" : undefined}
+                >
+                  <DiscountPreview
+                    current={numberOf(option.adultPrice)}
+                    original={numberOf(option.originalAdultPrice)}
+                  />
+                  {numberOf(option.childPrice) > 0 &&
+                  numberOf(option.originalChildPrice) > 0 ? (
+                    <DiscountPreview
+                      current={numberOf(option.childPrice)}
+                      original={numberOf(option.originalChildPrice)}
+                    />
+                  ) : null}
+                  {isContact ? (
+                    <small className="adm-price-preview-hidden">
+                      Đang ẩn trên web
+                    </small>
                   ) : null}
                 </div>
                 <div className="adm-list-actions adm-price-actions">

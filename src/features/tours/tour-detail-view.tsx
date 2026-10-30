@@ -26,6 +26,7 @@ import {
 import { ConsultSection } from "@/features/leads/consult-section";
 import { TranslationNotice } from "@/components/layout/translation-notice";
 import { isIndexable } from "@/domain/localization";
+import { isResolvedTranslationComplete } from "@/lib/translation-coverage";
 import type { Tour } from "@/domain/tour";
 import { tourTranslationStatus } from "@/lib/data/localize";
 import type { Locale } from "@/i18n/config";
@@ -118,9 +119,7 @@ export function TourDetailContent({
   const crumbs = crumbsFor(tour, locale);
   const primaryCategory = getCategoryById(tour.categoryIds[0], locale);
   const cover = tour.images[0]?.src ?? "/opengraph-image.png";
-  const indexable = preview
-    ? false
-    : isIndexable(tourTranslationStatus(tour.id, locale), locale);
+  const fullyTranslated = isResolvedTranslationComplete("tours", tour);
 
   const sections = [
     { id: "tong-quan", label: m.tour.sections.overview },
@@ -172,7 +171,12 @@ export function TourDetailContent({
         </>
       )}
 
-      {preview || indexable ? null : <TranslationNotice locale={locale} />}
+      {preview || fullyTranslated ? null : (
+        <TranslationNotice
+          locale={locale}
+          viHref={localizePath("vi", `/tour/${tour.slug}`)}
+        />
+      )}
 
       <header className="tour-detail-hero">
         <Breadcrumbs items={crumbs} ariaLabel={m.common.breadcrumbAria} />

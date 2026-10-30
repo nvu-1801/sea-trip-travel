@@ -23,6 +23,8 @@ import { HomeSections } from "./home-sections";
 import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
 import { HomeFeaturedEditor, type FeaturedEditorTour } from "./home-featured-editor";
 import { CustomerStoriesEditor } from "./customer-stories-editor";
+import { TranslationManager } from "./translation-manager";
+import { ArticleEditorLayout } from "./article-section-nav";
 import type { HomeSectionMeta } from "@/lib/home-sections";
 import { HOME_SECTIONS, HOME_GROUPS } from "@/lib/home-sections";
 import {
@@ -52,8 +54,11 @@ import {
   coverSrcOf,
   durationBadgeOf,
   durationGroupOf,
+  formatAdminMoney,
   lineGroupOf,
   priceLabelOf,
+  adminTourPriceOf,
+  tourEditorHeading,
   qnpyCategoryIds,
   trashDaysLeft,
   trashDeleteAtMs,
@@ -179,6 +184,8 @@ const tabs = [
   ["categories", "Danh mục", "categories"],
   ["destinations", "Điểm đến", "destinations"],
   ["media", "Thư viện ảnh", "media"],
+  ["customers", "Khách hàng & dấu ấn hành trình", "users"],
+  ["translations", "Bản dịch tiếng Anh", "language"],
   ["messages", "Nội dung VI / EN", "messages"],
   ["settings", "Website & footer", "settings"],
   ["leads", "Yêu cầu tư vấn", "leads"],
@@ -187,8 +194,13 @@ const tabs = [
   ["health", "Sức khỏe website", "chart"],
   ["account", "Bảo mật", "account"],
 ] as const;
+/**
+ * Sidebar order. The groups run from "what is happening right now" to "what I
+ * publish", then sales, then the site-wide switches, and both translation tabs
+ * sit next to each other because they are edited together.
+ */
 const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
-  { label: null, keys: ["overview", "activity", "health"] },
+  { label: "Vận hành", keys: ["overview", "activity", "health"] },
   {
     label: "Nội dung website",
     keys: [
@@ -199,11 +211,19 @@ const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
       "categories",
       "destinations",
       "media",
+      "customers",
+      "translations",
+      "messages",
     ],
   },
   { label: "Bán hàng", keys: ["leads", "finance"] },
-  { label: "Hệ thống", keys: ["messages", "settings", "account"] },
+  { label: "Hệ thống", keys: ["settings", "account"] },
 ];
+
+/** Short rail labels: the page keeps its full title, the sidebar stays one line. */
+const SIDEBAR_LABELS: Record<string, string> = {
+  customers: "Khách hàng & đối tác",
+};
 /**
  * The masthead pairs a number with the group name, so each sidebar group
  * counts from 01 instead of running across the whole menu.
@@ -271,6 +291,24 @@ const GUIDES: Record<string, Guide> = {
       "Xuất bản một phần chỉ đổi phần đó; bản nháp không ảnh hưởng website.",
     pitfalls:
       "Đừng xóa trắng danh sách (gợi ý, mốc thời gian, FAQ) — schema yêu cầu giữ ít nhất 1 mục.",
+  },
+  customers: {
+    purpose:
+      "Quản lý khối “Khách hàng & dấu ấn hành trình” nằm ngay dưới “Vì sao chọn SEA TRIP” trên trang chủ: dải logo 2 hàng chạy ngược chiều và các video khách hàng.",
+    steps: [
+      "Đọc 4 thẻ tổng quan để biết khối đang bật/tắt, số logo/video đang hiện và mục nào cần bổ sung.",
+      "Bật/tắt cả section, riêng dải logo và riêng nhóm video bằng 3 công tắc phía trên.",
+      "Thêm logo/video, rồi dùng ↑ ↓ để sắp thứ tự; bỏ tick “Hiện…” để ẩn một mục mà không xoá.",
+      "Chọn ảnh qua thư viện, sửa alt text và link; dán link YouTube để hệ thống kiểm tra video id.",
+      "Bấm Nạp dữ liệu demo để thử bộ dữ liệu đã xác minh từ seatriptravel.com — chỉ nạp vào form đang soạn.",
+      "Lưu bản nháp để giữ, hoặc Xuất bản thay đổi để khối này lên website ngay.",
+    ],
+    required:
+      "Logo cần ảnh và tên đơn vị; video cần tiêu đề và link YouTube hợp lệ. Section chỉ hiện khi được bật và có ít nhất một mục đang hiện.",
+    result:
+      "Đây là cùng bản ghi trang chủ (home-sections) với thẻ trong tab Trang chủ: lưu/xuất bản ở đây cập nhật đúng khối khách hàng, không tạo bản sao.",
+    pitfalls:
+      "Nạp dữ liệu demo thay nội dung đang soạn (chưa lưu) của form này; bản đã xuất bản không đổi cho tới khi bạn bấm Xuất bản. Ảnh demo nằm trong /images/customers, không phải ảnh tải lên thư viện.",
   },
   theme: {
     purpose:
@@ -367,6 +405,22 @@ const GUIDES: Record<string, Guide> = {
       "Ảnh mới dùng được ngay trong mọi form; ảnh gốc (28 ảnh seed) luôn được giữ.",
     pitfalls:
       "Ảnh đang được nháp/bản public/Thùng rác tham chiếu thì không xóa được — gỡ khỏi nội dung trước.",
+  },
+  translations: {
+    purpose:
+      "Theo dõi và bổ sung bản dịch tiếng Anh cho tour, cẩm nang, danh mục và điểm đến.",
+    steps: [
+      "Đọc 4 thẻ tổng quan: Chưa đủ bản EN, Chưa dịch, Dịch chưa đầy đủ, Đã dịch.",
+      "Lọc theo loại nội dung hoặc trạng thái; gõ tên tiếng Việt để tìm nhanh.",
+      "Bấm Bổ sung bản dịch để mở đúng form; với tour và điểm đến, form tự cuộn tới mục Bản dịch tiếng Anh.",
+      "Điền đủ các trường EN còn thiếu, lưu nháp hoặc xuất bản rồi quay lại mục này để kiểm tra trạng thái.",
+    ],
+    required:
+      "Các trường nội dung có trong bản tiếng Việt phải có bản EN tương ứng. Ô trống, khoảng trắng hoặc câu tiếng Việt còn sót lại đều tính là chưa dịch.",
+    result:
+      "Khi đủ nội dung EN, trạng thái chuyển thành Đã dịch và banner “Translation in progress” không còn hiện trên trang tiếng Anh.",
+    pitfalls:
+      "Bản nháp EN chỉ lên website sau khi Xuất bản. Bản dịch chưa duyệt vẫn có thể bị noindex dù đã đủ nội dung.",
   },
   messages: {
     purpose:
@@ -798,7 +852,7 @@ export function Dashboard({
     }
     return body;
   }
-  async function load(next = tab, background = false) {
+  async function load(next = tab, background = false, keepId?: string) {
     const serial = ++loadSerial.current;
     const activity = activitySerial.current;
     if (!background) setLoading(true);
@@ -806,7 +860,8 @@ export function Dashboard({
       if (
         next === "activity" ||
         next === "health" ||
-        next === "finance"
+        next === "finance" ||
+        next === "translations"
       ) {
         // These pages own their own read-only feeds and filters.
         setSelected(null);
@@ -853,6 +908,28 @@ export function Dashboard({
           media: mediaSelectOptions(library),
         });
         setSelected(null);
+        setDirty(false);
+        dirtyFields.current.clear();
+        setHasUpdates(false);
+        return true;
+      }
+      if (next === "customers") {
+        // Same CMS row as the "Trang chủ" section card: only the customers key
+        // is edited, the full landing record is kept so saving preserves the
+        // other sections.
+        const landingRows = (await api("content/landing")) as RecordRow[];
+        if (
+          serial !== loadSerial.current ||
+          (background && activity !== activitySerial.current)
+        )
+          return false;
+        const landing = landingRows[0] ?? null;
+        setHomeData((current) => ({ ...current, landing }));
+        setReferences({
+          ...options,
+          media: mediaSelectOptions(library),
+        });
+        setSelected(landing);
         setDirty(false);
         dirtyFields.current.clear();
         setHasUpdates(false);
@@ -939,6 +1016,13 @@ export function Dashboard({
         setMedia(library);
         setMediaStorage(storage);
       } else if (next !== "account") setRows(result);
+      // After saving, keep the same editor open with the refreshed revision so
+      // the owner stays where they were instead of landing at the bottom of a
+      // long list.
+      if (keepId) {
+        const keep = (result as RecordRow[]).find((row) => row.id === keepId);
+        if (keep) setSelected(keep);
+      }
       // Quick search / "Tour nổi bật": open the chosen record as soon as the
       // target tab's list arrives.
       const pending = pendingOpen.current;
@@ -1010,7 +1094,8 @@ export function Dashboard({
         tab === "account" ||
         tab === "overview" ||
         tab === "activity" ||
-        tab === "health"
+        tab === "health" ||
+        tab === "translations"
       )
         return true;
       if (dirty || selected) {
@@ -1242,6 +1327,35 @@ export function Dashboard({
       return false;
     }
     let ok = false;
+    const record = selected;
+    const scrollY = typeof window === "undefined" ? 0 : window.scrollY;
+    const recordName = String(
+      record.data.title ?? record.data.name ?? "",
+    ).trim();
+    const kindLabel =
+      tab === "tours"
+        ? "tour"
+        : tab === "articles"
+          ? "bài viết"
+          : tab === "categories"
+            ? "danh mục"
+            : tab === "destinations"
+              ? "điểm đến"
+              : tab === "settings"
+                ? "cài đặt website"
+                : tab === "messages"
+                  ? "nội dung VI/EN"
+                  : "nội dung";
+    const subject =
+      recordName && recordName !== record.id
+        ? `${kindLabel} “${recordName}”`
+        : kindLabel;
+    const keepEditor =
+      (action === "save" || action === "publish" || action === "unpublish") &&
+      collection === tab &&
+      ["tours", "articles", "categories", "destinations", "settings", "messages"].includes(
+        tab,
+      );
     await run(async () => {
       const editingRegions =
         collection === "landing" &&
@@ -1270,18 +1384,27 @@ export function Dashboard({
               },
         ),
       });
-      await load();
+      await load(tab, keepEditor, keepEditor ? record.id : undefined);
+      if (keepEditor && typeof window !== "undefined") {
+        // Keep the editor where the owner left it; the refreshed row must not
+        // scroll the document to the bottom of the list.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() =>
+            window.scrollTo({ top: scrollY, behavior: "auto" }),
+          );
+        });
+      }
       pushToast(
         "success",
         action === "publish"
-          ? "Đã xuất bản. Nội dung mới có hiệu lực trên website."
+          ? `Đã xuất bản ${subject}. Nội dung mới có hiệu lực trên website.`
           : action === "unpublish"
-            ? "Đã ẩn khỏi website. Bản nháp vẫn được giữ lại."
+            ? `Đã ẩn ${subject} khỏi website. Bản nháp vẫn được giữ lại.`
             : action === "delete"
-              ? "Đã chuyển vào Thùng rác. Mở Thùng rác để xem hoặc khôi phục."
+              ? `Đã chuyển ${subject} vào Thùng rác. Mở Thùng rác để xem hoặc khôi phục.`
               : action === "restore"
-                ? "Đã khôi phục thành bản nháp."
-                : "Đã lưu thay đổi.",
+                ? `Đã khôi phục ${subject} thành bản nháp.`
+                : `Đã lưu ${subject}.`,
       );
       if (action === "restore") setFilter("all");
       ok = true;
@@ -1664,6 +1787,29 @@ export function Dashboard({
     return left !== null && left <= 7;
   }).length;
   const tabLabel = tabs.find((t) => t[0] === tab)?.[1] ?? tab;
+  const editingTour = tab === "tours" && selected;
+  const tourHeaderTitle = editingTour
+    ? tourEditorHeading(selected.data, selected.revision === 0)
+    : "";
+  const customersMeta = HOME_SECTIONS.find(
+    (section) => section.key === "customers",
+  );
+  const customersSection = (selected?.data.customers ?? {}) as Record<
+    string,
+    unknown
+  >;
+  const customersRows = (key: "logos" | "videos") =>
+    Array.isArray(customersSection[key])
+      ? (customersSection[key] as Record<string, unknown>[])
+      : [];
+  const customersLogos = customersRows("logos");
+  const customersVideos = customersRows("videos");
+  const customersVisible = (rows: Record<string, unknown>[]) =>
+    rows.filter((row) => row.visible !== false).length;
+  const customersEnabled = customersSection.enabled === true;
+  const customersVisibleTotal =
+    customersVisible(customersLogos) + customersVisible(customersVideos);
+  const customersIncomplete = !customersEnabled || customersVisibleTotal === 0;
   const homeBannerState = homeData.hero
     ? homeData.hero.state === "published"
       ? "published"
@@ -1809,7 +1955,7 @@ export function Dashboard({
       : null;
   function renderTourCard(row: RecordRow) {
     const cover = coverSrcOf(row.data);
-    const price = priceLabelOf(row.data);
+    const price = adminTourPriceOf(row.data);
     const badge = durationBadgeOf(row.data);
     const line = lineGroupOf(row.data, qnpyIds);
     const slug = typeof row.data.slug === "string" ? row.data.slug : "";
@@ -1850,8 +1996,46 @@ export function Dashboard({
           </p>
           <small>
             {new Date(row.updated_at).toLocaleDateString("vi-VN")} · v
-            {row.revision} · {price ?? "Liên hệ"}
+            {row.revision}
           </small>
+        </div>
+        <div
+          className={`adm-tour-price${price.contact ? " adm-tour-price--contact" : ""}${price.percent ? " adm-tour-price--sale" : ""}`}
+        >
+          <span className="adm-tour-price-label">
+            {price.contact ? "Giá tour" : "Giá từ"}
+          </span>
+          {price.contact || price.current === null ? (
+            <>
+              <strong className="adm-tour-price-contact">
+                Liên hệ tư vấn
+              </strong>
+              {price.hiddenPackages > 0 ? (
+                <small className="adm-tour-price-hidden">
+                  Có {price.hiddenPackages} gói giá đang ẩn
+                </small>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <strong className="adm-tour-price-now">
+                {formatAdminMoney(price.current)}
+              </strong>
+              {price.original !== null && price.percent !== null ? (
+                <span className="adm-tour-price-was">
+                  <s aria-label={`Giá gốc ${formatAdminMoney(price.original)}`}>
+                    {formatAdminMoney(price.original)}
+                  </s>
+                  <span
+                    className="adm-tour-price-off"
+                    aria-label={`Giảm ${price.percent}% so với giá gốc`}
+                  >
+                    Giảm {price.percent}%
+                  </span>
+                </span>
+              ) : null}
+            </>
+          )}
         </div>
         <div className="adm-record-actions">
           <button
@@ -2452,7 +2636,6 @@ export function Dashboard({
             ×
           </button>
         </div>
-        <p className="adm-eyebrow">Không gian quản trị</p>
         <nav aria-label="Quản trị">
           {TAB_GROUPS.map((group) => (
             <div key={group.label ?? "main"} className="adm-nav-group">
@@ -2465,14 +2648,16 @@ export function Dashboard({
                 const entry = tabs.find((t) => t[0] === key);
                 if (!entry) return null;
                 const [, label, icon] = entry;
+                const railLabel = SIDEBAR_LABELS[key] ?? label;
                 return (
                   <button
                     key={key}
                     aria-current={tab === key ? "page" : undefined}
+                    title={label}
                     onClick={() => void navigateTo(key)}
                   >
                     <AdminIcon name={icon as AdminIconName} size={17} />
-                    {label}
+                    <span className="adm-nav-text">{railLabel}</span>
                     {key === "leads" && unreadLeads > 0 && (
                       <span
                         className="adm-unread-badge"
@@ -2488,27 +2673,29 @@ export function Dashboard({
             </div>
           ))}
         </nav>
-        <Link
-          className="adm-site-link"
-          href="/"
-          onClick={(event) => {
-            event.preventDefault();
-            setNavOpen(false);
-            leaveToWebsite();
-          }}
-        >
-          Về website <span aria-hidden="true">↗</span>
-        </Link>
-        <button
-          type="button"
-          className="adm-logout"
-          onClick={() => {
-            setNavOpen(false);
-            logoutFromStudio();
-          }}
-        >
-          Đăng xuất khỏi Studio
-        </button>
+        <div className="adm-side-foot">
+          <Link
+            className="adm-site-link"
+            href="/"
+            onClick={(event) => {
+              event.preventDefault();
+              setNavOpen(false);
+              leaveToWebsite();
+            }}
+          >
+            Về website <span aria-hidden="true">↗</span>
+          </Link>
+          <button
+            type="button"
+            className="adm-logout"
+            onClick={() => {
+              setNavOpen(false);
+              logoutFromStudio();
+            }}
+          >
+            Đăng xuất khỏi Studio
+          </button>
+        </div>
       </aside>
       <main className="adm-main">
         <header className="adm-topbar">
@@ -2523,8 +2710,15 @@ export function Dashboard({
             <AdminIcon name="menu" size={18} />
           </button>
           <div className="adm-topbar-lead">
-            <span className="adm-topbar-group">{tabGroup}</span>
-            <span className="adm-topbar-section">{tabLabel}</span>
+            <span className="adm-topbar-group">
+              {editingTour ? "Tour du lịch / Sửa tour" : tabGroup}
+            </span>
+            <span
+              className="adm-topbar-section"
+              title={editingTour ? tourHeaderTitle : undefined}
+            >
+              {editingTour ? tourHeaderTitle : tabLabel}
+            </span>
           </div>
           <div className="adm-topbar-actions">
             <button
@@ -2563,7 +2757,7 @@ export function Dashboard({
             ) : null}
             <span className="adm-topbar-divider" aria-hidden="true" />
             <div className="adm-topbar-tools">
-              {!["account", "overview", "activity", "health", "finance"].includes(
+              {!["account", "overview", "activity", "health", "finance", "translations"].includes(
                 tab,
               ) && (
                 <button
@@ -2621,20 +2815,33 @@ export function Dashboard({
               <span className="adm-masthead-sep" aria-hidden="true">
                 ·
               </span>
-              <span className="adm-masthead-label">Content &amp; sales</span>
+              <span className="adm-masthead-label">
+                {editingTour ? "Tour du lịch / Sửa tour" : "Content & sales"}
+              </span>
             </p>
-            <h1>{tabLabel}</h1>
-            <p className="adm-masthead-deck">
-              {tab === "activity"
-                ? "Theo dõi thao tác quản trị và những điểm cần xem lại."
-                : tab === "health"
-                  ? "Dung lượng, tốc độ tải thật và mức độ sẵn sàng SEO."
-                  : tab === "finance"
-                    ? "Tiền thực thu, chi thực tế và lợi nhuận dòng tiền theo tour."
-                    : tab === "home"
-                      ? "Bố cục, banner và từng khối nội dung — đúng thứ tự khách sẽ trải nghiệm."
-                      : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
-            </p>
+            <h1
+              className={editingTour ? "adm-masthead-tour-title" : undefined}
+              title={editingTour ? tourHeaderTitle : undefined}
+            >
+              {editingTour ? tourHeaderTitle : tabLabel}
+            </h1>
+            {!editingTour && (
+              <p className="adm-masthead-deck">
+                {tab === "activity"
+                  ? "Theo dõi thao tác quản trị và những điểm cần xem lại."
+                  : tab === "health"
+                    ? "Dung lượng, tốc độ tải thật và mức độ sẵn sàng SEO."
+                    : tab === "finance"
+                      ? "Tiền thực thu, chi thực tế và lợi nhuận dòng tiền theo tour."
+                      : tab === "translations"
+                        ? "Nội dung chưa đủ bản tiếng Anh và đường dẫn bổ sung bản dịch."
+                        : tab === "home"
+                          ? "Bố cục, banner và từng khối nội dung — đúng thứ tự khách sẽ trải nghiệm."
+                          : tab === "customers"
+                            ? "Dải logo 2 hàng full width và video khách hàng, ngay dưới Vì sao chọn SEA TRIP."
+                            : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
+              </p>
+            )}
           </div>
           <div className="adm-masthead-side">
             <p className="adm-masthead-chapter">
@@ -4060,25 +4267,199 @@ export function Dashboard({
               </div>
             )}
           </>
+        ) : tab === "customers" ? (
+          <section className="adm-panel adm-customers-page">
+            <header className="adm-customers-page-head">
+              <div className="adm-customers-page-heading">
+                <p className="adm-eyebrow">
+                  Trang chủ · Phần{" "}
+                  {String(
+                    HOME_SECTIONS.findIndex(
+                      (section) => section.key === "customers",
+                    ) + 1,
+                  ).padStart(2, "0")}{" "}
+                  · {customersMeta?.where ?? "Dưới Vì sao chọn SEA TRIP"}
+                </p>
+                <h2>Khách hàng &amp; dấu ấn hành trình</h2>
+                <p>
+                  Dải logo đối tác 2 hàng chạy ngược chiều và video khách hàng.
+                  Đây là cùng bản ghi trang chủ (home-sections) với thẻ trong tab
+                  Trang chủ — lưu hoặc xuất bản ở đây cập nhật đúng khối này,
+                  không có bản sao.
+                </p>
+              </div>
+              {selected ? (
+                <div className="adm-customers-page-meta" role="status">
+                  <span
+                    className={`adm-badge ${selected.state === "published" ? "" : "draft"}`}
+                  >
+                    {selected.state === "published"
+                      ? "Đang xuất bản"
+                      : "Bản nháp"}
+                  </span>
+                  <span>
+                    {customersVisible(customersLogos)}/{customersLogos.length}{" "}
+                    logo · {customersVisible(customersVideos)}/
+                    {customersVideos.length} video
+                  </span>
+                  <span>{dirty ? "Có thay đổi chưa lưu" : "Chưa có thay đổi"}</span>
+                </div>
+              ) : null}
+            </header>
+            <div
+              className="adm-customers-page-summary"
+              role="group"
+              aria-label="Tổng quan khối khách hàng"
+            >
+              <div data-tone={customersEnabled ? "live" : "muted"}>
+                <span>Trạng thái</span>
+                <strong>{customersEnabled ? "Đang bật" : "Đang tắt"}</strong>
+                <small>
+                  {customersEnabled
+                    ? "Khối này đang hiển thị trên trang chủ."
+                    : "Bật “Hiển thị section” để khách thấy khối này."}
+                </small>
+              </div>
+              <div data-tone="logo">
+                <span>Dải logo</span>
+                <strong>
+                  {customersVisible(customersLogos)}/{customersLogos.length}
+                </strong>
+                <small>2 hàng full width, chạy ngược chiều.</small>
+              </div>
+              <div data-tone="video">
+                <span>Video khách hàng</span>
+                <strong>
+                  {customersVisible(customersVideos)}/{customersVideos.length}
+                </strong>
+                <small>Chỉ tải YouTube khi khách bấm xem.</small>
+              </div>
+              <div data-tone={customersIncomplete ? "warn" : "ok"}>
+                <span>Kiểm tra nhanh</span>
+                <strong>
+                  {customersIncomplete ? "Cần bổ sung" : "Sẵn sàng"}
+                </strong>
+                <small>
+                  {customersIncomplete
+                    ? customersEnabled
+                      ? "Cần ít nhất 1 logo hoặc video đang hiện."
+                      : "Bật “Hiển thị section” để khối này lên trang chủ."
+                    : "Đã có nội dung đang hiển thị để xuất bản."}
+                </small>
+              </div>
+            </div>
+            {notice && (
+              <p className="adm-field-error" role="alert">
+                {notice}
+              </p>
+            )}
+            {!selected ? (
+              <p className="adm-empty">
+                {loading
+                  ? "Đang tải khối khách hàng…"
+                  : "Chưa tải được bản ghi trang chủ. Bấm tải lại dữ liệu ở thanh trên."}
+              </p>
+            ) : (
+              <>
+                <StickyEditorActions>
+                  <span className="adm-edit-status" aria-live="polite">
+                    {uploadCount > 0
+                      ? "Đang tải ảnh…"
+                      : busy
+                        ? "Đang lưu thay đổi…"
+                        : dirty
+                          ? "Có thay đổi chưa lưu"
+                          : "Chưa có thay đổi"}
+                  </span>
+                  <div className="adm-edit-buttons">
+                    <a
+                      className="adm-customers-preview-link"
+                      href="/admin/preview/customers"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Xem trước section ↗
+                    </a>
+                    <button
+                      type="button"
+                      disabled={busy || uploadCount > 0}
+                      onClick={() => void save("save", "landing")}
+                    >
+                      Lưu bản nháp
+                    </button>
+                    <button
+                      type="button"
+                      className="adm-primary"
+                      disabled={busy || uploadCount > 0}
+                      onClick={() => void save("publish", "landing")}
+                    >
+                      {busy ? "Đang lưu…" : "Xuất bản thay đổi ↗"}
+                    </button>
+                  </div>
+                </StickyEditorActions>
+                <CustomerStoriesEditor
+                  value={(selected.data.customers ?? {}) as Record<
+                    string,
+                    EditorValue
+                  >}
+                  references={references}
+                  onUploadImage={uploadImage}
+                  onChange={(customers) => {
+                    setSelected((current) =>
+                      current
+                        ? {
+                            ...current,
+                            data: {
+                              ...current.data,
+                              customers: customers as EditorValue,
+                            },
+                          }
+                        : current,
+                    );
+                    setDirty(true);
+                  }}
+                />
+              </>
+            )}
+          </section>
         ) : tab === "theme" ? (
           <ThemePanel
             record={themeRecord}
             busy={busy}
             onSave={(theme, action) => void saveTheme(theme, action)}
           />
+        ) : tab === "translations" ? (
+          <TranslationManager />
         ) : selected ? (
           <section className="adm-panel adm-edit">
             <div className="adm-editor-header">
-              <div>
+              <div className="adm-editor-heading">
                 <button onClick={closeEditor}>← Danh sách</button>
-                <h2>
+                {tab === "tours" ? (
+                  <p className="adm-editor-breadcrumb">
+                    Tour du lịch / Sửa tour
+                  </p>
+                ) : null}
+                <h2
+                  title={
+                    tab === "tours"
+                      ? tourHeaderTitle
+                      : String(
+                          selected.data.title ??
+                            selected.data.name ??
+                            selected.id,
+                        )
+                  }
+                >
                   {tab === "hero"
                     ? "Khối mở đầu trang chủ"
-                    : String(
-                        selected.data.title ??
-                          selected.data.name ??
-                          selected.id,
-                      )}
+                    : tab === "tours"
+                      ? tourHeaderTitle
+                      : String(
+                          selected.data.title ??
+                            selected.data.name ??
+                            selected.id,
+                        )}
                 </h2>
                 <p>
                   {selected.state === "published"
@@ -4274,30 +4655,34 @@ export function Dashboard({
                 }}
               />
             ) : (
-              <Editor
-                references={references}
-                value={selected.data}
-                locked={selected.revision > 0}
-                slugEditable={isPlaceholderSlug(selected.data.slug)}
-                onUploadImage={uploadImage}
-                onChange={(data) => {
-                  const next = data as Record<string, EditorValue>;
-                  setSelected({
-                    ...selected,
-                    data:
-                      tab === "articles" || tab === "categories"
-                        ? withLiveSlug(
-                            selected.data,
-                            next,
-                            tab,
-                            selected.revision === 0 ||
-                              isPlaceholderSlug(selected.data.slug),
-                          )
-                        : next,
-                  });
-                  setDirty(true);
-                }}
-              />
+              <ArticleEditorLayout
+                data={tab === "articles" ? selected.data : null}
+              >
+                <Editor
+                  references={references}
+                  value={selected.data}
+                  locked={selected.revision > 0}
+                  slugEditable={isPlaceholderSlug(selected.data.slug)}
+                  onUploadImage={uploadImage}
+                  onChange={(data) => {
+                    const next = data as Record<string, EditorValue>;
+                    setSelected({
+                      ...selected,
+                      data:
+                        tab === "articles" || tab === "categories"
+                          ? withLiveSlug(
+                              selected.data,
+                              next,
+                              tab,
+                              selected.revision === 0 ||
+                                isPlaceholderSlug(selected.data.slug),
+                            )
+                          : next,
+                    });
+                    setDirty(true);
+                  }}
+                />
+              </ArticleEditorLayout>
             )}
           </section>
         ) : (

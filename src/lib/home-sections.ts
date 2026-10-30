@@ -91,16 +91,6 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     tip: "Chọn tuyến/vùng, ghim danh sách theo thứ tự hoặc để hệ thống tự chọn.",
   },
   {
-    key: "customers",
-    collection: "landing",
-    title: "Khách hàng & dấu ấn hành trình",
-    where: "Dải logo + video khách hàng ngay dưới tour nổi bật",
-    illustration: "/images/hero/coastal-sunset.webp",
-    icon: "users",
-    group: "main",
-    tip: "Bật/tắt section, thêm logo đối tác và video khách hàng; mỗi mục có ảnh, link và thứ tự riêng.",
-  },
-  {
     key: "trust",
     collection: "landing",
     title: "Cam kết dịch vụ",
@@ -139,6 +129,16 @@ export const HOME_SECTIONS: readonly HomeSectionMeta[] = [
     icon: "gem",
     group: "main",
     tip: "Đổi ảnh, huy hiệu và 4 nguyên tắc làm việc.",
+  },
+  {
+    key: "customers",
+    collection: "landing",
+    title: "Khách hàng & dấu ấn hành trình",
+    where: "Ngay dưới Vì sao chọn SEA TRIP",
+    illustration: "/images/hero/coastal-sunset.webp",
+    icon: "users",
+    group: "main",
+    tip: "Dải logo 2 hàng full width chạy ngược chiều + video khách hàng. Bật/tắt section, thêm logo/video và sắp thứ tự tại đây.",
   },
   {
     key: "guides",

@@ -22,6 +22,7 @@ import { tourTranslationStatus } from "@/lib/data/localize";
 import { isIndexable } from "@/domain/localization";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
 import { getMessages } from "@/i18n/server";
+import { localizePath } from "@/i18n/routing";
 import { settings } from "@/server/cms/store";
 
 /**
@@ -92,18 +93,18 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       </div>
       {indexable ? null : (
         <div className="stt-home-translation-notice">
-          <TranslationNotice locale={locale} />
+          <TranslationNotice locale={locale} viHref={localizePath("vi", "/")} />
         </div>
       )}
       <Hero locale={locale} />
       <QuickFinder locale={locale} />
       <ExploreSection locale={locale} />
       <FeaturedToursSection locale={locale} />
-      <CustomerStories locale={locale} />
       <TrustStrip locale={locale} />
       <JourneyStory locale={locale} />
       <RegionsSection locale={locale} />
       <ValuesSection locale={locale} />
+      <CustomerStories locale={locale} />
       <GuidesSection locale={locale} />
       <PlanningSection locale={locale} />
       <ConsultSection

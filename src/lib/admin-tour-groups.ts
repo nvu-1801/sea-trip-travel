@@ -1,7 +1,10 @@
 /**
  * Pure helpers for the admin tour list: duration/line grouping, trash
- * countdown and price labels. No DB, no DOM — fully unit-testable.
+ * countdown, price labels and the editor heading. No DB, no DOM — fully
+ * unit-testable.
  */
+
+import { tourPrice } from "./tour-price";
 
 export const TRASH_RETENTION_DAYS = 60;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -93,12 +96,95 @@ export function trashDaysLeft(
   return left < 0 ? 0 : left;
 }
 
+/** Formatting shared by the list price block and the editor preview. */
+export function formatAdminMoney(amount: number): string {
+  return `${amount.toLocaleString("vi-VN")} ₫`;
+}
+
+export type AdminTourPrice = {
+  /** True for a tour intentionally kept at "Liên hệ tư vấn". */
+  contact: boolean;
+  current: number | null;
+  /** Only set when the public pricing helper found a real discount. */
+  original: number | null;
+  percent: number | null;
+  /** Packages saved while the tour is in contact mode (not public yet). */
+  hiddenPackages: number;
+};
+
+/**
+ * Use the same price/discount derivation as the public tour cards. The admin
+ * only formats the result; it must not invent a second discount rule.
+ */
+export function adminTourPriceOf(data: unknown): AdminTourPrice {
+  const price = tourPrice(
+    data as unknown as Parameters<typeof tourPrice>[0],
+  );
+  if (!price) {
+    const record =
+      data && typeof data === "object"
+        ? (data as Record<string, unknown>)
+        : {};
+    const options = Array.isArray(record.pricingOptions)
+      ? record.pricingOptions
+      : [];
+    const hiddenPackages = options.filter(
+      (option) =>
+        option &&
+        typeof option === "object" &&
+        typeof (option as { adultPrice?: unknown }).adultPrice === "number" &&
+        (option as { adultPrice: number }).adultPrice > 0,
+    ).length;
+    return {
+      contact: true,
+      current: null,
+      original: null,
+      percent: null,
+      hiddenPackages,
+    };
+  }
+  return {
+    contact: false,
+    current: price.current,
+    original: price.original,
+    percent: price.percent,
+    hiddenPackages: 0,
+  };
+}
+
 /** "2.290.000 ₫" for {amount} or null when there is no price. */
 export function priceLabelOf(data: unknown): string | null {
-  const amount = asRecord(asRecord(data).priceFrom).amount;
-  if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0)
-    return null;
-  return `${amount.toLocaleString("vi-VN")} ₫`;
+  const price = adminTourPriceOf(data);
+  return price.contact || price.current === null
+    ? null
+    : formatAdminMoney(price.current);
+}
+
+/**
+ * The title shown in the Studio header while editing a tour. New tours keep a
+ * clear "create" label until the owner types a real name; an existing tour
+ * whose title was cleared gets a different, truthful empty state.
+ */
+export function tourEditorHeading(data: unknown, isNew: boolean): string {
+  const record = asRecord(data);
+  const title =
+    typeof record.title === "string"
+      ? record.title.trim()
+      : typeof record.name === "string"
+        ? record.name.trim()
+        : "";
+  const unnamed =
+    !title ||
+    [
+      "nội dung mới",
+      "noi dung moi",
+      "chưa đặt tên",
+      "chua dat ten",
+      "tour mới",
+      "tour moi",
+    ].includes(title.toLocaleLowerCase("vi"));
+  if (!unnamed) return title;
+  return isNew ? "Tạo tour mới" : "Tour chưa có tên";
 }
 
 /** "3N2Đ" style badge, null when days is missing. */

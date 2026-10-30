@@ -63,7 +63,12 @@ export default async function PrivacyPage({ params }: PageProps<"/[locale]">) {
         ])}
       />
 
-      {locale === defaultLocale ? null : <TranslationNotice locale={locale} />}
+      {locale === defaultLocale ? null : (
+        <TranslationNotice
+          locale={locale}
+          viHref={localizePath("vi", ROUTES.privacy)}
+        />
+      )}
 
       <Breadcrumbs
         items={[

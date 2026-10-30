@@ -44,7 +44,7 @@ function ToastRow({
 }) {
   useEffect(() => {
     if (toast.kind === "error") return;
-    const timer = setTimeout(onClose, 3500);
+    const timer = setTimeout(onClose, toast.kind === "success" ? 5000 : 3500);
     return () => clearTimeout(timer);
   }, [toast.kind, onClose]);
   return (

@@ -86,6 +86,24 @@ Bản xem nhanh chỉ đọc dữ liệu đang sửa trong form (kể cả phầ
 gọi dịch vụ dịch bên ngoài. Bản EN vẫn phải nhập/sửa tay và bấm Lưu như bình
 thường; chỉ đánh dấu `_enReviewed` khi bạn đã kiểm tra nội dung.
 
+## 3.2. Theo dõi bản dịch trong Studio
+
+Mục **Bản dịch tiếng Anh** (`/admin/translations`) gom tour, cẩm nang, danh mục và
+điểm đến đang thiếu hoặc chưa đủ bản EN.
+
+- Mỗi dòng hiển thị loại nội dung, tên tiếng Việt, trạng thái và nút mở đúng form
+  để bổ sung bản dịch.
+- Trạng thái được tính trực tiếp từ `data._en` của bản ghi, không lưu thêm cột:
+  - **Chưa dịch**: chưa có trường EN nào.
+  - **Dịch chưa đầy đủ**: đã có một phần, phần còn lại vẫn dùng tiếng Việt.
+  - **Đã dịch**: mọi trường nội dung có trong bản VI đều có bản EN tương ứng.
+- Ô trống, chuỗi chỉ có khoảng trắng và câu tiếng Việt còn sót lại trong `_en`
+  đều tính là chưa dịch.
+- Lọc theo loại/trạng thái và tìm theo tên tiếng Việt hoặc slug. Danh sách tự tải
+  lại khi quay về tab, nên trạng thái đổi ngay sau khi lưu.
+- Trang EN chỉ hết banner “Translation in progress” sau khi nội dung EN đủ **và**
+  bản ghi đã được xuất bản. Quyền index vẫn theo `_enReviewed` như mục 4.
+
 ## 4. Bật index cho bản tiếng Anh
 
 Một trang tiếng Anh **chỉ được index** khi bản dịch của bản ghi gốc có

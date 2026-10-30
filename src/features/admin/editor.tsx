@@ -2,6 +2,7 @@
 import { useId } from "react";
 import { AdmMultiSelect, AdmSelect } from "./ui-select";
 import { ImageField, type UploadedImage } from "./image-picker";
+import { MoneyTextInput } from "./money-input";
 type Value =
   string | number | boolean | null | Value[] | { [key: string]: Value };
 export type EditorValue = Value;
@@ -181,6 +182,13 @@ const labels: Record<string, string> = {
   photoAltEn: "Mô tả ảnh giá trị tiếng Anh",
   badgeEn: "Huy hiệu tiếng Anh",
 };
+const MONEY_FIELDS = new Set([
+  "amount",
+  "adultPrice",
+  "childPrice",
+  "originalAdultPrice",
+  "originalChildPrice",
+]);
 const arrayDefaults: Record<string, Value> = {
   images: { src: "", alt: "Ảnh tour" },
   itinerary: {
@@ -461,55 +469,59 @@ export function Editor({
                 blocks[value.type]
               ),
           )
-          .map(([key, child]) =>
-            typeof child === "object" && child !== null &&
-            (key === "images" || key === "image" || key === "cover" ||
-              (!Array.isArray(child) && "alt" in child)) ? (
-              <fieldset key={key} className="adm-image-group">
-                <legend>{labels[key] ?? key}</legend>
+          .map(([key, child]) => (
+            <div
+              key={key}
+              id={name === "" ? `record-field-${key}` : undefined}
+              className={name === "" ? "adm-record-field-anchor" : undefined}
+            >
+              {typeof child === "object" && child !== null &&
+              (key === "images" || key === "image" || key === "cover" ||
+                (!Array.isArray(child) && "alt" in child)) ? (
+                <fieldset className="adm-image-group">
+                  <legend>{labels[key] ?? key}</legend>
+                  <Editor
+                    value={child}
+                    name={key}
+                    references={references}
+                    onUploadImage={onUploadImage}
+                    onChange={(next) => onChange({ ...value, [key]: next })}
+                  />
+                </fieldset>
+              ) : typeof child === "object" && child !== null ? (
+                <details
+                  open={
+                    name === "" &&
+                    ["contact", "duration", "priceFrom"].includes(key)
+                  }
+                >
+                  <summary>{labels[key] ?? key}</summary>
+                  <Editor
+                    value={child}
+                    name={key}
+                    references={references}
+                    onUploadImage={onUploadImage}
+                    onChange={(next) => onChange({ ...value, [key]: next })}
+                  />
+                </details>
+              ) : (
                 <Editor
                   value={child}
                   name={key}
                   references={references}
                   onUploadImage={onUploadImage}
+                  locked={
+                    key === "id" || key === "updatedAt"
+                      ? locked
+                      : key === "slug" || key === "path"
+                        ? locked && !slugEditable
+                        : false
+                  }
                   onChange={(next) => onChange({ ...value, [key]: next })}
                 />
-              </fieldset>
-            ) : typeof child === "object" && child !== null ? (
-              <details
-                key={key}
-                open={
-                  name === "" &&
-                  ["contact", "duration", "priceFrom"].includes(key)
-                }
-              >
-                <summary>{labels[key] ?? key}</summary>
-                <Editor
-                  value={child}
-                  name={key}
-                  references={references}
-                  onUploadImage={onUploadImage}
-                  onChange={(next) => onChange({ ...value, [key]: next })}
-                />
-              </details>
-            ) : (
-              <Editor
-                key={key}
-                value={child}
-                name={key}
-                references={references}
-                onUploadImage={onUploadImage}
-                locked={
-                  key === "id" || key === "updatedAt"
-                    ? locked
-                    : key === "slug" || key === "path"
-                      ? locked && !slugEditable
-                      : false
-                }
-                onChange={(next) => onChange({ ...value, [key]: next })}
-              />
-            ),
-          )}
+              )}
+            </div>
+          ))}
       </div>
     );
   if (typeof value === "boolean")
@@ -527,13 +539,22 @@ export function Editor({
     <div className="adm-field">
       <label htmlFor={id}>{title}</label>
       {typeof value === "number" ? (
-        <input
-          id={id}
-          type="number"
-          value={value}
-          disabled={locked}
-          onChange={(e) => onChange(Number(e.target.value))}
-        />
+        MONEY_FIELDS.has(name) ? (
+          <MoneyTextInput
+            id={id}
+            value={value}
+            disabled={locked}
+            onValueChange={(digits) => onChange(digits ? Number(digits) : 0)}
+          />
+        ) : (
+          <input
+            id={id}
+            type="number"
+            value={value}
+            disabled={locked}
+            onChange={(e) => onChange(Number(e.target.value))}
+          />
+        )
       ) : (typeof value === "string" ? value.length > 90 : false) ||
         [
           "summary",

@@ -1893,7 +1893,7 @@ async function checkTravelMotion(browser) {
     }),
   );
   await page.mouse.move(0, 0);
-  await card.locator("a").focus();
+  await card.locator("a").first().focus();
   check(
     "keyboard focus reaches the full card",
     await card.evaluate(
