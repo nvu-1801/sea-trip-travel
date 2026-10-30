@@ -708,28 +708,28 @@ body:has(.stt-cc-modal) .stt-customers-logo-track {
 
 .stt-cc-modal-head button {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   flex: none;
   place-items: center;
   padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: rgb(120 120 128 / 0.12);
-  color: #6e6e73;
-  font-size: 19px;
+  border: 1px solid #e8d8d2;
+  border-radius: 12px;
+  background: #fff;
+  color: #211621;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
   transition:
     background 160ms ease,
-    color 160ms ease,
-    transform 160ms ease;
+    border-color 160ms ease,
+    color 160ms ease;
 }
 
 .stt-cc-modal-head button:hover {
-  background: rgb(120 120 128 / 0.2);
-  color: #1c1c1e;
-  transform: scale(1.04);
+  border-color: #d9c3b8;
+  background: #fff8f3;
+  color: #211621;
 }
 
 .stt-cc-modal-frame {

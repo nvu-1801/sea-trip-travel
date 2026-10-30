@@ -15798,3 +15798,63 @@ select {
   border: 0;
   background: transparent;
 }
+
+/* One close control everywhere: white rounded square, warm border, dark X. */
+.adm-inv-close,
+.adm-fin-modal-head > button,
+.adm-section-modal-close,
+.adm-trash-close,
+.adm-health-modal-close,
+.adm-help-head > button,
+.adm-notice > button,
+.adm-toast > button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid #e8d8d2;
+  border-radius: 12px;
+  background: #fff;
+  color: #211621;
+  font-size: 22px;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.adm-inv-close:hover:not(:disabled),
+.adm-fin-modal-head > button:hover:not(:disabled),
+.adm-section-modal-close:hover,
+.adm-trash-close:hover:not(:disabled),
+.adm-health-modal-close:hover:not(:disabled),
+.adm-help-head > button:hover:not(:disabled),
+.adm-notice > button:hover:not(:disabled),
+.adm-toast > button:hover:not(:disabled) {
+  border-color: #d9c3b8;
+  background: #fff8f3;
+  color: #211621;
+}
+
+.adm-toast > button {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+.adm-nav-close {
+  border: 1px solid #e8d8d2;
+  border-radius: 12px;
+  background: #fff;
+  color: #211621;
+}
+
+.adm-nav-close:hover {
+  border-color: #d9c3b8;
+  background: #fff8f3;
+  color: #211621;
+}
