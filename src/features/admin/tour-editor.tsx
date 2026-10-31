@@ -846,7 +846,7 @@ export const TourEditor = forwardRef<
             Giá chi tiết theo từng gói nằm ở phần “Các gói giá” bên dưới. Giá
             người lớn thấp nhất sẽ tự động trở thành “Giá từ”.
           </p>
-          <h4 className="adm-subhead">Danh mục & điểm đến</h4>
+          <h4 className="adm-subhead">Danh mục &amp; điểm đến</h4>
           <div className={`adm-field${showError("categoryIds") ? " adm-field--invalid" : ""}`}>
             <AdmMultiSelect
               label="Danh mục của tour"

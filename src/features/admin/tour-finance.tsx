@@ -1537,7 +1537,7 @@ export function TourFinance({
                 }
               />
 
-              <p className="adm-fin-form-title">Nguồn khách & thanh toán</p>
+              <p className="adm-fin-form-title">Nguồn khách &amp; thanh toán</p>
               <AdmSelect
                 label="Yêu cầu tư vấn (tuỳ chọn)"
                 value={form.leadId}

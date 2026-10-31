@@ -43,3 +43,12 @@ payloads, remove the annotation and review its transport again.
 
 Production dependency audit (`npm audit --omit=dev`) reported zero
 vulnerabilities during this review.
+
+## Scanner parser compatibility
+
+Strict Semgrep scanning exposed parser errors in three existing admin files.
+Two JSX headings now encode literal ampersands as `&amp;`, preserving rendered
+text. Dashboard locals named `using` are renamed to `usage`: the scanner treats
+`using` as a TypeScript resource-management keyword inside JSX expressions.
+Direct AST parsing succeeds for all three files after these changes. No source
+file is excluded and `--strict` remains enabled.

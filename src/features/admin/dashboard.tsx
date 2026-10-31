@@ -2427,7 +2427,7 @@ export function Dashboard({
           : "";
     const name = String(data.name ?? row.id);
     const path = typeof data.path === "string" ? data.path : "";
-    const using = tourUsageOf(row.id, kind);
+    const usage = tourUsageOf(row.id, kind);
     const order = typeof data.order === "number" ? data.order : null;
     const region =
       typeof data.region === "string"
@@ -2518,13 +2518,13 @@ export function Dashboard({
           <p className="adm-card-place">
             {kind === "category" ? (
               <>
-                Trang <code>{path || "—"}</code> · {using} tour đang dùng
+                Trang <code>{path || "—"}</code> · {usage} tour đang dùng
                 {province ? ` · ${province}` : ""}
               </>
             ) : (
               <>
                 {province ? `${province} · ` : ""}
-                {using} tour đang dùng ·{" "}
+                {usage} tour đang dùng ·{" "}
                 <span className="adm-home-reason">{homeReason}</span>
               </>
             )}
@@ -2532,7 +2532,7 @@ export function Dashboard({
           <small>
             {new Date(row.updated_at).toLocaleDateString("vi-VN")} · v
             {row.revision} ·{" "}
-            {using === 0 ? "chưa gắn vào tour nào" : `${using} tour`}
+            {usage === 0 ? "chưa gắn vào tour nào" : `${usage} tour`}
           </small>
         </div>
         <div className="adm-record-actions">
@@ -5476,7 +5476,7 @@ export function Dashboard({
                                       {(tab === "categories" ||
                                         tab === "destinations") &&
                                         (() => {
-                                          const using = tourLinks.filter((t) =>
+                                          const usage = tourLinks.filter((t) =>
                                             tab === "categories"
                                               ? t.categoryIds.includes(row.id)
                                               : t.destinationIds.includes(
@@ -5504,7 +5504,7 @@ export function Dashboard({
                                                 ) : (
                                                   <>Không hiện Khám phá · </>
                                                 )}
-                                                {using} tour đang dùng
+                                                {usage} tour đang dùng
                                               </span>
                                             </>
                                           );
