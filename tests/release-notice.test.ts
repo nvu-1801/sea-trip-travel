@@ -21,7 +21,8 @@ import {
 it("release manifest includes notes and the previous release on merge commits", () => {
   const directory = mkdtempSync(path.join(tmpdir(), "seatrip-release-history-"));
   const env = {
-    ...process.env,
+    // Git hooks export repository context; fixtures must never inherit it.
+    ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
     GIT_AUTHOR_NAME: "Release fixture",
     GIT_AUTHOR_EMAIL: "fixture@example.com",
     GIT_COMMITTER_NAME: "Release fixture",

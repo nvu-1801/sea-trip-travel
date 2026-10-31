@@ -1,7 +1,7 @@
 # Worktree consolidation — 2026-10-31
 
 Baseline: `origin/main` at `805f6f36b595683a53d088ef2dff31188a505f72`.
-Integration branch: `chore/consolidate-worktrees` in a separate clean checkout.
+Release branch: `chore/consolidate-release` in a separate clean checkout.
 All ten original worktrees were checkpointed before integration: separate
 staged/unstaged binary patches, untracked files with SHA-256 verification and
 manifests containing HEAD/branch/status. Checkpoints are local, outside the
@@ -52,3 +52,18 @@ its checkpoint verified and all tracked/untracked work accounted for. Preserve
 ignored runtime/environment data before removal; keep directories with active
 processes or unresolved work. Keep local branches and checkpoints for recovery.
 Never remove unrelated Docker containers, volumes, repositories or processes.
+
+## Git-hook fixture isolation repair
+
+An initial push ran the new release-history fixture through the pre-push hook.
+Inherited `GIT_*` environment variables directed fixture Git commands into the
+real repository, creating three empty fixture commits and setting `core.bare`.
+No source files were lost and no merge or deploy occurred. PR #31 was closed.
+
+The repository configuration was restored and the release branch was recreated
+from the verified `f826603` source commit, excluding those fixture commits.
+Fixtures now remove inherited Git context before invoking Git. A regression test
+injects hook context pointing at a disposable surrounding repository and asserts
+its HEAD, branch, configuration and working tree remain unchanged. Original
+worktree checkpoints are revalidated before cleanup. No force push or main
+history rewrite is used.
