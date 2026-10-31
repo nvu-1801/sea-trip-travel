@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.git/
+out/
+build/
+coverage/
+verify-screenshots/
+data/
+.tmp*/
+.agents/
+skill-kit/
+docs/third-party/

@@ -63,7 +63,7 @@ export async function decryptArchive(source, target, key) {
     throw new Error("Không phải định dạng backup SEA TRIP");
   const iv = header.subarray(MAGIC.length, HEADER_BYTES);
   const tag = await readRange(source, size - TAG_BYTES, size - 1);
-  const decipher = createDecipheriv("aes-256-gcm", key, iv);
+  const decipher = createDecipheriv("aes-256-gcm", key, iv, { authTagLength: TAG_BYTES });
   decipher.setAuthTag(tag);
   try {
     await pipeline(
