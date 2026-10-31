@@ -1,21 +1,22 @@
 # Kiến trúc SEA TRIP TRAVEL
 
 Tài liệu này giải thích **cách source được tổ chức và vì sao**. Kèm theo là quy
-tắc phụ thuộc để việc mở rộng sau này (admin/CMS) không phải viết lại UI.
+tắc phụ thuộc giữa giao diện, nghiệp vụ và lớp dữ liệu. Website và Studio hiện chạy chung trong một ứng dụng.
 
 ## 1. Stack và lý do chọn
 
-| Thành phần | Lựa chọn | Lý do |
-| --- | --- | --- |
-| Framework | Next.js 16 (App Router) | SSG cho toàn bộ trang nội dung + Route Handler cho endpoint nhận lead, trong **một** ứng dụng. Không cần dựng backend riêng cho MVP. |
-| Ngôn ngữ | TypeScript strict | Hợp đồng dữ liệu rõ ràng, refactor an toàn. |
-| Styling | Tailwind CSS v4 | Token hoá bằng CSS variables, không cần file config thứ hai. |
-| Validation | Zod 4 | Một schema dùng chung cho **cả** client và server. |
-| Email | Interface `Mailer` + adapter SMTP | UI không phụ thuộc SDK email. Đổi nhà cung cấp = thêm một adapter. |
-| Cache | Cache Components (mặc định của `create-next-app` 16) | Trang nội dung là static shell; chỉ phần phụ thuộc request mới stream. |
+| Thành phần | Lựa chọn                                             | Lý do                                                                                                                                |
+| ---------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Framework  | Next.js 16 (App Router)                              | SSG cho toàn bộ trang nội dung + Route Handler cho endpoint nhận lead, trong **một** ứng dụng. Không cần dựng backend riêng cho MVP. |
+| Ngôn ngữ   | TypeScript strict                                    | Hợp đồng dữ liệu rõ ràng, refactor an toàn.                                                                                          |
+| Styling    | Tailwind CSS v4                                      | Token hoá bằng CSS variables, không cần file config thứ hai.                                                                         |
+| Validation | Zod 4                                                | Một schema dùng chung cho **cả** client và server.                                                                                   |
+| Email      | Interface `Mailer` + adapter SMTP                    | UI không phụ thuộc SDK email. Đổi nhà cung cấp = thêm một adapter.                                                                   |
+| Cache      | Cache Components (mặc định của `create-next-app` 16) | Trang nội dung là static shell; chỉ phần phụ thuộc request mới stream.                                                               |
 
-**Không dùng ở MVP:** NestJS, database, queue, CMS, auth. Không có lý do thực tế
-nào ở giai đoạn này; xem `docs/admin-roadmap.md`.
+**Hiện trạng:** Studio đã có CMS, xác thực quản trị và SQLite trên volume bền vững. `src/server/cms/` xử lý database, phiên, xuất bản và lead; `src/features/admin/` chứa UI quản trị. Nội dung seed trong `src/content/` được kết hợp với nội dung CMS qua lớp repository. Các phần mô tả MVP bên dưới lưu lại thiết kế ban đầu; không coi chúng là bằng chứng rằng hệ thống chưa có database hoặc admin.
+
+Production dùng một VPS, Docker Compose và reverse proxy Caddy. Xem [vận hành VPS](VPS-DEPLOY.md), [backup](BACKUP-RESTORE.md) và [rà soát bảo mật](SECURITY-REVIEW.md).
 
 ## 2. Cây thư mục
 
@@ -143,13 +144,13 @@ API.
 
 ## 5. Bảo mật ranh giới
 
-| Ranh giới | Cơ chế |
-| --- | --- |
-| Secret không lọt vào client | `import "server-only"` ở mọi module dùng credential + chỉ đọc `process.env` không có tiền tố `NEXT_PUBLIC_`. |
-| Người nhận email không do client chọn | `SALES_RECIPIENTS` đọc ở server; body request không có trường này. |
-| Dữ liệu khách không chèn được HTML | Email template escape mọi giá trị; `href` chỉ được tạo từ số điện thoại/email đã validate. |
-| URL trong email | Chỉ chấp nhận đường dẫn nội bộ `/...`; scheme lạ bị loại. |
-| JSON-LD | Serialize có escape `<`, `>`, `&`, U+2028/2029. |
+| Ranh giới                             | Cơ chế                                                                                                       |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Secret không lọt vào client           | `import "server-only"` ở mọi module dùng credential + chỉ đọc `process.env` không có tiền tố `NEXT_PUBLIC_`. |
+| Người nhận email không do client chọn | `SALES_RECIPIENTS` đọc ở server; body request không có trường này.                                           |
+| Dữ liệu khách không chèn được HTML    | Email template escape mọi giá trị; `href` chỉ được tạo từ số điện thoại/email đã validate.                   |
+| URL trong email                       | Chỉ chấp nhận đường dẫn nội bộ `/...`; scheme lạ bị loại.                                                    |
+| JSON-LD                               | Serialize có escape `<`, `>`, `&`, U+2028/2029.                                                              |
 
 Chi tiết luồng lead: `docs/lead-flow.md`.
 
@@ -188,7 +189,7 @@ Bất biến:
 2. **Dữ liệu dùng chung không nhân bản.** slug, id, quan hệ, giá, thời lượng,
    `src` ảnh chỉ tồn tại ở bản ghi nguồn; file dịch chỉ chứa trường ngôn ngữ.
 3. **Chỉ nội dung `reviewed` mới được index.** `draft`/`missing` → banner + noindex
-   + không vào sitemap/hreflang; `x-default` luôn trỏ về tiếng Việt.
+   - không vào sitemap/hreflang; `x-default` luôn trỏ về tiếng Việt.
 4. **Catalog không xuống client.** Client Component nhận chuỗi qua props
    (`LeadForm`, `DatePicker`, `LocaleSwitcher`, `TourExplorer`).
 5. **i18n first-party.** `next-intl` chưa hỗ trợ `cacheComponents`
@@ -199,4 +200,3 @@ Bất biến:
 `CMS_ENABLED=1` dùng SQLite và snapshot xuất bản qua `src/server/cms`, giữ TypeScript làm seed; `CMS_ENABLED=0` giữ nguồn seed phục vụ kiểm tra regression. Các route public render động để publish/ẩn/thêm slug có hiệu lực ngay, không dùng Cache Components cho bản CMS. `src/i18n/server.ts` đọc copy runtime; các client chỉ nhận dữ liệu cần thiết qua props/context. `/admin` có root layout riêng, không đi qua locale rewrite. `SITE_URL` là URL server cấu hình được lúc chạy Docker.
 
 CMS lưu revision/nháp/public/thùng rác, kiểm tra domain schema và tham chiếu. Dữ liệu khách/ghi chú mã hóa AES-GCM, session chỉ lưu hash. Giới hạn đăng nhập/lead và idempotency dùng SQLite trên VPS một instance. Đổi nguồn đã xuất bản khiến bản dịch seed cũ không được âm thầm dùng lại. Xem [hướng dẫn triển khai](VPS-DEPLOY.md), [hướng dẫn chủ quản trị](CMS-OWNER-GUIDE.md) và [báo cáo nghiệm thu](IMPLEMENTATION-2026-10.md). Phần mô tả dưới đây là kiến trúc seed ban đầu, cần đọc cùng cập nhật này.
-

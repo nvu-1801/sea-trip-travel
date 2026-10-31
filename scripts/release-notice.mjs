@@ -11,7 +11,7 @@
  *  - chống gửi trùng bằng SHA của bản deploy, lưu trong volume /app/data;
  *  - email chỉ chứa ghi chú khách hàng đã được duyệt trong commit trailer,
  *    không chứa SHA, tên tệp, log hay thông tin đăng nhập;
- *  - lỗi gửi email không làm deploy thất bại (bước workflow có continue-on-error).
+ *  - lỗi gửi email được báo trong workflow, không rollback website đã healthy.
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -69,8 +69,8 @@ const fromName =
   (process.env.MAIL_FROM_NAME ?? siteName).replace(/[\r\n]+/g, " ").trim() || siteName;
 
 const recipients = parseRecipients(
-  (process.env.RELEASE_NOTICE_RECIPIENTS ?? "").trim() ||
-    (process.env.SALES_RECIPIENTS ?? "").trim(),
+  (process.env.SALES_RECIPIENTS ?? "").trim() ||
+    (process.env.RELEASE_NOTICE_RECIPIENTS ?? "").trim(),
 );
 if (recipients.length === 0) {
   warn(

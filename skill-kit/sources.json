@@ -1,0 +1,73 @@
+{
+  "name": "landing-admin-skill-kit",
+  "version": "1.0.0",
+  "upstream": [
+    {
+      "skills": [
+        "frontend-design"
+      ],
+      "adaptation": "Unmodified skill and its LICENSE.txt",
+      "license": "Apache-2.0",
+      "url": "https://github.com/anthropics/skills",
+      "commit": "ca45fc496a3436251f191354091d557da31c15b5"
+    },
+    {
+      "skills": [
+        "vercel-react-best-practices"
+      ],
+      "adaptation": "Unmodified skill folder",
+      "license": "MIT declared in SKILL.md; no standalone license supplied",
+      "url": "https://github.com/vercel-labs/agent-skills",
+      "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62"
+    },
+    {
+      "skills": [
+        "web-design-guidelines"
+      ],
+      "adaptation": "Locally authored adapter; upstream skill and remote rules not redistributed",
+      "license": "Upstream skill unspecified",
+      "url": "https://github.com/vercel-labs/agent-skills",
+      "commit": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62"
+    },
+    {
+      "skills": [
+        "ui-ux-pro-max"
+      ],
+      "adaptation": "Project-local script paths in SKILL.md; scripts, data, references retained",
+      "license": "MIT",
+      "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+      "commit": "28b3b8dee8c976df4fa3e94aed4e092ad43fcb03"
+    },
+    {
+      "skills": [
+        "ponytail"
+      ],
+      "adaptation": "Skill and license copied",
+      "license": "MIT",
+      "url": "https://github.com/DietrichGebert/ponytail",
+      "commit": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846"
+    },
+    {
+      "skills": [
+        "humanizer"
+      ],
+      "adaptation": "Skill, agent metadata and license copied",
+      "license": "MIT",
+      "url": "https://github.com/blader/humanizer",
+      "commit": "0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0"
+    },
+    {
+      "skills": [
+        "i-have-adhd"
+      ],
+      "adaptation": "Skill, agent metadata and license copied; explicit-only policy preserved",
+      "license": "MIT",
+      "url": "https://github.com/ayghri/i-have-adhd",
+      "commit": "1ecea1993b7fce257ffbd686c070948b5e07eda6"
+    }
+  ],
+  "created": "2026-10-30",
+  "localSkills": [
+    "landing-admin"
+  ]
+}

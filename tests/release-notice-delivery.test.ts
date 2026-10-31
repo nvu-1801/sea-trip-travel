@@ -133,10 +133,23 @@ const baseEnv = (port: number): Record<string, string> => ({
   MAIL_FROM_EMAIL: "no-reply@example.com",
   MAIL_FROM_NAME: "SEA TRIP TRAVEL",
   RELEASE_NOTICE_RECIPIENTS: "owner@example.com",
+  SALES_RECIPIENTS: "",
   NEXT_PUBLIC_SITE_URL: "https://sea-trip.example",
 });
 
 describe("release notice — gửi thật và chống trùng", () => {
+  it("ưu tiên gửi đến sale khi cũng có địa chỉ chủ site", async () => {
+    const sink = createSink();
+    const port = await sink.listen();
+    try {
+      const result = await runNotifier({ ...baseEnv(port), SALES_RECIPIENTS: "sales@example.com" }, tempStateFile());
+      assert.equal(result.code, 0, result.output);
+      assert.equal(sink.received.length, 1);
+      assert.deepEqual(sink.received[0].rcptTo, ["RCPT TO:<sales@example.com>"]);
+    } finally {
+      await sink.close();
+    }
+  });
   it("gửi đúng một thư cho mỗi SHA", async () => {
     const sink = createSink();
     const port = await sink.listen();

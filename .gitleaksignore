@@ -1,0 +1,4 @@
+# Reviewed documentation placeholders only; see docs/SECURITY-TRIAGE.md.
+# Fingerprints bind the exception to one historical commit, file, rule and line.
+bce01de98aa5edc62e86a85a2364f4ace05840d2:.env.example:generic-api-key:78
+a43174919dd21ced9e7609f861f2638a43839be3:.env.production.example:generic-api-key:9

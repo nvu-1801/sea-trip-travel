@@ -55,7 +55,9 @@ try {
   let ready = false;
   for (let attempt = 0; attempt < 200; attempt++) {
     try {
-      if ((await fetch(`${base}/api/health`)).ok) {
+      // The server and URL above are fixed to IPv4 loopback; reject redirects.
+      // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
+      if ((await fetch(`${base}/api/health`, { redirect: "error", signal: AbortSignal.timeout(2000) })).ok) {
         ready = true;
         break;
       }

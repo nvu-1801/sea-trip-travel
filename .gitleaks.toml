@@ -1,0 +1,8 @@
+title = "Sea Trip secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Generated dependencies, build output and Git internals (history is scanned separately)"
+paths = ['''(^|/)(node_modules|\.next|coverage|\.git)/''']

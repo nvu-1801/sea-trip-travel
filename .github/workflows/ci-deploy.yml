@@ -10,6 +10,20 @@ concurrency:
   group: seatrip-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        with:
+          node-version: "22"
+      - run: node --test tests/code-security.test.mjs
+      - run: node scripts/code-security.mjs semgrep
+      - run: node scripts/code-security.mjs secrets
+      - run: node scripts/code-security.mjs history
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -30,10 +44,12 @@ jobs:
           npx playwright install --with-deps chromium
           node -e 'console.log("CHROMIUM_EXECUTABLE_PATH="+require("playwright").chromium.executablePath())' >> "$GITHUB_ENV"
       - run: npm run verify:ui
+      - run: npm run verify:depth
       - run: npm run verify:tour-import
       - run: npm run verify:cms
       - run: npm run verify:hero
       - run: npm run verify:tour-editor
+      - run: npm run verify:seo
       - name: Build production container
         run: docker build --build-arg APP_SHA="$GITHUB_SHA" -t sea-trip:check .
       - name: Smoke test container with persistent data and read-only filesystem
@@ -56,7 +72,7 @@ jobs:
           done
           exit 1
   deploy:
-    needs: check
+    needs: [check, security]
     if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -89,7 +105,10 @@ jobs:
       - name: Transfer and deploy exact checked commit
         run: |
           set -euo pipefail
-          git archive --format=tar.gz -o release.tar.gz "$GITHUB_SHA"
+          node scripts/build-release-notes.mjs > release-notes.json
+          git archive --format=tar -o release.tar "$GITHUB_SHA"
+          tar --append --file=release.tar release-notes.json
+          gzip release.tar
           ssh -i ~/.ssh/deploy -p "$VPS_PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes "$VPS_USER@$VPS_HOST" "mkdir -p '$APP_DIR'"
           scp -i ~/.ssh/deploy -P "$VPS_PORT" -o StrictHostKeyChecking=yes release.tar.gz "$VPS_USER@$VPS_HOST:$APP_DIR/incoming-$GITHUB_SHA.tar.gz"
           ssh -i ~/.ssh/deploy -p "$VPS_PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes -o ServerAliveInterval=30 "$VPS_USER@$VPS_HOST" "bash -s -- '$GITHUB_SHA' '$APP_DIR'" < scripts/deploy/deploy.sh
@@ -98,6 +117,10 @@ jobs:
           set -euo pipefail
           curl -fsS --retry 5 --retry-all-errors --max-time 20 "$HEALTH_URL" > health.json
           node -e 'const b=require("./health.json");if(b.status!=="ok"||b.sha!==process.env.GITHUB_SHA||b.database!=="connected")process.exit(1)'
+      - name: Notify sales of verified website update
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy -p "$VPS_PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes -o ServerAliveInterval=30 "$VPS_USER@$VPS_HOST" "bash -s -- '$GITHUB_SHA' '$APP_DIR'" < scripts/deploy/notify.sh
       - name: Remove temporary private key
         if: always()
         run: rm -f ~/.ssh/deploy

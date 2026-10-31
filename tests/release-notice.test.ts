@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   buildReleaseNoticeHtml,
@@ -12,6 +17,47 @@ import {
   safeSiteUrl,
   selectReleaseNotes,
 } from "../scripts/lib/release-notice.mjs";
+
+it("release manifest includes notes and the previous release on merge commits", () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "seatrip-release-history-"));
+  const env = {
+    // Git hooks export repository context; fixtures must never inherit it.
+    ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
+    NODE_ENV: process.env.NODE_ENV,
+    GIT_AUTHOR_NAME: "Release fixture",
+    GIT_AUTHOR_EMAIL: "fixture@example.com",
+    GIT_COMMITTER_NAME: "Release fixture",
+    GIT_COMMITTER_EMAIL: "fixture@example.com",
+  };
+  const git = (...args: string[]) =>
+    execFileSync("git", args, { cwd: directory, env, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  try {
+    git("init");
+    git("commit", "--allow-empty", "-m", "Initial release");
+    const previous = git("rev-parse", "HEAD");
+    const branch = git("symbolic-ref", "--short", "HEAD");
+    git("checkout", "-b", "feature");
+    git("commit", "--allow-empty", "-m", "Technical change");
+    git("checkout", branch);
+    const note = "Thông tin giá tour được kiểm tra trước khi lưu";
+    git("merge", "--no-ff", "feature", "-m", "Merge release", "-m", `Customer-Note: ${note}`);
+    const head = git("rev-parse", "HEAD");
+    const runner = fileURLToPath(new URL("../scripts/build-release-notes.mjs", import.meta.url));
+    const output = execFileSync(process.execPath, [runner], {
+      cwd: directory,
+      env: { ...env, GITHUB_SHA: head },
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const manifest = JSON.parse(output);
+    assert.equal(manifest.head, head);
+    assert.deepEqual(manifest.notes[head], [note]);
+    assert.ok(manifest.order.includes(previous));
+    assert.deepEqual(selectReleaseNotes(manifest, { headSha: head, previousSha: previous }).items, [note]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 /**
  * Email "website vừa được cập nhật" chỉ được nói về những thay đổi khách hàng

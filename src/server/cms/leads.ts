@@ -23,7 +23,7 @@ export function encrypt(value: unknown) {
 }
 export function decrypt(value: string) {
   const [iv, tag, body] = value.split(":");
-  const cipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(iv, "hex"));
+  const cipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(iv, "hex"), { authTagLength: 16 });
   cipher.setAuthTag(Buffer.from(tag, "hex"));
   return JSON.parse(
     Buffer.concat([

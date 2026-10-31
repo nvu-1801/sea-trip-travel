@@ -12,6 +12,11 @@ release thật, nên quy trình dưới đây là bắt buộc, không phải g�
 | `push` `main` | `check` → `deploy` | Gate đầy đủ, sau đó deploy lên VPS |
 | `workflow_dispatch` | `check` → `deploy` (nếu chọn `main`) | Chạy lại thủ công |
 
+Job `security` chạy song song với `check`: tests của scanner runner, Semgrep,
+Gitleaks working tree và Gitleaks toàn bộ lịch sử Git. Deploy phải chờ cả hai
+job thành công. Các ngoại lệ đã review nằm trong [SECURITY-TRIAGE.md](SECURITY-TRIAGE.md).
+CI cũng chạy `verify:depth` và `verify:seo` như full preflight cục bộ.
+
 `check` chạy đúng thứ tự sau, dừng ngay ở bước đầu tiên lỗi:
 
 1. `npm ci`
@@ -37,8 +42,13 @@ release thật, nên quy trình dưới đây là bắt buộc, không phải g�
 3. `scp` archive lên VPS và chạy `scripts/deploy/deploy.sh` qua `ssh`
 4. `curl` `PROD_HEALTH_URL`, đòi `status: ok`, `database: connected` và
    `sha` bằng đúng SHA vừa merge
-5. gửi email cập nhật cho chủ site (`scripts/deploy/notify.sh`, lỗi email
-   không làm hỏng deploy)
+5. gửi email cập nhật đến `SALES_RECIPIENTS` (dự phòng `RELEASE_NOTICE_RECIPIENTS`)
+   bằng `scripts/deploy/notify.sh`; lỗi gửi thư làm bước thông báo thất bại,
+   không rollback website đã kiểm tra thành công.
+
+Mỗi thay đổi cần thông báo phải có dòng `Customer-Note: ...` trong commit,
+viết bằng tiếng Việt dễ hiểu: thay đổi gì, lợi ích và cách sử dụng. Giữ các
+dòng này khi squash. Không có ghi chú thì email nói rõ không có mô tả thay đổi.
 
 ## 2. Quy trình bắt buộc khi push `main`
 

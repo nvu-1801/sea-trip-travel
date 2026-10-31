@@ -8,6 +8,7 @@ import {
   collectTourIssues,
   describeTourIssue,
   humanizeZodIssue,
+  MAX_TOUR_PRICE,
 } from "../src/domain/tour-rules";
 
 const source = tours[0];
@@ -42,6 +43,46 @@ test("price from must match the lowest adult package price", () => {
         issue.path.join(".") === "priceFrom.amount" &&
         /thấp nhất/.test(issue.message),
     ),
+  );
+});
+
+test("child price cannot exceed the adult price", () => {
+  const tour = parse({
+    pricingOptions: [
+      {
+        id: "price_test_child",
+        label: "Gói thử",
+        adultPrice: 500000,
+        childPrice: 700000,
+      },
+    ],
+    priceFrom: { amount: 500000, currency: "VND" },
+  });
+  const issues = collectTourBusinessIssues(tour, context);
+  assert.ok(
+    issues.some(
+      (issue) =>
+        issue.path.join(".") === "pricingOptions.0.childPrice" &&
+        /trẻ em/.test(issue.message),
+    ),
+  );
+});
+
+test("prices above the safety ceiling are rejected", () => {
+  const tour = parse({
+    pricingOptions: [
+      {
+        id: "price_test_max",
+        label: "Gói thử",
+        adultPrice: MAX_TOUR_PRICE + 1,
+        childPrice: 0,
+      },
+    ],
+    priceFrom: { amount: MAX_TOUR_PRICE + 1, currency: "VND" },
+  });
+  const issues = collectTourBusinessIssues(tour, context);
+  assert.ok(
+    issues.some((issue) => /vượt quá giới hạn/.test(issue.message)),
   );
 });
 

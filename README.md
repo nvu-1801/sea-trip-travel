@@ -1,139 +1,127 @@
-# SEA TRIP TRAVEL
+<div align="center">
+  <img src="public/brand/logo-lockup.png" alt="SEA TRIP TRAVEL" width="280" />
 
-Website giới thiệu điểm đến, tour và trải nghiệm du lịch trong nước, tập trung vào
-tuyến **Quy Nhơn – Phú Yên**. Khách xem lịch trình và gửi **yêu cầu tư vấn**; hệ
-thống gửi email cho bộ phận tư vấn; tư vấn viên liên hệ lại.
+# Du lịch được kể bằng trải nghiệm.<br/>Vận hành được xây bằng hệ thống.
 
-> **Giai đoạn MVP chưa có:** admin/CMS, tài khoản khách, thanh toán, đặt tour
-> trực tuyến, vé máy bay, khách sạn. Xem `docs/admin-roadmap.md` cho lộ trình mở
-> rộng.
+**SEA TRIP TRAVEL · Website du lịch & không gian quản trị**
 
-## Bắt đầu
+Next.js 16 · React 19 · TypeScript · SQLite · Docker
+
+[Khám phá website](https://sea-trip-travel.duckdns.org) · [Kiến trúc](docs/architecture.md) · [Triển khai](docs/CI-CD.md) · [Bảo mật](SECURITY.md)
+
+</div>
+
+![Bờ biển Quy Nhơn – Phú Yên](public/images/hero/blue-bay.webp)
+
+## Từ khám phá điểm đến đến tiếp nhận khách hàng
+
+SEA TRIP TRAVEL kết nối trải nghiệm xem tour với công việc vận hành của doanh nghiệp lữ hành. Khách hàng khám phá điểm đến, đọc lịch trình và gửi yêu cầu tư vấn. Đội ngũ vận hành quản lý nội dung, tiếp nhận lead và theo dõi nghiệp vụ trong **SEA TRIP Studio**.
+
+Sản phẩm tập trung vào Quy Nhơn – Phú Yên và các tuyến du lịch trong nước. Phạm vi hiện tại là giới thiệu dịch vụ và tiếp nhận tư vấn; chưa tích hợp thanh toán hoặc xác nhận đặt chỗ tự động.
+
+## Năng lực thể hiện trong sản phẩm
+
+| Nhu cầu doanh nghiệp       | Giải pháp trong repository                                                                        |
+| :------------------------- | :------------------------------------------------------------------------------------------------ |
+| Trình bày sản phẩm du lịch | Trang điểm đến, danh mục, lịch trình tour, cẩm nang và thư viện hình ảnh                          |
+| Chủ động cập nhật nội dung | Studio quản lý nội dung, nháp, xuất bản, media và cấu hình trang chủ                              |
+| Tiếp nhận cơ hội bán hàng  | Form tư vấn, kiểm tra dữ liệu, chống spam, lưu lead và gửi thông báo SMTP                         |
+| Hỗ trợ vận hành nội bộ     | Quản lý tài chính tour, hóa đơn và xuất PDF; xem [tài liệu nghiệp vụ](docs/ADMIN-TOUR-FINANCE.md) |
+| Tiếp cận người đọc quốc tế | Giao diện VI/EN, trạng thái duyệt bản dịch, quy tắc index nội dung                                |
+| Bàn giao có thể vận hành   | Docker, CI/CD, health endpoint theo commit, backup mã hóa và hướng dẫn phục hồi                   |
+
+## Thiết kế để bảo trì và bàn giao
+
+Ứng dụng dùng chung một nền tảng cho website và Studio. UI được tách khỏi lớp nghiệp vụ; nội dung xuất bản được đọc qua repository, còn dữ liệu quản trị lưu trên SQLite và volume bền vững.
+
+```mermaid
+flowchart LR
+    Visitor[Khách hàng] --> Public[Website VI / EN]
+    Owner[Chủ quản trị] --> Studio[SEA TRIP Studio]
+    Public --> Content[Lớp đọc nội dung xuất bản]
+    Studio --> CMS[API quản trị · phiên · CSRF]
+    CMS --> Data[(SQLite & uploads)]
+    Content --> Data
+    Public --> Lead[API tiếp nhận tư vấn]
+    Lead --> Data
+    Lead --> SMTP[Thông báo SMTP]
+    Data --> Backup[Backup mã hóa]
+```
+
+| Thành phần           | Lựa chọn                                            |
+| :------------------- | :-------------------------------------------------- |
+| Ứng dụng             | Next.js App Router, React, TypeScript               |
+| Giao diện            | Tailwind CSS, design tokens, chuyển động CSS        |
+| Hợp đồng dữ liệu     | Schema Zod và validation phía server                |
+| Nội dung & nghiệp vụ | SQLite, nội dung seed trong source, thư mục uploads |
+| Triển khai           | Node.js 22, Docker Compose, Caddy, GitHub Actions   |
+
+Mô hình triển khai hiện tại phù hợp **một VPS có ổ đĩa bền vững** và một chủ quản trị. Mở rộng nhiều instance cần đánh giá lại database, lưu trữ media và shared rate-limit store. Xem [kiến trúc](docs/architecture.md).
+
+## Chất lượng có bằng chứng
+
+Repository cung cấp các lớp kiểm tra có thể chạy lại, thay vì dựa vào số lượng test hoặc tuyên bố chất lượng cố định:
+
+| Lớp kiểm tra        | Nội dung                                                                   |
+| :------------------ | :------------------------------------------------------------------------- |
+| Static checks       | ESLint, TypeScript và production build                                     |
+| Unit & integration  | Validation, lead, email, nội dung, nghiệp vụ, CMS và backup                |
+| Trình duyệt         | UI, CMS, nhập tour, hero, trình biên tập tour và SEO                       |
+| Container & release | Build image, read-only filesystem, persistent volume, health và commit SHA |
 
 ```bash
-npm install
-cp .env.example .env.local     # rồi điền giá trị thật
-npm run dev                    # http://localhost:3050
+npm run verify:preflight -- --full
 ```
 
-Kiểm tra chất lượng:
+Đây là cổng kiểm tra bắt buộc trước khi push. Thay đổi hạ tầng cần thêm Docker build và smoke test theo [quy trình CI/CD](docs/CI-CD.md). CI chạy trên PR; deploy production chỉ chạy từ main khi được cấu hình. Trạng thái thực tế xem tại [GitHub Actions](https://github.com/nvu-1801/sea-trip-travel/actions), không suy ra từ README.
+
+## Bảo mật & dữ liệu khách hàng
+
+Các kiểm soát trong source gồm mật khẩu quản trị băm bằng scrypt, phiên lưu dưới dạng hash, cookie HttpOnly/SameSite, kiểm tra Origin và CSRF cho thao tác quản trị, mã hóa payload lead bằng AES-256-GCM và giới hạn đăng nhập. Container ứng dụng chạy với filesystem chỉ đọc và không được cấp thêm quyền.
+
+Bảo mật còn phụ thuộc cấu hình production, quản lý khóa và cập nhật dependency. [Chính sách bảo mật](SECURITY.md) mô tả cách báo cáo vấn đề; [báo cáo rà soát](docs/SECURITY-REVIEW.md) ghi bằng chứng và giới hạn đã biết. Đây không phải chứng nhận bảo mật hay kết quả pentest độc lập.
+
+## Chạy tại máy phát triển
+
+Yêu cầu **Node.js >= 22.13** và npm. Clone repository rồi chạy:
 
 ```bash
-npm run typecheck     # tsc --noEmit
-npm run lint          # eslint
-npm test              # node:test (132 test)
-npm run build         # next build (42 trang)
-
-npm run verify:ui     # Chrome thật: 82 kiểm tra (layout, bàn phím, form → SMTP)
-npm run content:report # nội dung nào còn thiếu, theo từng bản ghi
+npm ci
+cp .env.example .env.local
 ```
 
-## Cấu trúc
+Trên PowerShell, dùng `Copy-Item .env.example .env.local`. Trong file riêng vừa tạo, đặt `LEAD_ENCRYPTION_KEY` và `LEAD_HASH_SALT` bằng hai giá trị ngẫu nhiên độc lập. Chạy lệnh sau hai lần, mỗi lần lấy một giá trị:
 
-```
-src/
-├── app/         Route + page composition (mỏng, không chứa logic nghiệp vụ)
-├── components/  UI primitives không biết domain (button, form, layout, icons)
-├── features/    UI theo tính năng (home, tours, guides, leads, destinations)
-├── content/     Nội dung dạng file TS + kiểm tra toàn vẹn
-├── domain/      Kiểu + schema Zod (nguồn sự thật duy nhất)
-├── server/      Chỉ chạy trên server: mailer, template, service lead
-├── lib/         Repository (lib/data), format, seo, sanitize, json-ld
-└── config/      site.ts (nhận diện, liên hệ), navigation.ts (menu)
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Quy tắc phụ thuộc và lý do: **`docs/architecture.md`**.
+Để `MAIL_TRANSPORT=log` khi phát triển. Muốn thử gửi email, điền cấu hình SMTP và địa chỉ nhận của môi trường thử nghiệm vào `.env.local`.
 
-## Menu
+```bash
+npm run dev
+```
 
-Giữ đúng thứ tự yêu cầu. Nguồn duy nhất: `src/config/navigation.ts`.
+Mở [localhost:3050](http://localhost:3050). Để dùng Studio, đặt `ADMIN_USERNAME` và `ADMIN_PASSWORD` (14–200 ký tự) trong môi trường riêng, rồi chạy `npm run admin -- bootstrap`. Không có mật khẩu mặc định. Hướng dẫn chi tiết: [CMS cho chủ website](docs/CMS-OWNER-GUIDE.md).
 
-| Cấp 1                   | Cấp 2                  | URL                                             |
-| ----------------------- | ---------------------- | ----------------------------------------------- |
-| Trang chủ               |                        | `/`                                             |
-| Tour Quy Nhơn - Phú Yên |                        | `/tour-quy-nhon-phu-yen`                        |
-|                         | Tour Quy Nhơn 1 Ngày   | `/tour-quy-nhon-phu-yen/tour-quy-nhon-1-ngay`   |
-|                         | Tour Quy Nhơn dài Ngày | `/tour-quy-nhon-phu-yen/tour-quy-nhon-dai-ngay` |
-| Tour Trong Nước         |                        | `/tour-trong-nuoc`                              |
-|                         | Tour Miền Bắc          | `/tour-trong-nuoc/tour-mien-bac`                |
-|                         | Tour Miền Trung        | `/tour-trong-nuoc/tour-mien-trung`              |
-|                         | Tour Miền Nam          | `/tour-trong-nuoc/tour-mien-nam`                |
-|                         | Tour Tây Nguyên        | `/tour-trong-nuoc/tour-tay-nguyen`              |
-| Cẩm Nang Du Lịch        |                        | `/cam-nang-du-lich`                             |
-| Liên Hệ                 |                        | `/lien-he`                                      |
+## Vận hành production
 
-Trang khác: `/tour/[slug]`, `/cam-nang-du-lich/[slug]`, `/chinh-sach-bao-mat`,
-`/api/leads`, `sitemap.xml`, `robots.txt`.
+1. Tạo `.env.production` riêng trên VPS từ [template](.env.production.example); điền domain, SMTP và khóa, đặt quyền `600`.
+2. Chuẩn bị volume bền vững cho SQLite/uploads và bản sao khóa mã hóa ngoài VPS.
+3. Thực hiện release qua PR, CI và main; xác minh `/api/health` có `status: "ok"`, `database: "connected"` và đúng SHA.
+4. Kiểm tra backup và diễn tập phục hồi trước khi nhận dữ liệu thực.
 
-## Song ngữ (vi / en)
+Không đưa file môi trường thật, dữ liệu khách, database hoặc backup vào Git. Không thay khóa mã hóa lead đang dùng nếu chưa có kế hoạch di chuyển dữ liệu.
 
-Website hiện hỗ trợ **tiếng Việt** (mặc định, URL không prefix) và **tiếng Anh**
-(`/en/...`). Slug nội dung giữ nguyên ở cả hai ngôn ngữ.
+## Tài liệu bàn giao
 
-- **Không dùng thư viện i18n ngoài:** `next-intl` chưa hỗ trợ `cacheComponents`
-  (đang bật), nên i18n dựng trên `next/root-params` + `src/proxy.ts`.
-- Chuỗi giao diện: `src/messages/{vi,en}.json` (key khớp nhau, `typecheck` kiểm).
-- Nội dung: bản dịch đặt ở `src/content/locales/en/*.ts`, **khoá theo `id`** bản
-  ghi, kèm `translationStatus: draft | reviewed`.
-- Bản dịch tiếng Anh do agent tạo đang là **draft**: xem được nhưng có banner,
-  `noindex`, và **không** nằm trong `sitemap.xml`/`hreflang`.
+| Dành cho       | Tài liệu                                                                                                     |
+| :------------- | :----------------------------------------------------------------------------------------------------------- |
+| Chủ website    | [Sử dụng Studio](docs/CMS-OWNER-GUIDE.md) · [Nội dung cần bổ sung](docs/CONTENT-TODO.md)                     |
+| Đội phát triển | [Kiến trúc](docs/architecture.md) · [Design tokens](docs/design-tokens.md) · [Luồng lead](docs/lead-flow.md) |
+| Đội vận hành   | [VPS & Docker](docs/VPS-DEPLOY.md) · [CI/CD](docs/CI-CD.md) · [Backup & restore](docs/BACKUP-RESTORE.md)     |
+| Biên tập       | [Vận hành VI/EN](docs/I18N_GUIDE.md) · [Duyệt bản dịch](docs/I18N_CONTENT_REVIEW.md)                         |
+| Nghiệp vụ      | [Tài chính tour](docs/ADMIN-TOUR-FINANCE.md) · [Hóa đơn](docs/invoices.md)                                   |
+| Nghiệm thu     | [Checklist](docs/acceptance-checklist.md) · [Bảo mật](docs/SECURITY-REVIEW.md)                               |
 
-Vận hành: **`docs/I18N_GUIDE.md`**. Danh sách bản dịch cần duyệt:
-**`docs/I18N_CONTENT_REVIEW.md`**.
-
-## Biến môi trường
-
-Xem `.env.example`. Không có secret nào được ghi vào source. Chỉ biến có tiền tố
-`NEXT_PUBLIC_` mới lộ ra trình duyệt.
-
-## Nội dung và dữ liệu
-
-Nội dung nằm trong `src/content/`. Đợt 16/10/2026 đã nhập 11 chương trình từ tài liệu khách hàng, bảng giá lưu trú và metadata ảnh. 28 ảnh gốc từ Word chưa được công khai; bản code sử dụng placeholder. Xem `docs/TOUR-CONTENT-IMPLEMENTATION-PLAN.md` và `docs/TOUR-IMPORT-VERIFICATION.md`.
-
-- Tour từ tài liệu khách có `contentStatus: "verified"`; tour chưa có tài liệu đối ứng giữ `demo`. Đây là **metadata theo dõi nội bộ** (dùng
-  cho `docs/CONTENT-TODO.md` và checklist nghiệm thu) — trường này **không** được
-  render ra giao diện. Khách không thấy nhãn nào về "nội dung demo".
-- Tour một ngày chưa có giá giữ `priceFrom: null` → **"Liên hệ tư vấn"**; bốn tour dài ngày có bảng giá theo gói. Giá thiếu không
-  bao giờ hiển thị `0 ₫`.
-- Ảnh chưa có: `image.src` bỏ trống → hệ thống vẽ placeholder gradient thương
-  hiệu. Thêm ảnh thật = điền `src` (một dòng dữ liệu), không sửa component.
-
-Danh sách việc cần chủ website cung cấp: **`docs/CONTENT-TODO.md`**.
-
-## Tài liệu
-
-| File                           | Nội dung                                                                                          |
-| ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `docs/PLAN.md`                 | Kế hoạch triển khai: phạm vi, sitemap, art direction, lộ trình                                    |
-| `docs/verification.md`         | **Báo cáo kiểm chứng**: email thật, rate limit, mobile, animation, và những gì còn chưa kiểm được |
-| `docs/architecture.md`         | Kiến trúc, cây thư mục, quy tắc phụ thuộc, luồng dữ liệu                                          |
-| `docs/design-tokens.md`        | Token màu/chữ/khoảng cách + lý do đạt WCAG AA                                                     |
-| `docs/lead-flow.md`            | Luồng form → email, chống spam, xử lý lỗi, biến môi trường                                        |
-| `docs/admin-roadmap.md`        | Lộ trình bổ sung admin/CMS sau MVP                                                                |
-| `docs/I18N_GUIDE.md`           | Vận hành song ngữ vi/en: thêm chuỗi, thêm tour/bài viết, bật index EN                             |
-| `docs/I18N_CONTENT_REVIEW.md`  | Danh sách bản dịch tiếng Anh đang chờ duyệt                                                       |
-| `docs/acceptance-checklist.md` | Checklist nghiệm thu + cách kiểm chứng                                                            |
-| `docs/CONTENT-TODO.md`         | Thông tin còn thiếu cần chủ website cung cấp                                                      |
-
-## Ghi chú kỹ thuật
-
-- **Next.js 16.4** với Cache Components. Điều này ảnh hưởng tới cách viết code:
-  - `new Date()`, `Math.random()` khi prerender sẽ báo lỗi → năm bản quyền được
-    bọc trong `'use cache'`.
-  - Không dùng được `export const runtime` hay `dynamicParams`.
-  - Hai trang chi tiết đặt `export const instant = false` (nội dung phụ thuộc
-    hoàn toàn vào slug).
-- **React Compiler** đang bật qua ESLint: không gọi `setState` trực tiếp trong
-  thân `useEffect`. Chỗ nào cần theo dõi trạng thái ngoài React (vị trí cuộn)
-  thì dùng `useSyncExternalStore`.
-- **Animation cuộn** dùng CSS scroll-driven animation
-  (`animation-timeline: view()`), không có IntersectionObserver và không có
-  JavaScript. Trình duyệt không hỗ trợ sẽ hiển thị nội dung bình thường.
-
-# SEA TRIP Studio · CMS và triển khai VPS
-
-Nguồn chính là thư mục `sea-trip-travel`. Bản cập nhật 18/10/2026 bổ sung `/admin` cho một chủ quản trị, quản lý tour/bài viết/danh mục/điểm đến, nội dung VI/EN, footer, media và lead. SQLite và uploads phải nằm trên ổ đĩa bền vững. Bản public đọc snapshot đã xuất bản ngay ở runtime.
-
-Xem [hướng dẫn CMS, Docker, CI/CD, backup và VPS](docs/VPS-DEPLOY.md) cùng [kế hoạch triển khai](docs/IMPLEMENTATION-2026-10.md). Không có mật khẩu mặc định. Tạo tài khoản bằng `npm run admin -- bootstrap` sau khi cấu hình môi trường theo hướng dẫn.
-
-Kiểm tra thêm: `npm run test:cms` và `npm run verify:cms`. Browser test dùng tài khoản, database và khóa mã hóa tạm riêng. Workflow deploy main chỉ bật khi đã có cấu hình VPS và `DEPLOY_ENABLED=true`.
+Một số tài liệu kế hoạch lưu lại phạm vi ở thời điểm viết. Khi có khác biệt, đối chiếu source, test và quy trình vận hành hiện hành trước khi triển khai.

@@ -30,6 +30,9 @@ export type TourIssue = {
   section: TourSectionKey;
 };
 
+/** Upper bound for a published VND price; catches accidental pasted IDs. */
+export const MAX_TOUR_PRICE = 1_000_000_000;
+
 export type TourReferenceContext = {
   categories: ReadonlySet<string>;
   destinations: ReadonlySet<string>;
@@ -243,6 +246,29 @@ export function collectTourBusinessIssues(
       "Giá từ phải lớn hơn 0; dùng giá liên hệ nếu chưa có giá",
     );
   }
+  if (tour.priceFrom && tour.priceFrom.amount > MAX_TOUR_PRICE) {
+    add(["priceFrom", "amount"], "Giá từ vượt quá giới hạn hợp lệ");
+  }
+  tour.pricingOptions.forEach((option, index) => {
+    if (option.adultPrice > MAX_TOUR_PRICE) {
+      add(
+        ["pricingOptions", index, "adultPrice"],
+        "Giá người lớn vượt quá giới hạn hợp lệ",
+      );
+    }
+    if (option.childPrice > MAX_TOUR_PRICE) {
+      add(
+        ["pricingOptions", index, "childPrice"],
+        "Giá trẻ em vượt quá giới hạn hợp lệ",
+      );
+    }
+    if (option.childPrice > option.adultPrice) {
+      add(
+        ["pricingOptions", index, "childPrice"],
+        "Giá trẻ em không nên cao hơn giá người lớn",
+      );
+    }
+  });
 
   if (tour.duration.days > 90 || tour.duration.nights > tour.duration.days) {
     add(["duration", "nights"], "Thời lượng tour không hợp lệ");

@@ -15,7 +15,9 @@ try {
   let ready = false;
   for (let i = 0; i < 200; i++) {
     try {
-      if ((await fetch(`${base}/api/health`)).ok) { ready = true; break; }
+      // The server and URL above are fixed to IPv4 loopback; reject redirects.
+      // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
+      if ((await fetch(`${base}/api/health`, { redirect: "error", signal: AbortSignal.timeout(2000) })).ok) { ready = true; break; }
     } catch {}
     await new Promise((r) => setTimeout(r, 100));
   }
@@ -28,20 +30,20 @@ try {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(`${base}/admin`);
-  await page.getByLabel(/Tên đăng nhập/).waitFor();
+  await page.getByLabel(/TÃªn Ä‘Äƒng nháº­p/).waitFor();
   await page.waitForTimeout(600);
   await page.screenshot({ path: "verify-screenshots/admin-login-desktop.png" });
-  // Lỗi sai mật khẩu vẫn giữ form đẹp.
-  await page.getByLabel(/Tên đăng nhập/).fill("sai");
-  await page.getByLabel(/Mật khẩu/).fill("sai");
-  await page.getByRole("button", { name: /Vào SEA TRIP Studio/ }).click();
+  // Lá»—i sai máº­t kháº©u váº«n giá»¯ form Ä‘áº¹p.
+  await page.getByLabel(/TÃªn Ä‘Äƒng nháº­p/).fill("sai");
+  await page.getByLabel(/Máº­t kháº©u/).fill("sai");
+  await page.getByRole("button", { name: /VÃ o SEA TRIP Studio/ }).click();
   await page.getByRole("alert").waitFor({ timeout: 10000 });
   await page.screenshot({ path: "verify-screenshots/admin-login-error.png" });
   await ctx.close();
   const mob = await browser.newContext({ viewport: { width: 390, height: 900 } });
   const mp = await mob.newPage();
   await mp.goto(`${base}/admin`);
-  await mp.getByLabel(/Tên đăng nhập/).waitFor();
+  await mp.getByLabel(/TÃªn Ä‘Äƒng nháº­p/).waitFor();
   await mp.waitForTimeout(400);
   await mp.screenshot({ path: "verify-screenshots/admin-login-mobile.png", fullPage: true });
   await mob.close();
