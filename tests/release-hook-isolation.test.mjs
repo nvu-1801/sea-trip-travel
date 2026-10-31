@@ -10,6 +10,7 @@ test("release history fixtures cannot mutate a repository inherited from a Git h
   const directory = mkdtempSync(path.join(tmpdir(), "seatrip-hook-context-"));
   const env = {
     ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
+    NODE_ENV: process.env.NODE_ENV,
     GIT_AUTHOR_NAME: "Hook fixture",
     GIT_AUTHOR_EMAIL: "fixture@example.com",
     GIT_COMMITTER_NAME: "Hook fixture",
