@@ -1,0 +1,4 @@
+interface:
+  display_name: "Landing Page + Admin"
+  short_description: "Build connected landing pages and admin workflows"
+  default_prompt: "Use $landing-admin to implement this landing page and admin change using the existing project conventions."
