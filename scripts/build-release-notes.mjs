@@ -54,7 +54,7 @@ try {
   // `%x1e` tách commit, `%x1f` tách sha/body. Bản ghi mới nhất đứng trước.
   const raw = execFileSync(
     "git",
-    ["log", "--no-merges", `--format=%H%x1f%B%x1e`, "-n", String(MAX_COMMITS), head],
+    ["log", `--format=%H%x1f%B%x1e`, "-n", String(MAX_COMMITS), head],
     { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
 
