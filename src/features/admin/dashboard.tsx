@@ -21,8 +21,15 @@ import { HealthCheck } from "./health-check";
 import { BackupPanel } from "./backup-panel";
 import { HomeSections } from "./home-sections";
 import { HomeRegionsEditor, type RegionEditorRow } from "./home-regions-editor";
-import { HomeFeaturedEditor, type FeaturedEditorTour } from "./home-featured-editor";
-import { CustomerStoriesEditor } from "./customer-stories-editor";
+import {
+  HomeFeaturedEditor,
+  type FeaturedEditorTour,
+} from "./home-featured-editor";
+import {
+  CUSTOMER_PART_LABELS,
+  CustomerStoriesEditor,
+  type CustomerPart,
+} from "./customer-stories-editor";
 import { TranslationManager } from "./translation-manager";
 import { ArticleEditorLayout } from "./article-section-nav";
 import type { HomeSectionMeta } from "@/lib/home-sections";
@@ -84,7 +91,11 @@ import { descendantCategoryIds } from "@/lib/featured";
 import { AdminIcon, type AdminIconName } from "./admin-icons";
 import { SearchIcon, CloseIcon } from "@/components/ui/icons";
 import { searchKey } from "@/lib/search";
-import { isPlaceholderSlug, slugFollowsTitle, slugFromTitle } from "@/lib/public-slug";
+import {
+  isPlaceholderSlug,
+  slugFollowsTitle,
+  slugFromTitle,
+} from "@/lib/public-slug";
 import {
   ADMIN_SEARCH_GROUP_LABELS,
   rankAdminSearch,
@@ -627,6 +638,8 @@ export function Dashboard({
   const [leadTrashCount, setLeadTrashCount] = useState(0);
   const [leadTrashLoading, setLeadTrashLoading] = useState(false);
   const [references, setReferences] = useState<ReferenceOptions>({});
+  /** Groups with unsaved edits, shown in the customers save bar. */
+  const [customerParts, setCustomerParts] = useState<CustomerPart[]>([]);
   const [qnpyIds, setQnpyIds] = useState<ReadonlySet<string>>(new Set());
   const [tourLinks, setTourLinks] = useState<
     { categoryIds: string[]; destinationIds: string[] }[]
@@ -979,6 +992,7 @@ export function Dashboard({
           media: mediaSelectOptions(library),
         });
         setSelected(landing);
+        setCustomerParts([]);
         setDirty(false);
         dirtyFields.current.clear();
         setHasUpdates(false);
@@ -1248,7 +1262,9 @@ export function Dashboard({
             bytes?: number;
           }[]
         >,
-        api("storage?fresh=1").catch(() => null) as Promise<HealthStorage | null>,
+        api("storage?fresh=1").catch(
+          () => null,
+        ) as Promise<HealthStorage | null>,
       ]);
       setMedia(library);
       setMediaStorage(storage);
@@ -1461,9 +1477,14 @@ export function Dashboard({
     const keepEditor =
       (action === "save" || action === "publish" || action === "unpublish") &&
       collection === tab &&
-      ["tours", "articles", "categories", "destinations", "settings", "messages"].includes(
-        tab,
-      );
+      [
+        "tours",
+        "articles",
+        "categories",
+        "destinations",
+        "settings",
+        "messages",
+      ].includes(tab);
     await run(async () => {
       const editingRegions =
         collection === "landing" &&
@@ -2115,9 +2136,7 @@ export function Dashboard({
           </span>
           {price.contact || price.current === null ? (
             <>
-              <strong className="adm-tour-price-contact">
-                Liên hệ tư vấn
-              </strong>
+              <strong className="adm-tour-price-contact">Liên hệ tư vấn</strong>
               {price.hiddenPackages > 0 ? (
                 <small className="adm-tour-price-hidden">
                   Có {price.hiddenPackages} gói giá đang ẩn
@@ -2345,8 +2364,7 @@ export function Dashboard({
     .filter((row) => row.state !== "deleted")
     .map((row) => {
       const duration = row.data.duration as
-        | Record<string, EditorValue>
-        | undefined;
+        Record<string, EditorValue> | undefined;
       return {
         slug: String(row.data.slug ?? ""),
         title: String(row.data.title ?? row.data.slug ?? row.id),
@@ -2865,9 +2883,14 @@ export function Dashboard({
             ) : null}
             <span className="adm-topbar-divider" aria-hidden="true" />
             <div className="adm-topbar-tools">
-              {!["account", "overview", "activity", "health", "finance", "translations"].includes(
-                tab,
-              ) && (
+              {![
+                "account",
+                "overview",
+                "activity",
+                "health",
+                "finance",
+                "translations",
+              ].includes(tab) && (
                 <button
                   type="button"
                   className="adm-topbar-icon adm-topbar-refresh"
@@ -2947,7 +2970,9 @@ export function Dashboard({
                           ? "Bố cục, banner và từng khối nội dung — đúng thứ tự khách sẽ trải nghiệm."
                           : tab === "customers"
                             ? "Dải logo 2 hàng full width và video khách hàng, ngay dưới Vì sao chọn SEA TRIP."
-                            : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
+                            : tab === "hotels"
+                              ? "Danh mục lưu trú, thứ tự hiển thị và trạng thái xuất bản."
+                              : "Một nơi để chăm chút nội dung và những hành trình tiếp theo."}
               </p>
             )}
           </div>
@@ -3071,132 +3096,137 @@ export function Dashboard({
         ) : tab === "account" ? (
           <>
             <section className="adm-panel adm-security">
-            <div className="adm-security-head">
-              <span className="adm-security-shield" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2.5 4.5 5.5v6c0 4.6 3.2 8 7.5 10 4.3-2 7.5-5.4 7.5-10v-6L12 2.5Z" />
-                  <path d="m9 11.5 2.2 2.2L15.5 9.5" />
-                </svg>
-              </span>
-              <div>
-                <h2>Đổi mật khẩu</h2>
-                <p>
-                  Dùng ít nhất 14 ký tự. Sau khi đổi, mọi phiên đang đăng nhập
-                  (kể cả máy này) sẽ bị thu hồi.
-                </p>
+              <div className="adm-security-head">
+                <span className="adm-security-shield" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2.5 4.5 5.5v6c0 4.6 3.2 8 7.5 10 4.3-2 7.5-5.4 7.5-10v-6L12 2.5Z" />
+                    <path d="m9 11.5 2.2 2.2L15.5 9.5" />
+                  </svg>
+                </span>
+                <div>
+                  <h2>Đổi mật khẩu</h2>
+                  <p>
+                    Dùng ít nhất 14 ký tự. Sau khi đổi, mọi phiên đang đăng nhập
+                    (kể cả máy này) sẽ bị thu hồi.
+                  </p>
+                </div>
               </div>
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void run(async () => {
-                  await api("auth", {
-                    method: "PATCH",
-                    body: JSON.stringify({ current, password }),
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void run(async () => {
+                    await api("auth", {
+                      method: "PATCH",
+                      body: JSON.stringify({ current, password }),
+                    });
+                    setPassword("");
+                    setCurrent("");
+                    skipUnload.current = true;
+                    window.location.replace("/admin/login?loggedOut=1");
                   });
-                  setPassword("");
-                  setCurrent("");
-                  skipUnload.current = true;
-                  window.location.replace("/admin/login?loggedOut=1");
-                });
-              }}
-            >
-              <label htmlFor="adm-current-pw">Mật khẩu hiện tại</label>
-              <div className="adm-password-wrap">
-                <input
-                  id="adm-current-pw"
-                  type={showCurrentPw ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  value={current}
-                  onChange={(e) => setCurrent(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="adm-password-toggle"
-                  aria-label={showCurrentPw ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  aria-pressed={showCurrentPw}
-                  onClick={() => setShowCurrentPw((v) => !v)}
-                >
-                  {showCurrentPw ? "Ẩn" : "Hiện"}
-                </button>
-              </div>
-              <label htmlFor="adm-new-pw">Mật khẩu mới</label>
-              <div className="adm-password-wrap">
-                <input
-                  id="adm-new-pw"
-                  type={showNewPw ? "text" : "password"}
-                  autoComplete="new-password"
-                  required
-                  minLength={14}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="adm-password-toggle"
-                  aria-label={showNewPw ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  aria-pressed={showNewPw}
-                  onClick={() => setShowNewPw((v) => !v)}
-                >
-                  {showNewPw ? "Ẩn" : "Hiện"}
-                </button>
-              </div>
-              {(() => {
-                const len = password.length;
-                const score =
-                  (len >= 14 ? 1 : 0) +
-                  (len >= 20 ? 1 : 0) +
-                  (/[A-Z]/.test(password) && /[a-z]/.test(password) ? 1 : 0) +
-                  (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)
-                    ? 1
-                    : 0);
-                const label =
-                  len === 0
-                    ? ""
-                    : score <= 1
-                      ? "Yếu"
-                      : score === 2
-                        ? "Trung bình"
-                        : score === 3
-                          ? "Khá"
-                          : "Mạnh";
-                return (
-                  <div className="adm-pw-meter" aria-live="polite">
-                    <div className="adm-pw-meter-bar">
-                      {[0, 1, 2, 3].map((i) => (
-                        <span key={i} data-on={i < score} data-level={score} />
-                      ))}
-                    </div>
-                    <p>
-                      {len === 0 ? (
-                        <>Tối thiểu 14 ký tự, tối đa 200 ký tự.</>
-                      ) : len < 14 ? (
-                        <>Còn thiếu {14 - len} ký tự nữa mới đủ độ dài.</>
-                      ) : (
-                        <>
-                          Độ dài đạt yêu cầu · Độ mạnh: <strong>{label}</strong>{" "}
-                          (gợi ý thêm chữ hoa, số và ký tự đặc biệt).
-                        </>
-                      )}
-                    </p>
-                  </div>
-                );
-              })()}
-              <button
-                className="adm-primary adm-security-submit"
-                disabled={busy || password.length < 14 || !current}
+                }}
               >
-                {busy ? "Đang cập nhật…" : "Cập nhật mật khẩu"}
-              </button>
-            </form>
+                <label htmlFor="adm-current-pw">Mật khẩu hiện tại</label>
+                <div className="adm-password-wrap">
+                  <input
+                    id="adm-current-pw"
+                    type={showCurrentPw ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    value={current}
+                    onChange={(e) => setCurrent(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="adm-password-toggle"
+                    aria-label={showCurrentPw ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-pressed={showCurrentPw}
+                    onClick={() => setShowCurrentPw((v) => !v)}
+                  >
+                    {showCurrentPw ? "Ẩn" : "Hiện"}
+                  </button>
+                </div>
+                <label htmlFor="adm-new-pw">Mật khẩu mới</label>
+                <div className="adm-password-wrap">
+                  <input
+                    id="adm-new-pw"
+                    type={showNewPw ? "text" : "password"}
+                    autoComplete="new-password"
+                    required
+                    minLength={14}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="adm-password-toggle"
+                    aria-label={showNewPw ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-pressed={showNewPw}
+                    onClick={() => setShowNewPw((v) => !v)}
+                  >
+                    {showNewPw ? "Ẩn" : "Hiện"}
+                  </button>
+                </div>
+                {(() => {
+                  const len = password.length;
+                  const score =
+                    (len >= 14 ? 1 : 0) +
+                    (len >= 20 ? 1 : 0) +
+                    (/[A-Z]/.test(password) && /[a-z]/.test(password) ? 1 : 0) +
+                    (/\d/.test(password) && /[^A-Za-z0-9]/.test(password)
+                      ? 1
+                      : 0);
+                  const label =
+                    len === 0
+                      ? ""
+                      : score <= 1
+                        ? "Yếu"
+                        : score === 2
+                          ? "Trung bình"
+                          : score === 3
+                            ? "Khá"
+                            : "Mạnh";
+                  return (
+                    <div className="adm-pw-meter" aria-live="polite">
+                      <div className="adm-pw-meter-bar">
+                        {[0, 1, 2, 3].map((i) => (
+                          <span
+                            key={i}
+                            data-on={i < score}
+                            data-level={score}
+                          />
+                        ))}
+                      </div>
+                      <p>
+                        {len === 0 ? (
+                          <>Tối thiểu 14 ký tự, tối đa 200 ký tự.</>
+                        ) : len < 14 ? (
+                          <>Còn thiếu {14 - len} ký tự nữa mới đủ độ dài.</>
+                        ) : (
+                          <>
+                            Độ dài đạt yêu cầu · Độ mạnh:{" "}
+                            <strong>{label}</strong> (gợi ý thêm chữ hoa, số và
+                            ký tự đặc biệt).
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  );
+                })()}
+                <button
+                  className="adm-primary adm-security-submit"
+                  disabled={busy || password.length < 14 || !current}
+                >
+                  {busy ? "Đang cập nhật…" : "Cập nhật mật khẩu"}
+                </button>
+              </form>
             </section>
             {csrf ? <BackupPanel csrf={csrf} /> : null}
           </>
@@ -3550,11 +3580,15 @@ export function Dashboard({
                             <div className="adm-lead-facts">
                               <div className="adm-lead-fact">
                                 <span>Ngày nhận</span>
-                                <strong>{formatLeadDateTime(lead.created_at)}</strong>
+                                <strong>
+                                  {formatLeadDateTime(lead.created_at)}
+                                </strong>
                               </div>
                               <div className="adm-lead-fact">
                                 <span>Ngày dự kiến</span>
-                                <strong data-empty={travelDate ? undefined : "true"}>
+                                <strong
+                                  data-empty={travelDate ? undefined : "true"}
+                                >
                                   {travelDate
                                     ? formatLeadDay(travelDate)
                                     : "Chưa chọn"}
@@ -3562,7 +3596,9 @@ export function Dashboard({
                               </div>
                               <div className="adm-lead-fact">
                                 <span>Số khách</span>
-                                <strong data-empty={partySize ? undefined : "true"}>
+                                <strong
+                                  data-empty={partySize ? undefined : "true"}
+                                >
                                   {partySize ? `${partySize} khách` : "Chưa rõ"}
                                 </strong>
                               </div>
@@ -3662,7 +3698,9 @@ export function Dashboard({
                                         <span>
                                           Lập {formatLeadDay(item.issueDate)}
                                         </span>
-                                        <span>Tổng {formatVnd(item.total)}</span>
+                                        <span>
+                                          Tổng {formatVnd(item.total)}
+                                        </span>
                                         <span>
                                           Còn {formatVnd(item.remaining)}
                                         </span>
@@ -3733,8 +3771,7 @@ export function Dashboard({
                                   className="adm-mail-badge"
                                   data-mail={lead.mail_status}
                                 >
-                                  {mailVi[lead.mail_status] ??
-                                    lead.mail_status}
+                                  {mailVi[lead.mail_status] ?? lead.mail_status}
                                 </span>
                               </span>
                             </div>
@@ -3950,8 +3987,8 @@ export function Dashboard({
                         {formatBytes(PROJECT_STORAGE_LIMIT_BYTES)}
                       </strong>
                       <small>
-                        {Math.round(mediaStoragePercent)}% hạn mức · cảnh báo
-                        từ {STORAGE_WARN_PERCENT}%
+                        {Math.round(mediaStoragePercent)}% hạn mức · cảnh báo từ{" "}
+                        {STORAGE_WARN_PERCENT}%
                       </small>
                     </span>
                     <span
@@ -4239,7 +4276,9 @@ export function Dashboard({
                     >
                       Xem trang chủ <span aria-hidden="true">↗</span>
                     </a>
-                    <span>Bấm “Sửa” trên từng thẻ để mở đúng phần nội dung.</span>
+                    <span>
+                      Bấm “Sửa” trên từng thẻ để mở đúng phần nội dung.
+                    </span>
                   </div>
                 </div>
                 <div className="adm-home-status" role="status">
@@ -4465,6 +4504,8 @@ export function Dashboard({
                         }
                         references={references}
                         onUploadImage={uploadImage}
+                        onDirtyParts={setCustomerParts}
+                        cleanKey={`${selected.revision}:${selected.updated_at}`}
                         onChange={(customers) => {
                           setSelected({
                             ...selected,
@@ -4571,9 +4612,9 @@ export function Dashboard({
                 <h2>Khách hàng &amp; dấu ấn hành trình</h2>
                 <p>
                   Dải logo đối tác 2 hàng chạy ngược chiều và video khách hàng.
-                  Đây là cùng bản ghi trang chủ (home-sections) với thẻ trong tab
-                  Trang chủ — lưu hoặc xuất bản ở đây cập nhật đúng khối này,
-                  không có bản sao.
+                  Đây là cùng bản ghi trang chủ (home-sections) với thẻ trong
+                  tab Trang chủ — lưu hoặc xuất bản ở đây cập nhật đúng khối
+                  này, không có bản sao.
                 </p>
               </div>
               {selected ? (
@@ -4590,7 +4631,9 @@ export function Dashboard({
                     logo · {customersVisible(customersVideos)}/
                     {customersVideos.length} video
                   </span>
-                  <span>{dirty ? "Có thay đổi chưa lưu" : "Chưa có thay đổi"}</span>
+                  <span>
+                    {dirty ? "Có thay đổi chưa lưu" : "Chưa có thay đổi"}
+                  </span>
                 </div>
               ) : null}
             </header>
@@ -4650,13 +4693,21 @@ export function Dashboard({
             ) : (
               <>
                 <StickyEditorActions>
-                  <span className="adm-edit-status" aria-live="polite">
+                  <span
+                    className="adm-edit-status"
+                    data-dirty={dirty ? "true" : undefined}
+                    aria-live="polite"
+                  >
                     {uploadCount > 0
                       ? "Đang tải ảnh…"
                       : busy
                         ? "Đang lưu thay đổi…"
                         : dirty
-                          ? "Có thay đổi chưa lưu"
+                          ? customerParts.length
+                            ? `Chưa lưu · ${customerParts
+                                .map((part) => CUSTOMER_PART_LABELS[part])
+                                .join(" · ")}`
+                            : "Chưa lưu"
                           : "Chưa có thay đổi"}
                   </span>
                   <div className="adm-edit-buttons">
@@ -4686,12 +4737,16 @@ export function Dashboard({
                   </div>
                 </StickyEditorActions>
                 <CustomerStoriesEditor
-                  value={(selected.data.customers ?? {}) as Record<
-                    string,
-                    EditorValue
-                  >}
+                  value={
+                    (selected.data.customers ?? {}) as Record<
+                      string,
+                      EditorValue
+                    >
+                  }
                   references={references}
                   onUploadImage={uploadImage}
+                  onDirtyParts={setCustomerParts}
+                  cleanKey={`${selected.revision}:${selected.updated_at}`}
                   onChange={(customers) => {
                     setSelected((current) =>
                       current
@@ -5855,14 +5910,11 @@ export function Dashboard({
                     <ul className="adm-trash-list">
                       {trashedLeads.map((lead) => {
                         const name = String(
-                          lead.data.fullName ??
-                            lead.data.name ??
-                            "Khách hàng",
+                          lead.data.fullName ?? lead.data.name ?? "Khách hàng",
                         );
                         const phone = textOf(lead.data.phone);
                         const email = textOf(lead.data.email);
-                        const deletedAt =
-                          lead.deleted_at ?? lead.created_at;
+                        const deletedAt = lead.deleted_at ?? lead.created_at;
                         const left = trashDaysLeft(
                           deletedAt,
                           Date.now(),

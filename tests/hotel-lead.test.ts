@@ -314,6 +314,41 @@ describe("hotel request intake", () => {
     assert.equal(stored.hotel?.quote.status, "needs_quote");
   });
 
+  it("accepts a hotel request without a room type and never quotes it", async () => {
+    // The merged contact form only knows the property: no room, no price claim.
+    const result = await submitLead(
+      nextContext(
+        hotelBody({
+          hotel: {
+            hotelId: "hotel_test",
+            rooms: [],
+            roomPreference: "2 phòng đôi gần biển",
+            checkIn: "2026-12-20",
+            checkOut: undefined,
+          },
+        }),
+      ),
+    );
+    assert.equal(result.status, 200);
+    if (!result.response.ok) return;
+    const stored = contactLeadSchema.parse(
+      decrypt(
+        (db().prepare("SELECT data FROM leads WHERE id=?").get(
+          result.response.requestId,
+        ) as { data: string }).data,
+      ),
+    );
+    assert.equal(stored.kind, "hotel");
+    assert.deepEqual(stored.hotel?.rooms, []);
+    assert.equal(stored.hotel?.roomPreference, "2 phòng đôi gần biển");
+    assert.equal(stored.hotel?.quote.status, "needs_quote");
+    assert.equal(stored.hotel?.quote.lodgingTotal, null);
+    assert.equal(stored.hotel?.needsReview, true);
+    assert.equal(stored.hotel?.checkIn, "2026-12-20");
+    assert.equal(stored.hotel?.checkOut, null);
+    assert.equal(stored.hotel?.nights, 0);
+  });
+
   it("marks an over-capacity party for review instead of quoting", async () => {
     const result = await submitLead(
       nextContext(

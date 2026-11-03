@@ -131,7 +131,13 @@ export const hotelLeadRoomSchema = z.object({
 export const hotelStayRequestSchema = z
   .object({
     hotelId: z.string().regex(/^hotel_[a-z0-9_]+$/),
-    rooms: z.array(hotelLeadRoomSchema).min(1).max(6),
+    /**
+     * Empty = the visitor picked the hotel but no room type. The website never
+     * claims availability: sales checks with the partner before quoting.
+     */
+    rooms: z.array(hotelLeadRoomSchema).max(6).default([]),
+    /** Free text from the visitor, e.g. "2 phòng đôi gần biển". */
+    roomPreference: optionalText(200),
     checkIn: isoDateSchema.optional(),
     checkOut: isoDateSchema.optional(),
     datesFlexible: z.boolean().default(false),
@@ -143,7 +149,14 @@ export const hotelStayRequestSchema = z
   })
   .superRefine((value, ctx) => {
     const hasDates = Boolean(value.checkIn || value.checkOut);
-    if (hasDates && (!value.checkIn || !value.checkOut)) {
+    // A room-based request must be priceable, so it needs the full stay. A
+    // "hotel only" request (no room type) may carry the arrival date alone —
+    // sales confirms the nights with the partner.
+    if (
+      value.rooms.length > 0 &&
+      hasDates &&
+      (!value.checkIn || !value.checkOut)
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["checkOut"],
@@ -272,7 +285,9 @@ export const contactLeadSchema = z.object({
             quantity: z.number().int().positive(),
           }),
         )
-        .min(1),
+        .default([]),
+      /** Visitor's own words when no room type was chosen. */
+      roomPreference: z.string().optional(),
       checkIn: z.string().nullable(),
       checkOut: z.string().nullable(),
       nights: z.number().int().nonnegative(),

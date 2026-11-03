@@ -2,9 +2,9 @@
 
 ## Vì sao không cào ảnh/giá từ website khác
 
-Ảnh, mô tả, đánh giá và giá trên trang OTA/đối thủ thuộc quyền của họ và thay đổi liên tục. Dán chúng vào website của mình là vi phạm bản quyền và tạo ra giá sai cho khách. Vì vậy module này **không** có lệnh cào dữ liệu từ website bên ngoài.
+Ảnh, mô tả, đánh giá và giá trên trang OTA/đối thủ thuộc quyền của họ và thay đổi liên tục. Dán chúng vào website của mình là vi phạm bản quyền và tạo ra giá sai cho khách. Vì vậy không có lệnh nào tải ảnh, mô tả hay giá từ Booking/Agoda/website khách sạn.
 
-Cách đúng: dùng dữ liệu bạn có quyền — ảnh do khách sạn cung cấp, bảng giá đối tác gửi, hoặc file bạn tự nhập. Công cụ dưới đây nhập file đó thành **bản nháp** để rà lại trước khi xuất bản.
+Cách đúng: dùng dữ liệu bạn có quyền — ảnh do khách sạn cung cấp, bảng giá đối tác gửi, hoặc file bạn tự nhập. Công cụ dưới đây nhập file đó thành **bản nháp** để rà lại trước khi xuất bản. Khi cần dữ liệu demo để dựng giao diện, dùng script lấy từ nguồn mở ở mục kế tiếp.
 
 ## Chạy
 
@@ -20,6 +20,18 @@ npm run hotels:import -- data/khach-san.json --db data/local-hotels.sqlite
 - Không có cờ publish; `--publish` bị từ chối.
 - Chạy lại cùng file sẽ cập nhật bản nháp theo `slug`/`id` thay vì nhân đôi.
 - File mẫu `scripts/hotels/quynhon-demo.json` dùng ảnh có sẵn của website và giá demo, tên có chữ “Demo”.
+
+## Dựng dữ liệu demo từ nguồn mở
+
+```powershell
+node scripts/hotels/scrape-quynhon.mjs
+node scripts/hotels/scrape-quynhon.mjs --limit 6 --out data/khach-san.json
+```
+
+- Tên, địa chỉ, loại hình: OpenStreetMap qua Overpass (ODbL) trong bbox Quy Nhơn. Chỉ dùng dữ kiện, không chép mô tả của ai.
+- Ảnh: Openverse, lọc CC0 / public domain, nén WebP vào `public/images/hotels/<slug>/`. Nguồn từng ảnh ghi ở `public/images/hotels/CREDITS.md`.
+- Giá, tiện ích, hạng sao: dải demo, ghi rõ trong `policies` là dữ liệu chưa xác nhận.
+- Kết quả `data/khach-san-quynhon.json` (đã gitignore) rồi nhập bằng lệnh ở trên. Vẫn là **bản nháp**: mở Studio → Khách sạn để sửa rồi xuất bản.
 
 ## Định dạng file
 

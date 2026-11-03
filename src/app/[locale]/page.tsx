@@ -105,8 +105,8 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
       <TrustStrip locale={locale} />
       <JourneyStory locale={locale} />
       <RegionsSection locale={locale} />
-      <ValuesSection locale={locale} />
       <CustomerStories locale={locale} />
+      <ValuesSection locale={locale} />
       <GuidesSection locale={locale} />
       <PlanningSection locale={locale} />
       <ConsultSection

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import {
   leadInputSchema,
   type LeadResponse,
@@ -26,6 +26,15 @@ import {
 } from "@/components/ui/form-controls";
 import { cn } from "@/lib/utils";
 import { setFormDirty } from "./draft-guard";
+import {
+  forgetHotelRequest,
+  getHotelRequest,
+  getHotelRequestServerSnapshot,
+  subscribeHotelRequest,
+} from "@/features/hotels/hotel-request-store";
+import { formatVnd } from "@/features/hotels/hotel-format";
+import { localizePath } from "@/i18n/routing";
+import { MapPinIcon, CloseIcon } from "@/components/ui/icons";
 
 /**
  * Consultation request form.
@@ -66,6 +75,15 @@ export type LeadFormLabels = {
     message: string;
   };
   consent: { pre: string; link: string; post: string; hint: string };
+  /** Hotel attached from a hotel page; the request becomes a stay enquiry. */
+  hotel: {
+    label: string;
+    attached: string;
+    hint: string;
+    remove: string;
+    change: string;
+    needOne: string;
+  };
   submit: string;
   submitting: string;
   submittingSr: string;
@@ -172,6 +190,13 @@ export function LeadForm({
   const contact = useSiteContact();
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const id = (name: string) => `lead-${uid}-${name}`;
+  /** Hotel picked on a hotel page, if any — read from the shared store. */
+  const hotel = useSyncExternalStore(
+    subscribeHotelRequest,
+    getHotelRequest,
+    getHotelRequestServerSnapshot,
+  );
+  const hotelsHref = localizePath(locale, "/khach-san");
 
   const [values, setValues] = useState<Values>({
     ...EMPTY,
@@ -224,10 +249,38 @@ export function LeadForm({
     event.preventDefault();
     if (submittingRef.current) return;
 
+    // The merged form needs a subject: a tour/destination, a hotel, or both.
+    if (!hotel && !values.interest.trim()) {
+      setFieldErrors({ interest: [labels.hotel.needOne] });
+      setStatus("idle");
+      setSystemMessage(null);
+      document.getElementById(id("interest"))?.focus();
+      return;
+    }
+
+    const partySize = Number(values.partySize);
     const payload = {
       ...values,
       locale,
-      ...(tourSlug ? { tourSlug } : {}),
+      kind: hotel ? ("hotel" as const) : ("tour" as const),
+      ...(hotel
+        ? {
+            hotel: {
+              hotelId: hotel.id,
+              rooms: [],
+              ...(hotel.roomName ? { roomPreference: hotel.roomName } : {}),
+              ...(values.travelDate ? { checkIn: values.travelDate } : {}),
+              datesFlexible: !values.travelDate,
+              adults:
+                Number.isInteger(partySize) && partySize >= 1
+                  ? Math.min(40, partySize)
+                  : 2,
+              children: 0,
+              tourHelp: false,
+            },
+          }
+        : {}),
+      ...(tourSlug && !hotel ? { tourSlug } : {}),
       ...collectContext(),
     };
 
@@ -407,6 +460,69 @@ export function LeadForm({
         />
       </div>
 
+      <div className="rounded-2xl border border-border bg-surface-muted/40 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-foreground-subtle">
+            {labels.hotel.label}
+          </p>
+          {hotel ? (
+            <span className="rounded-full bg-primary-soft px-2.5 py-1 text-[0.6875rem] font-bold uppercase tracking-wide text-primary-strong">
+              {labels.hotel.attached}
+            </span>
+          ) : null}
+        </div>
+        {hotel ? (
+          <div className="mt-2 flex flex-wrap items-center gap-3 rounded-xl border border-brand-200 bg-surface px-3 py-2.5" data-hotel-chip>
+            <MapPinIcon
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-primary-strong"
+            />
+            <span className="min-w-0 flex-1">
+              <strong className="block truncate text-sm font-semibold text-foreground">
+                {hotel.name}
+              </strong>
+              <small className="block truncate text-xs text-foreground-muted">
+                {[
+                  hotel.roomName,
+                  hotel.priceFrom !== null
+                    ? formatVnd(hotel.priceFrom, locale)
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </small>
+            </span>
+            <a
+              href={hotelsHref}
+              className="text-xs font-semibold text-primary-strong underline underline-offset-2"
+            >
+              {labels.hotel.change}
+            </a>
+            <button
+              type="button"
+              onClick={() => forgetHotelRequest()}
+              aria-label={labels.hotel.remove}
+              title={labels.hotel.remove}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface text-foreground-muted transition-colors hover:border-danger/40 hover:text-danger"
+            >
+              <CloseIcon aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <a
+            href={hotelsHref}
+            className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-xl border border-border-strong bg-surface px-3 text-sm font-semibold text-foreground transition-colors hover:border-brand-300 hover:text-primary-strong"
+          >
+            <MapPinIcon aria-hidden="true" className="h-4 w-4" />
+            {labels.hotel.label}
+            <span aria-hidden="true">→</span>
+          </a>
+        )}
+        <p className="mt-2 text-xs leading-relaxed text-foreground-subtle">
+          {labels.hotel.hint}
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field
           id={id("fullName")}
@@ -472,6 +588,7 @@ export function LeadForm({
         <Field
           id={id("interest")}
           label={labels.fields.interest}
+          required={!hotel}
           optionalLabel={labels.optional}
           error={errorFor("interest")}
         >

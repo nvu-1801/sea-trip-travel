@@ -9,26 +9,40 @@ import { formatVnd } from "./hotel-format";
 /**
  * One catalogue card. Renders a reference price only when a valid, effective
  * rule exists; otherwise it invites a quote instead of printing 0 ₫.
+ *
+ * `index` only feeds the scroll depth level, so a row of cards travels at three
+ * different speeds instead of moving as one slab. The price disclaimer is not
+ * repeated here — the grid prints it once, which keeps the card foot calm.
  */
 export function HotelCard({
   hotel,
   locale,
+  index = 0,
 }: {
   hotel: PublicHotelCard;
   locale: Locale;
+  index?: number;
 }) {
   const m = getMessages(locale);
   const t = m.hotels.card;
   const href = localizePath(locale, `/khach-san/${hotel.slug}`);
   return (
-    <article className="stt-hotel-card">
-      <Link href={href} className="stt-hotel-card-media" tabIndex={-1} aria-hidden="true">
+    <article
+      className="stt-hotel-card"
+      data-hotel-depth={((index % 3) + 1) as 1 | 2 | 3}
+    >
+      <Link
+        href={href}
+        className="stt-hotel-card-media"
+        tabIndex={-1}
+        aria-hidden="true"
+      >
         {hotel.image?.src ? (
           <Image
             src={hotel.image.src}
             alt={hotel.image.alt}
             width={640}
-            height={400}
+            height={420}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
@@ -36,11 +50,17 @@ export function HotelCard({
             {hotel.lodgingTypeLabel}
           </span>
         )}
+        <span className="stt-hotel-card-badge">{hotel.lodgingTypeLabel}</span>
       </Link>
+
       <div className="stt-hotel-card-body">
         <p className="stt-hotel-card-meta">
-          {hotel.province} · {hotel.lodgingTypeLabel}
-          {hotel.starRating ? ` · ${"★".repeat(hotel.starRating)}` : ""}
+          <span>{hotel.province}</span>
+          {hotel.starRating ? (
+            <span aria-label={`${hotel.starRating}/5`}>
+              {"★".repeat(hotel.starRating)}
+            </span>
+          ) : null}
         </p>
         <h3 className="stt-hotel-card-title">
           <Link href={href}>{hotel.name}</Link>
@@ -53,29 +73,36 @@ export function HotelCard({
             ))}
           </ul>
         ) : null}
+
         <div className="stt-hotel-card-foot">
-          {hotel.priceFrom !== null ? (
-            <p className="stt-hotel-card-price">
-              {format(t.fromPrice, {
-                price: formatVnd(hotel.priceFrom, locale),
-              })}
+          <div className="stt-hotel-card-rate">
+            {hotel.priceFrom !== null ? (
+              <p className="stt-hotel-card-price">
+                <span className="stt-hotel-card-price-value">
+                  {formatVnd(hotel.priceFrom, locale)}
+                </span>
+                <small>{t.perNight}</small>
+              </p>
+            ) : (
+              <p className="stt-hotel-card-price stt-hotel-card-price--contact">
+                {t.contactForQuote}
+              </p>
+            )}
+            <p className="stt-hotel-card-rooms">
+              {format(t.roomsCount, { count: hotel.roomsCount })}
               {hotel.priceIncludesBreakfast ? (
-                <small> · {t.breakfast}</small>
+                <span className="stt-hotel-card-breakfast">
+                  {" · "}
+                  {t.breakfast}
+                </span>
               ) : null}
             </p>
-          ) : (
-            <p className="stt-hotel-card-price stt-hotel-card-price--contact">
-              {t.contactForQuote}
-            </p>
-          )}
-          <p className="stt-hotel-card-rooms">
-            {format(t.roomsCount, { count: hotel.roomsCount })}
-          </p>
-          <Link href={href} className="stt-btn-secondary stt-hotel-card-cta">
+          </div>
+          <Link href={href} className="stt-hotel-card-cta">
             {t.viewHotel}
+            <span aria-hidden="true">→</span>
           </Link>
         </div>
-        <p className="stt-hotel-card-note">{t.priceNote}</p>
       </div>
     </article>
   );

@@ -401,7 +401,7 @@
     "outOfHours": "Ngoài giờ làm việc, yêu cầu vẫn được ghi nhận và xử lý vào buổi làm việc kế tiếp.",
     "formEyebrow": "Form tư vấn",
     "formTitle": "Gửi yêu cầu",
-    "formDescription": "Chỉ cần họ tên, số điện thoại và xác nhận. Các trường còn lại giúp tư vấn chính xác hơn.",
+    "formDescription": "Chọn một tour/điểm đến hoặc một khách sạn, rồi để lại họ tên và số điện thoại. SEA TRIP sẽ kiểm tra và tư vấn lại.",
     "steps": [
       {
         "title": "1. SEA TRIP tiếp nhận yêu cầu",
@@ -434,6 +434,14 @@
       "travelDate": "Bỏ trống nếu chưa chắc",
       "partySize": "Tối đa 60 khách",
       "message": "Thời gian rảnh, ngân sách, yêu cầu riêng…"
+    },
+    "hotel": {
+      "label": "Khách sạn",
+      "attached": "Đã gắn khách sạn",
+      "hint": "SEA TRIP sẽ kiểm tra phòng và báo giá khách sạn này cùng yêu cầu của bạn.",
+      "remove": "Bỏ khách sạn",
+      "change": "Đổi khách sạn",
+      "needOne": "Chọn một tour/điểm đến hoặc một khách sạn để SEA TRIP biết bạn cần gì."
     },
     "placeholders": {
       "fullName": "Nguyễn Văn A",
@@ -641,7 +649,7 @@
       "viewHotel": "Xem khách sạn",
       "roomsCount": "{count} hạng phòng",
       "breakfast": "Có ăn sáng",
-      "priceNote": "Giá tham khảo, chưa gồm phụ thu và chưa phải xác nhận đặt phòng."
+      "priceNote": "Giá tham khảo, chưa gồm phụ thu và chưa phải xác nhận đặt phòng"
     },
     "detail": {
       "breadcrumb": "Khách sạn",
@@ -671,7 +679,14 @@
       "tourIncluded": "Đã bao gồm trong tour",
       "tourUpgrade": "Cần báo chênh lệch nâng hạng",
       "tourAdditional": "Chi phí lưu trú báo riêng",
-      "trustNote": "SEA TRIP chưa giữ phòng tự động. Nhân viên sẽ kiểm tra và xác nhận với bạn."
+      "trustNote": "SEA TRIP chưa giữ phòng tự động. Nhân viên sẽ kiểm tra và xác nhận với bạn.",
+      "starLabel": "Hạng sao",
+      "priceFromLabel": "Giá từ",
+      "roomsCta": "Xem hạng phòng",
+      "scrollCue": "Cuộn để xem chi tiết",
+      "galleryAll": "Xem tất cả {count} ảnh",
+      "mobileHint": "Giá tham khảo mỗi đêm",
+      "roomCta": "Tư vấn phòng này"
     },
     "availability": {
       "onRequest": "Liên hệ kiểm tra tình trạng phòng",
@@ -731,10 +746,27 @@
       "successBody": "Nhân viên sẽ liên hệ để kiểm tra phòng và tư vấn tour phù hợp. Yêu cầu này chưa phải xác nhận đặt phòng.",
       "disabled": "Module khách sạn đang tạm đóng. Vui lòng gọi hotline để được tư vấn."
     },
+    "request": {
+      "title": "Cần tư vấn phòng?",
+      "description": "Chọn hạng phòng bạn muốn. SEA TRIP sẽ kiểm tra tình trạng còn trống với khách sạn rồi liên hệ lại — website không giữ phòng.",
+      "roomsLabel": "Hạng phòng & giá tham khảo",
+      "pick": "Chọn phòng này",
+      "submit": "Gửi yêu cầu tư vấn",
+      "fallback": "Chưa chọn phòng cụ thể — SEA TRIP tư vấn hạng phòng phù hợp.",
+      "note": "Giá tham khảo theo đêm. Tình trạng phòng do SEA TRIP xác nhận với đối tác trước khi báo giá.",
+      "noRooms": "Khách sạn chưa công bố hạng phòng. Để lại yêu cầu, SEA TRIP sẽ tư vấn.",
+      "assignedTitle": "Đã gán vào form liên hệ",
+      "assignedBody": "SEA TRIP đã ghi nhận {hotel}. Điền thông tin liên hệ để được kiểm tra phòng và báo giá.",
+      "assignedNote": "Yêu cầu này chưa phải xác nhận đặt phòng; tình trạng phòng sẽ được kiểm tra lại.",
+      "continueTours": "Tiếp tục xem tour",
+      "goToForm": "Tới form liên hệ",
+      "changeHotel": "Chọn khách sạn khác"
+    },
     "home": {
       "title": "Nơi nghỉ cho chuyến đi của bạn",
       "subtitle": "Chọn khách sạn theo điểm đến và ngân sách; giá và tình trạng phòng luôn được kiểm tra lại trước khi xác nhận.",
-      "viewAll": "Xem tất cả khách sạn"
+      "viewAll": "Xem tất cả khách sạn",
+      "titleAccent": "chuyến đi của bạn"
     }
   }
 }

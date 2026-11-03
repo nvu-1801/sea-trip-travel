@@ -19,6 +19,7 @@ export function leadFormLabels(locale: Locale): LeadFormLabels {
     hints: m.lead.hints,
     placeholders: m.lead.placeholders,
     consent: m.lead.consent,
+    hotel: m.lead.hotel,
     submit: m.lead.submit,
     submitting: m.lead.submitting,
     submittingSr: m.lead.submittingSr,

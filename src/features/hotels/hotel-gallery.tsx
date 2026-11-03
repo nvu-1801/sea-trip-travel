@@ -5,11 +5,13 @@ import Image from "next/image";
 import type { ImageAsset } from "@/domain/common";
 
 /**
- * Photo gallery for a hotel.
+ * Photo strip + lightbox for a hotel.
  *
- * Opens on an explicit user action, traps focus inside a native `<dialog>`,
- * supports arrow keys / Escape, and returns focus to the trigger. No autoplay
- * and no motion beyond a simple fade, so reduced-motion users lose nothing.
+ * The first photo already lives in the hero, so the strip starts at the second
+ * one and the lightbox still opens on the full set. Opening is an explicit user
+ * action, focus moves inside a native `<dialog>`, arrow keys and Escape work,
+ * and focus returns to the trigger on close. No autoplay and no motion beyond a
+ * fade, so reduced-motion users lose nothing.
  */
 export function HotelGallery({
   images,
@@ -18,7 +20,7 @@ export function HotelGallery({
 }: {
   images: ImageAsset[];
   hotelName: string;
-  labels: { open: string; close: string; counter: string };
+  labels: { open: string; close: string; counter: string; all: string };
 }) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -45,65 +47,82 @@ export function HotelGallery({
 
   if (images.length === 0) return null;
   const current = images[Math.min(index, images.length - 1)];
+  const strip = images.slice(1, 4);
 
   return (
-    <>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="stt-hotel-gallery-open"
-        onClick={() => setOpen(true)}
-      >
-        <span className="stt-hotel-gallery-main">
-          <Image
-            src={current.src ?? "/opengraph-image.png"}
-            alt={current.alt}
-            width={1200}
-            height={750}
-            sizes="(max-width: 1024px) 100vw, 60vw"
-            priority
-          />
-        </span>
-        <span className="stt-hotel-gallery-count">
-          {labels.open} · {images.length}
-        </span>
-      </button>
+    <div className="stt-hotel-gallery">
+      <div className="stt-hotel-gallery-strip">
+        {strip.map((image, thumbIndex) => (
+          <button
+            key={`${image.src}-${thumbIndex}`}
+            type="button"
+            className="stt-hotel-gallery-cell"
+            data-hotel-depth={((thumbIndex % 3) + 1) as 1 | 2 | 3}
+            onClick={() => {
+              triggerRef.current = null;
+              setIndex(thumbIndex + 1);
+              setOpen(true);
+            }}
+            aria-label={`${hotelName} — ${labels.counter
+              .replace("{index}", String(thumbIndex + 2))
+              .replace("{total}", String(images.length))}`}
+          >
+            <Image
+              src={image.src ?? "/opengraph-image.png"}
+              alt=""
+              width={640}
+              height={420}
+              sizes="(max-width: 768px) 50vw, 320px"
+            />
+          </button>
+        ))}
 
-      {images.length > 1 ? (
-        <div className="stt-hotel-gallery-thumbs" aria-hidden="true">
-          {images.slice(1, 5).map((image, thumbIndex) => (
-            <span key={`${image.src}-${thumbIndex}`} className="stt-hotel-gallery-thumb">
-              <Image
-                src={image.src ?? "/opengraph-image.png"}
-                alt=""
-                width={320}
-                height={200}
-                sizes="200px"
-              />
-            </span>
-          ))}
-        </div>
+        {strip.length > 0 ? (
+          <button
+            ref={triggerRef}
+            type="button"
+            className="stt-hotel-gallery-open"
+            onClick={() => {
+              setIndex(0);
+              setOpen(true);
+            }}
+          >
+            {images.length > 1 ? labels.all : labels.open}
+          </button>
+        ) : null}
+      </div>
+
+      {strip.length === 0 ? (
+        <button
+          ref={triggerRef}
+          type="button"
+          className="stt-hotel-gallery-open stt-hotel-gallery-open--solo"
+          onClick={() => {
+            setIndex(0);
+            setOpen(true);
+          }}
+        >
+          {labels.open}
+        </button>
       ) : null}
 
       <dialog
         ref={dialogRef}
         className="stt-hotel-lightbox"
-        aria-label={`${hotelName} — ${labels.counter
-          .replace("{index}", String(index + 1))
-          .replace("{total}", String(images.length))}`}
+        aria-label={hotelName}
+        onClick={(event) => {
+          // Click on the shell - not on the photo, a button or the caption.
+          if ((event.target as HTMLElement).dataset.close === "true")
+            setOpen(false);
+        }}
         onClose={() => {
           setOpen(false);
           triggerRef.current?.focus();
         }}
         onCancel={() => setOpen(false)}
       >
-        <div className="stt-hotel-lightbox-inner">
+        <div className="stt-hotel-lightbox-inner" data-close="true">
           <div className="stt-hotel-lightbox-bar">
-            <span>
-              {labels.counter
-                .replace("{index}", String(index + 1))
-                .replace("{total}", String(images.length))}
-            </span>
             <button
               type="button"
               className="stt-hotel-lightbox-close"
@@ -112,29 +131,34 @@ export function HotelGallery({
               {labels.close}
             </button>
           </div>
-          <div className="stt-hotel-lightbox-stage">
+          <div className="stt-hotel-lightbox-row">
             <button
               type="button"
               className="stt-hotel-lightbox-nav"
               aria-label="‹"
               onClick={() =>
-                setIndex((current) => (current - 1 + images.length) % images.length)
+                setIndex(
+                  (current) => (current - 1 + images.length) % images.length,
+                )
               }
             >
               ‹
             </button>
-            <Image
-              src={current.src ?? "/opengraph-image.png"}
-              alt={current.alt}
-              width={1400}
-              height={900}
-              style={{ maxWidth: "100%", height: "auto" }}
-            />
+            <figure className="stt-hotel-lightbox-stage">
+              <Image
+                src={current.src ?? "/opengraph-image.png"}
+                alt={current.alt}
+                width={1400}
+                height={900}
+              />
+            </figure>
             <button
               type="button"
               className="stt-hotel-lightbox-nav"
               aria-label="›"
-              onClick={() => setIndex((current) => (current + 1) % images.length)}
+              onClick={() =>
+                setIndex((current) => (current + 1) % images.length)
+              }
             >
               ›
             </button>
@@ -144,6 +168,6 @@ export function HotelGallery({
           ) : null}
         </div>
       </dialog>
-    </>
+    </div>
   );
 }

@@ -22,7 +22,10 @@ import {
 } from "@/server/email/templates/lead-notification";
 import { safeSiteUrl } from "@/lib/sanitize";
 import { hotelSettings } from "@/server/cms/store";
-import { quoteHotelRequest } from "@/server/hotels/public";
+import {
+  publicHotelDetailById,
+  quoteHotelRequest,
+} from "@/server/hotels/public";
 import { getLeadStore } from "./store";
 import { getRateLimiter } from "./rate-limit";
 
@@ -194,6 +197,131 @@ function buildHotelLead(
   const flexible = stay.datesFlexible || !stay.checkIn || !stay.checkOut;
   const checkIn = flexible ? "" : (stay.checkIn ?? "");
   const checkOut = flexible ? "" : (stay.checkOut ?? "");
+
+  /**
+   * Hotel only, no room type picked.
+   *
+   * The website has no inventory: the visitor chooses a property, sales checks
+   * the rooms with the partner and quotes. So this snapshot never claims a
+   * price, a room or availability — it is always flagged for review.
+   */
+  if (stay.rooms.length === 0) {
+    const detail = publicHotelDetailById(stay.hotelId, input.locale, {
+      checkIn: null,
+      checkOut: null,
+      tourSlug: null,
+    });
+    if (!detail)
+      return {
+        ok: false,
+        fieldErrors: {
+          hotel: ["Khách sạn không còn nhận yêu cầu. Vui lòng chọn lại."],
+        },
+        message: "Khách sạn không còn nhận yêu cầu.",
+      };
+
+    const datesOpen = stay.datesFlexible || !stay.checkIn;
+    const checkIn = datesOpen ? "" : (stay.checkIn ?? "");
+    const checkOut = datesOpen ? "" : (stay.checkOut ?? "");
+    const guests = stay.adults + stay.children;
+    const nights =
+      checkIn && checkOut
+        ? Math.max(
+            0,
+            Math.round(
+              (Date.parse(`${checkOut}T00:00:00Z`) -
+                Date.parse(`${checkIn}T00:00:00Z`)) /
+                86_400_000,
+            ),
+          )
+        : 0;
+    const datesLabel = datesOpen
+      ? "Chưa chốt ngày"
+      : checkOut
+        ? `${checkIn} → ${checkOut} (${nights} đêm)`
+        : `${checkIn} (chưa chốt ngày trả)`;
+    const guestsLabel =
+      `${stay.adults} người lớn` +
+      (stay.children > 0
+        ? `, ${stay.children} trẻ em${
+            stay.childrenAges.length > 0
+              ? ` (${stay.childrenAges.join(", ")} tuổi)`
+              : ""
+          }`
+        : "");
+    const hotelUrl = safeSiteUrl(`/khach-san/${detail.slug}`) ?? undefined;
+
+    return {
+      ok: true,
+      lead: {
+        requestId,
+        receivedAt: now.toISOString(),
+        kind: "hotel",
+        fullName: input.fullName,
+        phone: normalizePhone(input.phone),
+        ...(input.email ? { email: input.email } : {}),
+        interest: detail.name,
+        ...(checkIn ? { travelDate: checkIn } : {}),
+        partySize: guests,
+        ...(input.message ? { message: input.message } : {}),
+        ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
+        locale: input.locale,
+        ...(input.utm ? { utm: input.utm } : {}),
+        hotel: {
+          hotelId: stay.hotelId,
+          hotelName: detail.name,
+          hotelSlug: detail.slug,
+          rooms: [],
+          ...(stay.roomPreference
+            ? { roomPreference: stay.roomPreference }
+            : {}),
+          checkIn: checkIn || null,
+          checkOut: checkOut || null,
+          nights,
+          datesFlexible: datesOpen,
+          adults: stay.adults,
+          children: stay.children,
+          childrenAges: stay.childrenAges,
+          tourSlug: null,
+          tourTitle: null,
+          tourRelation: null,
+          availability: {},
+          quote: {
+            status: "needs_quote",
+            reasons: ["room_selection_deferred"],
+            lodgingTotal: null,
+            includedByTour: false,
+            capturedAt: now.toISOString(),
+          },
+          needsReview: true,
+        },
+      },
+      hotelSummary: {
+        name: detail.name,
+        rows: [
+          { label: "Khách sạn", value: detail.name },
+          {
+            label: "Hạng phòng",
+            value: stay.roomPreference
+              ? `${stay.roomPreference} — khách tự chọn, cần kiểm tra lại`
+              : "Sale kiểm tra và tư vấn hạng phòng",
+          },
+          { label: "Ngày lưu trú", value: datesLabel },
+          { label: "Khách", value: guestsLabel },
+          {
+            label: "Tour quan tâm",
+            value: input.interest || "Chưa chọn — sale tư vấn thêm",
+          },
+          {
+            label: "Cần lưu ý",
+            value:
+              "Website không giữ phòng. Cần kiểm tra tình trạng còn trống và báo giá với khách sạn.",
+          },
+        ],
+        ...(hotelUrl ? { url: hotelUrl } : {}),
+      },
+    };
+  }
 
   const result = quoteHotelRequest(input.locale, {
     hotelId: stay.hotelId,
