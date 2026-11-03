@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
+import { notFound } from "next/navigation";
 import { buildMetadata, absoluteUrl } from "@/lib/seo";
 import { localizePath } from "@/i18n/routing";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
@@ -10,7 +9,15 @@ import { hotelSettings } from "@/server/cms/store";
 import { publicHotelDetail } from "@/server/hotels/public";
 import { HotelGallery } from "@/features/hotels/hotel-gallery";
 import { HotelBookingPanel } from "@/features/hotels/hotel-booking-panel";
+import { HotelMobileBar } from "@/features/hotels/hotel-mobile-bar";
+import { HotelDepth } from "@/features/hotels/hotel-motion";
 import { formatVnd } from "@/features/hotels/hotel-format";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { MaskedHeading } from "@/components/motion/word-reveal";
+import { Reveal } from "@/components/ui/reveal";
+import { ButtonLink } from "@/components/ui/button";
+import { SectionHeading } from "@/components/ui/layout";
+import { TiltCard } from "@/components/motion/tilt-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { breadcrumbJsonLd, hotelJsonLd } from "@/lib/json-ld";
 import "@/features/hotels/hotels.css";
@@ -21,6 +28,10 @@ import "@/features/hotels/hotels.css";
  * Only published hotels and rooms are read. The booking panel is a client
  * island; everything else is server-rendered, so prices and availability shown
  * before hydration already come from the server projection.
+ *
+ * The hero is the same `PageHero` the guides, contact and tour-category pages
+ * use, so the eyebrow, masked headline, meta strip and floating card read as
+ * one site. `HotelDepth` adds the scroll depth below it in every browser.
  */
 
 export const dynamic = "force-dynamic";
@@ -108,9 +119,19 @@ export default async function HotelDetailPage({
   );
   const path = `/khach-san/${detail.slug}`;
   const pageUrl = absoluteUrl(localizePath(locale, path));
+  const heroImage = detail.images[0] ?? detail.image;
+  const priceLabel =
+    detail.priceFrom !== null
+      ? formatVnd(detail.priceFrom, locale)
+      : m.hotels.card.contactForQuote;
+  // The hero already prints the summary; repeating it as the first paragraph
+  // makes the overview look like a copy-paste.
+  const overview = detail.description.filter(
+    (paragraph, index) =>
+      !(index === 0 && paragraph.trim() === detail.summary.trim()),
+  );
 
-  const availabilityLabel = (room: (typeof detail.rooms)[number]) => {
-    const result = room.availability;
+  const availabilityLabel = (room: (typeof detail.rooms)[number]) => {    const result = room.availability;
     if (result.kind === "on_request") return t.trustNote;
     if (result.kind === "unknown") return m.hotels.availability.unknown;
     if (result.kind === "closed") return m.hotels.availability.closed;
@@ -145,58 +166,91 @@ export default async function HotelDetailPage({
         ])}
       />
 
-      <nav className="stt-hotel-breadcrumb" aria-label={m.common.breadcrumbAria}>
-        <Link href={localizePath(locale, "/")}>{m.common.home}</Link>
-        <span aria-hidden="true">/</span>
-        <Link href={localizePath(locale, "/khach-san")}>
-          {m.hotels.list.title}
-        </Link>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">{detail.name}</span>
-      </nav>
+      <header className="stt-hotel-hero-lux">
+        <Breadcrumbs
+          items={[
+            { label: m.common.home, href: localizePath(locale, "/") },
+            {
+              label: m.hotels.list.title,
+              href: localizePath(locale, "/khach-san"),
+            },
+            { label: detail.name, href: localizePath(locale, path) },
+          ]}
+          ariaLabel={m.common.breadcrumbAria}
+        />
 
-      <header className="stt-hotel-detail-head">
-        <div>
-          <p className="stt-hotel-eyebrow">
-            {detail.lodgingTypeLabel} · {detail.province}
-          </p>
-          <h1>{detail.name}</h1>
-          {detail.starRating ? (
-            <p className="stt-hotel-stars">
-              <span aria-hidden="true">{"★".repeat(detail.starRating)}</span>{" "}
-              {detail.starBasis ? (
-                <small>({detail.starBasis})</small>
-              ) : null}
+        <div className="stt-hotel-hero-lux-top">
+          <div className="stt-hotel-hero-lux-copy">
+            <p className="eyebrow-pill">
+              {detail.lodgingTypeLabel} · {detail.province}
             </p>
-          ) : null}
-          <p className="stt-hotel-address">{detail.address}</p>
-          <div className="stt-hotel-headlinks">
-            {detail.mapUrl ? (
-              <a
-                href={detail.mapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t.viewMap}
-              </a>
-            ) : null}
-            <a href="#hang-phong">{t.rooms}</a>
+            <MaskedHeading
+              as="h1"
+              lines={[{ text: detail.name }]}
+              className="stt-hotel-hero-lux-title"
+            />
+            <p className="stt-hotel-hero-lux-lead">{detail.summary}</p>
+            <div className="stt-hotel-hero-lux-actions">
+              <ButtonLink href="#hang-phong">{t.roomsCta}</ButtonLink>
+              {detail.mapUrl ? (
+                <ButtonLink href={detail.mapUrl} variant="secondary" external>
+                  {t.viewMap}
+                </ButtonLink>
+              ) : null}
+            </div>
           </div>
+
+          <dl className="stt-hotel-hero-lux-meta">
+            {detail.checkInTime ? (
+              <div>
+                <dt>{t.checkIn}</dt>
+                <dd>{detail.checkInTime}</dd>
+              </div>
+            ) : null}
+            {detail.checkOutTime ? (
+              <div>
+                <dt>{t.checkOut}</dt>
+                <dd>{detail.checkOutTime}</dd>
+              </div>
+            ) : null}
+            {detail.starRating ? (
+              <div>
+                <dt>{t.starLabel}</dt>
+                <dd>
+                  <span aria-label={`${detail.starRating}/5`}>
+                    {"★".repeat(detail.starRating)}
+                  </span>
+                </dd>
+              </div>
+            ) : null}
+            <div>
+              <dt>{t.priceFromLabel}</dt>
+              <dd>{priceLabel}</dd>
+            </div>
+          </dl>
         </div>
-        <dl className="stt-hotel-times">
-          {detail.checkInTime ? (
-            <>
-              <dt>{t.checkIn}</dt>
-              <dd>{detail.checkInTime}</dd>
-            </>
+
+        <div className="stt-hotel-hero-lux-media">
+          {heroImage?.src ? (
+            <Image
+              src={heroImage.src}
+              alt={heroImage.alt ?? detail.name}
+              fill
+              priority
+              sizes="(max-width: 1200px) 100vw, 1200px"
+              className="stt-hotel-hero-lux-img"
+            />
           ) : null}
-          {detail.checkOutTime ? (
-            <>
-              <dt>{t.checkOut}</dt>
-              <dd>{detail.checkOutTime}</dd>
-            </>
-          ) : null}
-        </dl>
+          <div className="stt-hotel-hero-lux-price">
+            <p className="stt-hotel-float-eyebrow">{t.priceFromLabel}</p>
+            <p className="stt-hotel-float-price">{priceLabel}</p>
+            <p className="stt-hotel-float-note">{t.trustNote}</p>
+          </div>
+          <p className="stt-hotel-hero-lux-cue">
+            <span aria-hidden="true" />
+            {t.scrollCue}
+          </p>
+        </div>
       </header>
 
       <HotelGallery
@@ -206,125 +260,191 @@ export default async function HotelDetailPage({
           open: t.galleryOpen,
           close: t.galleryClose,
           counter: t.galleryCounter,
+          all: format(t.galleryAll, { count: detail.images.length }),
         }}
       />
 
       <div className="stt-hotel-layout">
         <div className="stt-hotel-content">
           {detail.description.length > 0 || detail.highlights.length > 0 ? (
-            <section aria-labelledby="hotel-overview">
-              <h2 id="hotel-overview">{t.overview}</h2>
-              {detail.description.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-              {detail.highlights.length > 0 ? (
-                <ul className="stt-hotel-highlights">
-                  {detail.highlights.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              ) : null}
+            <section className="stt-hotel-block" aria-label={t.overview}>
+              <Reveal>
+                <SectionHeading title={t.overview} />
+                <div className="stt-hotel-overview">
+                  <div className="stt-hotel-prose">
+                    {overview.map((paragraph) => (
+                      <p key={paragraph}>{paragraph}</p>
+                    ))}
+                  </div>
+                  {detail.highlights.length > 0 ? (
+                    <ul className="stt-hotel-highlights">
+                      {detail.highlights.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              </Reveal>
             </section>
           ) : null}
 
           {detail.amenities.length > 0 ? (
-            <section aria-labelledby="hotel-amenities">
-              <h2 id="hotel-amenities">{t.amenities}</h2>
-              <ul className="stt-hotel-tags">
-                {detail.amenities.map((amenity) => (
-                  <li key={amenity}>{amenity}</li>
-                ))}
-              </ul>
+            <section className="stt-hotel-block" aria-label={t.amenities}>
+              <Reveal>
+                <SectionHeading title={t.amenities} />
+                <ul className="stt-hotel-tags stt-hotel-tags--lg">
+                  {detail.amenities.map((amenity) => (
+                    <li key={amenity}>{amenity}</li>
+                  ))}
+                </ul>
+              </Reveal>
             </section>
           ) : null}
 
-          <section id="hang-phong" aria-labelledby="hotel-rooms">
-            <h2 id="hotel-rooms">{t.rooms}</h2>
-            <p className="stt-hotel-muted">{t.roomPickerHint}</p>
-            {detail.rooms.length === 0 ? (
-              <p className="stt-hotel-muted">{t.noRooms}</p>
-            ) : null}
-            <div className="stt-hotel-roomlist">
-              {detail.rooms.map((room) => (
-                <article className="stt-hotel-room" key={room.id}>
-                  {room.images[0]?.src ? (
-                    <Image
-                      src={room.images[0].src}
-                      alt={room.images[0].alt}
-                      width={420}
-                      height={280}
-                      sizes="(max-width: 768px) 100vw, 320px"
-                    />
-                  ) : null}
-                  <div>
-                    <h3>{room.name}</h3>
-                    <p className="stt-hotel-room-meta">
-                      {room.sizeSqm ? format(t.size, { size: room.sizeSqm }) : null}
-                      {room.bed ? ` · ${t.bed}: ${room.bed}` : null}
-                      {room.view ? ` · ${t.view}: ${room.view}` : null}
-                      {` · ${format(t.capacity, { count: room.maxOccupancy })}`}
-                    </p>
-                    {room.description ? <p>{room.description}</p> : null}
-                    {room.amenities.length > 0 ? (
-                      <ul className="stt-hotel-tags">
-                        {room.amenities.slice(0, 6).map((amenity) => (
-                          <li key={amenity}>{amenity}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    <div className="stt-hotel-room-foot">
-                      <p className="stt-hotel-room-price">
-                        {room.priceFrom !== null
-                          ? format(t.priceFrom, {
-                              price: formatVnd(room.priceFrom, locale),
-                            })
-                          : m.hotels.card.contactForQuote}
-                      </p>
-                      <p className="stt-hotel-muted">{availabilityLabel(room)}</p>
-                    </div>
+          <section
+            id="hang-phong"
+            className="stt-hotel-block"
+            aria-label={t.rooms}
+          >
+            <Reveal>
+              <SectionHeading title={t.rooms} description={t.roomPickerHint} />
+              {detail.rooms.length === 0 ? (
+                <p className="stt-hotel-muted">{t.noRooms}</p>
+              ) : null}
+              <div className="stt-hotel-roomlist">
+                {detail.rooms.map((room, index) => {
+                  const image = room.images[0] ?? heroImage;
+                  return (
+                  <div
+                    key={room.id}
+                    data-hotel-depth={((index % 3) + 1) as 1 | 2 | 3}
+                  >
+                    <TiltCard max={2.5}>
+                      <article className="stt-hotel-room">
+                        {image?.src ? (
+                          <div className="stt-hotel-room-media">
+                            <Image
+                              src={image.src}
+                              alt={image.alt ?? detail.name}
+                              width={720}
+                              height={480}
+                              sizes="(max-width: 768px) 100vw, 340px"
+                            />
+                          </div>
+                        ) : null}
+                        <div className="stt-hotel-room-body">
+                          <h3>{room.name}</h3>
+                          <p className="stt-hotel-room-meta">
+                            {room.sizeSqm
+                              ? format(t.size, { size: room.sizeSqm })
+                              : null}
+                            {room.bed ? ` · ${t.bed}: ${room.bed}` : null}
+                            {room.view ? ` · ${t.view}: ${room.view}` : null}
+                            {` · ${format(t.capacity, {
+                              count: room.maxOccupancy,
+                            })}`}
+                          </p>
+                          {room.description ? <p>{room.description}</p> : null}
+                          {room.amenities.length > 0 ? (
+                            <ul className="stt-hotel-tags">
+                              {room.amenities.slice(0, 6).map((amenity) => (
+                                <li key={amenity}>{amenity}</li>
+                              ))}
+                            </ul>
+                          ) : null}
+                          <div className="stt-hotel-room-foot">
+                            <div className="stt-hotel-room-rate">
+                              <p className="stt-hotel-room-price">
+                                {room.priceFrom !== null
+                                  ? format(t.priceFrom, {
+                                      price: formatVnd(room.priceFrom, locale),
+                                    })
+                                  : m.hotels.card.contactForQuote}
+                              </p>
+                              <p className="stt-hotel-room-state">
+                                {availabilityLabel(room)}
+                              </p>
+                            </div>
+                            <a href="#dat-phong" className="stt-hotel-room-cta">
+                              {t.roomCta}
+                              <span aria-hidden="true">→</span>
+                            </a>
+                          </div>
+                        </div>
+                      </article>
+                    </TiltCard>
                   </div>
-                </article>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            </Reveal>
+          </section>
+
+          <section className="stt-hotel-block" aria-label={t.location}>
+            <Reveal>
+              <SectionHeading title={t.location} />
+              <div className="stt-hotel-location">
+                <p className="stt-hotel-location-address">{detail.address}</p>
+                {detail.mapUrl ? (
+                  <a
+                    className="stt-btn-secondary"
+                    href={detail.mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t.viewMap}
+                  </a>
+                ) : null}
+              </div>
+            </Reveal>
           </section>
 
           {detail.policies.length > 0 ? (
-            <section aria-labelledby="hotel-policies">
-              <h2 id="hotel-policies">{t.policies}</h2>
-              <ul className="stt-hotel-policies">
-                {detail.policies.map((policy) => (
-                  <li key={policy}>{policy}</li>
-                ))}
-              </ul>
+            <section className="stt-hotel-block" aria-label={t.policies}>
+              <Reveal>
+                <SectionHeading title={t.policies} />
+                <ul className="stt-hotel-policies">
+                  {detail.policies.map((policy) => (
+                    <li key={policy}>{policy}</li>
+                  ))}
+                </ul>
+              </Reveal>
             </section>
           ) : null}
 
           {detail.tourLinks.length > 0 ? (
-            <section aria-labelledby="hotel-tours">
-              <h2 id="hotel-tours">{t.relatedTours}</h2>
-              <ul className="stt-hotel-tourlinks">
-                {detail.tourLinks.map((link) => (
-                  <li key={`${link.tourSlug}-${link.relation}`}>
-                    <Link href={localizePath(locale, `/tour/${link.tourSlug}`)}>
-                      {link.tourTitle}
-                    </Link>
-                    <small>
-                      {link.relation === "included"
-                        ? t.tourIncluded
-                        : link.relation === "upgrade"
-                          ? t.tourUpgrade
-                          : t.tourAdditional}
-                    </small>
-                  </li>
-                ))}
-              </ul>
+            <section className="stt-hotel-block" aria-label={t.relatedTours}>
+              <Reveal>
+                <SectionHeading title={t.relatedTours} />
+                <ul className="stt-hotel-tourlinks">
+                  {detail.tourLinks.map((link) => (
+                    <li key={`${link.tourSlug}-${link.relation}`}>
+                      <a
+                        href={localizePath(locale, `/tour/${link.tourSlug}`)}
+                        className="stt-hotel-tourlink"
+                      >
+                        <span>{link.tourTitle}</span>
+                        <small>
+                          {link.relation === "included"
+                            ? t.tourIncluded
+                            : link.relation === "upgrade"
+                              ? t.tourUpgrade
+                              : t.tourAdditional}
+                        </small>
+                        <span aria-hidden="true">→</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
             </section>
           ) : null}
 
           <p className="stt-hotel-fine">{t.trustNote}</p>
         </div>
 
-        <HotelBookingPanel
+        <div className="stt-hotel-panel-col" id="dat-phong">
+          <HotelBookingPanel
           locale={locale}
           hotelId={detail.id}
           sourcePage={localizePath(locale, path)}
@@ -412,7 +532,17 @@ export default async function HotelDetailPage({
             unknown: m.hotels.availability.unknown,
           }}
         />
+        </div>
       </div>
+
+      <HotelMobileBar
+        priceLabel={priceLabel}
+        hasPrice={detail.priceFrom !== null}
+        label={t.roomsCta}
+        hint={t.mobileHint}
+      />
+
+      <HotelDepth scope=".stt-hotel-detail" />
     </main>
   );
 }

@@ -360,3 +360,164 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Hotels panel: the featured picker and the action column are the two places
+   the editor touches every day, so they get the room. */
+
+.stt-hotel-panel .adm-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.stt-hotel-panel .stt-hotel-weekday {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.7rem;
+  background: var(--color-surface);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.stt-hotel-panel .stt-hotel-weekday:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.stt-hotel-panel .stt-hotel-weekday:has(input:checked) {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary-soft) 55%, transparent);
+}
+
+.stt-hotel-panel .stt-hotel-weekday input {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.stt-hotel-panel .stt-hotel-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-strong);
+  white-space: nowrap;
+}
+
+.stt-hotel-panel .stt-hotel-table tbody tr {
+  transition: background 160ms ease;
+}
+
+.stt-hotel-panel .stt-hotel-table tbody tr:hover {
+  background: color-mix(in srgb, var(--color-primary-soft) 30%, transparent);
+}
+
+.stt-hotel-panel .stt-hotel-table td {
+  vertical-align: middle;
+}
+
+.stt-hotel-panel .stt-hotel-table td:last-child {
+  white-space: nowrap;
+}
+
+/* Archive is reversible: keep it visible but out of the way. */
+.stt-hotel-panel .adm-danger {
+  padding: 0.42rem 0.75rem;
+  font-size: 0.78rem;
+  border-radius: 0.55rem;
+  box-shadow: none;
+}
+
+.stt-hotel-panel .adm-ghost-link {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 720px) {
+  .stt-hotel-panel .adm-chips {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The admin surface uses its own palette, not the public tokens. */
+.stt-hotel-panel .adm-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 6px;
+  align-items: stretch;
+}
+
+.stt-hotel-panel .stt-hotel-weekday {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid #f0cede;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.stt-hotel-panel .stt-hotel-weekday:hover {
+  border-color: #d81b60;
+}
+
+.stt-hotel-panel .stt-hotel-weekday:has(input:checked) {
+  border-color: #d81b60;
+  background: #fdeef5;
+}
+
+.stt-hotel-panel .stt-hotel-weekday input {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.stt-hotel-panel .stt-hotel-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+  border-bottom: 1px solid #eed3e1;
+  white-space: nowrap;
+}
+
+.stt-hotel-panel .stt-hotel-table tbody tr:hover {
+  background: #fdf4f8;
+}
+
+.stt-hotel-panel .stt-hotel-table td {
+  vertical-align: middle;
+}
+
+.stt-hotel-panel .stt-hotel-table td:last-child {
+  white-space: nowrap;
+}
+
+.stt-hotel-panel .adm-danger {
+  padding: 5px 10px;
+  font-size: 0.76rem;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.stt-hotel-panel .adm-ghost-link {
+  padding: 4px 8px;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 720px) {
+  .stt-hotel-panel .adm-chips {
+    grid-template-columns: 1fr;
+  }
+}

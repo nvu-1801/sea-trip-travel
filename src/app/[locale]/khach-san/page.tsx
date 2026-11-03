@@ -16,6 +16,9 @@ import {
 } from "@/lib/hotel-filters";
 import { HotelCard } from "@/features/hotels/hotel-card";
 import { HotelFilterForm } from "@/features/hotels/hotel-filters";
+import { HotelDepth } from "@/features/hotels/hotel-motion";
+import { MaskedHeading } from "@/components/motion/word-reveal";
+import { Reveal } from "@/components/ui/reveal";
 import { JsonLd } from "@/components/seo/json-ld";
 import { breadcrumbJsonLd, collectionPageJsonLd } from "@/lib/json-ld";
 import { absoluteUrl } from "@/lib/seo";
@@ -121,8 +124,12 @@ export default async function HotelListPage({
       />
 
       <header className="stt-hotel-hero">
-        <p className="stt-hotel-eyebrow">{t.eyebrow}</p>
-        <h1>{t.title}</h1>
+        <p className="eyebrow-pill">{t.eyebrow}</p>
+        <MaskedHeading
+          as="h1"
+          lines={[{ text: t.title }]}
+          className="stt-hotel-hero-title"
+        />
         <p className="stt-hotel-lede">{t.description}</p>
       </header>
 
@@ -148,8 +155,10 @@ export default async function HotelListPage({
           </div>
         ) : (
           <div className="stt-hotel-grid-cards">
-            {result.items.map((hotel) => (
-              <HotelCard key={hotel.id} hotel={hotel} locale={locale} />
+            {result.items.map((hotel, index) => (
+              <Reveal key={hotel.id} delay={index % 3}>
+                <HotelCard hotel={hotel} locale={locale} index={index} />
+              </Reveal>
             ))}
           </div>
         )}
@@ -175,6 +184,8 @@ export default async function HotelListPage({
           </nav>
         ) : null}
       </section>
+
+      <HotelDepth scope=".stt-hotel-page" />
     </main>
   );
 }

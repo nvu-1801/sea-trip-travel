@@ -641,7 +641,7 @@
       "viewHotel": "Xem khách sạn",
       "roomsCount": "{count} hạng phòng",
       "breakfast": "Có ăn sáng",
-      "priceNote": "Giá tham khảo, chưa gồm phụ thu và chưa phải xác nhận đặt phòng."
+      "priceNote": "Giá tham khảo, chưa gồm phụ thu và chưa phải xác nhận đặt phòng"
     },
     "detail": {
       "breadcrumb": "Khách sạn",
@@ -671,7 +671,14 @@
       "tourIncluded": "Đã bao gồm trong tour",
       "tourUpgrade": "Cần báo chênh lệch nâng hạng",
       "tourAdditional": "Chi phí lưu trú báo riêng",
-      "trustNote": "SEA TRIP chưa giữ phòng tự động. Nhân viên sẽ kiểm tra và xác nhận với bạn."
+      "trustNote": "SEA TRIP chưa giữ phòng tự động. Nhân viên sẽ kiểm tra và xác nhận với bạn.",
+      "starLabel": "Hạng sao",
+      "priceFromLabel": "Giá từ",
+      "roomsCta": "Xem hạng phòng",
+      "scrollCue": "Cuộn để xem chi tiết",
+      "galleryAll": "Xem tất cả {count} ảnh",
+      "mobileHint": "Giá tham khảo mỗi đêm",
+      "roomCta": "Tư vấn phòng này"
     },
     "availability": {
       "onRequest": "Liên hệ kiểm tra tình trạng phòng",
@@ -734,7 +741,8 @@
     "home": {
       "title": "Nơi nghỉ cho chuyến đi của bạn",
       "subtitle": "Chọn khách sạn theo điểm đến và ngân sách; giá và tình trạng phòng luôn được kiểm tra lại trước khi xác nhận.",
-      "viewAll": "Xem tất cả khách sạn"
+      "viewAll": "Xem tất cả khách sạn",
+      "titleAccent": "chuyến đi của bạn"
     }
   }
 }

@@ -641,7 +641,7 @@
       "viewHotel": "View hotel",
       "roomsCount": "{count} room types",
       "breakfast": "Breakfast included",
-      "priceNote": "Reference price, excludes unconfirmed surcharges and is not a booking confirmation."
+      "priceNote": "Reference rate, excludes surcharges and is not a confirmed booking"
     },
     "detail": {
       "breadcrumb": "Hotels",
@@ -671,7 +671,14 @@
       "tourIncluded": "Included in the tour",
       "tourUpgrade": "Upgrade difference to be quoted",
       "tourAdditional": "Accommodation quoted separately",
-      "trustNote": "SEA TRIP does not hold rooms automatically. A team member checks and confirms with you."
+      "trustNote": "SEA TRIP does not hold rooms automatically. A team member checks and confirms with you.",
+      "starLabel": "Star rating",
+      "priceFromLabel": "From",
+      "roomsCta": "See rooms",
+      "scrollCue": "Scroll for details",
+      "galleryAll": "See all {count} photos",
+      "mobileHint": "Reference rate per night",
+      "roomCta": "Ask about this room"
     },
     "availability": {
       "onRequest": "Contact us to check room availability",
@@ -734,7 +741,8 @@
     "home": {
       "title": "A place to stay for your trip",
       "subtitle": "Choose a hotel by destination and budget; prices and availability are always re-checked before confirmation.",
-      "viewAll": "View all hotels"
+      "viewAll": "View all hotels",
+      "titleAccent": "your trip"
     }
   }
 }
