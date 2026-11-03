@@ -44,6 +44,7 @@ jobs:
           npx playwright install --with-deps chromium
           node -e 'console.log("CHROMIUM_EXECUTABLE_PATH="+require("playwright").chromium.executablePath())' >> "$GITHUB_ENV"
       - run: npm run verify:ui
+      - run: npm run verify:hotels
       - run: npm run verify:depth
       - run: npm run verify:tour-import
       - run: npm run verify:cms

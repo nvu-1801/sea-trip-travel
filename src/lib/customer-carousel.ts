@@ -17,6 +17,28 @@ export function customerVideoSlot(
   return slot;
 }
 
+/**
+ * Default cover files replaced in the repository. Bump the revision whenever
+ * their pixels change: the same URL is cached by the browser and the Next image
+ * optimizer, so a query revision is the smallest way to serve the new frame
+ * without touching owner-uploaded covers.
+ */
+const STOCK_VIDEO_COVERS = new Set([
+  "/images/customers/videos/cKpNJv2x-3I.jpg",
+  "/images/customers/videos/8ybMTyzbfxo.jpg",
+  "/images/customers/videos/uRNs9VkZSx4.jpg",
+  "/images/customers/videos/PebkD6IFJD8.jpg",
+  "/images/customers/videos/tFTWDt5K8pY.jpg",
+  "/images/customers/videos/CcO59qGJLGk.jpg",
+]);
+export const CUSTOMER_VIDEO_COVER_REVISION = "2026-11-01";
+
+/** Version only the six bundled covers; a custom owner cover stays untouched. */
+export function customerVideoCoverSrc(src?: string): string | undefined {
+  if (!src || !STOCK_VIDEO_COVERS.has(src)) return src;
+  return `${src}?v=${CUSTOMER_VIDEO_COVER_REVISION}`;
+}
+
 /** How many cards each side of the centre remain visible at this breakpoint. */
 export function customerVideoSideCount(count: number, compact: boolean): number {
   if (count <= 1) return 0;

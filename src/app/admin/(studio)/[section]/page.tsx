@@ -12,6 +12,7 @@ const LABELS: Record<string, string> = {
   articles: "Cẩm nang",
   categories: "Danh mục",
   destinations: "Điểm đến",
+  hotels: "Khách sạn",
   media: "Thư viện ảnh",
   translations: "Bản dịch tiếng Anh",
   messages: "Nội dung VI / EN",

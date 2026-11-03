@@ -43,13 +43,18 @@ export function MobileNav({
   locale,
   labels,
   ui,
+  hotelsEnabled = false,
 }: {
   locale: Locale;
   labels: NavLabels;
   ui: MobileNavUi;
+  hotelsEnabled?: boolean;
 }) {
   const pathname = usePathname();
   const currentPath = stripLocaleFromPath(pathname ?? "/").path;
+  const items = primaryNav.filter(
+    (item) => !item.flag || (item.flag === "hotels" && hotelsEnabled),
+  );
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -137,7 +142,7 @@ export function MobileNav({
 
           <nav aria-label={ui.primaryNavAria} className="flex-1 overflow-y-auto px-3 py-4">
             <ul className="flex flex-col gap-1">
-              {primaryNav.map((item) => {
+              {items.map((item) => {
                 const label = labels.nav[item.labelKey];
                 const isActive =
                   item.href === "/"
@@ -145,21 +150,34 @@ export function MobileNav({
                     : currentPath === item.href || currentPath.startsWith(`${item.href}/`);
 
                 if (!item.children || item.children.length === 0) {
+                  const className = cn(
+                    "block rounded-lg px-4 py-3.5 text-base font-semibold whitespace-nowrap transition-colors",
+                    isActive
+                      ? "bg-primary-soft text-primary-strong"
+                      : "text-foreground hover:bg-surface-muted",
+                  );
                   return (
                     <li key={item.href}>
-                      <Link
-                        href={localizePath(locale, item.href)}
-                        onClick={close}
-                        aria-current={isActive ? "page" : undefined}
-                        className={cn(
-                          "block rounded-lg px-4 py-3.5 text-base font-semibold whitespace-nowrap transition-colors",
-                          isActive
-                            ? "bg-primary-soft text-primary-strong"
-                            : "text-foreground hover:bg-surface-muted",
-                        )}
-                      >
-                        {label}
-                      </Link>
+                      {item.href === "/" ? (
+                        // Home always reloads the document, so it also lands at the top.
+                        <a
+                          href={localizePath(locale, item.href)}
+                          onClick={close}
+                          aria-current={isActive ? "page" : undefined}
+                          className={className}
+                        >
+                          {label}
+                        </a>
+                      ) : (
+                        <Link
+                          href={localizePath(locale, item.href)}
+                          onClick={close}
+                          aria-current={isActive ? "page" : undefined}
+                          className={className}
+                        >
+                          {label}
+                        </Link>
+                      )}
                     </li>
                   );
                 }

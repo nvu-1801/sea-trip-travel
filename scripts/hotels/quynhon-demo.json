@@ -1,0 +1,136 @@
+{
+  "hotels": [
+    {
+      "slug": "demo-quy-nhon-bay-resort",
+      "name": "Demo Quy Nhơn Bay Resort",
+      "province": "Bình Định",
+      "address": "Bãi biển Quy Nhơn (dữ liệu demo, chưa phải địa chỉ thật)",
+      "lodgingType": "resort",
+      "starRating": 4,
+      "starBasis": "Dữ liệu demo cho kiểm thử giao diện",
+      "summary": "Dữ liệu demo: resort sát biển với hồ bơi và ăn sáng, dùng để kiểm thử module khách sạn.",
+      "description": [
+        "Đây là bản ghi demo dùng cho kiểm thử local. Không phải thông tin của một khách sạn có thật.",
+        "Thay ảnh, mô tả và giá bằng dữ liệu do đối tác cung cấp trước khi xuất bản."
+      ],
+      "highlights": ["Sát biển", "Hồ bơi vô cực", "Ăn sáng tại phòng"],
+      "amenities": ["Hồ bơi", "Bãi biển", "Ăn sáng", "Đưa đón sân bay"],
+      "images": [
+        { "src": "/images/hero/blue-bay.webp", "alt": "Ảnh demo bãi biển xanh" },
+        { "src": "/images/hero/emerald-bay.webp", "alt": "Ảnh demo vịnh xanh" }
+      ],
+      "checkInTime": "14:00",
+      "checkOutTime": "12:00",
+      "policies": ["Nhận phòng từ 14:00", "Dữ liệu demo, không dùng để đặt phòng"],
+      "roomMode": "manual_daily",
+      "order": 1,
+      "rooms": [
+        {
+          "name": "Deluxe hướng biển",
+          "description": "Phòng demo 32 m², ban công nhìn biển.",
+          "sizeSqm": 32,
+          "bed": "1 giường đôi",
+          "view": "Biển",
+          "capacityAdults": 2,
+          "capacityChildren": 1,
+          "maxOccupancy": 3,
+          "amenities": ["Ban công", "Minibar"],
+          "rates": [
+            { "kind": "base", "amount": 1500000, "includesBreakfast": true },
+            { "kind": "weekday", "weekdays": [5, 6], "amount": 1800000, "includesBreakfast": true },
+            {
+              "kind": "date_range",
+              "startDate": "2027-04-28",
+              "endDate": "2027-05-03",
+              "amount": 2400000,
+              "includesBreakfast": true,
+              "label": "Demo cao điểm lễ"
+            }
+          ]
+        },
+        {
+          "name": "Suite gia đình",
+          "description": "Phòng demo 48 m² cho gia đình.",
+          "sizeSqm": 48,
+          "bed": "1 giường đôi + 1 sofa bed",
+          "view": "Biển",
+          "capacityAdults": 3,
+          "capacityChildren": 2,
+          "maxOccupancy": 5,
+          "amenities": ["Ban công", "Bồn tắm"],
+          "rates": [{ "kind": "base", "amount": 2400000, "includesBreakfast": true }]
+        }
+      ],
+      "availabilityOffsets": [
+        { "days": 30, "rooms": 5 },
+        { "days": 31, "rooms": 2 }
+      ],
+      "tourLinks": [
+        {
+          "tourSlug": "quy-nhon-phu-yen-3-ngay-2-dem",
+          "relation": "additional",
+          "condition": "Demo: báo giá lưu trú riêng"
+        }
+      ]
+    },
+    {
+      "slug": "demo-quy-nhon-beach-hotel",
+      "name": "Demo Quy Nhơn Beach Hotel",
+      "province": "Bình Định",
+      "address": "Trung tâm Quy Nhơn (dữ liệu demo)",
+      "lodgingType": "hotel",
+      "starRating": 3,
+      "starBasis": "Dữ liệu demo cho kiểm thử giao diện",
+      "summary": "Dữ liệu demo: khách sạn 3 sao gần trung tâm, phù hợp khách đi tour ngắn ngày.",
+      "description": ["Bản ghi demo, không phải khách sạn có thật."],
+      "amenities": ["Ăn sáng", "Xe đưa đón"],
+      "images": [
+        { "src": "/images/hero/coastal-sunset.webp", "alt": "Ảnh demo hoàng hôn ven biển" }
+      ],
+      "roomMode": "on_request",
+      "order": 2,
+      "rooms": [
+        {
+          "name": "Standard đôi",
+          "capacityAdults": 2,
+          "capacityChildren": 0,
+          "maxOccupancy": 2,
+          "rates": [{ "kind": "base", "amount": 950000 }]
+        },
+        {
+          "name": "Superior ba người",
+          "capacityAdults": 3,
+          "capacityChildren": 0,
+          "maxOccupancy": 3,
+          "rates": [{ "kind": "base", "amount": 1350000 }]
+        }
+      ]
+    },
+    {
+      "slug": "demo-phu-yen-hideaway",
+      "name": "Demo Phú Yên Hideaway",
+      "province": "Phú Yên",
+      "address": "Vùng ven biển Phú Yên (dữ liệu demo)",
+      "lodgingType": "homestay",
+      "starRating": null,
+      "summary": "Dữ liệu demo: homestay nhỏ, phù hợp khách thích yên tĩnh.",
+      "description": ["Bản ghi demo, không phải cơ sở có thật."],
+      "amenities": ["Vườn", "Bếp chung"],
+      "images": [
+        { "src": "/images/hero/island-panorama.webp", "alt": "Ảnh demo toàn cảnh đảo" }
+      ],
+      "roomMode": "manual_daily",
+      "order": 3,
+      "rooms": [
+        {
+          "name": "Bungalow vườn",
+          "capacityAdults": 2,
+          "capacityChildren": 1,
+          "maxOccupancy": 3,
+          "rates": [{ "kind": "base", "amount": 650000 }]
+        }
+      ],
+      "availabilityOffsets": [{ "days": 30, "rooms": 1 }]
+    }
+  ]
+}

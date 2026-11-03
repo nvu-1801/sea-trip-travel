@@ -121,6 +121,7 @@ try {
         "Cẩm nang",
         "Danh mục",
         "Điểm đến",
+        "Khách sạn",
         "Thư viện ảnh",
         "Khách hàng & đối tác",
         "Bản dịch tiếng Anh",
@@ -1308,7 +1309,7 @@ try {
     "media tab counts its chapter inside the sidebar group",
     (
       await page.locator(".adm-masthead-chapter-no").first().innerText()
-    ).trim() === "07",
+    ).trim() === "08",
   );
   await page.keyboard.press("Control+k");
   await quickAgain.waitFor();

@@ -1,5 +1,7 @@
-import { settings } from "@/server/cms/store";
+import { hotelSettings, settings } from "@/server/cms/store";
 import Link from "next/link";
+
+import { ROUTES } from "@/config/navigation";
 
 import { getCategories } from "@/lib/data/categories";
 import { Container } from "@/components/ui/layout";
@@ -134,6 +136,16 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <nav aria-label={m.footer.infoAria} className="lg:col-span-2">
             <FooterHeading>{m.footer.infoTitle}</FooterHeading>
             <ul className="mt-5 space-y-3 text-sm">
+              {hotelSettings().enabled ? (
+                <li>
+                  <Link
+                    href={localizePath(locale, ROUTES.hotels)}
+                    className={linkClass}
+                  >
+                    {m.nav.hotels}
+                  </Link>
+                </li>
+              ) : null}
               {config.footerLinks.map((item) => (
                 <li key={item.href}>
                   <Link

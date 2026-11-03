@@ -23,21 +23,23 @@ Chuyển đổi khi lưu: cắt viền trắng thừa, thu về tối đa 560 ×
 
 ## Video (`videos/`)
 
-Ảnh bìa là thumbnail công khai của đúng video YouTube được nhúng trong section nguồn, tải từ `i.ytimg.com` (`maxresdefault`), cắt viền đen và xuất JPEG chất lượng 88.
+Ảnh bìa là khung hình thật, trích trực tiếp từ bản video 1080p gốc của đúng video YouTube được nhúng trong section nguồn (không dùng thumbnail, không tải lại video). Mỗi ảnh được cắt bỏ viền đen (nếu có), cắt giữa về tỉ lệ 16:9 đúng bằng khung card và xuất JPEG chất lượng 90, không phóng to.
 
-| Tệp | Video |
-| --- | --- |
-| `cKpNJv2x-3I.jpg` | <https://www.youtube.com/watch?v=cKpNJv2x-3I> |
-| `8ybMTyzbfxo.jpg` | <https://www.youtube.com/watch?v=8ybMTyzbfxo> |
-| `uRNs9VkZSx4.jpg` | <https://www.youtube.com/watch?v=uRNs9VkZSx4> |
-| `PebkD6IFJD8.jpg` | <https://www.youtube.com/watch?v=PebkD6IFJD8> |
-| `tFTWDt5K8pY.jpg` | <https://www.youtube.com/watch?v=tFTWDt5K8pY> |
-| `CcO59qGJLGk.jpg` | <https://www.youtube.com/watch?v=CcO59qGJLGk> |
+| Tệp | Video | Mốc thời gian | Kích thước |
+| --- | --- | --- | --- |
+| `cKpNJv2x-3I.jpg` | <https://www.youtube.com/watch?v=cKpNJv2x-3I> | 201,6 s | 1579 × 888 |
+| `8ybMTyzbfxo.jpg` | <https://www.youtube.com/watch?v=8ybMTyzbfxo> | 86,0 s | 1920 × 1080 |
+| `uRNs9VkZSx4.jpg` | <https://www.youtube.com/watch?v=uRNs9VkZSx4> | 77,52 s | 1920 × 1080 |
+| `PebkD6IFJD8.jpg` | <https://www.youtube.com/watch?v=PebkD6IFJD8> | 56,0 s | 1920 × 1080 |
+| `tFTWDt5K8pY.jpg` | <https://www.youtube.com/watch?v=tFTWDt5K8pY> | 57,6 s | 1580 × 889 |
+| `CcO59qGJLGk.jpg` | <https://www.youtube.com/watch?v=CcO59qGJLGk> | 79,36 s | 1538 × 865 |
+
+Các file có chiều cao nhỏ hơn 1080 đến từ video gốc có viền đen trên/dưới; phần viền đã được cắt, giữ nguyên độ nét gốc thay vì phóng to. Ảnh bìa tùy chỉnh do chủ site tải lên không bị thay đổi. Với sáu ảnh mặc định, URL hiển thị có thêm `?v=2026-11-01` để trình duyệt và bộ tối ưu ảnh của Next.js lấy đúng file mới thay vì bản cache cũ.
 
 Tiêu đề video lấy từ thuộc tính `title` của iframe nguồn và đã đối chiếu qua YouTube oEmbed. Section nguồn không có mô tả riêng cho từng video, nên `body` để trống.
 
 ## Ghi chú sử dụng
 
 - Đây là bộ **demo** nạp vào bản nháp trong Studio; không tự xuất bản.
-- Logo và thumbnail thuộc quyền của từng đơn vị/SEA TRIP. Chỉ dùng lại khi có quyền sử dụng nội dung từ chủ website.
+- Logo và khung hình video thuộc quyền của từng đơn vị/SEA TRIP. Chỉ dùng lại khi có quyền sử dụng nội dung từ chủ website.
 - Nếu thay bằng ảnh tải lên thư viện, giữ nguyên `alt` mô tả đúng đơn vị/video.

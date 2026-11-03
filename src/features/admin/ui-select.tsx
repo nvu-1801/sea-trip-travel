@@ -328,6 +328,8 @@ export const LEAD_STATUSES = [
   { value: "new", label: "Mới", dot: "#2e90fa", hint: "Chưa liên hệ" },
   { value: "contacted", label: "Đã liên hệ", dot: "#e8a13d", hint: "Đang trao đổi" },
   { value: "qualified", label: "Tiềm năng", dot: "#9b5cf6", hint: "Có khả năng chốt" },
+  { value: "quoted", label: "Đã báo giá", dot: "#0e9384", hint: "Đã gửi báo giá" },
+  { value: "confirmed", label: "Đã xác nhận", dot: "#0f6b53", hint: "Khách đồng ý phương án" },
   { value: "won", label: "Đã chốt", dot: "#12a56b", hint: "Thành công" },
   { value: "lost", label: "Chưa phù hợp", dot: "#98a2b3", hint: "Dừng chăm sóc" },
 ] as const;

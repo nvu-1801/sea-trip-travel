@@ -17,6 +17,7 @@ export type NavKey =
   | "central"
   | "south"
   | "highlands"
+  | "hotels"
   | "guides"
   | "contact"
   | "privacy";
@@ -32,6 +33,11 @@ export type NavItem = NavLink & {
   children?: readonly NavLink[];
   /** Key into `messages.nav.description` for the mega-panel / accordion line. */
   descriptionKey?: "quyNhonPhuYen" | "domestic";
+  /**
+   * Hidden unless the matching module switch is on. Filtering happens in the
+   * header/footer, which are the only places that know the flag.
+   */
+  flag?: "hotels";
 };
 
 export const ROUTES = {
@@ -44,6 +50,7 @@ export const ROUTES = {
   central: "/tour-trong-nuoc/tour-mien-trung",
   south: "/tour-trong-nuoc/tour-mien-nam",
   highlands: "/tour-trong-nuoc/tour-tay-nguyen",
+  hotels: "/khach-san",
   guides: "/cam-nang-du-lich",
   contact: "/lien-he",
   privacy: "/chinh-sach-bao-mat",
@@ -73,6 +80,11 @@ export const primaryNav: readonly NavItem[] = [
       { labelKey: "south", href: ROUTES.south },
       { labelKey: "highlands", href: ROUTES.highlands },
     ],
+  },
+  {
+    labelKey: "hotels",
+    href: ROUTES.hotels,
+    flag: "hotels",
   },
   {
     labelKey: "guides",

@@ -31,11 +31,24 @@ export type LeadNotificationContext = {
   sourceUrl?: string;
   /** Absolute URL of the tour page, when the request came from a tour page. */
   tourUrl?: string;
+  /**
+   * Hotel request details, already composed server-side from validated data.
+   * `value` is plain text and is escaped by the template.
+   */
+  hotelSummary?: {
+    name: string;
+    rows: { label: string; value: string }[];
+    /** Absolute URL of the hotel page, when known. */
+    url?: string;
+  };
 };
 
 export function buildLeadSubject(context: LeadNotificationContext): string {
   const { lead, tourTitle } = context;
   const parts = ["[SEA TRIP] Yêu cầu tư vấn mới", `#${lead.requestId}`];
+  const hotelName = context.hotelSummary?.name;
+  if (hotelName)
+    parts.push(hotelName.length > 38 ? `${hotelName.slice(0, 37)}…` : hotelName);
   if (tourTitle) parts.push(tourTitle.length > 48 ? `${tourTitle.slice(0, 47)}…` : tourTitle);
   // Ngày khởi hành giúp sales quét inbox nhanh hơn; ngày tháng không phải PII.
   const day = dayLabel(lead.travelDate);
@@ -278,8 +291,10 @@ export function buildLeadNotificationHtml(context: LeadNotificationContext): str
                 ${row(
                   "Số người",
                   lead.partySize ? `${lead.partySize} khách` : `<span style="color:#8b7684;">Chưa xác định</span>`,
-                  { last: !lead.message },
                 )}
+                ${(context.hotelSummary?.rows ?? [])
+                  .map((item) => row(item.label, escapeHtml(item.value)))
+                  .join("")}
                 ${row(
                   "Ngôn ngữ khách sử dụng",
                   lead.locale === "en"
@@ -397,6 +412,9 @@ export function buildLeadNotificationText(context: LeadNotificationContext): str
     `Tour / điểm đến quan tâm: ${tourTitle ?? lead.interest ?? "(chưa xác định)"}`,
     `Ngày dự kiến: ${lead.travelDate ? formatDate(lead.travelDate, "vi") : "(chưa xác định)"}`,
     `Số người: ${lead.partySize ?? "(chưa xác định)"}`,
+    ...(context.hotelSummary?.rows ?? []).map(
+      (item) => `${item.label}: ${item.value}`,
+    ),
     `Ngôn ngữ khách sử dụng: ${lead.locale === "en" ? "English" : "Tiếng Việt"}`,
   );
 

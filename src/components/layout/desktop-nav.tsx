@@ -36,14 +36,19 @@ export type NavLabels = {
 export function DesktopNav({
   locale,
   labels,
+  hotelsEnabled = false,
 }: {
   locale: Locale;
   labels: NavLabels;
+  hotelsEnabled?: boolean;
 }) {
   const pathname = usePathname();
   // Links are authored in their Vietnamese-canonical form; strip any prefix
   // before comparing so EN pages still highlight the right item.
   const currentPath = stripLocaleFromPath(pathname ?? "/").path;
+  const items = primaryNav.filter(
+    (item) => !item.flag || (item.flag === "hotels" && hotelsEnabled),
+  );
   const [openLabel, setOpenLabel] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemRefs = useRef(new Map<string, HTMLDivElement>());
@@ -139,28 +144,39 @@ export function DesktopNav({
       className="stt-desktop-nav hidden min-w-0 xl:block"
     >
       <ul className="flex items-center gap-0.5 xl:gap-1">
-        {primaryNav.map((item) => {
+        {items.map((item) => {
           const label = labels.nav[item.labelKey];
           const childHrefs = item.children?.map((child) => child.href) ?? [];
           const active = isActive(item.href, childHrefs);
           const allOf = labels.allOf.replace("{label}", label);
 
           if (!item.children || item.children.length === 0) {
+            const content = (
+              <span className="relative">
+                {label}
+                <span aria-hidden="true" className={underlineClass(active)} />
+              </span>
+            );
             return (
               <li key={item.href} className="shrink-0">
-                <Link
-                  href={localizePath(locale, item.href)}
-                  aria-current={active ? "page" : undefined}
-                  className={itemClass(active)}
-                >
-                  <span className="relative">
-                    {label}
-                    <span
-                      aria-hidden="true"
-                      className={underlineClass(active)}
-                    />
-                  </span>
-                </Link>
+                {item.href === "/" ? (
+                  // Home always reloads the document, so it also lands at the top.
+                  <a
+                    href={localizePath(locale, item.href)}
+                    aria-current={active ? "page" : undefined}
+                    className={itemClass(active)}
+                  >
+                    {content}
+                  </a>
+                ) : (
+                  <Link
+                    href={localizePath(locale, item.href)}
+                    aria-current={active ? "page" : undefined}
+                    className={itemClass(active)}
+                  >
+                    {content}
+                  </Link>
+                )}
               </li>
             );
           }

@@ -69,14 +69,14 @@ export default async function Preview({
 }) {
   if (!(await session())) redirect("/admin");
   const { kind, id } = await params;
-  if (kind !== "tours" && kind !== "articles") notFound();
+  if (kind !== "tours" && kind !== "articles" && kind !== "hotels") notFound();
   const row = list(kind).find((row) => row.id === id);
   if (!row) notFound();
   return (
     <main className="adm-preview">
       <Link href="/admin">← Về Studio</Link>
       <p className="adm-eyebrow">Bản nháp đã lưu · chỉ chủ quản trị thấy</p>
-      <h1>{String(row.data.title)}</h1>
+      <h1>{String(row.data.title ?? row.data.name ?? id)}</h1>
       <Content value={row.data} />
     </main>
   );
