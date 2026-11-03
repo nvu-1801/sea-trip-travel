@@ -8,7 +8,7 @@ import { format, getMessages } from "@/i18n/server";
 import { hotelSettings } from "@/server/cms/store";
 import { publicHotelDetail } from "@/server/hotels/public";
 import { HotelGallery } from "@/features/hotels/hotel-gallery";
-import { HotelBookingPanel } from "@/features/hotels/hotel-booking-panel";
+import { HotelRequestPanel } from "@/features/hotels/hotel-request-panel";
 import { HotelMobileBar } from "@/features/hotels/hotel-mobile-bar";
 import { HotelDepth } from "@/features/hotels/hotel-motion";
 import { formatVnd } from "@/features/hotels/hotel-format";
@@ -46,19 +46,6 @@ function first(value: string | string[] | undefined): string {
 
 function localeOf(params: PageParams): Locale {
   return isLocale(params.locale) ? params.locale : defaultLocale;
-}
-
-function selectionOf(raw: string, roomIds: string[]): Record<string, number> {
-  const selection: Record<string, number> = {};
-  if (!raw) return selection;
-  for (const entry of raw.split(",")) {
-    const [roomId, count] = entry.split(":");
-    if (!roomIds.includes(roomId)) continue;
-    const quantity = Number(count);
-    if (Number.isInteger(quantity) && quantity >= 1 && quantity <= 5)
-      selection[roomId] = quantity;
-  }
-  return selection;
 }
 
 export async function generateMetadata({
@@ -113,10 +100,6 @@ export default async function HotelDetailPage({
   });
   if (!detail) notFound();
 
-  const selection = selectionOf(
-    first(query.rooms),
-    detail.rooms.map((room) => room.id),
-  );
   const path = `/khach-san/${detail.slug}`;
   const pageUrl = absoluteUrl(localizePath(locale, path));
   const heroImage = detail.images[0] ?? detail.image;
@@ -444,94 +427,38 @@ export default async function HotelDetailPage({
         </div>
 
         <div className="stt-hotel-panel-col" id="dat-phong">
-          <HotelBookingPanel
-          locale={locale}
-          hotelId={detail.id}
-          sourcePage={localizePath(locale, path)}
-          initial={{
-            checkIn: checkIn ?? "",
-            checkOut: checkOut ?? "",
-            tourSlug: tourSlug ?? "",
-            selection,
-          }}
-          rooms={detail.rooms.map((room) => ({
-            id: room.id,
-            name: room.name,
-            capacityAdults: room.capacityAdults,
-            capacityChildren: room.capacityChildren,
-            maxOccupancy: room.maxOccupancy,
-            priceFrom: room.priceFrom,
-            breakfastIncluded: room.breakfastIncluded,
-            taxIncluded: room.taxIncluded,
-            availability: room.availability,
-          }))}
-          tourOptions={detail.tourLinks.map((link) => ({
-            slug: link.tourSlug,
-            title: link.tourTitle,
-            relation: link.relation,
-          }))}
-          labels={{
-            title: m.hotels.form.title,
-            description: m.hotels.form.description,
-            dates: m.hotels.form.dates,
-            datesFlexible: m.hotels.form.datesFlexible,
-            checkIn: t.checkIn,
-            checkOut: t.checkOut,
-            adults: m.hotels.form.adults,
-            children: m.hotels.form.children,
-            childrenAges: m.hotels.form.childrenAges,
-            childrenAgesHint: m.hotels.form.childrenAgesHint,
-            rooms: m.hotels.form.rooms,
-            roomQuantity: m.hotels.form.roomQuantity,
-            tourOptional: m.hotels.form.tourOptional,
-            noTour: m.hotels.form.noTour,
-            tourHelp: m.hotels.form.tourHelp,
-            submit: m.lead.submit,
-            submitting: m.lead.submitting,
-            noRoomsSelected: m.hotels.form.noRoomsSelected,
-            quoteTitle: m.hotels.quote.title,
-            quoteSubtotal: m.hotels.quote.subtotal,
-            quoteNights: m.hotels.quote.nights,
-            quoteNeeds: m.hotels.quote.needsQuote,
-            quoteNeedsHint: m.hotels.quote.needsQuoteHint,
-            quoteIncluded: m.hotels.quote.included,
-            quoteUpgrade: m.hotels.quote.upgrade,
-            quoteFees: m.hotels.quote.fees,
-            quoteRefreshing: m.hotels.quote.refreshing,
-            quoteError: m.hotels.quote.error,
-            quoteNoDates: m.hotels.quote.noDates,
-            quoteNotConfirmed: m.hotels.quote.notConfirmed,
-            estimateTitle: m.hotels.estimate.title,
-            estimateTotal: m.hotels.estimate.total,
-            estimateTour: m.hotels.estimate.tour,
-            estimateStay: m.hotels.estimate.stay,
-            estimateNoTour: m.hotels.estimate.noTour,
-            estimateRooms: m.hotels.estimate.rooms,
-            estimateAdults: m.hotels.estimate.adults,
-            estimateChildren: m.hotels.estimate.children,
-            estimateNeeds: m.hotels.estimate.needs,
-            estimateNeedsHint: m.hotels.estimate.needsHint,
-            estimateShow: m.hotels.estimate.show,
-            estimateHide: m.hotels.estimate.hide,
-            estimateNote: m.hotels.estimate.note,
-            successTitle: m.hotels.form.successTitle,
-            successBody: m.hotels.form.successBody,
-            fullName: m.lead.fields.fullName,
-            phone: m.lead.fields.phone,
-            email: m.lead.fields.email,
-            message: m.lead.fields.message,
-            consent: m.lead.consent.pre,
-            consentHint: m.lead.consent.hint,
-            privacyLabel: m.nav.privacy,
-            privacyHref: localizePath(locale, "/chinh-sach-bao-mat"),
-            optional: m.lead.optional,
-            genericError: m.lead.genericError,
-            networkError: m.lead.networkError,
-            available: m.hotels.availability.available,
-            unavailable: m.hotels.availability.closed,
-            unknown: m.hotels.availability.unknown,
-          }}
-        />
+          <HotelRequestPanel
+            locale={locale}
+            hotel={{
+              id: detail.id,
+              slug: detail.slug,
+              name: detail.name,
+              priceFrom: detail.priceFrom,
+            }}
+            rooms={detail.rooms.map((room) => ({
+              id: room.id,
+              name: room.name,
+              priceFrom: room.priceFrom,
+              image: room.images[0]?.src ?? heroImage?.src,
+            }))}
+            contactHref={`${localizePath(locale, "/lien-he")}#tu-van`}
+            toursHref={localizePath(locale, "/tim-tour")}
+            labels={{
+              title: m.hotels.request.title,
+              description: m.hotels.request.description,
+              roomsLabel: m.hotels.request.roomsLabel,
+              pick: m.hotels.request.pick,
+              submit: m.hotels.request.submit,
+              fallback: m.hotels.request.fallback,
+              note: m.hotels.request.note,
+              noRooms: m.hotels.request.noRooms,
+              assignedTitle: m.hotels.request.assignedTitle,
+              assignedBody: m.hotels.request.assignedBody,
+              assignedNote: m.hotels.request.assignedNote,
+              continueTours: m.hotels.request.continueTours,
+              goToForm: m.hotels.request.goToForm,
+            }}
+          />
         </div>
       </div>
 

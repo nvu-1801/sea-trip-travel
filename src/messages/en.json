@@ -401,7 +401,7 @@
     "outOfHours": "Outside working hours, requests are still recorded and handled on the next working day.",
     "formEyebrow": "Consultation form",
     "formTitle": "Send a request",
-    "formDescription": "All we need is your name, phone number and confirmation. The other fields make the advice more accurate.",
+    "formDescription": "Pick a tour/destination or a hotel, then leave your name and phone number. SEA TRIP will check and get back to you.",
     "steps": [
       {
         "title": "1. SEA TRIP receives your request",
@@ -434,6 +434,14 @@
       "travelDate": "Leave blank if unsure",
       "partySize": "Up to 60 guests",
       "message": "Free time, budget, special requests…"
+    },
+    "hotel": {
+      "label": "Hotel",
+      "attached": "Hotel attached",
+      "hint": "SEA TRIP will check availability and quote this hotel together with your request.",
+      "remove": "Remove hotel",
+      "change": "Change hotel",
+      "needOne": "Pick a tour/destination or a hotel so SEA TRIP knows what you need."
     },
     "placeholders": {
       "fullName": "John Smith",
@@ -737,6 +745,22 @@
       "successTitle": "SEA TRIP has received your request",
       "successBody": "A team member will contact you to check the room and suggest a suitable tour. This request is not a booking confirmation.",
       "disabled": "The hotel module is paused. Please call the hotline for advice."
+    },
+    "request": {
+      "title": "Need advice on a room?",
+      "description": "Pick the room type you like. SEA TRIP will check availability with the hotel and get back to you — the website does not hold rooms.",
+      "roomsLabel": "Room types & reference prices",
+      "pick": "Pick this room",
+      "submit": "Send an enquiry",
+      "fallback": "No specific room yet — SEA TRIP will suggest a suitable one.",
+      "note": "Reference nightly prices. Availability is confirmed by SEA TRIP with the partner before any quote.",
+      "noRooms": "This hotel has not published room types yet. Send an enquiry and SEA TRIP will advise.",
+      "assignedTitle": "Added to the contact form",
+      "assignedBody": "SEA TRIP has noted {hotel}. Fill in your contact details so we can check availability and quote.",
+      "assignedNote": "This is not a booking confirmation; availability will be checked again.",
+      "continueTours": "Keep browsing tours",
+      "goToForm": "Go to the contact form",
+      "changeHotel": "Choose another hotel"
     },
     "home": {
       "title": "A place to stay for your trip",

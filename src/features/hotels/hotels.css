@@ -2052,3 +2052,166 @@
   line-height: 1.6;
   color: var(--color-foreground-muted);
 }
+
+/* Hotel page request panel ------------------------------------------------ */
+/* The panel only lists room types and prices. Picking one attaches it to the
+   consultation form; the site never claims availability or holds a room. */
+
+.stt-hotel-request-rooms {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.stt-hotel-request-rooms legend {
+  padding: 0;
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-foreground-muted);
+}
+
+.stt-hotel-request-rooms ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stt-hotel-request-room {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  width: 100%;
+  padding: 0.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 0.75rem);
+  background: var(--color-surface);
+  color: var(--color-foreground);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.stt-hotel-request-room:hover,
+.stt-hotel-request-room[data-picked="true"] {
+  border-color: var(--color-brand-300, var(--color-border-strong));
+  background: var(--color-primary-soft);
+}
+
+.stt-hotel-request-room img {
+  flex: none;
+  width: 3.4rem;
+  height: 2.4rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+}
+
+.stt-hotel-request-copy {
+  display: grid;
+  flex: 1;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.stt-hotel-request-copy strong {
+  overflow: hidden;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stt-hotel-request-copy small {
+  color: var(--color-foreground-muted);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stt-hotel-request-pick {
+  flex: none;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-primary-strong);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.stt-hotel-request-cta {
+  width: 100%;
+}
+
+/* "Added to the contact form" dialog */
+.stt-hotel-assign {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgb(24 12 20 / 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.stt-hotel-assign-card {
+  display: grid;
+  gap: 0.6rem;
+  width: min(34rem, 100%);
+  padding: 1.4rem;
+  border-radius: 1.25rem;
+  background: var(--color-surface);
+  box-shadow: 0 30px 70px -30px rgb(24 12 20 / 0.6);
+}
+
+.stt-hotel-assign-card:focus {
+  outline: none;
+}
+
+.stt-hotel-assign-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1.25;
+}
+
+.stt-hotel-assign-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-foreground-muted);
+}
+
+.stt-hotel-assign-eyebrow {
+  font-size: 0.72rem !important;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-primary-strong) !important;
+}
+
+.stt-hotel-assign-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.stt-hotel-assign-actions > * {
+  flex: 1 1 12rem;
+  justify-content: center;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .stt-hotel-request-pick {
+    display: none;
+  }
+}

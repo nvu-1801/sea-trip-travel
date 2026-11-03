@@ -222,7 +222,7 @@ async function main() {
       (await page.locator(".stt-hotel-room").count()) >= 2,
     );
     const availability = await page
-      .locator(".stt-hotel-room .stt-hotel-muted")
+      .locator(".stt-hotel-room-state")
       .allInnerTexts();
     check(
       "nightly availability uses the tightest night (2)",
@@ -246,50 +246,69 @@ async function main() {
       JSON.stringify(quote?.quote?.status ?? null),
     );
 
-    console.log("2b. Consultation form");
-    await page.locator(".stt-hotel-qty select").first().selectOption("1");
-    await page
-      .getByLabel("Tour quan tâm (tuỳ chọn)")
-      .selectOption("quy-nhon-phu-yen-3-ngay-2-dem");
-    await page.locator(".stt-hotel-estimate-toggle").waitFor({ timeout: 20_000 });
-    await page.waitForFunction(
-      () =>
-        document
-          .querySelector(".stt-hotel-estimate-line")
-          ?.textContent?.includes("Quy Nhơn") ?? false,
-      { timeout: 20_000 },
-    );
-    await page.locator(".stt-hotel-estimate-toggle").click();
-    await page.locator(".stt-hotel-estimate-detail").waitFor();
-    const tourLine = await page
-      .locator(".stt-hotel-estimate-line")
-      .first()
-      .innerText();
+    console.log("2b. Room prices and the merged consultation form");
     check(
-      "estimate shows the selected tour subtotal",
-      tourLine.includes("Quy Nhơn") && /₫/.test(tourLine),
-      tourLine.replace(/\s+/g, " ").slice(0, 90),
+      "hotel page lists room prices instead of a contact form",
+      (await page.locator(".stt-hotel-form").count()) === 0 &&
+        (await page.locator(".stt-hotel-request-room").count()) >= 2,
     );
-    const totalText = await page
-      .locator(".stt-hotel-estimate-total strong")
-      .innerText();
-    check("estimate shows a combined total", /₫/.test(totalText), totalText);
+    await page.locator(".stt-hotel-request-room").first().click();
+    const assignDialog = page.getByRole("dialog");
+    await assignDialog.waitFor({ timeout: 20_000 });
+    check(
+      "choosing a room confirms it was added to the contact form",
+      (await assignDialog.innerText()).includes("Đã gán vào form liên hệ"),
+    );
     await page.screenshot({
-      path: path.join(SHOT_DIR, "estimate-1440.png"),
-      fullPage: true,
+      path: path.join(SHOT_DIR, "assign-dialog-1440.png"),
     });
-    await page.getByLabel("Họ tên").fill("Khách Kiểm Thử");
-    await page.locator('.stt-hotel-form input[autocomplete="tel"]').fill("0987 654 321");
-    await page.locator(".stt-hotel-check input[type=checkbox][required]").check();
-    await page.locator("button.stt-hotel-submit").click();
-    await page
-      .getByRole("heading", { name: /đã nhận yêu cầu/i })
-      .waitFor({ timeout: 20_000 });
-    const submitted = await page.locator(".stt-hotel-panel h2").first().innerText();
+    await assignDialog.getByRole("link", { name: "Tới form liên hệ" }).click();
+    await page.waitForURL(/\/lien-he/, { timeout: 20_000 });
     check(
-      "hotel request confirms receipt without promising a booking",
-      submitted.includes("đã nhận yêu cầu") && !submitted.includes("Đặt thành công"),
-      submitted,
+      "the dialog lands on the contact page",
+      new URL(page.url()).pathname === "/lien-he",
+    );
+    await page.locator("[data-hotel-chip]").first().waitFor();
+    check(
+      "the contact form shows only the chosen hotel",
+      (await page.locator("[data-hotel-chip]").count()) === 1 &&
+        (await page.locator("[data-hotel-chip]").innerText()).includes(
+          "Demo Quy Nhơn",
+        ),
+    );
+    await page.locator('input[name="fullName"]').first().fill("Khách Kiểm Thử");
+    await page.locator('input[name="phone"]').first().fill("0987 654 321");
+    await page.locator('input[name="consent"]').check();
+    await page.getByRole("button", { name: "Gửi yêu cầu tư vấn" }).click();
+    await page
+      .getByRole("heading", { name: /Cảm ơn bạn đã chọn SEA TRIP/ })
+      .waitFor({ timeout: 20_000 });
+    check(
+      "the merged form submits the hotel enquiry without promising a booking",
+      (await page.getByText("Mã yêu cầu:").count()) === 1,
+    );
+    await page.screenshot({
+      path: path.join(SHOT_DIR, "contact-success-1440.png"),
+    });
+
+    await page.goto(`${BASE}/lien-he`, { waitUntil: "load" });
+    await page.locator("[data-hotel-chip]").first().waitFor();
+    await page.getByRole("button", { name: "Bỏ khách sạn" }).click();
+    await page.waitForFunction(() => !document.querySelector("[data-hotel-chip]"), {
+      timeout: 10_000,
+    });
+    check(
+      "the attached hotel can be removed from the form",
+      (await page.locator("[data-hotel-chip]").count()) === 0,
+    );
+    await page.getByRole("button", { name: "Gửi yêu cầu tư vấn" }).click();
+    const needOne = page
+      .getByText(/Chọn một tour\/điểm đến hoặc một khách sạn/)
+      .first();
+    await needOne.waitFor({ timeout: 10_000 });
+    check(
+      "the form refuses a request with neither tour nor hotel",
+      await needOne.isVisible(),
     );
 
     const enResponse = await page.goto(`${BASE}/en/khach-san`, {
