@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     qualities: [75, 90],
+    // Unversioned local images keep working; only the six replaced customer
+    // covers may carry the cache-busting revision. Keep the query in sync with
+    // CUSTOMER_VIDEO_COVER_REVISION in src/lib/customer-carousel.ts.
+    localPatterns: [
+      { pathname: "/**", search: "" },
+      {
+        pathname: "/images/customers/videos/**",
+        search: "?v=2026-11-01",
+      },
+    ],
   },
   outputFileTracingExcludes: {
     "/*": ["./data/**/*", "./.env*", "./verify-screenshots/**/*", "./*.log"],

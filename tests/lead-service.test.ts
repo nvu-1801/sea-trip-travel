@@ -31,6 +31,7 @@ function makeLead(overrides: Partial<ContactLead> = {}): ContactLead {
   return {
     requestId: "STT-20260115-ABCD",
     receivedAt: "2026-01-15T02:00:00.000Z",
+    kind: "tour",
     fullName: "Nguyễn Văn A",
     phone: "0987654321",
     email: "khach@example.com",

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { getMessages } from "@/i18n/server";
 import type { Locale } from "@/i18n/config";
 import { getDestinationSearchIndex } from "@/lib/data/destination-search";
+import { hotelSettings } from "@/server/cms/store";
 import { DesktopNav } from "./desktop-nav";
 import { HeaderSearch } from "./header-search";
 import { HeaderShell } from "./header-shell";
@@ -48,6 +49,8 @@ export function SiteHeader({ locale }: { locale: Locale }) {
   const m = getMessages(locale);
   const navLabels = { nav: m.nav, header: m.header, allOf: m.common.allOf };
   const searchItems = getDestinationSearchIndex(locale, m.regions);
+  // The menu entry and its public routes share one switch.
+  const hotelsEnabled = hotelSettings().enabled;
   return (
     <HeaderShell>
       <div className="stt-header-brandline brand-gradient h-px w-full" aria-hidden="true" />
@@ -56,7 +59,11 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         <div className="flex h-16 items-center justify-between gap-4 transition-[height] duration-300 ease-out sm:h-18 sm:gap-6 sm:group-data-[condensed=true]:h-16 xl:gap-4">
           <LogoLink locale={locale} priority className="stt-header-logo" />
 
-          <DesktopNav locale={locale} labels={navLabels} />
+          <DesktopNav
+            locale={locale}
+            labels={navLabels}
+            hotelsEnabled={hotelsEnabled}
+          />
 
           <div className="stt-header-actions flex shrink-0 items-center gap-2">
             <HeaderSearch
@@ -106,6 +113,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
             <MobileNav
               locale={locale}
               labels={navLabels}
+              hotelsEnabled={hotelsEnabled}
               ui={{
                 openMenu: m.header.openMenu,
                 closeMenu: m.header.closeMenu,

@@ -14,6 +14,8 @@ import {
   categoryTranslationStatus,
   tourTranslationStatus,
 } from "@/lib/data/localize";
+import { hotelSettings } from "@/server/cms/store";
+import { publishedHotels } from "@/server/hotels/store";
 
 /**
  * sitemap.xml
@@ -124,5 +126,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       ),
   );
 
-  return [...staticRoutes, ...categoryRoutes, ...tourRoutes, ...articleRoutes];
+  // The hotel catalogue only exists while the module is on. Draft hotels never
+  // reach `publishedHotels()`, so no draft URL can leak into the sitemap.
+  const hotels = hotelSettings().enabled ? publishedHotels() : [];
+  const hotelDate =
+    hotels.length > 0
+      ? newestDate(...hotels.map((hotel) => hotel.updatedAt))
+      : contentDate;
+  const hotelRoutes: MetadataRoute.Sitemap =
+    hotels.length > 0
+      ? [
+          ...entry("/khach-san", hotelDate, 0.75, "weekly", false),
+          ...hotels.flatMap((hotel) =>
+            entry(
+              `/khach-san/${hotel.slug}`,
+              new Date(hotel.updatedAt),
+              0.7,
+              "weekly",
+              Boolean(hotel._enReviewed && hotel._en),
+            ),
+          ),
+        ]
+      : [];
+
+  return [
+    ...staticRoutes,
+    ...categoryRoutes,
+    ...tourRoutes,
+    ...articleRoutes,
+    ...hotelRoutes,
+  ];
 }

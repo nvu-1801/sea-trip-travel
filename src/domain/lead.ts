@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { contentLocaleSchema } from "./common";
+import { contentLocaleSchema, isoDateSchema } from "./common";
 
 /**
  * The consultation-request ("lead") contract.
@@ -116,8 +116,78 @@ export const utmSchema = z
 
 export type UtmParams = z.infer<typeof utmSchema>;
 
+/**
+ * Hotel consultation block inside a lead.
+ *
+ * Kept separate from the tour fields so a tour request stays byte-compatible
+ * with the existing pipeline. The server re-reads the hotel, rooms, prices and
+ * tour relation; nothing here is trusted as a quote.
+ */
+export const hotelLeadRoomSchema = z.object({
+  roomId: z.string().regex(/^room_[a-z0-9_]+$/),
+  quantity: z.number().int().min(1).max(5),
+});
+
+export const hotelStayRequestSchema = z
+  .object({
+    hotelId: z.string().regex(/^hotel_[a-z0-9_]+$/),
+    rooms: z.array(hotelLeadRoomSchema).min(1).max(6),
+    checkIn: isoDateSchema.optional(),
+    checkOut: isoDateSchema.optional(),
+    datesFlexible: z.boolean().default(false),
+    adults: z.number().int().min(1).max(40).default(2),
+    children: z.number().int().min(0).max(10).default(0),
+    childrenAges: z.array(z.number().int().min(0).max(17)).max(10).default([]),
+    tourHelp: z.boolean().default(false),
+    tourSlug: optionalText(LEAD_LIMITS.tourSlug),
+  })
+  .superRefine((value, ctx) => {
+    const hasDates = Boolean(value.checkIn || value.checkOut);
+    if (hasDates && (!value.checkIn || !value.checkOut)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["checkOut"],
+        message: "Cần nhập đủ ngày nhận và ngày trả, hoặc chọn chưa chốt ngày",
+      });
+    }
+    if (value.checkIn && value.checkOut && value.checkOut <= value.checkIn) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["checkOut"],
+        message: "Ngày trả phải sau ngày nhận",
+      });
+    }
+    if (value.datesFlexible && hasDates) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["datesFlexible"],
+        message: "Đã chọn chưa chốt ngày thì không gửi kèm ngày cụ thể",
+      });
+    }
+    if (value.childrenAges.length > value.children) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["childrenAges"],
+        message: "Số tuổi trẻ em nhiều hơn số trẻ em",
+      });
+    }
+    const rooms = new Set(value.rooms.map((room) => room.roomId));
+    if (rooms.size !== value.rooms.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["rooms"],
+        message: "Một hạng phòng bị chọn hai lần",
+      });
+    }
+  });
+
+export type HotelStayRequest = z.infer<typeof hotelStayRequestSchema>;
+
 /** What the browser is allowed to POST. */
 export const leadInputSchema = z.object({
+  /** Tour request (default) or hotel consultation. */
+  kind: z.enum(["tour", "hotel"]).default("tour"),
+  hotel: hotelStayRequestSchema.optional(),
   fullName: z
     .string({ error: "Vui lòng nhập họ tên" })
     .trim()
@@ -174,6 +244,8 @@ export type LeadInput = z.infer<typeof leadInputSchema>;
 export const contactLeadSchema = z.object({
   requestId: z.string().min(1),
   receivedAt: z.iso.datetime(),
+  /** `tour` for the original pipeline; `hotel` adds the block below. */
+  kind: z.enum(["tour", "hotel"]).default("tour"),
   fullName: z.string().min(1),
   phone: z.string().min(1),
   email: z.string().optional(),
@@ -186,6 +258,42 @@ export const contactLeadSchema = z.object({
   /** Locale the visitor used. Drives the "customer language" row in the sales email. */
   locale: contentLocaleSchema.default("vi"),
   utm: utmSchema,
+  /** Snapshot of the hotel request, including the server-computed reference. */
+  hotel: z
+    .object({
+      hotelId: z.string().min(1),
+      hotelName: z.string().min(1),
+      hotelSlug: z.string().min(1),
+      rooms: z
+        .array(
+          z.object({
+            roomId: z.string().min(1),
+            name: z.string().min(1),
+            quantity: z.number().int().positive(),
+          }),
+        )
+        .min(1),
+      checkIn: z.string().nullable(),
+      checkOut: z.string().nullable(),
+      nights: z.number().int().nonnegative(),
+      datesFlexible: z.boolean(),
+      adults: z.number().int().positive(),
+      children: z.number().int().nonnegative(),
+      childrenAges: z.array(z.number().int().nonnegative()),
+      tourSlug: z.string().nullable(),
+      tourTitle: z.string().nullable(),
+      tourRelation: z.enum(["included", "upgrade", "additional"]).nullable(),
+      availability: z.record(z.string(), z.string()),
+      quote: z.object({
+        status: z.enum(["quoted", "needs_quote"]),
+        reasons: z.array(z.string()).max(10),
+        lodgingTotal: z.number().int().nonnegative().nullable(),
+        includedByTour: z.boolean(),
+        capturedAt: z.iso.datetime(),
+      }),
+      needsReview: z.boolean(),
+    })
+    .optional(),
 });
 
 export type ContactLead = z.infer<typeof contactLeadSchema>;
@@ -199,6 +307,7 @@ export const LEAD_ERROR_CODES = [
   "MAIL_DELIVERY_FAILED",
   "MAIL_NOT_CONFIGURED",
   "INTERNAL_ERROR",
+  "MODULE_DISABLED",
 ] as const;
 
 export type LeadErrorCode = (typeof LEAD_ERROR_CODES)[number];

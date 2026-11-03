@@ -112,7 +112,53 @@ export function db() {
     INSERT OR IGNORE INTO cms_versions(scope) VALUES('public'),('admin');
     CREATE TABLE IF NOT EXISTS cms_migrations (id TEXT PRIMARY KEY, applied_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS content_redirects (from_path TEXT PRIMARY KEY, to_path TEXT NOT NULL, created_at TEXT NOT NULL);
-    PRAGMA user_version=1;`);
+    CREATE TABLE IF NOT EXISTS hotel_rate_rules (
+      id TEXT PRIMARY KEY,
+      hotel_id TEXT NOT NULL,
+      room_id TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('base','weekday','date_range')),
+      weekdays TEXT NOT NULL DEFAULT '',
+      start_date TEXT,
+      end_date TEXT,
+      amount INTEGER NOT NULL CHECK(amount > 0),
+      includes_breakfast INTEGER NOT NULL DEFAULT 0,
+      includes_tax INTEGER NOT NULL DEFAULT 0,
+      fees_note TEXT NOT NULL DEFAULT '',
+      label TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_hotel_rate_rules_room ON hotel_rate_rules(room_id, kind);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_hotel_rate_rules_base ON hotel_rate_rules(room_id) WHERE kind='base';
+    CREATE TABLE IF NOT EXISTS hotel_availability (
+      room_id TEXT NOT NULL,
+      date TEXT NOT NULL,
+      rooms INTEGER NOT NULL CHECK(rooms >= 0),
+      closed INTEGER NOT NULL DEFAULT 0,
+      note TEXT NOT NULL DEFAULT '',
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY(room_id, date)
+    );
+    CREATE INDEX IF NOT EXISTS idx_hotel_availability_date ON hotel_availability(date);
+    CREATE TABLE IF NOT EXISTS hotel_tour_links (
+      hotel_id TEXT NOT NULL,
+      room_id TEXT NOT NULL DEFAULT '',
+      tour_slug TEXT NOT NULL,
+      relation TEXT NOT NULL CHECK(relation IN ('included','upgrade','additional')),
+      condition TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL,
+      PRIMARY KEY(hotel_id, room_id, tour_slug)
+    );
+    CREATE INDEX IF NOT EXISTS idx_hotel_tour_links_tour ON hotel_tour_links(tour_slug);
+    CREATE TABLE IF NOT EXISTS hotel_lead_plans (
+      lead_id TEXT PRIMARY KEY REFERENCES leads(id) ON DELETE CASCADE,
+      quote_amount INTEGER,
+      quote_note TEXT NOT NULL DEFAULT '',
+      confirmed_option TEXT NOT NULL DEFAULT '',
+      booking_id TEXT REFERENCES tour_bookings(id) ON DELETE SET NULL,
+      updated_at TEXT NOT NULL
+    );
+    PRAGMA user_version=2;`);
   const leadColumns = database.prepare("PRAGMA table_info(leads)").all() as {
     name: string;
   }[];
@@ -124,6 +170,25 @@ export function db() {
   if (!leadColumns.some((column) => column.name === "deleted_at")) {
     database.exec("ALTER TABLE leads ADD COLUMN deleted_at TEXT");
   }
+  // Hotel consultation requests reuse the lead pipeline. Only non-sensitive
+  // routing fields get their own column so the Studio can filter without
+  // decrypting the payload; the customer data stays inside the encrypted blob.
+  const addLeadColumn = (name: string, definition: string) => {
+    if (!leadColumns.some((column) => column.name === name)) {
+      database!.exec(`ALTER TABLE leads ADD COLUMN ${name} ${definition}`);
+      leadColumns.push({ name });
+    }
+  };
+  addLeadColumn("kind", "TEXT NOT NULL DEFAULT 'tour'");
+  addLeadColumn("hotel_id", "TEXT");
+  addLeadColumn("stay_checkin", "TEXT");
+  addLeadColumn("stay_checkout", "TEXT");
+  database.exec(
+    "CREATE INDEX IF NOT EXISTS idx_leads_kind ON leads(kind, created_at)",
+  );
+  database.exec(
+    "CREATE INDEX IF NOT EXISTS idx_leads_hotel ON leads(hotel_id, created_at)",
+  );
   database.exec(
     "CREATE INDEX IF NOT EXISTS idx_leads_deleted ON leads(deleted_at)",
   );
@@ -158,11 +223,30 @@ export function db() {
     "tour_bookings",
     "tour_finance_entries",
     "invoices",
+    "hotel_rate_rules",
+    "hotel_availability",
+    "hotel_tour_links",
+    "hotel_lead_plans",
   ]) {
     for (const operation of ["INSERT", "UPDATE", "DELETE"]) {
       database.exec(`CREATE TRIGGER IF NOT EXISTS live_${table}_${operation}
         AFTER ${operation} ON ${table} BEGIN
           UPDATE cms_versions SET version=version+1 WHERE scope='admin';
+        END;`);
+    }
+  }
+  // Price and reference data feeds the public hotel pages, so a successful
+  // write must invalidate the public snapshot too. Draft editorial saves are
+  // handled by the records triggers below and never touch the public scope.
+  for (const table of [
+    "hotel_rate_rules",
+    "hotel_availability",
+    "hotel_tour_links",
+  ]) {
+    for (const operation of ["INSERT", "UPDATE", "DELETE"]) {
+      database.exec(`CREATE TRIGGER IF NOT EXISTS live_${table}_public_${operation}
+        AFTER ${operation} ON ${table} BEGIN
+          UPDATE cms_versions SET version=version+1 WHERE scope='public';
         END;`);
     }
   }

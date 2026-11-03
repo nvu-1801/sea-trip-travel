@@ -13,8 +13,8 @@ import type { LandingSections } from "@/domain/landing";
  *   itself and `href` stays empty. Nothing about a relationship, quote, rating
  *   or destination was added.
  * - 6 YouTube embeds. Titles come from the player's `title` attribute and were
- *   confirmed through YouTube's public oEmbed endpoint. Covers are the public
- *   YouTube thumbnails for those exact videos.
+ *   confirmed through YouTube's public oEmbed endpoint. Covers are frames
+ *   captured from those exact videos (timestamps in `public/images/customers/SOURCE.md`).
  * - The source has no per-video description, so `body`/`bodyEn` stay empty and
  *   the card only shows the real title and the partner named in that title.
  *

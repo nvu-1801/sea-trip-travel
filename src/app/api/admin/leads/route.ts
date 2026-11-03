@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { requireSession } from "@/server/cms/auth";
 import { db } from "@/server/cms/db";
-import { auditFailure, auditRequest } from "@/server/cms/audit";
+import { auditContext, auditFailure, auditRequest } from "@/server/cms/audit";
 import {
   listLeads,
   encrypt,
@@ -19,6 +19,11 @@ import { consumeLimit } from "@/server/cms/store";
 import { getMailer } from "@/server/email/mailer";
 import { contactLeadSchema } from "@/domain/lead";
 import { getTourBySlug } from "@/lib/data/tours";
+import { list } from "@/server/cms/store";
+import {
+  getHotelLeadPlan,
+  saveHotelLeadPlan,
+} from "@/server/hotels/store";
 import {
   buildLeadSubject,
   buildLeadNotificationHtml,
@@ -61,6 +66,27 @@ function withTourInfo(rows: ReturnType<typeof listLeads>) {
   });
 }
 
+/**
+ * Hotel requests need the property name and the sales plan. The hotel is read
+ * from the admin list (drafts included) so an archived property still shows
+ * the name on an old request.
+ */
+function withHotelInfo(rows: ReturnType<typeof listLeads>) {
+  const hotels = list("hotels");
+  const byId = new Map(hotels.map((row) => [row.id, row]));
+  return rows.map((row) => {
+    if (row.kind !== "hotel") return row;
+    const hotel = byId.get(row.hotel_id ?? "");
+    const slug = hotel ? String(hotel.data.slug ?? "") : "";
+    return {
+      ...row,
+      hotelTitle: hotel ? String(hotel.data.name ?? row.hotel_id) : null,
+      hotelSlug: slug || null,
+      hotelPlan: getHotelLeadPlan(row.id),
+    };
+  });
+}
+
 export async function GET(request: Request) {
   return handle(async () => {
     await requireSession(request);
@@ -72,9 +98,9 @@ export async function GET(request: Request) {
       });
     }
     if (params.get("trash") === "1") {
-      return reply(withTourInfo(listTrashedLeads()));
+      return reply(withHotelInfo(withTourInfo(listTrashedLeads())));
     }
-    return reply(withTourInfo(listLeads()));
+    return reply(withHotelInfo(withTourInfo(listLeads())));
   });
 }
 export async function PATCH(request: Request) {
@@ -114,31 +140,68 @@ export async function PATCH(request: Request) {
     }
     const input = z
       .object({
+        action: z.literal("hotel-plan"),
+        id: z.string().min(1).max(100),
+        quoteAmount: z.number().int().positive().max(1_000_000_000_000).nullable(),
+        quoteNote: z.string().max(2000),
+        confirmedOption: z.string().max(2000),
+        bookingId: z.string().min(1).max(100).nullable(),
+      })
+      .safeParse(body);
+    if (input.success) {
+      const lead = db()
+        .prepare("SELECT kind FROM leads WHERE id=? AND deleted_at IS NULL")
+        .get(input.data.id) as { kind: string } | undefined;
+      if (!lead || lead.kind !== "hotel") {
+        auditFailure(
+          request,
+          "hotel-lead-plan",
+          input.data.id,
+          "Không tìm thấy yêu cầu khách sạn",
+        );
+        return reply({ error: "Không tìm thấy yêu cầu khách sạn" }, 404);
+      }
+      const result = saveHotelLeadPlan(
+        { ...input.data, leadId: input.data.id },
+        auditContext(request),
+      );
+      return reply({ ok: true, ...result });
+    }
+    const input2 = z
+      .object({
         id: z.string().max(100),
-        status: z.enum(["new", "contacted", "qualified", "won", "lost"]),
+        status: z.enum([
+          "new",
+          "contacted",
+          "qualified",
+          "quoted",
+          "confirmed",
+          "won",
+          "lost",
+        ]),
         note: z.string().max(2000),
       })
       .parse(body);
     const before = db()
       .prepare("SELECT status FROM leads WHERE id=?")
-      .get(input.id) as { status: string } | undefined;
+      .get(input2.id) as { status: string } | undefined;
     if (!before) {
       auditFailure(
         request,
         "lead-update",
-        input.id,
+        input2.id,
         "Không tìm thấy yêu cầu tư vấn",
       );
       return reply({ error: "Không có yêu cầu này" }, 404);
     }
     db()
       .prepare("UPDATE leads SET status=?,note=? WHERE id=?")
-      .run(input.status, encrypt(input.note), input.id);
-    auditRequest(request, "lead-update", input.id, {
+      .run(input2.status, encrypt(input2.note), input2.id);
+    auditRequest(request, "lead-update", input2.id, {
       details: {
-        leadId: input.id,
+        leadId: input2.id,
         before: { status: before.status },
-        after: { status: input.status },
+        after: { status: input2.status },
       },
     });
     return reply({ ok: true });

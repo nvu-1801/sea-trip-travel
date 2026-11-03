@@ -182,6 +182,7 @@ describe("category repository", () => {
       "Trang chủ",
       "Tour Quy Nhơn - Phú Yên",
       "Tour Trong Nước",
+      "Khách sạn",
       "Cẩm Nang Du Lịch",
       "Liên Hệ",
     ]);
@@ -217,7 +218,8 @@ describe("category repository", () => {
         getCategoryByPath(item.href, VI) ||
           item.href === ROUTES.home ||
           item.href === ROUTES.guides ||
-          item.href === ROUTES.contact,
+          item.href === ROUTES.contact ||
+          item.href === ROUTES.hotels,
         `no destination for ${item.href}`,
       );
       for (const child of item.children ?? []) {

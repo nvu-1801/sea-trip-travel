@@ -3,6 +3,7 @@ import vi from "@/messages/vi.json";
 import en from "@/messages/en.json";
 import { siteConfig } from "@/config/site";
 import { HOME_SEO } from "@/content/seo";
+import { MAX_HOTEL_FEATURED } from "@/domain/hotel";
 import {
   primarySocialLinks,
   secondarySocialLinks,
@@ -47,6 +48,21 @@ export const settingsSchema = z.object({
     .max(10),
   motion: z.boolean(),
   /**
+   * Hotel module switches. The module ships **off**: the migration and the
+   * default record must never publish a catalogue by accident.
+   *
+   * - `enabled`      — public routes, API, menu, home section and tour links.
+   * - `homeVisible`  — only the home section; the catalogue stays reachable.
+   * - `featured`     — ordered hotel ids/slugs on the home page (max 6).
+   */
+  hotels: z
+    .object({
+      enabled: z.boolean(),
+      homeVisible: z.boolean(),
+      featured: z.array(z.string().min(1).max(80)).max(MAX_HOTEL_FEATURED),
+    })
+    .default({ enabled: false, homeVisible: false, featured: [] }),
+  /**
    * Home-page metadata. Defaults live in `content/seo.ts`; the owner can edit
    * them in Website & footer → SEO and publish without a rebuild.
    */
@@ -86,6 +102,7 @@ export const defaultSettings = settingsSchema.parse({
     href: item.url,
   })),
   motion: true,
+  hotels: { enabled: false, homeVisible: false, featured: [] },
   seo: {
     homeTitle: HOME_SEO.vi.title,
     homeDescription: HOME_SEO.vi.description,

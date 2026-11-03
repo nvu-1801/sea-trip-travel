@@ -1,0 +1,362 @@
+/* Hotel Studio panel. Reuses the Studio tokens (pink accent, warm paper). */
+
+.stt-hotel-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.stt-hotel-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.stt-hotel-toolbar .adm-field {
+  min-width: 160px;
+  margin: 0;
+}
+
+.stt-hotel-flags {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid #f2d5e0;
+  border-radius: 14px;
+  background: #fff6f9;
+}
+
+.stt-hotel-flags h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.stt-hotel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.stt-hotel-table th,
+.stt-hotel-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #f4e2e9;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.stt-hotel-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a6377;
+}
+
+.stt-hotel-thumb {
+  width: 56px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f7e6ec;
+}
+
+.stt-hotel-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stt-hotel-state[data-state="published"] {
+  background: #e5f6ef;
+  color: #0f6b53;
+}
+
+.stt-hotel-state[data-state="draft"] {
+  background: #fdeef3;
+  color: #9c2d59;
+}
+
+.stt-hotel-editor {
+  display: grid;
+  gap: 16px;
+}
+
+.stt-hotel-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid #f2d5e0;
+  padding-bottom: 8px;
+}
+
+.stt-hotel-tab {
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #6d4b5c;
+}
+
+.stt-hotel-tab[data-active="true"] {
+  background: #e0005a;
+  border-color: #e0005a;
+  color: #fff;
+}
+
+.stt-hotel-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #f4e2e9;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.stt-hotel-section-head h3 {
+  margin: 0 0 2px;
+  font-size: 15px;
+}
+
+.stt-hotel-grid2 {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.stt-hotel-gallery {
+  display: grid;
+  gap: 10px;
+}
+
+.stt-hotel-gallery-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  padding: 10px;
+  border: 1px dashed #f0cede;
+  border-radius: 12px;
+}
+
+.stt-hotel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.stt-hotel-roomtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stt-hotel-roomtab {
+  border: 1px solid #f0cede;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.stt-hotel-roomtab[data-active="true"] {
+  background: #211621;
+  border-color: #211621;
+  color: #fff;
+}
+
+.stt-hotel-rules {
+  display: grid;
+  gap: 12px;
+}
+
+.stt-hotel-rule {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  padding: 12px;
+  border: 1px solid #f4e2e9;
+  border-radius: 12px;
+  background: #fffafc;
+}
+
+@media (max-width: 900px) {
+  .stt-hotel-rule {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stt-hotel-rule-main {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  align-items: start;
+}
+
+.stt-hotel-rule-side {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.stt-hotel-weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stt-hotel-weekday {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid #f0cede;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.stt-hotel-month {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+}
+
+.stt-hotel-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.stt-hotel-grid-head {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8a6377;
+  text-align: center;
+  padding: 4px 0;
+}
+
+.stt-hotel-day {
+  display: grid;
+  gap: 2px;
+  min-height: 56px;
+  padding: 6px;
+  border: 1px solid #f4e2e9;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  font-size: 11px;
+  color: #211621;
+}
+
+.stt-hotel-day[data-outside="true"] {
+  opacity: 0.35;
+}
+
+.stt-hotel-day[data-empty="true"] .stt-hotel-day-value {
+  color: #b39aa6;
+}
+
+.stt-hotel-day[data-selected="true"] {
+  border-color: #e0005a;
+  box-shadow: inset 0 0 0 1px #e0005a;
+  background: #fff2f7;
+}
+
+.stt-hotel-day-number {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.stt-hotel-day-value {
+  color: #6d4b5c;
+}
+
+.stt-hotel-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  padding-top: 6px;
+}
+
+.stt-hotel-bulk .adm-field {
+  min-width: 110px;
+  margin: 0;
+}
+
+.stt-hotel-public-preview {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed #f0cede;
+  border-radius: 12px;
+  background: #fffafc;
+  font-size: 13px;
+}
+
+.stt-hotel-public-preview dl {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 4px 10px;
+  margin: 0;
+}
+
+.stt-hotel-public-preview dt {
+  color: #8a6377;
+}
+
+.stt-hotel-public-preview dd {
+  margin: 0;
+}
+
+.stt-hotel-link-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  align-items: end;
+  padding: 10px;
+  border: 1px solid #f4e2e9;
+  border-radius: 12px;
+}
+
+.stt-hotel-lead {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #f2d5e0;
+  border-radius: 12px;
+  background: #fff6f9;
+  font-size: 13px;
+}
+
+.stt-hotel-lead-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+}
+
+.stt-hotel-lead-head a {
+  color: #a81455;
+}
+
+.stt-hotel-lead-plan {
+  display: grid;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #f0cede;
+}
+
+@media (max-width: 900px) {
+  .stt-hotel-link-row {
+    grid-template-columns: 1fr;
+  }
+}

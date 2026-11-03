@@ -172,6 +172,70 @@ export function touristTripJsonLd({
   };
 }
 
+export function hotelJsonLd({
+  name,
+  description,
+  url,
+  image,
+  address,
+  amenities,
+  checkInTime,
+  checkOutTime,
+  priceFrom,
+  locale,
+}: {
+  name: string;
+  description: string;
+  /** Absolute URL of the hotel page. */
+  url: string;
+  image: string;
+  address: { street: string; locality: string; region: string };
+  amenities: readonly string[];
+  checkInTime?: string | null;
+  checkOutTime?: string | null;
+  /** Lowest effective nightly price, or `null` when unknown. */
+  priceFrom: number | null;
+  locale: Locale;
+}): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "LodgingBusiness",
+    name,
+    description,
+    url,
+    image: absoluteUrl(image),
+    inLanguage: lang(locale),
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: address.street,
+      addressLocality: address.locality,
+      addressRegion: address.region,
+      addressCountry: "VN",
+    },
+    ...(amenities.length > 0
+      ? {
+          amenityFeature: amenities.map((amenity) => ({
+            "@type": "LocationFeatureSpecification",
+            name: amenity,
+            value: true,
+          })),
+        }
+      : {}),
+    ...(checkInTime ? { checkinTime: checkInTime } : {}),
+    ...(checkOutTime ? { checkoutTime: checkOutTime } : {}),
+    // Only a real, effective price — never 0 and never a guess.
+    ...(priceFrom !== null
+      ? {
+          makesOffer: {
+            "@type": "Offer",
+            price: priceFrom,
+            priceCurrency: "VND",
+          },
+        }
+      : {}),
+  };
+}
+
 export function articleJsonLd({
   title,
   excerpt,

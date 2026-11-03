@@ -5,6 +5,8 @@ import { tourRecordSchema } from "@/domain/tour-cms";
 import { collectTourBusinessIssues } from "@/domain/tour-rules";
 import { defaultThemeRecord, themeRecordSchema } from "@/domain/theme";
 import { travelArticleSchema } from "@/domain/article";
+import { hotelSchema } from "@/domain/hotel";
+import { hotelRoomSchema } from "@/domain/hotel-room";
 import {
   destinationSchema,
   MAX_HOME_DESTINATIONS,
@@ -79,6 +81,8 @@ export const schemas = {
       .optional(),
     _enReviewed: z.boolean().optional(),
   }),
+  hotels: hotelSchema,
+  hotelRooms: hotelRoomSchema,
   settings: settingsSchema,
   theme: themeRecordSchema,
   hero: heroSchema,
@@ -91,6 +95,8 @@ const seeds = {
   articles,
   categories: tourCategories,
   destinations,
+  hotels: [],
+  hotelRooms: [],
   settings: [defaultSettings],
   theme: [defaultThemeRecord],
   hero: [defaultHero],
@@ -774,6 +780,7 @@ const PUBLIC_SLUG_COLLECTIONS = [
   "articles",
   "categories",
   "destinations",
+  "hotels",
 ] as const;
 type PublicSlugCollection = (typeof PUBLIC_SLUG_COLLECTIONS)[number];
 
@@ -812,6 +819,7 @@ function publicPathFor(
   if (!slug) return null;
   if (collection === "tours") return `/tour/${slug}`;
   if (collection === "articles") return `/cam-nang-du-lich/${slug}`;
+  if (collection === "hotels") return `/khach-san/${slug}`;
   if (collection === "categories") return String(data.path ?? "") || null;
   return null;
 }
@@ -1174,6 +1182,20 @@ function saveRecord(
       )
         throw new Error("Tour/điểm đến liên quan không tồn tại");
     }
+    if (collection === "hotels") {
+      const hotel = hotelSchema.parse(data);
+      if (hotel.destinationId && !present("destinations", hotel.destinationId))
+        throw new Error("Điểm đến liên kết không tồn tại");
+    }
+    if (collection === "hotelRooms") {
+      const room = hotelRoomSchema.parse(data);
+      // A room's parent is part of its identity: moving it would orphan prices,
+      // availability rows and any request that already referenced it.
+      if (previousData && String(previousData.hotelId) !== room.hotelId)
+        throw new Error("Không chuyển hạng phòng sang khách sạn khác");
+      if (!present("hotels", room.hotelId))
+        throw new Error("Khách sạn của hạng phòng không tồn tại");
+    }
     if (collection === "categories" && raw.parentId) {
       const visited = new Set([data.id]);
       let parent = String(raw.parentId);
@@ -1233,6 +1255,8 @@ function saveRecord(
       if (collection === "articles")
         (data as Record<string, unknown>).updatedAt = now.slice(0, 10);
       if (collection === "tours")
+        (data as Record<string, unknown>).updatedAt = now;
+      if (collection === "hotels" || collection === "hotelRooms")
         (data as Record<string, unknown>).updatedAt = now;
     } else if (previous && "updatedAt" in data) {
       // Thùng rác / ẩn / khôi phục không được đổi ngày hiển thị của bản ghi.
@@ -1390,7 +1414,19 @@ export function settings() {
     ...stored,
     contact: { ...defaultSettings.contact, ...stored.contact },
     seo: { ...defaultSettings.seo, ...(stored as { seo?: object }).seo },
+    hotels: {
+      ...defaultSettings.hotels,
+      ...(stored as { hotels?: object }).hotels,
+    },
   });
+}
+
+/**
+ * Public hotel switches. Read from the *published* settings, so a draft toggle
+ * can never open the catalogue; the Studio publishes it like any other change.
+ */
+export function hotelSettings() {
+  return settings().hotels;
 }
 export function siteTheme() {
   return (

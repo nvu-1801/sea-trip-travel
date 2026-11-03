@@ -35,6 +35,9 @@ import {
   type ToastKind,
 } from "./notify";
 import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
+import { HotelsPanel } from "./hotels-panel";
+import { HotelLeadCard } from "./hotel-lead-card";
+import "./hotels-panel.css";
 import { LEAD_TRASH_RETENTION_DAYS } from "@/lib/lead-trash";
 import { buildLeadGmailComposeHref } from "@/lib/gmail-compose";
 import {
@@ -111,6 +114,19 @@ type Lead = {
   tourTitle?: string;
   /** `null` = the lead references a tour that is no longer published. */
   tourHref?: string | null;
+  /** `tour` (original pipeline) or `hotel` (consultation with a stay). */
+  kind?: string;
+  hotel_id?: string | null;
+  hotelTitle?: string | null;
+  hotelSlug?: string | null;
+  hotelPlan?: {
+    leadId: string;
+    quoteAmount: number | null;
+    quoteNote: string;
+    confirmedOption: string;
+    bookingId: string | null;
+    updatedAt: string;
+  } | null;
 };
 
 /** `YYYY-MM-DD` → `DD/MM/YYYY`, without shifting the day across timezones. */
@@ -208,6 +224,7 @@ const tabs = [
   ["articles", "Cẩm nang", "articles"],
   ["categories", "Danh mục", "categories"],
   ["destinations", "Điểm đến", "destinations"],
+  ["hotels", "Khách sạn", "home"],
   ["media", "Thư viện ảnh", "media"],
   ["customers", "Khách hàng & dấu ấn hành trình", "users"],
   ["translations", "Bản dịch tiếng Anh", "language"],
@@ -235,6 +252,7 @@ const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
       "articles",
       "categories",
       "destinations",
+      "hotels",
       "media",
       "customers",
       "translations",
@@ -602,7 +620,8 @@ export function Dashboard({
       "all",
     ),
     [lineFilter, setLineFilter] = useState<"all" | "qnpy" | "domestic">("all"),
-    [leadStatusFilter, setLeadStatusFilter] = useState("all");
+    [leadStatusFilter, setLeadStatusFilter] = useState("all"),
+    [leadKindFilter, setLeadKindFilter] = useState("all");
   const [leadTrashOpen, setLeadTrashOpen] = useState(false);
   const [trashedLeads, setTrashedLeads] = useState<Lead[]>([]);
   const [leadTrashCount, setLeadTrashCount] = useState(0);
@@ -3187,6 +3206,12 @@ export function Dashboard({
           ) : (
             <p className="adm-empty">Đang tải…</p>
           )
+        ) : tab === "hotels" ? (
+          csrf ? (
+            <HotelsPanel csrf={csrf} />
+          ) : (
+            <p className="adm-empty">Đang tải…</p>
+          )
         ) : tab === "leads" ? (
           <>
             <div className="adm-stats">
@@ -3279,6 +3304,36 @@ export function Dashboard({
               <div
                 className="adm-chip-row adm-lead-chips"
                 role="group"
+                aria-label="Lọc theo loại yêu cầu"
+              >
+                {(
+                  [
+                    ["all", `Mọi loại (${leads.length})`],
+                    [
+                      "tour",
+                      `Tour (${leads.filter((l) => (l.kind ?? "tour") === "tour").length})`,
+                    ],
+                    [
+                      "hotel",
+                      `Khách sạn (${leads.filter((l) => l.kind === "hotel").length})`,
+                    ],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className="adm-chip-btn"
+                    data-active={leadKindFilter === value}
+                    aria-pressed={leadKindFilter === value}
+                    onClick={() => setLeadKindFilter(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div
+                className="adm-chip-row adm-lead-chips"
+                role="group"
                 aria-label="Lọc theo trạng thái"
               >
                 {(
@@ -3323,6 +3378,8 @@ export function Dashboard({
                   new: "Mới",
                   contacted: "Đã liên hệ",
                   qualified: "Tiềm năng",
+                  quoted: "Đã báo giá",
+                  confirmed: "Đã xác nhận",
                   won: "Đã chốt",
                   lost: "Chưa phù hợp",
                 };
@@ -3336,6 +3393,8 @@ export function Dashboard({
                   (l) =>
                     (leadStatusFilter === "all" ||
                       l.status === leadStatusFilter) &&
+                    (leadKindFilter === "all" ||
+                      (l.kind ?? "tour") === leadKindFilter) &&
                     JSON.stringify(l.data)
                       .toLowerCase()
                       .includes(search.toLowerCase()),
@@ -3641,6 +3700,14 @@ export function Dashboard({
                                 để gửi cho khách.
                               </p>
                             </div>
+
+                            {lead.kind === "hotel" && csrf ? (
+                              <HotelLeadCard
+                                lead={lead}
+                                csrf={csrf}
+                                onSaved={() => void load("leads", true)}
+                              />
+                            ) : null}
 
                             <div className="adm-lead-foot">
                               {requestId && (

@@ -18,8 +18,11 @@ import {
   buildLeadNotificationHtml,
   buildLeadNotificationText,
   buildLeadSubject,
+  type LeadNotificationContext,
 } from "@/server/email/templates/lead-notification";
 import { safeSiteUrl } from "@/lib/sanitize";
+import { hotelSettings } from "@/server/cms/store";
+import { quoteHotelRequest } from "@/server/hotels/public";
 import { getLeadStore } from "./store";
 import { getRateLimiter } from "./rate-limit";
 
@@ -164,6 +167,201 @@ function hostnameOf(url: string): string {
   }
 }
 
+/**
+ * Validate and snapshot a hotel consultation.
+ *
+ * The hotel, its published rooms, their prices and the tour relation are all
+ * re-read here. A client cannot name another hotel's room, a draft hotel or a
+ * price of its own.
+ */
+function buildHotelLead(
+  input: LeadInput,
+  requestId: string,
+  now: Date,
+): { ok: true; lead: ContactLead; hotelSummary: NonNullable<LeadNotificationContext["hotelSummary"]> } | {
+  ok: false;
+  fieldErrors: Record<string, string[]>;
+  message: string;
+} {
+  const stay = input.hotel;
+  if (!stay)
+    return {
+      ok: false,
+      fieldErrors: { hotel: ["Thiếu thông tin lưu trú"] },
+      message: "Thiếu thông tin lưu trú.",
+    };
+
+  const flexible = stay.datesFlexible || !stay.checkIn || !stay.checkOut;
+  const checkIn = flexible ? "" : (stay.checkIn ?? "");
+  const checkOut = flexible ? "" : (stay.checkOut ?? "");
+
+  const result = quoteHotelRequest(input.locale, {
+    hotelId: stay.hotelId,
+    rooms: stay.rooms,
+    checkIn,
+    checkOut,
+    tourSlug: stay.tourHelp ? null : (stay.tourSlug ?? null),
+  });
+  if (!result)
+    return {
+      ok: false,
+      fieldErrors: {
+        hotel: [
+          "Khách sạn hoặc hạng phòng không còn nhận yêu cầu. Vui lòng chọn lại.",
+        ],
+      },
+      message: "Khách sạn hoặc hạng phòng không còn nhận yêu cầu.",
+    };
+  if (!stay.tourHelp && stay.tourSlug && !result.tour)
+    return {
+      ok: false,
+      fieldErrors: { tourSlug: ["Tour đã chọn không còn phù hợp"] },
+      message: "Tour đã chọn không còn phù hợp.",
+    };
+
+  const availabilityText: Record<string, string> = {};
+  for (const [roomId, value] of Object.entries(result.availability)) {
+    availabilityText[roomId] =
+      value.kind === "available"
+        ? `có thể còn ${value.rooms} phòng (tham khảo)`
+        : value.kind === "closed"
+          ? "không còn phòng cho kỳ này"
+          : value.kind === "on_request"
+            ? "cần kiểm tra với đối tác"
+            : "chưa đủ dữ liệu";
+  }
+
+  const capacity = result.rooms.reduce(
+    (sum, room) => sum + room.maxOccupancy * room.quantity,
+    0,
+  );
+  const guests = stay.adults + stay.children;
+  const needsReview = guests > capacity || result.quote.status !== "quoted";
+
+  const roomsLabel = result.rooms
+    .map((room) => `${room.name} × ${room.quantity}`)
+    .join(", ");
+  const datesLabel = flexible
+    ? "Chưa chốt ngày"
+    : `${checkIn} → ${checkOut} (${result.quote.nights} đêm)`;
+  const priceLabel = result.quote.includedByTour
+    ? "Đã bao gồm trong tour"
+    : result.quote.lodgingTotal !== null && result.quote.status === "quoted"
+      ? `${new Intl.NumberFormat("vi-VN").format(result.quote.lodgingTotal)} ₫ (tham khảo)`
+      : "Cần báo giá";
+
+  const tourTitle = result.tour?.title ?? null;
+  const hotelUrl = safeSiteUrl(`/khach-san/${result.hotelSlug}`) ?? undefined;
+
+  const lead: ContactLead = {
+    requestId,
+    receivedAt: now.toISOString(),
+    kind: "hotel",
+    fullName: input.fullName,
+    phone: normalizePhone(input.phone),
+    ...(input.email ? { email: input.email } : {}),
+    interest: result.hotelName,
+    ...(result.tour ? { tourSlug: result.tour.slug } : {}),
+    ...(checkIn ? { travelDate: checkIn } : {}),
+    partySize: guests,
+    ...(input.message ? { message: input.message } : {}),
+    ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
+    locale: input.locale,
+    ...(input.utm ? { utm: input.utm } : {}),
+    hotel: {
+      hotelId: stay.hotelId,
+      hotelName: result.hotelName,
+      hotelSlug: result.hotelSlug,
+      rooms: result.rooms.map((room) => ({
+        roomId: room.id,
+        name: room.name,
+        quantity: room.quantity,
+      })),
+      checkIn: checkIn || null,
+      checkOut: checkOut || null,
+      nights: flexible ? 0 : result.quote.nights,
+      datesFlexible: flexible,
+      adults: stay.adults,
+      children: stay.children,
+      childrenAges: stay.childrenAges,
+      tourSlug: result.tour?.slug ?? null,
+      tourTitle,
+      tourRelation: result.tour?.relation ?? null,
+      availability: availabilityText,
+      quote: {
+        status: flexible ? "needs_quote" : result.quote.status,
+        reasons: flexible
+          ? [...new Set([...result.quote.reasons, "flexible_dates"])].slice(0, 10)
+          : result.quote.reasons,
+        lodgingTotal: flexible ? null : result.quote.lodgingTotal,
+        includedByTour: result.quote.includedByTour,
+        capturedAt: now.toISOString(),
+      },
+      needsReview,
+    },
+  };
+
+  const rows = [
+    { label: "Khách sạn", value: result.hotelName },
+    { label: "Hạng phòng", value: roomsLabel },
+    { label: "Ngày lưu trú", value: datesLabel },
+    {
+      label: "Khách",
+      value:
+        `${stay.adults} người lớn` +
+        (stay.children > 0
+          ? `, ${stay.children} trẻ em${
+              stay.childrenAges.length > 0
+                ? ` (${stay.childrenAges.join(", ")} tuổi)`
+                : ""
+            }`
+          : ""),
+    },
+    {
+      label: "Tình trạng tham khảo",
+      value:
+        result.rooms
+          .map((room) => `${room.name}: ${availabilityText[room.id] ?? "chưa rõ"}`)
+          .join(" · ") || "Chưa kiểm tra",
+    },
+    { label: "Giá tham khảo", value: priceLabel },
+    ...(tourTitle
+      ? [
+          {
+            label: "Tour liên quan",
+            value:
+              result.tour?.relation === "included"
+                ? `${tourTitle} — đã bao gồm phòng`
+                : result.tour?.relation === "upgrade"
+                  ? `${tourTitle} — cần báo chênh lệch nâng hạng`
+                  : `${tourTitle} — báo giá lưu trú riêng`,
+          },
+        ]
+      : [{ label: "Tour", value: "Khách nhờ tư vấn tour phù hợp" }]),
+    ...(needsReview
+      ? [
+          {
+            label: "Cần lưu ý",
+            value:
+              guests > capacity
+                ? "Số khách vượt sức chứa đã công bố — tư vấn phương án khác."
+                : "Giá/tình trạng chưa đủ — cần kiểm tra và báo giá.",
+          },
+        ]
+      : []),
+  ];
+
+  return {
+    ok: true,
+    lead,
+    hotelSummary: {
+      name: result.hotelName,
+      rows,
+      ...(hotelUrl ? { url: hotelUrl } : {}),
+    },
+  };
+}
+
 export async function submitLead(
   context: SubmitLeadContext,
 ): Promise<SubmitLeadResult> {
@@ -201,6 +399,15 @@ export async function submitLead(
   }
 
   const input: LeadInput = parsed.data;
+
+  // A hotel request is refused when the module is off, before any write.
+  // Tour leads keep working in the same deployment.
+  if (input.kind === "hotel" && !hotelSettings().enabled)
+    return fail(
+      403,
+      "MODULE_DISABLED",
+      "Module khách sạn đang tạm đóng. Vui lòng gọi hotline để được tư vấn.",
+    );
 
   // --- 2. Idempotency ------------------------------------------------------
   const idempotencyKey = input.submissionId
@@ -242,25 +449,53 @@ export async function submitLead(
   const tour = input.tourSlug
     ? getTourBySlug(input.tourSlug, input.locale)
     : undefined;
-  const lead: ContactLead = {
-    requestId,
-    receivedAt: now.toISOString(),
-    fullName: input.fullName,
-    phone: normalizePhone(input.phone),
-    ...(input.email ? { email: input.email } : {}),
-    ...(input.interest ? { interest: input.interest } : {}),
-    ...(tour ? { tourSlug: tour.slug } : {}),
-    ...(input.travelDate ? { travelDate: input.travelDate } : {}),
-    ...(input.partySize ? { partySize: input.partySize } : {}),
-    ...(input.message ? { message: input.message } : {}),
-    ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
-    locale: input.locale,
-    ...(input.utm ? { utm: input.utm } : {}),
-  };
+
+  let lead: ContactLead;
+  let hotelSummary: LeadNotificationContext["hotelSummary"];
+  let persistMeta: {
+    kind: string;
+    hotelId: string | null;
+    checkIn: string | null;
+    checkOut: string | null;
+  } = { kind: "tour", hotelId: null, checkIn: null, checkOut: null };
+
+  if (input.kind === "hotel") {
+    const built = buildHotelLead(input, requestId, now);
+    if (!built.ok)
+      return fail(400, "VALIDATION_ERROR", built.message, {
+        fieldErrors: built.fieldErrors,
+        requestId,
+      });
+    lead = built.lead;
+    hotelSummary = built.hotelSummary;
+    persistMeta = {
+      kind: "hotel",
+      hotelId: built.lead.hotel?.hotelId ?? null,
+      checkIn: built.lead.hotel?.checkIn ?? null,
+      checkOut: built.lead.hotel?.checkOut ?? null,
+    };
+  } else {
+    lead = {
+      requestId,
+      receivedAt: now.toISOString(),
+      kind: "tour",
+      fullName: input.fullName,
+      phone: normalizePhone(input.phone),
+      ...(input.email ? { email: input.email } : {}),
+      ...(input.interest ? { interest: input.interest } : {}),
+      ...(tour ? { tourSlug: tour.slug } : {}),
+      ...(input.travelDate ? { travelDate: input.travelDate } : {}),
+      ...(input.partySize ? { partySize: input.partySize } : {}),
+      ...(input.message ? { message: input.message } : {}),
+      ...(input.sourcePage ? { sourcePage: input.sourcePage } : {}),
+      locale: input.locale,
+      ...(input.utm ? { utm: input.utm } : {}),
+    };
+  }
 
   // --- 5. Build + send -----------------------------------------------------
   const stored = process.env.CMS_ENABLED === "1";
-  if (stored) persistLead(requestId, lead);
+  if (stored) persistLead(requestId, lead, persistMeta);
   const accepted = async (): Promise<SubmitLeadResult> => {
     const response: SubmitLeadResult = {
       status: 200,
@@ -293,15 +528,19 @@ export async function submitLead(
   }
 
   const sourceUrl = safeSiteUrl(input.sourcePage) ?? undefined;
-  const tourUrl = tour
-    ? (safeSiteUrl(`/tour/${tour.slug}`) ?? undefined)
+  const effectiveTour = lead.hotel?.tourSlug
+    ? getTourBySlug(lead.hotel.tourSlug, input.locale)
+    : tour;
+  const tourUrl = effectiveTour
+    ? (safeSiteUrl(`/tour/${effectiveTour.slug}`) ?? undefined)
     : undefined;
 
   const emailContext = {
     lead,
-    tourTitle: tour?.title,
+    tourTitle: lead.hotel?.tourTitle ?? effectiveTour?.title,
     sourceUrl,
     tourUrl,
+    ...(hotelSummary ? { hotelSummary } : {}),
   };
 
   let result;

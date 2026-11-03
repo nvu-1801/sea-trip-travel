@@ -32,10 +32,29 @@ export function decrypt(value: string) {
     ]).toString(),
   );
 }
-export function persistLead(id: string, value: unknown) {
+export function persistLead(
+  id: string,
+  value: unknown,
+  meta: {
+    kind?: string;
+    hotelId?: string | null;
+    checkIn?: string | null;
+    checkOut?: string | null;
+  } = {},
+) {
   db()
-    .prepare("INSERT OR IGNORE INTO leads(id,data,created_at) VALUES(?,?,?)")
-    .run(id, encrypt(value), new Date().toISOString());
+    .prepare(
+      "INSERT OR IGNORE INTO leads(id,data,created_at,kind,hotel_id,stay_checkin,stay_checkout) VALUES(?,?,?,?,?,?,?)",
+    )
+    .run(
+      id,
+      encrypt(value),
+      new Date().toISOString(),
+      meta.kind ?? "tour",
+      meta.hotelId ?? null,
+      meta.checkIn ?? null,
+      meta.checkOut ?? null,
+    );
 }
 type LeadRow = {
   id: string;
@@ -45,6 +64,10 @@ type LeadRow = {
   created_at: string;
   read_at: string | null;
   deleted_at: string | null;
+  kind: string;
+  hotel_id: string | null;
+  stay_checkin: string | null;
+  stay_checkout: string | null;
   data: string;
 };
 

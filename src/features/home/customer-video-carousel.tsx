@@ -8,11 +8,13 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
 import { parseYouTubeUrl } from "@/lib/youtube";
 import {
   customerDisplayTitle,
+  customerVideoCoverSrc,
   customerVideoSideCount,
   customerVideoSlot,
 } from "@/lib/customer-carousel";
@@ -35,7 +37,7 @@ export type CustomerVideoLabels = {
   dialog: string;
 };
 
-const AUTOPLAY_MS = 2000;
+const AUTOPLAY_MS = 1600;
 const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
 const COMPACT_QUERY = "(max-width: 1023px)";
 
@@ -67,7 +69,7 @@ function label(template: string, title: string) {
  * 3D coverflow for real customer videos.
  *
  * A single state value (`active`) drives every card's slot; the movement itself
- * is CSS transform/opacity, so React never renders during the 760ms transition
+ * is CSS transform/opacity, so React never renders during the transition
  * or on each autoplay frame. Autoplay steps the active index *backwards*, which
  * moves the left card into the centre and the centre card to the right - the
  * direction requested for this section. A wrapping index makes the loop
@@ -86,12 +88,16 @@ export function CustomerVideoCarousel({
   const hidden = useSyncExternalStore(subscribeVisibility, getHidden, () => false);
   const [active, setActive] = useState(0);
   const [hovered, setHovered] = useState(false);
-  const [inView, setInView] = useState(true);
+  const [focused, setFocused] = useState(false);
+  const [inView, setInView] = useState(false);
+  const [entered, setEntered] = useState(false);
   const [playing, setPlaying] = useState<CustomerVideo | null>(null);
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
   const stageRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const pointerStart = useRef<number | null>(null);
+  const pausedRef = useRef(false);
+  const restoringFocus = useRef(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -105,43 +111,51 @@ export function CustomerVideoCarousel({
     [count],
   );
 
+  // Keep the interval's phase stable while hover/focus/dialog temporarily pause
+  // it; restarting the timer on every pause made rotation jump and stall.
   useEffect(() => {
-    if (
-      count < 2 ||
-      playing ||
-      hovered ||
-      hidden ||
-      reduced ||
-      !inView
-    ) {
-      return;
-    }
-    const timer = window.setInterval(() => {
+    pausedRef.current = Boolean(playing || hovered || focused || hidden);
+  }, [focused, hidden, hovered, playing]);
+
+  useEffect(() => {
+    if (count < 2 || reduced || !inView) return;
+    const advance = () => {
+      if (pausedRef.current) return;
       // The site-wide motion switch is an attribute, not React state, so this
       // stays a cheap read instead of forcing another subscription.
       if (document.documentElement.dataset.motionPaused === "true") return;
       setActive((current) => (current - 1 + count) % count);
-    }, AUTOPLAY_MS);
-    return () => window.clearInterval(timer);
-  }, [
-    active,
-    count,
-    hidden,
-    hovered,
-    inView,
-    playing,
-    reduced,
-  ]);
+    };
+    let timer: number | undefined;
+    // Start on the first visible frame; the interval matches the CSS travel time.
+    const frame = window.requestAnimationFrame(() => {
+      advance();
+      timer = window.setInterval(advance, AUTOPLAY_MS);
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearInterval(timer);
+    };
+  }, [count, inView, reduced]);
 
   useEffect(() => {
     const node = stageRef.current;
-    if (!node || typeof IntersectionObserver === "undefined") return;
+    if (!node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      const frame = requestAnimationFrame(() => {
+        setInView(true);
+        setEntered(true);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry) setInView(entry.isIntersecting);
+        if (!entry) return;
+        setInView(entry.isIntersecting);
+        if (entry.isIntersecting) setEntered(true);
       },
-      { rootMargin: "120px 0px", threshold: 0.15 },
+      { threshold: 0.15 },
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -149,7 +163,15 @@ export function CustomerVideoCarousel({
 
   const closeVideo = useCallback(() => {
     setPlaying(null);
-    requestAnimationFrame(() => triggerRef.current?.focus());
+    requestAnimationFrame(() => {
+      // Restoring focus is not a new keyboard pause; keep autoplay moving.
+      restoringFocus.current = true;
+      triggerRef.current?.focus();
+      restoringFocus.current = false;
+      setFocused(false);
+      // The pointer may now sit over the stage after the veil disappears.
+      setHovered(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -241,9 +263,27 @@ export function CustomerVideoCarousel({
   return (
     <div
       className="stt-cc"
+      data-entered={entered ? "true" : "false"}
       data-playing={playing ? "true" : undefined}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      style={{ "--cc-step": `${AUTOPLAY_MS}ms` } as CSSProperties}
+      onPointerMove={(event) => {
+        // Scrolling beneath a stationary cursor is not an intentional hover.
+        if (event.pointerType === "mouse" && (event.movementX || event.movementY)) {
+          setHovered(true);
+        }
+      }}
+      onPointerLeave={() => setHovered(false)}
+      onFocusCapture={(event) => {
+        // Mouse clicks leave focus on a card too; only keyboard focus pauses.
+        if (restoringFocus.current) return;
+        const target = event.target;
+        if (target instanceof Element && target.matches(":focus-visible")) {
+          setFocused(true);
+        }
+      }}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
+      }}
     >
       <div
         ref={stageRef}
@@ -275,9 +315,10 @@ export function CustomerVideoCarousel({
           const title = video.title || labels.fallbackTitle;
           const displayTitle = customerDisplayTitle(title);
           const customer = video.customer.trim();
-  const accessible = customer ? `${customer} - ${title}` : title;
+          const accessible = customer ? `${customer} - ${title}` : title;
           const previewSrc =
-            video.cover?.src || `/api/youtube-thumb/${parsed.id}`;
+            customerVideoCoverSrc(video.cover?.src) ||
+            `/api/youtube-thumb/${parsed.id}`;
           const previewFailed = failed.has(video.id);
           const isCentre = visible && slot === 0;
           return (
@@ -300,6 +341,8 @@ export function CustomerVideoCarousel({
                 onClick={(event) => {
                   if (isCentre) {
                     triggerRef.current = event.currentTarget;
+                    // The dialog replaces the carousel as the interaction surface.
+                    setHovered(false);
                     setPlaying(video);
                   } else {
                     setActive(index);
@@ -309,6 +352,7 @@ export function CustomerVideoCarousel({
                 {previewSrc && !previewFailed ? (
                   <Image
                     src={previewSrc}
+                    quality={90}
                     alt={isCentre ? video.cover?.alt || accessible : ""}
                     fill
                     sizes="(max-width: 640px) 84vw, (max-width: 1023px) 58vw, 36vw"
