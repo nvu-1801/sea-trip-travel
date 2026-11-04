@@ -99,3 +99,31 @@ Ghi chú:
 1. Mở **Studio → Khách sạn**, sửa nội dung/ảnh/giá bằng dữ liệu thật.
 2. Kiểm tra **Xem trước**.
 3. Bật module và xuất bản khi đã đủ điều kiện.
+
+## Đưa danh mục đã duyệt lên production
+
+Máy chủ không có `tsx` và không có bundle Studio, nên danh mục đi theo một file
+seed đã kiểm tra thay vì chạy lại lệnh import trên server.
+
+```powershell
+# 1. Xuất danh mục đang xuất bản ở Studio local (chỉ nhận bản đã publish).
+npm run hotels:export
+# → scripts/hotels/seed.json (commit cùng pull request để review được)
+```
+
+```text
+# 2. Merge pull request (deploy như bình thường), rồi chạy tay workflow
+#    "Seed hotel catalogue (production)" trên GitHub, nhập SEED để xác nhận.
+```
+
+- Workflow ghi thẳng vào database của container đang chạy: `hotels`/`hotelRooms`
+  (kèm bản `published`), bảng giá, tình trạng phòng, liên kết tour và đúng ba
+  khoá `hotels.enabled / homeVisible / featured` trong `settings`. Liên hệ, SEO,
+  bản dịch và lead giữ nguyên.
+- Trigger của CMS tự tăng `cms_versions`, nên tab đang mở cập nhật như một lần
+  bấm “Xuất bản”, không cần build lại.
+- Ngày của bảng tình trạng phòng được dời để bắt đầu từ hôm chạy seed (dữ liệu
+  demo). Chạy lại cùng file sẽ thay thế đúng các dòng đó, không nhân đôi.
+- Đây là thao tác công bố: ảnh CC0 và giá demo sẽ hiện công khai. Chỉ chạy khi
+  đã đồng ý dùng dữ liệu demo, hoặc đã thay bằng ảnh/giá thật rồi xuất lại file.
+

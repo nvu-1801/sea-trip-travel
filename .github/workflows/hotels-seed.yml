@@ -1,0 +1,77 @@
+name: Seed hotel catalogue (production)
+
+# One-off, manual data operation: writes scripts/hotels/seed.json into the
+# running container's CMS database (published hotels + rates + availability +
+# the hotel switches). It is not part of deploy and never runs on push.
+#
+# Review the fixture in the pull request before dispatching: it publishes demo
+# photos and reference prices, exactly like pressing "Xuất bản" in the Studio.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type SEED to publish scripts/hotels/seed.json to production"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seatrip-hotels-seed
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'SEED'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_PORT: ${{ secrets.VPS_PORT }}
+      APP_DIR: ${{ vars.VPS_APP_DIR }}
+      HEALTH_URL: ${{ vars.PROD_HEALTH_URL }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prepare verified SSH transport
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          [[ "$VPS_HOST" =~ ^[a-zA-Z0-9.-]+$ && "$VPS_USER" =~ ^[a-zA-Z0-9_-]+$ && "$VPS_PORT" =~ ^[0-9]+$ ]]
+          [[ "$APP_DIR" =~ ^/[a-zA-Z0-9_/-]+$ && "$HEALTH_URL" == https://* ]]
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy ~/.ssh/known_hosts
+      - name: Apply the seed inside the running container
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy -p "$VPS_PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes \
+            -o ServerAliveInterval=30 "$VPS_USER@$VPS_HOST" "bash -s -- '$APP_DIR'" <<'REMOTE'
+          set -euo pipefail
+          app_dir=${1:?}
+          cd "$app_dir/current"
+          export APP_ENV_FILE="$app_dir/.env.production"
+          docker compose --env-file "$APP_ENV_FILE" -f "$app_dir/current/compose.yml" \
+            exec -T app node scripts/admin.mjs seed-hotels scripts/hotels/seed.json </dev/null
+          REMOTE
+      - name: Verify the public catalogue
+        run: |
+          set -euo pipefail
+          site=${HEALTH_URL%/api/health}
+          curl -fsS --retry 5 --retry-all-errors --max-time 20 "$HEALTH_URL" > health.json
+          node -e 'const b=require("./health.json");if(b.status!=="ok"||b.database!=="connected")process.exit(1)'
+          code=$(curl -sS -o catalogue.html -w '%{http_code}' --max-time 20 "$site/khach-san")
+          test "$code" = "200"
+          grep -q 'stt-hotel-card' catalogue.html
+          code=$(curl -sS -o detail.html -w '%{http_code}' --max-time 20 "$site/khach-san/aurora-villas")
+          test "$code" = "200"
+          grep -q 'Aurora Villas' detail.html
+      - name: Remove temporary private key
+        if: always()
+        run: rm -f ~/.ssh/deploy
