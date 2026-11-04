@@ -98,6 +98,11 @@
   white-space: nowrap;
 }
 
+/* The filter columns are narrow: the date keeps its number, not the weekday. */
+.stt-hotel-filters .stt-date-weekday {
+  display: none;
+}
+
 /* Results ------------------------------------------------------------------ */
 
 .stt-hotel-results {
