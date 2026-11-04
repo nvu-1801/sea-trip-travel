@@ -7,13 +7,18 @@ import {
   type HotelQuery,
 } from "@/lib/hotel-filters";
 import { LODGING_LABELS, LODGING_TYPES } from "@/domain/hotel";
+import {
+  HotelFilterPanel,
+  type HotelFilterLabels,
+  type HotelFilterSets,
+} from "./hotel-filter-panel";
 
 /**
  * Catalogue filters as a plain GET form.
  *
- * Every control is server-rendered and named, so the URL always describes the
- * state: Back/Forward, sharing a link and reloading all work without a client
- * store. On a phone the block collapses into a `<details>` sheet.
+ * The labels and the option lists are resolved here (server) so the client
+ * panel receives plain strings; the panel itself owns the controls and keeps
+ * each value in a named hidden input, so the URL always describes the state.
  */
 export function HotelFilterForm({
   locale,
@@ -38,128 +43,81 @@ export function HotelFilterForm({
           : value === "over-5000000"
             ? t.budgetOver50
             : t.budgetAny;
+
+  const labels: HotelFilterLabels = {
+    formLabel: t.filters,
+    searchLabel: t.searchLabel,
+    searchPlaceholder: t.searchPlaceholder,
+    checkIn: t.checkIn,
+    checkOut: t.checkOut,
+    apply: t.applyFilters,
+    clear: t.clearFilters,
+    province: t.province,
+    budget: t.budget,
+    star: t.star,
+    type: t.type,
+    amenity: t.amenity,
+    sort: t.sortLabel,
+  };
+
+  const sets: HotelFilterSets = {
+    provinces: [
+      { value: "", label: t.allProvinces },
+      ...provinces.map((province) => ({
+        value: province.value,
+        label: `${province.value} (${province.count})`,
+      })),
+    ],
+    budgets: BUDGET_OPTIONS.map((option) => ({
+      value: option.value,
+      label: budgetLabel(option.value),
+    })),
+    stars: [
+      { value: "", label: t.allStars },
+      ...[5, 4, 3, 2, 1].map((star) => ({
+        value: String(star),
+        label: `${star} ★`,
+      })),
+    ],
+    types: [
+      { value: "", label: t.allTypes },
+      ...LODGING_TYPES.map((type) => ({
+        value: type,
+        label: LODGING_LABELS[type],
+      })),
+    ],
+    amenities: [
+      { value: "", label: t.allAmenities },
+      ...amenities.map((amenity) => ({
+        value: amenity.value,
+        label: amenity.value,
+      })),
+    ],
+    sorts: HOTEL_SORTS.map((sort) => ({
+      value: sort,
+      label:
+        sort === "recommended"
+          ? t.sortRecommended
+          : sort === "price-asc"
+            ? t.sortPriceAsc
+            : t.sortPriceDesc,
+    })),
+  };
+
+  const initialBudget =
+    BUDGET_OPTIONS.find(
+      (option) =>
+        option.min === query.minPrice && option.max === query.maxPrice,
+    )?.value ?? "";
+
   return (
-    <form
-      className="stt-hotel-filters"
-      method="get"
+    <HotelFilterPanel
       action={localizePath(locale, "/khach-san")}
-      role="search"
-      aria-label={t.filters}
-    >
-      <div className="stt-hotel-filters-head">
-        <label className="stt-hotel-field stt-hotel-field--search">
-          <span>{t.searchLabel}</span>
-          <input
-            type="search"
-            name="q"
-            defaultValue={query.q}
-            maxLength={80}
-            placeholder={t.searchPlaceholder}
-          />
-        </label>
-        <label className="stt-hotel-field">
-          <span>{t.checkIn}</span>
-          <input type="date" name="checkIn" defaultValue={query.checkIn} />
-        </label>
-        <label className="stt-hotel-field">
-          <span>{t.checkOut}</span>
-          <input type="date" name="checkOut" defaultValue={query.checkOut} />
-        </label>
-        <button type="submit" className="stt-btn-primary stt-hotel-search">
-          {t.applyFilters}
-        </button>
-      </div>
-
-      <div className="stt-hotel-filters-grid">
-        <label className="stt-hotel-field">
-          <span>{t.province}</span>
-          <select name="province" defaultValue={query.province}>
-            <option value="">{t.allProvinces}</option>
-            {provinces.map((province) => (
-              <option key={province.value} value={province.value}>
-                {province.value} ({province.count})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="stt-hotel-field">
-          <span>{t.budget}</span>
-          <select
-            name="budget"
-            defaultValue={
-              BUDGET_OPTIONS.find(
-                (option) =>
-                  option.min === query.minPrice && option.max === query.maxPrice,
-              )?.value ?? ""
-            }
-          >
-            {BUDGET_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {budgetLabel(option.value)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="stt-hotel-field">
-          <span>{t.star}</span>
-          <select name="star" defaultValue={query.star ? String(query.star) : ""}>
-            <option value="">{t.allStars}</option>
-            {[5, 4, 3, 2, 1].map((star) => (
-              <option key={star} value={star}>
-                {star} ★
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="stt-hotel-field">
-          <span>{t.type}</span>
-          <select name="type" defaultValue={query.type}>
-            <option value="">{t.allTypes}</option>
-            {LODGING_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {LODGING_LABELS[type]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="stt-hotel-field">
-          <span>{t.amenity}</span>
-          <select name="amenity" defaultValue={query.amenity}>
-            <option value="">{t.allAmenities}</option>
-            {amenities.map((amenity) => (
-              <option key={amenity.value} value={amenity.value}>
-                {amenity.value}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="stt-hotel-field">
-          <span>{t.sortLabel}</span>
-          <select name="sort" defaultValue={query.sort}>
-            {HOTEL_SORTS.map((sort) => (
-              <option key={sort} value={sort}>
-                {sort === "recommended"
-                  ? t.sortRecommended
-                  : sort === "price-asc"
-                    ? t.sortPriceAsc
-                    : t.sortPriceDesc}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div className="stt-hotel-filters-foot">
-        <a
-          className="stt-hotel-clear"
-          href={localizePath(locale, "/khach-san")}
-        >
-          {t.clearFilters}
-        </a>
-        <button type="submit" className="stt-btn-secondary">
-          {t.applyFilters}
-        </button>
-      </div>
-    </form>
+      initial={query}
+      initialBudget={initialBudget}
+      labels={labels}
+      sets={sets}
+      datePicker={m.datePicker}
+    />
   );
 }
