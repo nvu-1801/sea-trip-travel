@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { randomBytes, scryptSync } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 const file = process.env.CMS_DB_PATH ?? path.resolve("data/seatrip.sqlite");
 mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
@@ -40,5 +40,15 @@ if (command === "bootstrap" || command === "reset") {
   if (result.integrity_check !== "ok")
     throw new Error("SQLite integrity check failed");
   console.log("SQLite integrity: ok");
-} else throw new Error("Dùng bootstrap | reset | backup | verify");
+} else if (command === "seed-hotels") {
+  // One-off catalogue seed for a fresh server: the fixture is the Studio export
+  // shipped in the image, so no editor bundle or tsx is needed inside the
+  // container. Re-running replaces the same rows.
+  const file = process.argv[3];
+  if (!file) throw new Error("Thiếu đường dẫn file seed (ví dụ scripts/hotels/seed.json)");
+  const fixture = JSON.parse(readFileSync(file, "utf8"));
+  const { seedHotels } = await import("./lib/hotels-seed.mjs");
+  const summary = seedHotels(db, fixture);
+  console.log(`Đã nạp danh mục khách sạn: ${JSON.stringify(summary)}`);
+} else throw new Error("Dùng bootstrap | reset | backup | verify | seed-hotels");
 db.close();

@@ -16,6 +16,9 @@ COPY --from=build --chown=seatrip:seatrip /app/.next/standalone ./
 COPY --from=build --chown=seatrip:seatrip /app/.next/static ./.next/static
 COPY --from=build --chown=seatrip:seatrip /app/public ./public
 COPY --chown=seatrip:seatrip scripts/admin.mjs ./scripts/admin.mjs
+# Catalogue seed: a Studio export applied with `node scripts/admin.mjs seed-hotels`.
+COPY --chown=seatrip:seatrip scripts/lib/hotels-seed.mjs ./scripts/lib/hotels-seed.mjs
+COPY --chown=seatrip:seatrip scripts/hotels/seed.json ./scripts/hotels/seed.json
 # Email thông báo deploy chạy bằng node thuần trong container này.
 COPY --chown=seatrip:seatrip scripts/release-notice.mjs ./scripts/release-notice.mjs
 COPY --chown=seatrip:seatrip scripts/lib/release-notice.mjs ./scripts/lib/release-notice.mjs
