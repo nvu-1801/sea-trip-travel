@@ -67,6 +67,7 @@ export function DatePicker({
   labels,
   describedBy,
   className,
+  ariaLabel,
 }: {
   id: string;
   /** ISO `YYYY-MM-DD`, or `""` when empty. */
@@ -76,6 +77,8 @@ export function DatePicker({
   labels: DatePickerLabels;
   describedBy?: string;
   className?: string;
+  /** Accessible name when the visible label is rendered outside the control. */
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [today, setToday] = useState<DateParts | null>(null);
@@ -208,6 +211,7 @@ export function DatePicker({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-describedby={describedBy}
+        aria-label={ariaLabel}
         data-focus-ring=""
         onClick={() => (open ? returnFocusToTrigger() : openPopover())}
         onKeyDown={(event) => {
