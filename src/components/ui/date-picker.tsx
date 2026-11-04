@@ -240,7 +240,7 @@ export function DatePicker({
           {selected ? ddmm(selected) : labels.placeholder}
         </span>
         {selected ? (
-          <span className="hidden shrink-0 text-xs text-foreground-subtle sm:inline">
+          <span className="stt-date-weekday hidden shrink-0 text-xs text-foreground-subtle sm:inline">
             {labels.weekdaysFull[weekdayIndexMonday(selected)]}
           </span>
         ) : null}
