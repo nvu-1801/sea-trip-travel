@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { LODGING_LABELS, type LodgingType } from "@/domain/hotel";
 import { HotelEditor, type HotelRoomRow, type HotelRow } from "./hotel-editor";
-import { Field, text } from "./hotel-form";
+import { text } from "./hotel-form";
 import { AdminIcon } from "./admin-icons";
 import "./hotels-panel.css";
 
@@ -181,7 +182,9 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
       setStatus({
         kind: "ok",
         message: next.enabled
-          ? "Đã bật module khách sạn trên website."
+          ? next.homeVisible
+            ? "Đã bật module và section khách sạn trên trang chủ."
+            : "Đã bật module; section trang chủ đang tắt."
           : "Đã tắt module. Public route/API và yêu cầu khách sạn mới bị chặn; dữ liệu và admin vẫn giữ.",
       });
     } catch (cause) {
@@ -293,6 +296,33 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
     });
   }, [filter, hotels]);
 
+  const summary = useMemo(() => {
+    const counts = { total: hotels.length, published: 0, draft: 0, deleted: 0 };
+    for (const row of hotels) {
+      if (row.state === "published") counts.published += 1;
+      else if (row.state === "deleted") counts.deleted += 1;
+      else counts.draft += 1;
+    }
+    return counts;
+  }, [hotels]);
+
+  const activeFilterCount = [filter.q, filter.province, filter.state, filter.mode].filter(
+    Boolean,
+  ).length;
+  const clearFilters = () =>
+    setFilter({ q: "", province: "", state: "", mode: "" });
+
+  const hotelKey = (row: HotelRow) => text(row.data.slug) || row.id;
+  const featuredOrderOf = (row: HotelRow) => {
+    const key = hotelKey(row);
+    return flags.featured.findIndex((item) => item === key || item === row.id) + 1;
+  };
+  // Archived hotels stay visible only when they are already featured, so the
+  // editor can always remove a stale selection.
+  const featureCandidates = hotels.filter(
+    (row) => row.state !== "deleted" || featuredOrderOf(row) > 0,
+  );
+
   const editingRow = hotels.find((row) => row.id === editing) ?? null;
 
   if (editingRow)
@@ -325,60 +355,182 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
         </p>
       ) : null}
 
-      <section className="stt-hotel-flags" aria-labelledby="hotel-flags-title">
-        <h3 id="hotel-flags-title">Công tắc module trên website</h3>
-        <label className="adm-toggle">
-          <input
-            type="checkbox"
-            checked={flags.enabled}
-            disabled={busy || !settingsRow}
-            onChange={(event) =>
-              void saveFlags({
-                ...flags,
-                enabled: event.target.checked,
-                homeVisible: event.target.checked ? flags.homeVisible : false,
-              })
-            }
-          />
-          <span>
-            Bật module Khách sạn (menu, danh sách, chi tiết, form yêu cầu)
+      <section className="stt-hotel-summary" aria-label="Tổng quan danh mục khách sạn">
+        <div className="stt-hotel-kpi" data-tone="total">
+          <span className="stt-hotel-kpi-icon" aria-hidden="true">
+            <AdminIcon name="home" size={16} />
           </span>
-        </label>
-        <label className="adm-toggle">
-          <input
-            type="checkbox"
-            checked={flags.homeVisible}
-            disabled={busy || !flags.enabled}
-            onChange={(event) =>
-              void saveFlags({ ...flags, homeVisible: event.target.checked })
-            }
-          />
-          <span>Hiện section khách sạn trên trang chủ</span>
-        </label>
-        <p className="adm-hint">
-          Tắt module không xoá nội dung hay yêu cầu cũ. Public route trả 404 và
-          form mới bị từ chối; lead tour vẫn hoạt động bình thường. Công tắc chỉ
-          có hiệu lực sau khi lưu &amp; xuất bản.
-        </p>
-        <div>
-          <span className="adm-field-label">
-            Khách sạn nổi bật trên trang chủ (tối đa {MAX_FEATURED}, theo thứ tự)
+          <span className="stt-hotel-kpi-copy">
+            <span>Tổng khách sạn</span>
+            <strong>{summary.total}</strong>
           </span>
-          <div className="adm-chips">
-            {hotels.map((row) => {
-              const active = flags.featured.includes(row.id) ||
-                flags.featured.includes(text(row.data.slug));
+        </div>
+        <div className="stt-hotel-kpi" data-tone="published">
+          <span className="stt-hotel-kpi-icon" aria-hidden="true">
+            <AdminIcon name="eye" size={16} />
+          </span>
+          <span className="stt-hotel-kpi-copy">
+            <span>Đang hiển thị</span>
+            <strong>{summary.published}</strong>
+          </span>
+        </div>
+        <div className="stt-hotel-kpi" data-tone="draft">
+          <span className="stt-hotel-kpi-icon" aria-hidden="true">
+            <AdminIcon name="edit" size={16} />
+          </span>
+          <span className="stt-hotel-kpi-copy">
+            <span>Bản nháp</span>
+            <strong>{summary.draft}</strong>
+          </span>
+        </div>
+        <div className="stt-hotel-kpi" data-tone="deleted">
+          <span className="stt-hotel-kpi-icon" aria-hidden="true">
+            <AdminIcon name="trash" size={16} />
+          </span>
+          <span className="stt-hotel-kpi-copy">
+            <span>Đã lưu trữ</span>
+            <strong>{summary.deleted}</strong>
+          </span>
+        </div>
+      </section>
+
+      <section className="stt-hotel-admin-card" aria-labelledby="hotel-flags-title">
+        <div className="stt-hotel-admin-card-head">
+          <div>
+            <p className="stt-hotel-eyebrow">Cấu hình hiển thị</p>
+            <h3 id="hotel-flags-title">Module &amp; trang chủ</h3>
+            <p className="stt-hotel-sub">
+              Bật module để mở menu, danh sách, chi tiết và form yêu cầu trên
+              website.
+            </p>
+          </div>
+          <span className="stt-hotel-pill" data-on={flags.enabled ? "true" : "false"}>
+            {flags.enabled ? "Đang bật" : "Đang tắt"}
+          </span>
+        </div>
+
+        <div className="stt-hotel-switch-grid">
+          <label
+            className="stt-hotel-switch"
+            data-disabled={busy || !settingsRow ? "true" : undefined}
+          >
+            <span className="stt-hotel-switch-icon" aria-hidden="true">
+              <AdminIcon name="eye" size={16} />
+            </span>
+            <span className="stt-hotel-switch-copy">
+              <strong>Module Khách sạn</strong>
+              <small>Menu, danh sách, chi tiết và form yêu cầu.</small>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              checked={flags.enabled}
+              disabled={busy || !settingsRow}
+              onChange={(event) =>
+                void saveFlags({
+                  ...flags,
+                  enabled: event.target.checked,
+                  homeVisible: event.target.checked ? flags.homeVisible : false,
+                })
+              }
+            />
+            <span className="stt-hotel-switch-track" aria-hidden="true" />
+          </label>
+          <label
+            className="stt-hotel-switch"
+            data-disabled={busy || !flags.enabled ? "true" : undefined}
+          >
+            <span className="stt-hotel-switch-icon" aria-hidden="true">
+              <AdminIcon name="home" size={16} />
+            </span>
+            <span className="stt-hotel-switch-copy">
+              <strong>Section trên trang chủ</strong>
+              <small>Hiện khối khách sạn nổi bật ngay dưới hero.</small>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              checked={flags.homeVisible}
+              disabled={busy || !flags.enabled}
+              onChange={(event) =>
+                void saveFlags({ ...flags, homeVisible: event.target.checked })
+              }
+            />
+            <span className="stt-hotel-switch-track" aria-hidden="true" />
+          </label>
+        </div>
+
+        <div className="stt-hotel-featured">
+          <div className="stt-hotel-featured-head">
+            <div>
+              <h4>Khách sạn nổi bật trên trang chủ</h4>
+              <p>Chọn tối đa {MAX_FEATURED}. Thứ tự chọn là thứ tự hiển thị.</p>
+            </div>
+            <span className="stt-hotel-count">
+              {flags.featured.length}/{MAX_FEATURED}
+            </span>
+          </div>
+
+          <div className="stt-hotel-featured-grid">
+            {featureCandidates.map((row) => {
+              const key = hotelKey(row);
+              const order = featuredOrderOf(row);
+              const active = order > 0;
+              const disabled =
+                busy || (!active && flags.featured.length >= MAX_FEATURED);
+              const name = text(row.data.name, row.id);
+              const image = Array.isArray(row.data.images)
+                ? (row.data.images[0] as { src?: string } | undefined)
+                : undefined;
+              const lodging =
+                LODGING_LABELS[
+                  text(row.data.lodgingType, "hotel") as LodgingType
+                ] ?? text(row.data.lodgingType);
+
               return (
-                <label key={row.id} className="stt-hotel-weekday">
+                <label
+                  key={row.id}
+                  className="stt-hotel-feature-card"
+                  data-selected={active ? "true" : undefined}
+                  data-disabled={disabled ? "true" : undefined}
+                  title={name}
+                >
+                  {image?.src ? (
+                    <Image
+                      className="stt-hotel-feature-thumb"
+                      src={image.src}
+                      alt=""
+                      width={40}
+                      height={40}
+                    />
+                  ) : (
+                    <span
+                      className="stt-hotel-feature-thumb stt-hotel-feature-thumb--empty"
+                      aria-hidden="true"
+                    >
+                      <AdminIcon name="image" size={15} />
+                    </span>
+                  )}
+                  <span className="stt-hotel-feature-copy">
+                    <strong>{name}</strong>
+                    <small>
+                      {text(row.data.province, "Chưa có điểm đến")} · {lodging}
+                    </small>
+                  </span>
+                  {active ? (
+                    <span
+                      className="stt-hotel-feature-order"
+                      aria-label={`Thứ tự ${order}`}
+                    >
+                      {order}
+                    </span>
+                  ) : null}
                   <input
                     type="checkbox"
                     checked={active}
-                    disabled={
-                      busy ||
-                      (!active && flags.featured.length >= MAX_FEATURED)
-                    }
+                    disabled={disabled}
+                    aria-label={`Chọn ${name} làm khách sạn nổi bật`}
                     onChange={(event) => {
-                      const key = text(row.data.slug) || row.id;
                       const next = event.target.checked
                         ? [...flags.featured, key]
                         : flags.featured.filter(
@@ -387,181 +539,314 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
                       void saveFlags({ ...flags, featured: next });
                     }}
                   />
-                  <span>{text(row.data.name, row.id)}</span>
                 </label>
               );
             })}
-            {hotels.length === 0 ? (
-              <span className="adm-empty-note">Chưa có khách sạn để chọn.</span>
+            {featureCandidates.length === 0 ? (
+              <p className="adm-empty-note">Chưa có khách sạn để chọn.</p>
             ) : null}
           </div>
-          <p className="adm-hint">
+
+          <p className="stt-hotel-hint">
             Không chọn gì thì trang chủ dùng thứ tự đề xuất trong danh sách.
           </p>
         </div>
+
+        <p className="stt-hotel-hint stt-hotel-hint--muted">
+          Tắt module không xoá nội dung hay yêu cầu cũ. Public route trả 404 và
+          form mới bị từ chối; lead tour vẫn hoạt động bình thường. Công tắc chỉ
+          có hiệu lực sau khi lưu &amp; xuất bản.
+        </p>
       </section>
 
-      <div className="stt-hotel-toolbar">
-        <Field label="Tìm tên">
-          <input
-            value={filter.q}
-            placeholder="Tên khách sạn"
-            onChange={(event) => setFilter({ ...filter, q: event.target.value })}
-          />
-        </Field>
-        <Field label="Điểm đến">
-          <select
-            value={filter.province}
-            onChange={(event) => setFilter({ ...filter, province: event.target.value })}
+      <section className="stt-hotel-admin-card" aria-labelledby="hotel-list-title">
+        <div className="stt-hotel-list-head">
+          <div>
+            <p className="stt-hotel-eyebrow">Danh mục</p>
+            <h3 id="hotel-list-title">Danh sách khách sạn</h3>
+            <p className="stt-hotel-sub">
+              {filtered.length === hotels.length
+                ? `${hotels.length} khách sạn`
+                : `${filtered.length} / ${hotels.length} khách sạn`}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="adm-primary stt-hotel-add"
+            disabled={busy}
+            onClick={() => void createHotel()}
           >
-            <option value="">Tất cả</option>
-            {provinces.map((province) => (
-              <option key={province} value={province}>
-                {province}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Trạng thái">
-          <select
-            value={filter.state}
-            onChange={(event) => setFilter({ ...filter, state: event.target.value })}
-          >
-            <option value="">Tất cả</option>
-            <option value="published">Đang hiển thị</option>
-            <option value="draft">Bản nháp</option>
-            <option value="deleted">Đã lưu trữ</option>
-          </select>
-        </Field>
-        <Field label="Chế độ phòng">
-          <select
-            value={filter.mode}
-            onChange={(event) => setFilter({ ...filter, mode: event.target.value })}
-          >
-            <option value="">Tất cả</option>
-            <option value="on_request">Cần kiểm tra</option>
-            <option value="manual_daily">Số phòng theo ngày</option>
-          </select>
-        </Field>
-        <button type="button" className="adm-primary" disabled={busy} onClick={() => void createHotel()}>
-          <AdminIcon name="plus" size={14} /> Thêm khách sạn
-        </button>
-      </div>
+            <AdminIcon name="plus" size={14} /> Thêm khách sạn
+          </button>
+        </div>
 
-      {loading ? <p className="adm-empty">Đang tải khách sạn…</p> : null}
-      {!loading && filtered.length === 0 ? (
-        <p className="adm-empty">
-          {hotels.length === 0
-            ? "Chưa có khách sạn nào. Bấm “Thêm khách sạn” để tạo bản nháp."
-            : "Không có khách sạn khớp bộ lọc hiện tại."}
-        </p>
-      ) : null}
+        <div className="stt-hotel-filters">
+          <label className="stt-hotel-filter stt-hotel-filter--search">
+            <span>Tìm tên</span>
+            <span className="stt-hotel-search">
+              <AdminIcon name="search" size={15} />
+              <input
+                value={filter.q}
+                placeholder="Tên khách sạn…"
+                onChange={(event) =>
+                  setFilter({ ...filter, q: event.target.value })
+                }
+              />
+            </span>
+          </label>
+          <label className="stt-hotel-filter">
+            <span>Điểm đến</span>
+            <select
+              value={filter.province}
+              onChange={(event) =>
+                setFilter({ ...filter, province: event.target.value })
+              }
+            >
+              <option value="">Tất cả điểm đến</option>
+              {provinces.map((province) => (
+                <option key={province} value={province}>
+                  {province}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="stt-hotel-filter">
+            <span>Trạng thái</span>
+            <select
+              value={filter.state}
+              onChange={(event) =>
+                setFilter({ ...filter, state: event.target.value })
+              }
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="published">Đang hiển thị</option>
+              <option value="draft">Bản nháp</option>
+              <option value="deleted">Đã lưu trữ</option>
+            </select>
+          </label>
+          <label className="stt-hotel-filter">
+            <span>Chế độ phòng</span>
+            <select
+              value={filter.mode}
+              onChange={(event) =>
+                setFilter({ ...filter, mode: event.target.value })
+              }
+            >
+              <option value="">Tất cả chế độ</option>
+              <option value="on_request">Cần kiểm tra</option>
+              <option value="manual_daily">Số phòng theo ngày</option>
+            </select>
+          </label>
+          {activeFilterCount > 0 ? (
+            <button
+              type="button"
+              className="stt-hotel-filter-reset"
+              onClick={clearFilters}
+            >
+              Xoá lọc ({activeFilterCount})
+            </button>
+          ) : null}
+        </div>
 
-      {filtered.length > 0 ? (
-        <table className="stt-hotel-table">
-          <thead>
-            <tr>
-              <th scope="col">Ảnh</th>
-              <th scope="col">Tên</th>
-              <th scope="col">Điểm đến</th>
-              <th scope="col">Hạng phòng</th>
-              <th scope="col">Xuất bản</th>
-              <th scope="col">Cập nhật</th>
-              <th scope="col">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((row) => {
-              const image = Array.isArray(row.data.images)
-                ? (row.data.images[0] as { src?: string } | undefined)
-                : undefined;
-              return (
-                <tr key={row.id}>
-                  <td>
-                    {image?.src ? (
-                      <Image
-                        className="stt-hotel-thumb"
-                        src={image.src}
-                        alt=""
-                        width={56}
-                        height={40}
-                      />
-                    ) : (
-                      <span className="stt-hotel-thumb" aria-hidden="true" />
-                    )}
-                  </td>
-                  <td>
-                    <strong>{text(row.data.name, row.id)}</strong>
-                    <br />
-                    <small className="adm-hint">
-                      {LODGING_LABELS[text(row.data.lodgingType, "hotel") as LodgingType] ??
-                        text(row.data.lodgingType)}
-                      {row.data.starRating ? ` · ${row.data.starRating} sao` : ""}
-                    </small>
-                  </td>
-                  <td>{text(row.data.province, "—")}</td>
-                  <td>{roomsOf(row.id).length}</td>
-                  <td>
-                    <span className="stt-hotel-state" data-state={row.state}>
-                      {STATE_LABEL[row.state] ?? row.state}
-                    </span>
-                  </td>
-                  <td>{text(row.data.updatedAt).slice(0, 10)}</td>
-                  <td>
-                    <div className="stt-hotel-actions">
-                      <button
-                        type="button"
-                        className="adm-ghost-link"
-                        onClick={() => setEditing(row.id)}
-                      >
-                        Sửa
-                      </button>
-                      {row.state === "published" ? (
-                        <button
-                          type="button"
-                          className="adm-ghost-link"
-                          disabled={busy}
-                          onClick={() => void changeState(row, "unpublish")}
-                        >
-                          Ẩn
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="adm-ghost-link"
-                          disabled={busy}
-                          onClick={() => void changeState(row, "publish")}
-                        >
-                          Xuất bản
-                        </button>
-                      )}
-                      {row.state === "deleted" ? (
-                        <button
-                          type="button"
-                          className="adm-ghost-link"
-                          disabled={busy}
-                          onClick={() => void changeState(row, "restore")}
-                        >
-                          Khôi phục
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="adm-danger"
-                          disabled={busy}
-                          onClick={() => void changeState(row, "delete")}
-                        >
-                          Lưu trữ
-                        </button>
-                      )}
-                    </div>
-                  </td>
+        {loading ? (
+          <div className="stt-hotel-empty" role="status">
+            <span className="stt-hotel-empty-icon" aria-hidden="true">
+              <AdminIcon name="refresh" size={20} />
+            </span>
+            <p>Đang tải khách sạn…</p>
+          </div>
+        ) : null}
+
+        {!loading && filtered.length === 0 ? (
+          <div className="stt-hotel-empty">
+            <span className="stt-hotel-empty-icon" aria-hidden="true">
+              <AdminIcon name="home" size={20} />
+            </span>
+            <h4>{hotels.length === 0 ? "Chưa có khách sạn" : "Không có kết quả"}</h4>
+            <p>
+              {hotels.length === 0
+                ? "Tạo bản nháp đầu tiên để bắt đầu xây danh mục lưu trú."
+                : "Thử đổi từ khoá hoặc xoá bộ lọc để xem lại toàn bộ danh mục."}
+            </p>
+            {hotels.length === 0 ? (
+              <button
+                type="button"
+                className="adm-primary"
+                disabled={busy}
+                onClick={() => void createHotel()}
+              >
+                <AdminIcon name="plus" size={14} /> Thêm khách sạn
+              </button>
+            ) : (
+              <button type="button" className="stt-hotel-action" onClick={clearFilters}>
+                Xoá bộ lọc
+              </button>
+            )}
+          </div>
+        ) : null}
+
+        {filtered.length > 0 ? (
+          <div className="stt-hotel-table-wrap">
+            <table className="stt-hotel-table">
+              <thead>
+                <tr>
+                  <th scope="col">Khách sạn</th>
+                  <th scope="col">Điểm đến</th>
+                  <th scope="col">Loại phòng</th>
+                  <th scope="col">Trạng thái</th>
+                  <th scope="col">Cập nhật</th>
+                  <th scope="col">Thao tác</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      ) : null}
+              </thead>
+              <tbody>
+                {filtered.map((row) => {
+                  const image = Array.isArray(row.data.images)
+                    ? (row.data.images[0] as { src?: string } | undefined)
+                    : undefined;
+                  const name = text(row.data.name, row.id);
+                  const slug = text(row.data.slug);
+                  const roomCount = roomsOf(row.id).length;
+                  const lodging =
+                    LODGING_LABELS[
+                      text(row.data.lodgingType, "hotel") as LodgingType
+                    ] ?? text(row.data.lodgingType);
+                  const star = row.data.starRating
+                    ? ` · ${row.data.starRating} sao`
+                    : "";
+                  const mode =
+                    text(row.data.roomMode) === "manual_daily"
+                      ? "Số phòng theo ngày"
+                      : "Cần kiểm tra";
+
+                  return (
+                    <tr key={row.id}>
+                      <td>
+                        <div className="stt-hotel-identity">
+                          {image?.src ? (
+                            <Image
+                              className="stt-hotel-thumb"
+                              src={image.src}
+                              alt=""
+                              width={64}
+                              height={48}
+                            />
+                          ) : (
+                            <span
+                              className="stt-hotel-thumb stt-hotel-thumb--empty"
+                              aria-hidden="true"
+                            >
+                              <AdminIcon name="image" size={17} />
+                            </span>
+                          )}
+                          <span className="stt-hotel-identity-copy">
+                            <strong>{name}</strong>
+                            <small>
+                              {lodging}
+                              {star}
+                            </small>
+                          </span>
+                        </div>
+                      </td>
+                      <td data-label="Điểm đến">
+                        <span className="stt-hotel-place">
+                          <AdminIcon name="map" size={13} />
+                          {text(row.data.province, "—")}
+                        </span>
+                      </td>
+                      <td data-label="Loại phòng">
+                        <span className="stt-hotel-roomcount">
+                          <strong>
+                            {roomCount > 0 ? `${roomCount} loại` : "Chưa có"}
+                          </strong>
+                          <small>{mode}</small>
+                        </span>
+                      </td>
+                      <td data-label="Trạng thái">
+                        <span className="stt-hotel-state" data-state={row.state}>
+                          {STATE_LABEL[row.state] ?? row.state}
+                        </span>
+                      </td>
+                      <td data-label="Cập nhật">
+                        {text(row.data.updatedAt).slice(0, 10) || "—"}
+                      </td>
+                      <td>
+                        <div className="stt-hotel-actions">
+                          <button
+                            type="button"
+                            className="stt-hotel-action stt-hotel-action--primary"
+                            onClick={() => setEditing(row.id)}
+                          >
+                            <AdminIcon name="edit" size={13} /> Sửa
+                          </button>
+                          {row.state === "published" && slug ? (
+                            <Link
+                              className="stt-hotel-action"
+                              href={`/khach-san/${slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <AdminIcon name="eye" size={13} /> Xem
+                            </Link>
+                          ) : row.state === "draft" ? (
+                            <Link
+                              className="stt-hotel-action"
+                              href={`/admin/preview/hotels/${row.id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <AdminIcon name="eye" size={13} /> Xem trước
+                            </Link>
+                          ) : null}
+                          {row.state === "deleted" ? (
+                            <button
+                              type="button"
+                              className="stt-hotel-action"
+                              disabled={busy}
+                              onClick={() => void changeState(row, "restore")}
+                            >
+                              <AdminIcon name="restore" size={13} /> Khôi phục
+                            </button>
+                          ) : (
+                            <>
+                              {row.state === "published" ? (
+                                <button
+                                  type="button"
+                                  className="stt-hotel-action"
+                                  disabled={busy}
+                                  onClick={() => void changeState(row, "unpublish")}
+                                >
+                                  Ẩn
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="stt-hotel-action"
+                                  disabled={busy}
+                                  onClick={() => void changeState(row, "publish")}
+                                >
+                                  Xuất bản
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="stt-hotel-action stt-hotel-action--danger"
+                                disabled={busy}
+                                onClick={() => void changeState(row, "delete")}
+                              >
+                                <AdminIcon name="trash" size={13} /> Lưu trữ
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }
