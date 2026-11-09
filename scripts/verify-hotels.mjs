@@ -472,6 +472,10 @@ async function main() {
       fullPage: true,
     });
 
+    await page.getByRole("button", { name: "Về danh sách", exact: true }).click();
+    await page.locator(".stt-hotel-table").waitFor();
+    check("return to list closes the hotel editor", !(await page.locator(".stt-hotel-tabs").isVisible()));
+
     console.log("4b. Sales flow");
     await page.goto(`${BASE}/admin/leads`, { waitUntil: "load" });
     await page.locator(".adm-chip-btn", { hasText: "Khách sạn" }).first().click();

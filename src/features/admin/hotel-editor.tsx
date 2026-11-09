@@ -259,7 +259,7 @@ export function HotelEditor({
             Xem trước
           </a>
           <button type="button" className="adm-ghost-link" onClick={onClose}>
-            Đóng
+            <span aria-hidden="true">←</span> Về danh sách
           </button>
         </div>
       </header>
