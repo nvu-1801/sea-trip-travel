@@ -9,7 +9,7 @@
  *   npm run build && npm run verify:hotels
  */
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
@@ -432,6 +432,29 @@ async function main() {
       (await preview.locator("h1").innerText()).includes("Demo Quy Nhơn"),
     );
     await preview.close();
+    const highlights = page.getByLabel("Điểm nổi bật");
+    await highlights.fill("Gần biển");
+    await highlights.press("End");
+    await highlights.press("Enter");
+    await highlights.pressSequentially("Có hồ bơi");
+    check("hotel highlights preserve a second line while typing",
+      (await highlights.inputValue()) === "Gần biển\nCó hồ bơi");
+
+    await page.locator(".stt-hotel-tab", { hasText: "Hạng phòng" }).click();
+    await page.getByRole("button", { name: "Sửa hạng phòng", exact: true }).first().click();
+    const dropzone = page.getByRole("button", { name: /kéo thả.*thêm ảnh hạng phòng/i });
+    check("room uploader shows the recommended dimensions",
+      await page.getByText(/1600 × 1200 px \(4:3\)/).first().isVisible());
+    const imageBytes = Array.from(readFileSync("public/images/hotels/st-apartment-flc-seatower/2-9494d5a4.webp"));
+    await dropzone.evaluate((target, bytes) => {
+      const transfer = new DataTransfer();
+      transfer.items.add(new File([new Uint8Array(bytes)], "room.webp", { type: "image/webp" }));
+      target.dispatchEvent(new DragEvent("drop", { dataTransfer: transfer, bubbles: true, cancelable: true }));
+    }, imageBytes);
+    const savedPreview = page.locator(".stt-hotel-gallery-row .adm-dropzone img").first();
+    await savedPreview.waitFor();
+    check("dropping a room photo adds a preview", await savedPreview.isVisible());
+
     await page.locator(".stt-hotel-tab", { hasText: "Giá & tình trạng" }).click();
     await page.waitForSelector(".stt-hotel-grid", { timeout: 20_000 });
     check(
