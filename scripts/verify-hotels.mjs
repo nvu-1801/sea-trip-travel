@@ -9,7 +9,7 @@
  *   npm run build && npm run verify:hotels
  */
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
@@ -221,6 +221,39 @@ async function main() {
       "detail shows the room list",
       (await page.locator(".stt-hotel-room").count()) >= 2,
     );
+    check(
+      "rooms without photos show a dedicated placeholder",
+      (await page.locator(".stt-room-photo-empty").count()) >= 1,
+    );
+    const mapsHref = await page.getByRole("link", { name: "Mở trong Maps", exact: true }).getAttribute("href");
+    check("hotel location links to Maps even without an admin URL",
+      mapsHref?.startsWith("https://www.google.com/maps/search/?api=1&query="));
+    const galleryTile = page.locator(".stt-photo-gallery .stt-photo-tile").first();
+    await galleryTile.click();
+    const gallery = page.locator("dialog.stt-hotel-lightbox[open]");
+    await gallery.waitFor();
+    check("the hotel photo opens in a modal", await gallery.isVisible());
+    await page.keyboard.press("Escape");
+    await gallery.waitFor({ state: "hidden" });
+    check(
+      "closing the gallery restores focus to the photo",
+      await galleryTile.evaluate((tile) => tile === document.activeElement),
+    );
+    await galleryTile.click();
+    await gallery.waitFor();
+    await gallery.locator(".stt-hotel-lightbox-row > img").click();
+    check("clicking the photo keeps the gallery open", await gallery.isVisible());
+    await page.mouse.click(5, 5);
+    await gallery.waitFor({ state: "hidden" });
+    check("clicking the backdrop closes the gallery", !(await gallery.isVisible()));
+
+    const dateTrigger = page.locator(".stt-room-filter-date button[aria-haspopup]").first();
+    await dateTrigger.click();
+    const calendar = page.locator(".stt-room-filter-date [role=dialog]");
+    check("room filter opens the themed calendar", await calendar.isVisible());
+    await page.keyboard.press("Escape");
+    await calendar.waitFor({ state: "hidden" });
+
     const availability = await page
       .locator(".stt-hotel-room-state")
       .allInnerTexts();
@@ -255,6 +288,7 @@ async function main() {
     await page.locator(".stt-hotel-request-room").first().click();
     const assignDialog = page.getByRole("dialog");
     await assignDialog.waitFor({ timeout: 20_000 });
+    check("room confirmation stays above the page", await assignDialog.evaluate((dialog) => dialog.matches(":modal")));
     check(
       "choosing a room confirms it was added to the contact form",
       (await assignDialog.innerText()).includes("Đã gán vào form liên hệ"),
@@ -337,6 +371,16 @@ async function main() {
     await mobilePage.goto(`${BASE}/khach-san`, { waitUntil: "load" });
     const listOverflow = await overflowOf(mobilePage);
     check("mobile list has no horizontal scroll", listOverflow <= 0, `${listOverflow}px`);
+    const mobileCatalogDates = mobilePage.locator(".stt-hotel-filters-head button[aria-haspopup=dialog]");
+    for (const trigger of await mobileCatalogDates.all()) {
+      await trigger.tap();
+      const calendar = mobilePage.locator(".stt-hotel-filters-head [role=dialog]");
+      const bounds = await calendar.boundingBox();
+      check("mobile catalogue calendar fits within the viewport",
+        Boolean(bounds && bounds.x >= 0 && bounds.x + bounds.width <= 390));
+      await mobilePage.keyboard.press("Escape");
+      await calendar.waitFor({ state: "hidden" });
+    }
     await mobilePage.screenshot({
       path: path.join(SHOT_DIR, "list-390.png"),
       fullPage: true,
@@ -351,6 +395,12 @@ async function main() {
       path: path.join(SHOT_DIR, "detail-390.png"),
       fullPage: true,
     });
+    const mobileCheckIn = mobilePage.locator(".stt-room-filter-date button[aria-haspopup]").first();
+    await mobileCheckIn.tap();
+    const mobileCalendar = mobilePage.locator(".stt-room-filter-date [role=dialog]");
+    await mobileCalendar.getByRole("button", { name: "Hôm nay", exact: true }).tap();
+    const selectedCheckIn = await mobilePage.locator('input[name="checkIn"]').inputValue();
+    check("mobile check-in calendar accepts a tap", /^\d{4}-\d{2}-\d{2}$/.test(selectedCheckIn) && selectedCheckIn !== checkIn);
     await mobile.close();
 
     /* ----------------------------------------------------------------- admin */
@@ -386,6 +436,31 @@ async function main() {
       (await preview.locator("h1").innerText()).includes("Demo Quy Nhơn"),
     );
     await preview.close();
+    const highlights = page.getByLabel("Điểm nổi bật");
+    await highlights.fill("Gần biển");
+    await highlights.press("End");
+    await highlights.press("Enter");
+    await highlights.pressSequentially("Có hồ bơi");
+    check("hotel highlights preserve a second line while typing",
+      (await highlights.inputValue()) === "Gần biển\nCó hồ bơi");
+
+    await page.locator(".stt-hotel-tab", { hasText: "Hạng phòng" }).click();
+    await page.getByRole("button", { name: "Sửa hạng phòng", exact: true }).first().click();
+    check("Studio previews the room facts shown below its photos",
+      (await page.locator(".stt-hotel-room-facts-preview").innerText()).includes("người lớn"));
+    const dropzone = page.getByRole("button", { name: /kéo thả.*thêm ảnh hạng phòng/i });
+    check("room uploader shows the recommended dimensions",
+      await page.getByText(/1600 × 1200 px \(4:3\)/).first().isVisible());
+    const imageBytes = Array.from(readFileSync("public/images/hotels/st-apartment-flc-seatower/2-9494d5a4.webp"));
+    await dropzone.evaluate((target, bytes) => {
+      const transfer = new DataTransfer();
+      transfer.items.add(new File([new Uint8Array(bytes)], "room.webp", { type: "image/webp" }));
+      target.dispatchEvent(new DragEvent("drop", { dataTransfer: transfer, bubbles: true, cancelable: true }));
+    }, imageBytes);
+    const savedPreview = page.locator(".stt-hotel-gallery-row .adm-dropzone img").first();
+    await savedPreview.waitFor();
+    check("dropping a room photo adds a preview", await savedPreview.isVisible());
+
     await page.locator(".stt-hotel-tab", { hasText: "Giá & tình trạng" }).click();
     await page.waitForSelector(".stt-hotel-grid", { timeout: 20_000 });
     check(
@@ -402,6 +477,10 @@ async function main() {
       path: path.join(SHOT_DIR, "admin-rates-1440.png"),
       fullPage: true,
     });
+
+    await page.getByRole("button", { name: "Về danh sách", exact: true }).click();
+    await page.locator(".stt-hotel-table").waitFor();
+    check("return to list closes the hotel editor", !(await page.locator(".stt-hotel-tabs").isVisible()));
 
     console.log("4b. Sales flow");
     await page.goto(`${BASE}/admin/leads`, { waitUntil: "load" });

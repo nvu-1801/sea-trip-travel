@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { ImageAsset } from "@/domain/common";
 import { ImageField } from "./image-picker";
 import { AdminIcon } from "./admin-icons";
@@ -90,13 +90,18 @@ export function LinesField({
   placeholder?: string;
   onChange: (value: string[]) => void;
 }) {
+  const [raw, setRaw] = useState(() => textLines(value));
+  const displayed = textLines(toLines(raw)) === textLines(value) ? raw : textLines(value);
   return (
     <Field label={label} hint={hint}>
       <textarea
         rows={rows}
-        value={textLines(value)}
+        value={displayed}
         placeholder={placeholder}
-        onChange={(event) => onChange(toLines(event.target.value))}
+        onChange={(event) => {
+          setRaw(event.target.value);
+          onChange(toLines(event.target.value));
+        }}
       />
     </Field>
   );
@@ -113,11 +118,16 @@ export function ChipsField({
   value: string[];
   onChange: (value: string[]) => void;
 }) {
+  const [raw, setRaw] = useState(() => chips(value));
+  const displayed = chips(toChips(raw)) === chips(value) ? raw : chips(value);
   return (
     <Field label={label} hint={hint}>
       <input
-        value={chips(value)}
-        onChange={(event) => onChange(toChips(event.target.value))}
+        value={displayed}
+        onChange={(event) => {
+          setRaw(event.target.value);
+          onChange(toChips(event.target.value));
+        }}
       />
     </Field>
   );
@@ -129,6 +139,9 @@ export function GalleryField({
   value,
   media,
   upload,
+  maxImages,
+  sizeGuide,
+  busy = false,
   onChange,
 }: {
   label: string;
@@ -136,6 +149,9 @@ export function GalleryField({
   value: ImageAsset[];
   media: { value: string; label: string }[];
   upload: (file: File) => Promise<{ src: string; alt: string }>;
+  maxImages?: number;
+  sizeGuide?: string;
+  busy?: boolean;
   onChange: (value: ImageAsset[]) => void;
 }) {
   const update = (index: number, patch: Partial<ImageAsset>) => {
@@ -165,6 +181,7 @@ export function GalleryField({
             alt={text(image.alt)}
             media={media}
             onUpload={upload}
+            sizeGuide={sizeGuide}
             compact
             altRequired
             onAltChange={(alt) => update(index, { alt })}
@@ -178,7 +195,7 @@ export function GalleryField({
               type="button"
               className="adm-ghost-link"
               aria-label={`Đưa ảnh ${index + 1} lên`}
-              disabled={index === 0}
+              disabled={busy || index === 0}
               onClick={() => move(index, -1)}
             >
               ↑
@@ -187,7 +204,7 @@ export function GalleryField({
               type="button"
               className="adm-ghost-link"
               aria-label={`Đưa ảnh ${index + 1} xuống`}
-              disabled={index === value.length - 1}
+              disabled={busy || index === value.length - 1}
               onClick={() => move(index, 1)}
             >
               ↓
@@ -195,6 +212,7 @@ export function GalleryField({
             <button
               type="button"
               className="adm-danger"
+              disabled={busy}
               onClick={() => onChange(value.filter((_, itemIndex) => itemIndex !== index))}
             >
               <AdminIcon name="trash" size={14} /> Xoá
@@ -202,13 +220,29 @@ export function GalleryField({
           </div>
         </div>
       ))}
-      <button
-        type="button"
-        className="adm-add-row"
-        onClick={() => onChange([...value, { src: "", alt: "" }])}
-      >
-        <AdminIcon name="plus" size={14} /> Thêm ảnh
-      </button>
+      {maxImages === undefined ? (
+        <button
+          type="button"
+          className="adm-add-row"
+          onClick={() => onChange([...value, { src: "", alt: "" }])}
+        >
+          <AdminIcon name="plus" size={14} /> Thêm ảnh
+        </button>
+      ) : value.length < maxImages ? (
+        <ImageField
+          label="Thêm ảnh hạng phòng"
+          value=""
+          media={media}
+          onUpload={upload}
+          sizeGuide={sizeGuide}
+          compact
+          onChange={(src, alt) => {
+            if (src) onChange([...value, { src, alt: alt ?? "" }]);
+          }}
+        />
+      ) : (
+        <p className="adm-hint">Đã đủ {maxImages} ảnh.</p>
+      )}
     </div>
   );
 }

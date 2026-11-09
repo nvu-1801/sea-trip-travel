@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import type { HotelRoom } from "@/domain/hotel-room";
+import { MAX_ROOM_IMAGES, type HotelRoom } from "@/domain/hotel-room";
 import { LODGING_TYPES, LODGING_LABELS } from "@/domain/hotel";
 import type { TourLink } from "@/server/hotels/store";
 import type { TourRelation } from "@/domain/hotel-pricing";
+import { HotelRoomFacts } from "@/features/hotels/hotel-room-facts";
 import { HotelCalendar } from "./hotel-calendar";
 import {
   ChipsField,
@@ -259,7 +260,7 @@ export function HotelEditor({
             Xem trước
           </a>
           <button type="button" className="adm-ghost-link" onClick={onClose}>
-            Đóng
+            <span aria-hidden="true">←</span> Về danh sách
           </button>
         </div>
       </header>
@@ -348,7 +349,7 @@ export function HotelEditor({
                 onChange={(event) => set("address", event.target.value)}
               />
             </Field>
-            <Field label="Link bản đồ (https)" hint="Chỉ nhận liên kết https, không nhúng iframe.">
+            <Field label="Link bản đồ (https)" hint="Dán link HTTPS. Để hiện bản đồ xem trước, có thể dùng URL trong mã nhúng Google Maps.">
               <input
                 value={text(draft.mapUrl)}
                 maxLength={500}
@@ -874,6 +875,17 @@ function RoomRow({
     isNew ? 0 : (room.revision ?? 1),
   );
   const [busy, setBusy] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
+  const uploading = uploadCount > 0;
+
+  async function uploadRoomPhoto(file: File) {
+    setUploadCount((count) => count + 1);
+    try {
+      return await upload(file);
+    } finally {
+      setUploadCount((count) => count - 1);
+    }
+  }
   const [error, setError] = useState("");
 
   const set = (key: keyof HotelRoom, value: unknown) =>
@@ -929,7 +941,7 @@ function RoomRow({
             {room.maxOccupancy}
           </span>
         </div>
-        <button type="button" className="adm-ghost-link" onClick={onToggle}>
+        <button type="button" className="adm-ghost-link" disabled={uploading} onClick={onToggle}>
           {open ? "Thu gọn" : "Sửa hạng phòng"}
         </button>
       </div>
@@ -1040,16 +1052,28 @@ function RoomRow({
           </Field>
           <GalleryField
             label="Ảnh hạng phòng"
+            hint={`Tối đa ${MAX_ROOM_IMAGES} ảnh. Ảnh đầu tiên hiển thị trên thẻ phòng.`}
+            sizeGuide="Nên dùng ảnh ngang 1600 × 1200 px (4:3), JPEG, PNG hoặc WebP, tối đa 10 MB mỗi ảnh."
+            maxImages={MAX_ROOM_IMAGES}
+            busy={uploading}
             value={imagesOf(draft.images)}
             media={media}
-            upload={upload}
+            upload={uploadRoomPhoto}
             onChange={(value) => set("images", value)}
           />
+          <div className="stt-hotel-room-facts-preview">
+            <span className="adm-field-label">Hiển thị dưới ảnh phòng</span>
+            <HotelRoomFacts
+              adults={draft.capacityAdults}
+              childCount={draft.capacityChildren}
+              bed={draft.bed}
+            />
+          </div>
           <div className="stt-hotel-actions">
             <button
               type="button"
               className="adm-primary"
-              disabled={busy}
+              disabled={busy || uploading}
               onClick={() => void save("save")}
             >
               Lưu nháp
@@ -1057,7 +1081,7 @@ function RoomRow({
             <button
               type="button"
               className="adm-ghost-link"
-              disabled={busy}
+              disabled={busy || uploading}
               onClick={() => void save("publish")}
             >
               Lưu và xuất bản
@@ -1065,7 +1089,7 @@ function RoomRow({
             <button
               type="button"
               className="adm-danger"
-              disabled={busy || isNew}
+              disabled={busy || uploading || isNew}
               onClick={() => void save("delete")}
             >
               Lưu trữ

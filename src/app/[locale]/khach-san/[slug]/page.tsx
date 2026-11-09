@@ -1,5 +1,9 @@
+import { HotelRoomFacts } from "@/features/hotels/hotel-room-facts";
+import { HotelRoomDate } from "@/features/hotels/hotel-room-date";
+import { Input } from "@/components/ui/form-controls";
+import { MAX_NIGHTS_PER_STAY, stayDates } from "@/domain/hotel-pricing";
 import type { Metadata } from "next";
-import Image from "next/image";
+import { HotelRoomRequest } from "@/features/hotels/hotel-room-request";
 import { notFound } from "next/navigation";
 import { buildMetadata, absoluteUrl } from "@/lib/seo";
 import { localizePath } from "@/i18n/routing";
@@ -15,9 +19,8 @@ import { formatVnd } from "@/features/hotels/hotel-format";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { MaskedHeading } from "@/components/motion/word-reveal";
 import { Reveal } from "@/components/ui/reveal";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink, buttonStyles } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/layout";
-import { TiltCard } from "@/components/motion/tilt-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { breadcrumbJsonLd, hotelJsonLd } from "@/lib/json-ld";
 import "@/features/hotels/hotels.css";
@@ -38,6 +41,12 @@ export const dynamic = "force-dynamic";
 
 type PageParams = { locale: string; slug: string };
 type SearchParams = Record<string, string | string[] | undefined>;
+
+const demoRoomPhotos: Partial<Record<string, string>> = {
+  room_aurora_villas_deluxe_huong_bien_1: "/images/hotels/hung-thinh-hotel/2-38116f85.webp",
+  room_aurora_villas_suite_gia_dinh_2: "/images/hotels/hoang-nhan-palace/2-d32183c2.webp",
+  room_aurora_villas_villa_2_phong_ngu_3: "/images/hotels/aurora-villas/2-893c05be.webp",
+};
 
 function first(value: string | string[] | undefined): string {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -89,8 +98,10 @@ export default async function HotelDetailPage({
 
   const checkInRaw = first(query.checkIn);
   const checkOutRaw = first(query.checkOut);
-  const checkIn = /^\d{4}-\d{2}-\d{2}$/.test(checkInRaw) ? checkInRaw : null;
-  const checkOut = /^\d{4}-\d{2}-\d{2}$/.test(checkOutRaw) ? checkOutRaw : null;
+  const datesValid = Boolean(stayDates(checkInRaw, checkOutRaw));
+  const invalidDates = Boolean(checkInRaw || checkOutRaw) && !datesValid;
+  const checkIn = datesValid ? checkInRaw : null;
+  const checkOut = datesValid ? checkOutRaw : null;
   const tourSlug = first(query.tour) || null;
 
   const detail = publicHotelDetail(slug, locale, {
@@ -103,15 +114,52 @@ export default async function HotelDetailPage({
   const path = `/khach-san/${detail.slug}`;
   const pageUrl = absoluteUrl(localizePath(locale, path));
   const heroImage = detail.images[0] ?? detail.image;
+  const galleryImages = detail.images.length ? detail.images : heroImage ? [heroImage] : [];
+  const vi = locale === "vi";
+  const mapQuery = detail.address ? `${detail.name}, ${detail.address}` : detail.name;
+  const savedEmbed = detail.mapUrl?.startsWith("https://www.google.com/maps/embed?");
+  const mapsHref = detail.mapUrl && !savedEmbed
+    ? detail.mapUrl
+    : `https://www.google.com/maps/search/?${new URLSearchParams({ api: "1", query: mapQuery })}`;
+  const embedKey = process.env.GOOGLE_MAPS_EMBED_KEY?.trim();
+  const mapEmbed = savedEmbed
+    ? detail.mapUrl
+    : embedKey
+      ? `https://www.google.com/maps/embed/v1/place?${new URLSearchParams({ key: embedKey, q: mapQuery })}`
+      : null;
+  const mapLabel = vi ? "Mở trong Maps" : "Open in Maps";
+  const guestCount = (value: string, min: number, max: number) => {
+    const count = Number(value);
+    return /^\d+$/.test(value) && count >= min && count <= max ? count : min;
+  };
+  const adults = guestCount(first(query.adults), 1, 20);
+  const children = guestCount(first(query.children), 0, 10);
+  const amenities = [...new Set(detail.rooms.flatMap((room) => room.amenities))];
+  const requestedAmenities = Array.isArray(query.amenity) ? query.amenity : [query.amenity];
+  const selectedAmenities = amenities.filter((amenity) => requestedAmenities.includes(amenity));
+  const visibleRooms = detail.rooms.filter((room) =>
+    adults <= room.capacityAdults &&
+    children <= room.capacityChildren &&
+    adults + children <= room.maxOccupancy &&
+    selectedAmenities.every((amenity) => room.amenities.includes(amenity)),
+  );
+  const resetQuery = new URLSearchParams();
+  if (tourSlug) resetQuery.set("tour", tourSlug);
+  const resetHref = localizePath(locale, path) + (resetQuery.size ? `?${resetQuery}` : "") + "#hang-phong";
+  const galleryLabels = {
+    open: t.galleryOpen,
+    close: t.galleryClose,
+    all: format(t.galleryAll, { count: galleryImages.length }),
+    previous: vi ? "Ảnh trước" : "Previous photo",
+    next: vi ? "Ảnh sau" : "Next photo",
+  };
   const priceLabel =
     detail.priceFrom !== null
       ? formatVnd(detail.priceFrom, locale)
       : m.hotels.card.contactForQuote;
-  // The hero already prints the summary; repeating it as the first paragraph
-  // makes the overview look like a copy-paste.
   const overview = detail.description.filter(
     (paragraph, index) =>
-      !(index === 0 && paragraph.trim() === detail.summary.trim()),
+      paragraph.trim() !== "" && !(index === 0 && paragraph.trim() === detail.summary.trim()),
   );
 
   const availabilityLabel = (room: (typeof detail.rooms)[number]) => {    const result = room.availability;
@@ -172,11 +220,11 @@ export default async function HotelDetailPage({
               lines={[{ text: detail.name }]}
               className="stt-hotel-hero-lux-title"
             />
-            <p className="stt-hotel-hero-lux-lead">{detail.summary}</p>
+            <p className="stt-hotel-hero-lux-lead">{detail.address}</p>
             <div className="stt-hotel-hero-lux-actions">
               <ButtonLink href="#hang-phong">{t.roomsCta}</ButtonLink>
               {detail.mapUrl ? (
-                <ButtonLink href={detail.mapUrl} variant="secondary" external>
+                <ButtonLink href={mapsHref} variant="secondary" external>
                   {t.viewMap}
                 </ButtonLink>
               ) : null}
@@ -213,48 +261,18 @@ export default async function HotelDetailPage({
           </dl>
         </div>
 
-        <div className="stt-hotel-hero-lux-media">
-          {heroImage?.src ? (
-            <Image
-              src={heroImage.src}
-              alt={heroImage.alt ?? detail.name}
-              fill
-              priority
-              sizes="(max-width: 1200px) 100vw, 1200px"
-              className="stt-hotel-hero-lux-img"
-            />
-          ) : null}
-          <div className="stt-hotel-hero-lux-price">
-            <p className="stt-hotel-float-eyebrow">{t.priceFromLabel}</p>
-            <p className="stt-hotel-float-price">{priceLabel}</p>
-            <p className="stt-hotel-float-note">{t.trustNote}</p>
-          </div>
-          <p className="stt-hotel-hero-lux-cue">
-            <span aria-hidden="true" />
-            {t.scrollCue}
-          </p>
-        </div>
+        <HotelGallery images={galleryImages} hotelName={detail.name} labels={galleryLabels} />
       </header>
-
-      <HotelGallery
-        images={detail.images}
-        hotelName={detail.name}
-        labels={{
-          open: t.galleryOpen,
-          close: t.galleryClose,
-          counter: t.galleryCounter,
-          all: format(t.galleryAll, { count: detail.images.length }),
-        }}
-      />
 
       <div className="stt-hotel-layout">
         <div className="stt-hotel-content">
-          {detail.description.length > 0 || detail.highlights.length > 0 ? (
+          {detail.summary || overview.length > 0 || detail.highlights.length > 0 ? (
             <section className="stt-hotel-block" aria-label={t.overview}>
               <Reveal>
                 <SectionHeading title={t.overview} />
                 <div className="stt-hotel-overview">
                   <div className="stt-hotel-prose">
+                    {detail.summary ? <p>{detail.summary}</p> : null}
                     {overview.map((paragraph) => (
                       <p key={paragraph}>{paragraph}</p>
                     ))}
@@ -271,19 +289,41 @@ export default async function HotelDetailPage({
             </section>
           ) : null}
 
-          {detail.amenities.length > 0 ? (
-            <section className="stt-hotel-block" aria-label={t.amenities}>
+          <div className="stt-hotel-location-grid">
+            <section className="stt-hotel-block" aria-label={t.location}>
               <Reveal>
-                <SectionHeading title={t.amenities} />
-                <ul className="stt-hotel-tags stt-hotel-tags--lg">
-                  {detail.amenities.map((amenity) => (
-                    <li key={amenity}>{amenity}</li>
-                  ))}
-                </ul>
+                <SectionHeading title={t.location} />
+                <div className="stt-hotel-location">
+                  <p className="stt-hotel-location-address">{detail.address}</p>
+                  {mapEmbed ? (
+                    <iframe
+                      className="stt-hotel-map"
+                      title={`${t.location} · ${detail.name}`}
+                      src={mapEmbed}
+                      loading="lazy"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                    />
+                  ) : null}
+                  <ButtonLink href={mapsHref} variant="secondary" size="sm" external>
+                    {mapLabel}
+                  </ButtonLink>
+                </div>
               </Reveal>
             </section>
-          ) : null}
-
+            {detail.amenities.length > 0 ? (
+              <section className="stt-hotel-block" aria-label={t.amenities}>
+                <Reveal>
+                  <SectionHeading title={t.amenities} />
+                  <ul className="stt-hotel-tags stt-hotel-tags--lg">
+                    {detail.amenities.map((amenity) => (
+                      <li key={amenity}>{amenity}</li>
+                    ))}
+                  </ul>
+                </Reveal>
+              </section>
+            ) : null}
+          </div>
           <section
             id="hang-phong"
             className="stt-hotel-block"
@@ -294,93 +334,128 @@ export default async function HotelDetailPage({
               {detail.rooms.length === 0 ? (
                 <p className="stt-hotel-muted">{t.noRooms}</p>
               ) : null}
-              <div className="stt-hotel-roomlist">
-                {detail.rooms.map((room, index) => {
-                  const image = room.images[0] ?? heroImage;
-                  return (
-                  <div
-                    key={room.id}
-                    data-hotel-depth={((index % 3) + 1) as 1 | 2 | 3}
-                  >
-                    <TiltCard max={2.5}>
-                      <article className="stt-hotel-room">
-                        {image?.src ? (
-                          <div className="stt-hotel-room-media">
-                            <Image
-                              src={image.src}
-                              alt={image.alt ?? detail.name}
-                              width={720}
-                              height={480}
-                              sizes="(max-width: 768px) 100vw, 340px"
-                            />
-                          </div>
-                        ) : null}
-                        <div className="stt-hotel-room-body">
-                          <h3>{room.name}</h3>
-                          <p className="stt-hotel-room-meta">
-                            {room.sizeSqm
-                              ? format(t.size, { size: room.sizeSqm })
-                              : null}
-                            {room.bed ? ` · ${t.bed}: ${room.bed}` : null}
-                            {room.view ? ` · ${t.view}: ${room.view}` : null}
-                            {` · ${format(t.capacity, {
-                              count: room.maxOccupancy,
-                            })}`}
-                          </p>
-                          {room.description ? <p>{room.description}</p> : null}
-                          {room.amenities.length > 0 ? (
-                            <ul className="stt-hotel-tags">
-                              {room.amenities.slice(0, 6).map((amenity) => (
-                                <li key={amenity}>{amenity}</li>
-                              ))}
-                            </ul>
-                          ) : null}
-                          <div className="stt-hotel-room-foot">
-                            <div className="stt-hotel-room-rate">
-                              <p className="stt-hotel-room-price">
-                                {room.priceFrom !== null
-                                  ? format(t.priceFrom, {
-                                      price: formatVnd(room.priceFrom, locale),
-                                    })
-                                  : m.hotels.card.contactForQuote}
-                              </p>
-                              <p className="stt-hotel-room-state">
-                                {availabilityLabel(room)}
-                              </p>
-                            </div>
-                            <a href="#dat-phong" className="stt-hotel-room-cta">
-                              {t.roomCta}
-                              <span aria-hidden="true">→</span>
-                            </a>
-                          </div>
-                        </div>
-                      </article>
-                    </TiltCard>
+              {detail.rooms.length ? (
+                <form action={`${localizePath(locale, path)}#hang-phong`} className="stt-room-filters">
+                  {tourSlug ? <input type="hidden" name="tour" value={tourSlug} /> : null}
+                  <HotelRoomDate key={`in-${checkInRaw}`} name="checkIn" label={t.checkIn} initialValue={checkInRaw} labels={m.datePicker} invalid={invalidDates} />
+                  <HotelRoomDate key={`out-${checkOutRaw}`} name="checkOut" label={t.checkOut} initialValue={checkOutRaw} labels={m.datePicker} invalid={invalidDates} />
+                  <label className="stt-room-filter-field">{vi ? "Người lớn" : "Adults"}<Input type="number" name="adults" min={1} max={20} defaultValue={adults} required /></label>
+                  <label className="stt-room-filter-field">{vi ? "Trẻ em" : "Children"}<Input type="number" name="children" min={0} max={10} defaultValue={children} required /></label>
+                  {amenities.length ? (
+                    <details open={selectedAmenities.length > 0}>
+                      <summary>{vi ? "Lọc theo tiện nghi phòng" : "Filter by room amenities"}</summary>
+                      <div className="stt-room-filter-options">
+                        {amenities.map((amenity) => (
+                          <label key={amenity}>
+                            <input type="checkbox" name="amenity" value={amenity} defaultChecked={selectedAmenities.includes(amenity)} /> {amenity}
+                          </label>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
+                  <div className="stt-room-filter-actions">
+                    <Button type="submit">{vi ? "Tìm phòng" : "Find rooms"}</Button>
+                    <a href={resetHref} className={buttonStyles("secondary")} data-focus-ring="">
+                      {vi ? "Xóa bộ lọc" : "Clear filters"}
+                    </a>
                   </div>
+                </form>
+              ) : null}
+              {invalidDates ? (
+                <p role="alert">{vi ? `Chọn ngày nhận và trả phòng cho kỳ nghỉ từ 1 đến ${MAX_NIGHTS_PER_STAY} đêm.` : `Choose check-in and check-out dates for a stay of 1 to ${MAX_NIGHTS_PER_STAY} nights.`}</p>
+              ) : null}
+              {detail.rooms.length > 0 && visibleRooms.length === 0 ? (
+                <p>{vi ? "Không có hạng phòng phù hợp." : "No matching room types."}</p>
+              ) : null}
+              <div className="stt-hotel-roomlist">
+                {visibleRooms.map((room) => {
+                  const roomPhotos = room.images.filter((image) => image.src);
+                  const referencePhoto = roomPhotos.length === 0 ? demoRoomPhotos[room.id] : undefined;
+
+                  const photos = referencePhoto
+                    ? [{ src: referencePhoto, alt: vi ? "Ảnh phòng tham khảo" : "Reference room photo" }]
+                    : roomPhotos;
+                  const facts = (
+                    <HotelRoomFacts
+                      adults={room.capacityAdults}
+                      childCount={room.capacityChildren}
+                      bed={room.bed ?? undefined}
+                      vietnamese={vi}
+                    />
+                  );
+                  return (
+                    <article className="stt-hotel-room" key={room.id} data-room-photo={photos.length > 0}>
+                      {photos.length > 0 ? (
+                        <div className="stt-room-figure">
+                          <HotelGallery images={photos} hotelName={room.name} labels={galleryLabels} room />
+                          {facts}
+                        </div>
+                      ) : null}
+                      <div className="stt-hotel-room-body">
+                        <h3>{room.name}</h3>
+                        <p className="stt-hotel-room-meta">
+                          {[
+                            room.sizeSqm ? format(t.size, { size: room.sizeSqm }) : null,
+                            room.view ? `${t.view}: ${room.view}` : null,
+                            format(t.capacity, { count: room.maxOccupancy }),
+                          ].filter(Boolean).join(" · ")}
+                        </p>
+                        {photos.length === 0 ? facts : null}
+                        {photos.length === 0 ? (
+                          <small className="stt-room-photo-empty">
+                            {vi ? "Chưa có ảnh phòng" : "Room photos unavailable"}
+                          </small>
+                        ) : null}
+                        {room.description ? <p>{room.description}</p> : null}
+                        {room.amenities.length > 0 ? (
+                          <ul className="stt-hotel-tags">
+                            {room.amenities.slice(0, 6).map((amenity) => (
+                              <li key={amenity}>{amenity}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                        {room.amenities.length > 6 ? (
+                          <details>
+                            <summary>{vi ? "Xem thêm tiện nghi" : "More amenities"}</summary>
+                            <ul className="stt-hotel-tags">
+                              {room.amenities.slice(6).map((amenity) => <li key={amenity}>{amenity}</li>)}
+                            </ul>
+                          </details>
+                        ) : null}
+                      </div>
+                      <div className="stt-hotel-room-foot">
+                        <div className="stt-hotel-room-rate">
+                          <p className="stt-hotel-room-price">
+                            {room.priceFrom !== null
+                              ? format(t.priceFrom, {
+                                  price: formatVnd(room.priceFrom, locale),
+                                })
+                              : m.hotels.card.contactForQuote}
+                          </p>
+                          <p className="stt-hotel-room-state">
+                            {availabilityLabel(room)}
+                          </p>
+                        </div>
+                        <HotelRoomRequest
+                          href={`${localizePath(locale, "/lien-he")}#tu-van`}
+                          label={t.roomCta}
+                          draft={{
+                            id: detail.id,
+                            slug: detail.slug,
+                            name: detail.name,
+                            priceFrom: detail.priceFrom,
+                            roomId: room.id,
+                            roomName: room.name,
+                          }}
+                        />
+                      </div>
+                    </article>
                   );
                 })}
               </div>
             </Reveal>
           </section>
 
-          <section className="stt-hotel-block" aria-label={t.location}>
-            <Reveal>
-              <SectionHeading title={t.location} />
-              <div className="stt-hotel-location">
-                <p className="stt-hotel-location-address">{detail.address}</p>
-                {detail.mapUrl ? (
-                  <a
-                    className="stt-btn-secondary"
-                    href={detail.mapUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {t.viewMap}
-                  </a>
-                ) : null}
-              </div>
-            </Reveal>
-          </section>
 
           {detail.policies.length > 0 ? (
             <section className="stt-hotel-block" aria-label={t.policies}>
@@ -439,7 +514,7 @@ export default async function HotelDetailPage({
               id: room.id,
               name: room.name,
               priceFrom: room.priceFrom,
-              image: room.images[0]?.src ?? heroImage?.src,
+              image: room.images.find((image) => image.src)?.src,
             }))}
             contactHref={`${localizePath(locale, "/lien-he")}#tu-van`}
             toursHref={localizePath(locale, "/tim-tour")}
