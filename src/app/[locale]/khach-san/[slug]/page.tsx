@@ -20,7 +20,6 @@ import { MaskedHeading } from "@/components/motion/word-reveal";
 import { Reveal } from "@/components/ui/reveal";
 import { Button, ButtonLink, buttonStyles } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/layout";
-import { TiltCard } from "@/components/motion/tilt-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { breadcrumbJsonLd, hotelJsonLd } from "@/lib/json-ld";
 import "@/features/hotels/hotels.css";
@@ -347,90 +346,72 @@ export default async function HotelDetailPage({
                 <p>{vi ? "Không có hạng phòng phù hợp." : "No matching room types."}</p>
               ) : null}
               <div className="stt-hotel-roomlist">
-                {visibleRooms.map((room, index) => {
+                {visibleRooms.map((room) => {
                   const hasRoomPhotos = room.images.some((image) => image.src);
                   return (
-                    <div
-                      key={room.id}
-                      data-hotel-depth={((index % 3) + 1) as 1 | 2 | 3}
-                    >
-                      <TiltCard max={2.5}>
-                        <article className="stt-hotel-room">
-                          <div className="stt-room-photo">
-                            {hasRoomPhotos ? (
-                              <HotelGallery
-                                images={room.images}
-                                hotelName={room.name}
-                                labels={galleryLabels}
-                                room
-                              />
-                            ) : (
-                              <div className="stt-room-photo-empty">
-                                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                                  <rect x="3" y="4" width="18" height="16" rx="3" />
-                                  <circle cx="9" cy="9" r="1.5" />
-                                  <path d="m4 17 4-4 3 3 4-5 5 6" />
-                                </svg>
-                                <span>{vi ? "Chưa có ảnh phòng" : "Room photos unavailable"}</span>
-                              </div>
-                            )}
-                            <p>{format(t.capacity, { count: room.maxOccupancy })}</p>
-                            {room.bed ? <p>{t.bed} · {room.bed}</p> : null}
-                          </div>
-                          <div className="stt-hotel-room-body">
-                            <h3>{room.name}</h3>
-                            <p className="stt-hotel-room-meta">
-                              {room.sizeSqm
-                                ? format(t.size, { size: room.sizeSqm })
-                                : null}
-                              {room.view ? ` · ${t.view}: ${room.view}` : null}
-                            </p>
-                            {room.description ? <p>{room.description}</p> : null}
-                            {room.amenities.length > 0 ? (
-                              <ul className="stt-hotel-tags">
-                                {room.amenities.slice(0, 6).map((amenity) => (
-                                  <li key={amenity}>{amenity}</li>
-                                ))}
-                              </ul>
-                            ) : null}
-                            {room.amenities.length > 6 ? (
-                              <details>
-                                <summary>{vi ? "Xem thêm tiện nghi" : "More amenities"}</summary>
-                                <ul className="stt-hotel-tags">
-                                  {room.amenities.slice(6).map((amenity) => <li key={amenity}>{amenity}</li>)}
-                                </ul>
-                              </details>
-                            ) : null}
-                          </div>
-                          <div className="stt-hotel-room-foot">
-                            <div className="stt-hotel-room-rate">
-                              <p className="stt-hotel-room-price">
-                                {room.priceFrom !== null
-                                  ? format(t.priceFrom, {
-                                      price: formatVnd(room.priceFrom, locale),
-                                    })
-                                  : m.hotels.card.contactForQuote}
-                              </p>
-                              <p className="stt-hotel-room-state">
-                                {availabilityLabel(room)}
-                              </p>
-                            </div>
-                            <HotelRoomRequest
-                              href={`${localizePath(locale, "/lien-he")}#tu-van`}
-                              label={t.roomCta}
-                              draft={{
-                                id: detail.id,
-                                slug: detail.slug,
-                                name: detail.name,
-                                priceFrom: detail.priceFrom,
-                                roomId: room.id,
-                                roomName: room.name,
-                              }}
-                            />
-                          </div>
-                        </article>
-                      </TiltCard>
-                    </div>
+                    <article className="stt-hotel-room" key={room.id} data-room-photo={hasRoomPhotos}>
+                      {hasRoomPhotos ? (
+                        <HotelGallery images={room.images} hotelName={room.name} labels={galleryLabels} room />
+                      ) : null}
+                      <div className="stt-hotel-room-body">
+                        <h3>{room.name}</h3>
+                        <p className="stt-hotel-room-meta">
+                          {[
+                            room.sizeSqm ? format(t.size, { size: room.sizeSqm }) : null,
+                            room.bed,
+                            room.view ? `${t.view}: ${room.view}` : null,
+                            format(t.capacity, { count: room.maxOccupancy }),
+                          ].filter(Boolean).join(" · ")}
+                        </p>
+                        {!hasRoomPhotos ? (
+                          <small className="stt-room-photo-empty">
+                            {vi ? "Chưa có ảnh phòng" : "Room photos unavailable"}
+                          </small>
+                        ) : null}
+                        {room.description ? <p>{room.description}</p> : null}
+                        {room.amenities.length > 0 ? (
+                          <ul className="stt-hotel-tags">
+                            {room.amenities.slice(0, 6).map((amenity) => (
+                              <li key={amenity}>{amenity}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                        {room.amenities.length > 6 ? (
+                          <details>
+                            <summary>{vi ? "Xem thêm tiện nghi" : "More amenities"}</summary>
+                            <ul className="stt-hotel-tags">
+                              {room.amenities.slice(6).map((amenity) => <li key={amenity}>{amenity}</li>)}
+                            </ul>
+                          </details>
+                        ) : null}
+                      </div>
+                      <div className="stt-hotel-room-foot">
+                        <div className="stt-hotel-room-rate">
+                          <p className="stt-hotel-room-price">
+                            {room.priceFrom !== null
+                              ? format(t.priceFrom, {
+                                  price: formatVnd(room.priceFrom, locale),
+                                })
+                              : m.hotels.card.contactForQuote}
+                          </p>
+                          <p className="stt-hotel-room-state">
+                            {availabilityLabel(room)}
+                          </p>
+                        </div>
+                        <HotelRoomRequest
+                          href={`${localizePath(locale, "/lien-he")}#tu-van`}
+                          label={t.roomCta}
+                          draft={{
+                            id: detail.id,
+                            slug: detail.slug,
+                            name: detail.name,
+                            priceFrom: detail.priceFrom,
+                            roomId: room.id,
+                            roomName: room.name,
+                          }}
+                        />
+                      </div>
+                    </article>
                   );
                 })}
               </div>
