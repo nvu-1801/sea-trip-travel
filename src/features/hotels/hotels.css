@@ -2608,3 +2608,14 @@
     align-content: center;
   }
 }
+
+.stt-room-figure {
+  min-width: 0;
+  margin: 0;
+}
+
+.stt-room-figure figcaption {
+  margin-block-start: 0.35rem;
+  color: var(--color-foreground-muted);
+  font-size: 0.75rem;
+}

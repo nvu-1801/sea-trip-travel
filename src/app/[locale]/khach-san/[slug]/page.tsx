@@ -41,6 +41,12 @@ export const dynamic = "force-dynamic";
 type PageParams = { locale: string; slug: string };
 type SearchParams = Record<string, string | string[] | undefined>;
 
+const demoRoomPhotos: Partial<Record<string, string>> = {
+  room_aurora_villas_deluxe_huong_bien_1: "/images/hotels/hung-thinh-hotel/2-38116f85.webp",
+  room_aurora_villas_suite_gia_dinh_2: "/images/hotels/hoang-nhan-palace/2-d32183c2.webp",
+  room_aurora_villas_villa_2_phong_ngu_3: "/images/hotels/aurora-villas/2-893c05be.webp",
+};
+
 function first(value: string | string[] | undefined): string {
   const raw = Array.isArray(value) ? value[0] : value;
   return (raw ?? "").trim();
@@ -347,11 +353,19 @@ export default async function HotelDetailPage({
               ) : null}
               <div className="stt-hotel-roomlist">
                 {visibleRooms.map((room) => {
-                  const hasRoomPhotos = room.images.some((image) => image.src);
+                  const roomPhotos = room.images.filter((image) => image.src);
+                  const referencePhoto = roomPhotos.length === 0 ? demoRoomPhotos[room.id] : undefined;
+                  const referenceLabel = vi ? "Ảnh minh họa" : "Illustrative photo";
+                  const photos = referencePhoto
+                    ? [{ src: referencePhoto, alt: referenceLabel, caption: `${referenceLabel} · ${room.name}` }]
+                    : roomPhotos;
                   return (
-                    <article className="stt-hotel-room" key={room.id} data-room-photo={hasRoomPhotos}>
-                      {hasRoomPhotos ? (
-                        <HotelGallery images={room.images} hotelName={room.name} labels={galleryLabels} room />
+                    <article className="stt-hotel-room" key={room.id} data-room-photo={photos.length > 0}>
+                      {photos.length > 0 ? (
+                        <figure className="stt-room-figure">
+                          <HotelGallery images={photos} hotelName={room.name} labels={galleryLabels} room />
+                          {referencePhoto ? <figcaption>{referenceLabel}</figcaption> : null}
+                        </figure>
                       ) : null}
                       <div className="stt-hotel-room-body">
                         <h3>{room.name}</h3>
@@ -363,7 +377,7 @@ export default async function HotelDetailPage({
                             format(t.capacity, { count: room.maxOccupancy }),
                           ].filter(Boolean).join(" · ")}
                         </p>
-                        {!hasRoomPhotos ? (
+                        {photos.length === 0 ? (
                           <small className="stt-room-photo-empty">
                             {vi ? "Chưa có ảnh phòng" : "Room photos unavailable"}
                           </small>
