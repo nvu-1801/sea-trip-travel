@@ -288,6 +288,7 @@ async function main() {
     await page.locator(".stt-hotel-request-room").first().click();
     const assignDialog = page.getByRole("dialog");
     await assignDialog.waitFor({ timeout: 20_000 });
+    check("room confirmation stays above the page", await assignDialog.evaluate((dialog) => dialog.matches(":modal")));
     check(
       "choosing a room confirms it was added to the contact form",
       (await assignDialog.innerText()).includes("Đã gán vào form liên hệ"),

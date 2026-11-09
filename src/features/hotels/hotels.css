@@ -2166,10 +2166,23 @@
 .stt-hotel-assign {
   position: fixed;
   inset: 0;
-  z-index: 120;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 1.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-foreground);
+}
+
+.stt-hotel-assign[open] {
   display: grid;
   place-items: center;
-  padding: 1.25rem;
+}
+
+.stt-hotel-assign::backdrop {
   background: rgb(24 12 20 / 0.55);
   backdrop-filter: blur(3px);
 }

@@ -55,20 +55,15 @@ export function HotelRequestPanel({
   toursHref: string;
 }) {
   const titleId = useId();
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [picked, setPicked] = useState<RequestPanelRoom | null>(null);
   const [assigned, setAssigned] = useState(false);
 
   useEffect(() => {
     if (!assigned) return;
     const previous = document.activeElement as HTMLElement | null;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setAssigned(false);
-    };
-    document.addEventListener("keydown", onKey);
-    dialogRef.current?.focus();
+    dialogRef.current?.showModal();
     return () => {
-      document.removeEventListener("keydown", onKey);
       if (previous?.isConnected) previous.focus();
     };
   }, [assigned]);
@@ -134,21 +129,16 @@ export function HotelRequestPanel({
       <p className="stt-hotel-fine">{labels.note}</p>
 
       {assigned ? (
-        <div
+        <dialog
+          ref={dialogRef}
           className="stt-hotel-assign"
-          role="presentation"
+          aria-labelledby={`${titleId}-assign`}
+          onClose={() => setAssigned(false)}
           onClick={(event) => {
-            if (event.target === event.currentTarget) setAssigned(false);
+            if (event.target === event.currentTarget) event.currentTarget.close();
           }}
         >
-          <div
-            ref={dialogRef}
-            className="stt-hotel-assign-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`${titleId}-assign`}
-            tabIndex={-1}
-          >
+          <div className="stt-hotel-assign-card">
             <p className="stt-hotel-assign-eyebrow">
               {hotel.name}
               {picked ? ` · ${picked.name}` : ""}
@@ -165,7 +155,7 @@ export function HotelRequestPanel({
               </ButtonLink>
             </div>
           </div>
-        </div>
+        </dialog>
       ) : null}
     </aside>
   );
