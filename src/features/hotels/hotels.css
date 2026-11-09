@@ -11,6 +11,7 @@
 
 .stt-hotel-page.stt-hotel-detail {
   width: min(100% - 2 * clamp(1rem, 3vw, 3.5rem), 1360px);
+  padding-block-start: clamp(0.5rem, 1.1vw, 1rem);
 }
 
 .stt-hotel-hero,
@@ -1697,7 +1698,17 @@
 .stt-hotel-hero-lux {
   display: grid;
   gap: clamp(1rem, 2vw, 1.5rem);
-  padding-block-start: clamp(0.75rem, 2vw, 1.5rem);
+
+}
+
+.stt-hotel-hero-lux > nav .container-page {
+  width: 100%;
+  max-width: none;
+  padding-inline: 0;
+}
+
+.stt-hotel-hero-lux > nav ol {
+  padding-block: 0;
 }
 
 .stt-hotel-hero-lux-top {
@@ -2636,4 +2647,13 @@
 
 .stt-room-facts svg {
   flex: none;
+}
+
+.stt-hotel-map {
+  display: block;
+  width: 100%;
+  height: clamp(200px, 24vw, 300px);
+  margin-block: 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
 }

@@ -349,7 +349,7 @@ export function HotelEditor({
                 onChange={(event) => set("address", event.target.value)}
               />
             </Field>
-            <Field label="Link bản đồ (https)" hint="Chỉ nhận liên kết https, không nhúng iframe.">
+            <Field label="Link bản đồ (https)" hint="Dán link HTTPS. Để hiện bản đồ xem trước, có thể dùng URL trong mã nhúng Google Maps.">
               <input
                 value={text(draft.mapUrl)}
                 maxLength={500}
@@ -1065,7 +1065,7 @@ function RoomRow({
             <span className="adm-field-label">Hiển thị dưới ảnh phòng</span>
             <HotelRoomFacts
               adults={draft.capacityAdults}
-              children={draft.capacityChildren}
+              childCount={draft.capacityChildren}
               bed={draft.bed}
             />
           </div>

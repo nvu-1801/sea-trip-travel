@@ -2,18 +2,18 @@ import { BedIcon, UsersIcon } from "@/components/ui/icons";
 
 export function HotelRoomFacts({
   adults,
-  children,
+  childCount,
   bed,
   vietnamese = true,
 }: {
   adults: number;
-  children: number;
+  childCount: number;
   bed?: string;
   vietnamese?: boolean;
 }) {
   const guests = vietnamese
-    ? `${adults} người lớn · ${children} trẻ em`
-    : `${adults} ${adults === 1 ? "adult" : "adults"} · ${children} ${children === 1 ? "child" : "children"}`;
+    ? `${adults} người lớn · ${childCount} trẻ em`
+    : `${adults} ${adults === 1 ? "adult" : "adults"} · ${childCount} ${childCount === 1 ? "child" : "children"}`;
 
   return (
     <ul className="stt-room-facts">

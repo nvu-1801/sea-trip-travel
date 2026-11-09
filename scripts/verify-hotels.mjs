@@ -225,6 +225,9 @@ async function main() {
       "rooms without photos show a dedicated placeholder",
       (await page.locator(".stt-room-photo-empty").count()) >= 1,
     );
+    const mapsHref = await page.getByRole("link", { name: "Mở trong Maps", exact: true }).getAttribute("href");
+    check("hotel location links to Maps even without an admin URL",
+      mapsHref?.startsWith("https://www.google.com/maps/search/?api=1&query="));
     const galleryTile = page.locator(".stt-photo-gallery .stt-photo-tile").first();
     await galleryTile.click();
     const gallery = page.locator("dialog.stt-hotel-lightbox[open]");

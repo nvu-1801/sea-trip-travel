@@ -116,6 +116,18 @@ export default async function HotelDetailPage({
   const heroImage = detail.images[0] ?? detail.image;
   const galleryImages = detail.images.length ? detail.images : heroImage ? [heroImage] : [];
   const vi = locale === "vi";
+  const mapQuery = detail.address ? `${detail.name}, ${detail.address}` : detail.name;
+  const savedEmbed = detail.mapUrl?.startsWith("https://www.google.com/maps/embed?");
+  const mapsHref = detail.mapUrl && !savedEmbed
+    ? detail.mapUrl
+    : `https://www.google.com/maps/search/?${new URLSearchParams({ api: "1", query: mapQuery })}`;
+  const embedKey = process.env.GOOGLE_MAPS_EMBED_KEY?.trim();
+  const mapEmbed = savedEmbed
+    ? detail.mapUrl
+    : embedKey
+      ? `https://www.google.com/maps/embed/v1/place?${new URLSearchParams({ key: embedKey, q: mapQuery })}`
+      : null;
+  const mapLabel = vi ? "Mở trong Maps" : "Open in Maps";
   const guestCount = (value: string, min: number, max: number) => {
     const count = Number(value);
     return /^\d+$/.test(value) && count >= min && count <= max ? count : min;
@@ -212,7 +224,7 @@ export default async function HotelDetailPage({
             <div className="stt-hotel-hero-lux-actions">
               <ButtonLink href="#hang-phong">{t.roomsCta}</ButtonLink>
               {detail.mapUrl ? (
-                <ButtonLink href={detail.mapUrl} variant="secondary" external>
+                <ButtonLink href={mapsHref} variant="secondary" external>
                   {t.viewMap}
                 </ButtonLink>
               ) : null}
@@ -283,16 +295,19 @@ export default async function HotelDetailPage({
                 <SectionHeading title={t.location} />
                 <div className="stt-hotel-location">
                   <p className="stt-hotel-location-address">{detail.address}</p>
-                  {detail.mapUrl ? (
-                    <a
-                      className="stt-btn-secondary"
-                      href={detail.mapUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {t.viewMap}
-                    </a>
+                  {mapEmbed ? (
+                    <iframe
+                      className="stt-hotel-map"
+                      title={`${t.location} · ${detail.name}`}
+                      src={mapEmbed}
+                      loading="lazy"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      allowFullScreen
+                    />
                   ) : null}
+                  <ButtonLink href={mapsHref} variant="secondary" size="sm" external>
+                    {mapLabel}
+                  </ButtonLink>
                 </div>
               </Reveal>
             </section>
@@ -363,7 +378,7 @@ export default async function HotelDetailPage({
                   const facts = (
                     <HotelRoomFacts
                       adults={room.capacityAdults}
-                      children={room.capacityChildren}
+                      childCount={room.capacityChildren}
                       bed={room.bed ?? undefined}
                       vietnamese={vi}
                     />
