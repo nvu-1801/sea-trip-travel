@@ -2529,3 +2529,73 @@
     inset-inline: auto 0;
   }
 }
+
+.stt-room-photo-empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.45rem;
+  min-height: 6rem;
+  padding: 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  background: var(--color-primary-soft);
+  color: var(--color-foreground-muted);
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 639px) {
+  .stt-hotel-filters-head,
+  .stt-hotel-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .stt-hotel-field--search,
+  .stt-hotel-filters-head .stt-hotel-search {
+    grid-column: 1 / -1;
+  }
+
+  .stt-hotel-field {
+    min-width: 0;
+  }
+
+  .stt-hotel-filters:has([aria-haspopup="dialog"][aria-expanded="true"]) {
+    position: relative;
+    z-index: 3;
+  }
+
+  .stt-hotel-filters-head > :nth-child(3) [role="dialog"] {
+    inset-inline: auto 0;
+  }
+
+  :is(.stt-room-filters, .stt-hotel-filters) button[aria-haspopup="dialog"] {
+    gap: 0.4rem;
+    padding-inline: 0.5rem;
+  }
+
+  :is(.stt-room-filters, .stt-hotel-filters) button[aria-haspopup="dialog"] > svg:last-child {
+    display: none;
+  }
+
+  :is(.stt-room-filters, .stt-hotel-filters) button[aria-haspopup="dialog"] + [role="dialog"] {
+    max-width: calc(100vw - 4.25rem);
+    padding-inline: 0.45rem;
+  }
+
+  :is(.stt-room-filters, .stt-hotel-filters) :is(input:not([type="checkbox"]), select) {
+    font-size: 16px;
+  }
+
+  .stt-hotel-card-foot {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .stt-hotel-card-cta,
+  .stt-hotel-room-cta {
+    min-height: 44px;
+    align-content: center;
+  }
+}

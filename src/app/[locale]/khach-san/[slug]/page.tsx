@@ -357,15 +357,23 @@ export default async function HotelDetailPage({
                       <TiltCard max={2.5}>
                         <article className="stt-hotel-room">
                           <div className="stt-room-photo">
-                            <HotelGallery
-                              images={hasRoomPhotos ? room.images : heroImage ? [heroImage] : []}
-                              hotelName={hasRoomPhotos ? room.name : detail.name}
-                              labels={galleryLabels}
-                              room
-                            />
-                            {!hasRoomPhotos && heroImage?.src ? (
-                              <small>{vi ? "Ảnh khách sạn" : "Hotel photo"}</small>
-                            ) : null}
+                            {hasRoomPhotos ? (
+                              <HotelGallery
+                                images={room.images}
+                                hotelName={room.name}
+                                labels={galleryLabels}
+                                room
+                              />
+                            ) : (
+                              <div className="stt-room-photo-empty">
+                                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                                  <rect x="3" y="4" width="18" height="16" rx="3" />
+                                  <circle cx="9" cy="9" r="1.5" />
+                                  <path d="m4 17 4-4 3 3 4-5 5 6" />
+                                </svg>
+                                <span>{vi ? "Chưa có ảnh phòng" : "Room photos unavailable"}</span>
+                              </div>
+                            )}
                             <p>{format(t.capacity, { count: room.maxOccupancy })}</p>
                             {room.bed ? <p>{t.bed} · {room.bed}</p> : null}
                           </div>
@@ -487,7 +495,7 @@ export default async function HotelDetailPage({
               id: room.id,
               name: room.name,
               priceFrom: room.priceFrom,
-              image: room.images[0]?.src ?? heroImage?.src,
+              image: room.images.find((image) => image.src)?.src,
             }))}
             contactHref={`${localizePath(locale, "/lien-he")}#tu-van`}
             toursHref={localizePath(locale, "/tim-tour")}

@@ -221,6 +221,10 @@ async function main() {
       "detail shows the room list",
       (await page.locator(".stt-hotel-room").count()) >= 2,
     );
+    check(
+      "rooms without photos show a dedicated placeholder",
+      (await page.locator(".stt-room-photo-empty").count()) >= 1,
+    );
     const galleryTile = page.locator(".stt-photo-gallery .stt-photo-tile").first();
     await galleryTile.click();
     const gallery = page.locator("dialog.stt-hotel-lightbox[open]");
@@ -363,6 +367,16 @@ async function main() {
     await mobilePage.goto(`${BASE}/khach-san`, { waitUntil: "load" });
     const listOverflow = await overflowOf(mobilePage);
     check("mobile list has no horizontal scroll", listOverflow <= 0, `${listOverflow}px`);
+    const mobileCatalogDates = mobilePage.locator(".stt-hotel-filters-head button[aria-haspopup=dialog]");
+    for (const trigger of await mobileCatalogDates.all()) {
+      await trigger.tap();
+      const calendar = mobilePage.locator(".stt-hotel-filters-head [role=dialog]");
+      const bounds = await calendar.boundingBox();
+      check("mobile catalogue calendar fits within the viewport",
+        Boolean(bounds && bounds.x >= 0 && bounds.x + bounds.width <= 390));
+      await mobilePage.keyboard.press("Escape");
+      await calendar.waitFor({ state: "hidden" });
+    }
     await mobilePage.screenshot({
       path: path.join(SHOT_DIR, "list-390.png"),
       fullPage: true,
