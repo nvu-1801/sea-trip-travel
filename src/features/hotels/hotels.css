@@ -2444,6 +2444,11 @@
   background: color-mix(in srgb, var(--color-surface) 88%, var(--color-primary-soft));
 }
 
+.stt-room-filters:has([aria-expanded="true"][aria-haspopup="dialog"]) {
+  position: relative;
+  z-index: 3;
+}
+
 .stt-room-filter-field {
   display: grid;
   gap: 0.4rem;

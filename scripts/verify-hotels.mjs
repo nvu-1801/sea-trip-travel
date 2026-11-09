@@ -377,6 +377,12 @@ async function main() {
       path: path.join(SHOT_DIR, "detail-390.png"),
       fullPage: true,
     });
+    const mobileCheckIn = mobilePage.locator(".stt-room-filter-date button[aria-haspopup]").first();
+    await mobileCheckIn.tap();
+    const mobileCalendar = mobilePage.locator(".stt-room-filter-date [role=dialog]");
+    await mobileCalendar.getByRole("button", { name: "Hôm nay", exact: true }).tap();
+    const selectedCheckIn = await mobilePage.locator('input[name="checkIn"]').inputValue();
+    check("mobile check-in calendar accepts a tap", /^\d{4}-\d{2}-\d{2}$/.test(selectedCheckIn) && selectedCheckIn !== checkIn);
     await mobile.close();
 
     /* ----------------------------------------------------------------- admin */
