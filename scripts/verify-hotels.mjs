@@ -221,6 +221,32 @@ async function main() {
       "detail shows the room list",
       (await page.locator(".stt-hotel-room").count()) >= 2,
     );
+    const galleryTile = page.locator(".stt-photo-gallery .stt-photo-tile").first();
+    await galleryTile.click();
+    const gallery = page.locator("dialog.stt-hotel-lightbox[open]");
+    await gallery.waitFor();
+    check("the hotel photo opens in a modal", await gallery.isVisible());
+    await page.keyboard.press("Escape");
+    await gallery.waitFor({ state: "hidden" });
+    check(
+      "closing the gallery restores focus to the photo",
+      await galleryTile.evaluate((tile) => tile === document.activeElement),
+    );
+    await galleryTile.click();
+    await gallery.waitFor();
+    await gallery.locator(".stt-hotel-lightbox-row > img").click();
+    check("clicking the photo keeps the gallery open", await gallery.isVisible());
+    await page.mouse.click(5, 5);
+    await gallery.waitFor({ state: "hidden" });
+    check("clicking the backdrop closes the gallery", !(await gallery.isVisible()));
+
+    const dateTrigger = page.locator(".stt-room-filter-date button[aria-haspopup]").first();
+    await dateTrigger.click();
+    const calendar = page.locator(".stt-room-filter-date [role=dialog]");
+    check("room filter opens the themed calendar", await calendar.isVisible());
+    await page.keyboard.press("Escape");
+    await calendar.waitFor({ state: "hidden" });
+
     const availability = await page
       .locator(".stt-hotel-room-state")
       .allInnerTexts();

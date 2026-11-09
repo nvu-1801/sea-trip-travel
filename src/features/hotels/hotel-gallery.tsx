@@ -4,169 +4,118 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { ImageAsset } from "@/domain/common";
 
-/**
- * Photo strip + lightbox for a hotel.
- *
- * The first photo already lives in the hero, so the strip starts at the second
- * one and the lightbox still opens on the full set. Opening is an explicit user
- * action, focus moves inside a native `<dialog>`, arrow keys and Escape work,
- * and focus returns to the trigger on close. No autoplay and no motion beyond a
- * fade, so reduced-motion users lose nothing.
- */
 export function HotelGallery({
   images,
   hotelName,
   labels,
+  room = false,
 }: {
   images: ImageAsset[];
   hotelName: string;
-  labels: { open: string; close: string; counter: string; all: string };
+  labels: { open: string; close: string; all: string; previous: string; next: string };
+  room?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
+  const [preview, setPreview] = useState(0);
+  const [open, setOpen] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const photos = images.filter((image) => image.src);
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (open && dialog && !dialog.open) dialog.showModal();
-    if (!open && dialog?.open) dialog.close();
+    if (open && !dialog.current?.open) dialog.current?.showModal();
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "ArrowRight")
-        setIndex((current) => (current + 1) % images.length);
-      if (event.key === "ArrowLeft")
-        setIndex((current) => (current - 1 + images.length) % images.length);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [images.length, open]);
+  if (!photos.length) return null;
 
-  if (images.length === 0) return null;
-  const current = images[Math.min(index, images.length - 1)];
-  const strip = images.slice(1, 4);
+  const count = photos.length;
+  const current = photos[index] ?? photos[0];
+  const offset = (position: number, direction: number) =>
+    (position + direction + count) % count;
+
+  function show(position: number, button: HTMLButtonElement) {
+    trigger.current = button;
+    setIndex(position);
+    setOpen(true);
+  }
 
   return (
-    <div className="stt-hotel-gallery">
-      <div className="stt-hotel-gallery-strip">
-        {strip.map((image, thumbIndex) => (
+    <div className={room ? "stt-photo-room" : "stt-photo-gallery"}>
+      <div className="stt-photo-grid" data-count={room ? 1 : Math.min(count, 5)}>
+        {(room ? [photos[preview] ?? photos[0]] : photos.slice(0, 5)).map((image, i) => (
           <button
-            key={`${image.src}-${thumbIndex}`}
+            className="stt-photo-tile"
+            key={i}
             type="button"
-            className="stt-hotel-gallery-cell"
-            data-hotel-depth={((thumbIndex % 3) + 1) as 1 | 2 | 3}
-            onClick={() => {
-              triggerRef.current = null;
-              setIndex(thumbIndex + 1);
-              setOpen(true);
-            }}
-            aria-label={`${hotelName} — ${labels.counter
-              .replace("{index}", String(thumbIndex + 2))
-              .replace("{total}", String(images.length))}`}
+            aria-label={`${labels.open} · ${hotelName} · ${(room ? preview : i) + 1}/${count}`}
+            onClick={(event) => show(room ? preview : i, event.currentTarget)}
           >
             <Image
-              src={image.src ?? "/opengraph-image.png"}
-              alt=""
-              width={640}
-              height={420}
-              sizes="(max-width: 768px) 50vw, 320px"
+              src={image.src!}
+              alt={image.alt}
+              fill
+              sizes={room ? "(max-width: 640px) 100vw, 320px" : "(max-width: 640px) 100vw, 50vw"}
+              preload={!room && i === 0}
             />
+            {!room && i === 4 && count > 5 ? <span>+{count - 5}</span> : null}
           </button>
         ))}
-
-        {strip.length > 0 ? (
-          <button
-            ref={triggerRef}
-            type="button"
-            className="stt-hotel-gallery-open"
-            onClick={() => {
-              setIndex(0);
-              setOpen(true);
-            }}
-          >
-            {images.length > 1 ? labels.all : labels.open}
-          </button>
-        ) : null}
       </div>
-
-      {strip.length === 0 ? (
-        <button
-          ref={triggerRef}
-          type="button"
-          className="stt-hotel-gallery-open stt-hotel-gallery-open--solo"
-          onClick={() => {
-            setIndex(0);
-            setOpen(true);
-          }}
-        >
-          {labels.open}
+      {!room ? (
+        <button className="stt-photo-all" type="button" onClick={(event) => show(0, event.currentTarget)}>
+          {labels.all}
         </button>
+      ) : count > 1 ? (
+        <div className="stt-photo-controls">
+          <button type="button" aria-label={labels.previous} onClick={() => setPreview(offset(preview, -1))}>‹</button>
+          <span aria-live="polite">{preview + 1}/{count}</span>
+          <button type="button" aria-label={labels.next} onClick={() => setPreview(offset(preview, 1))}>›</button>
+        </div>
       ) : null}
 
       <dialog
-        ref={dialogRef}
+        ref={dialog}
         className="stt-hotel-lightbox"
         aria-label={hotelName}
-        onClick={(event) => {
-          // Click on the shell - not on the photo, a button or the caption.
-          if ((event.target as HTMLElement).dataset.close === "true")
-            setOpen(false);
-        }}
         onClose={() => {
           setOpen(false);
-          triggerRef.current?.focus();
+          trigger.current?.focus();
         }}
-        onCancel={() => setOpen(false)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+            event.preventDefault();
+            setIndex(offset(index, event.key === "ArrowLeft" ? -1 : 1));
+          }
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) dialog.current?.close();
+        }}
       >
-        <div className="stt-hotel-lightbox-inner" data-close="true">
-          <div className="stt-hotel-lightbox-bar">
-            <button
-              type="button"
-              className="stt-hotel-lightbox-close"
-              onClick={() => setOpen(false)}
-            >
+        {open ? (
+          <div className="stt-photo-viewer">
+            <button className="stt-hotel-lightbox-close" type="button" onClick={() => dialog.current?.close()}>
               {labels.close}
             </button>
+            <div className="stt-hotel-lightbox-row">
+              <Image src={current.src!} alt={current.alt} width={1400} height={900} sizes="90vw" />
+              {count > 1 ? (
+                <>
+                  <button className="stt-hotel-lightbox-nav" type="button" aria-label={labels.previous} onClick={() => setIndex(offset(index, -1))}>‹</button>
+                  <button className="stt-hotel-lightbox-nav" type="button" aria-label={labels.next} onClick={() => setIndex(offset(index, 1))}>›</button>
+                </>
+              ) : null}
+            </div>
+            <p aria-live="polite">{current.caption || hotelName} · {index + 1}/{count}</p>
+            {count > 1 ? (
+              <div className="stt-photo-thumbs">
+                {photos.map((image, i) => (
+                  <button key={i} type="button" aria-label={`${hotelName} · ${i + 1}/${count}`} aria-current={i === index} onClick={() => setIndex(i)}>
+                    <Image src={image.src!} alt="" width={80} height={54} />
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
-          <div className="stt-hotel-lightbox-row">
-            <button
-              type="button"
-              className="stt-hotel-lightbox-nav"
-              aria-label="‹"
-              onClick={() =>
-                setIndex(
-                  (current) => (current - 1 + images.length) % images.length,
-                )
-              }
-            >
-              ‹
-            </button>
-            <figure className="stt-hotel-lightbox-stage">
-              <Image
-                src={current.src ?? "/opengraph-image.png"}
-                alt={current.alt}
-                width={1400}
-                height={900}
-              />
-            </figure>
-            <button
-              type="button"
-              className="stt-hotel-lightbox-nav"
-              aria-label="›"
-              onClick={() =>
-                setIndex((current) => (current + 1) % images.length)
-              }
-            >
-              ›
-            </button>
-          </div>
-          {current.caption ? (
-            <p className="stt-hotel-lightbox-caption">{current.caption}</p>
-          ) : null}
-        </div>
+        ) : null}
       </dialog>
     </div>
   );
