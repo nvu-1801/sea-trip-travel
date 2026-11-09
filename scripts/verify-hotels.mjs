@@ -442,6 +442,8 @@ async function main() {
 
     await page.locator(".stt-hotel-tab", { hasText: "Hạng phòng" }).click();
     await page.getByRole("button", { name: "Sửa hạng phòng", exact: true }).first().click();
+    check("Studio previews the room facts shown below its photos",
+      (await page.locator(".stt-hotel-room-facts-preview").innerText()).includes("người lớn"));
     const dropzone = page.getByRole("button", { name: /kéo thả.*thêm ảnh hạng phòng/i });
     check("room uploader shows the recommended dimensions",
       await page.getByText(/1600 × 1200 px \(4:3\)/).first().isVisible());

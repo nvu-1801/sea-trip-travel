@@ -2614,8 +2614,26 @@
   margin: 0;
 }
 
-.stt-room-figure figcaption {
-  margin-block-start: 0.35rem;
+.stt-photo-room .stt-photo-tile {
+  background: transparent;
+}
+
+.stt-room-facts {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0;
+  margin: 0.6rem 0 0;
+  list-style: none;
   color: var(--color-foreground-muted);
-  font-size: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.stt-room-facts li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stt-room-facts svg {
+  flex: none;
 }

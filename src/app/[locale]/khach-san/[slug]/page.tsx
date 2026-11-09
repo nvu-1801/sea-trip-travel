@@ -1,3 +1,4 @@
+import { HotelRoomFacts } from "@/features/hotels/hotel-room-facts";
 import { HotelRoomDate } from "@/features/hotels/hotel-room-date";
 import { Input } from "@/components/ui/form-controls";
 import { MAX_NIGHTS_PER_STAY, stayDates } from "@/domain/hotel-pricing";
@@ -355,28 +356,36 @@ export default async function HotelDetailPage({
                 {visibleRooms.map((room) => {
                   const roomPhotos = room.images.filter((image) => image.src);
                   const referencePhoto = roomPhotos.length === 0 ? demoRoomPhotos[room.id] : undefined;
-                  const referenceLabel = vi ? "Ảnh minh họa" : "Illustrative photo";
+
                   const photos = referencePhoto
-                    ? [{ src: referencePhoto, alt: referenceLabel, caption: `${referenceLabel} · ${room.name}` }]
+                    ? [{ src: referencePhoto, alt: vi ? "Ảnh phòng tham khảo" : "Reference room photo" }]
                     : roomPhotos;
+                  const facts = (
+                    <HotelRoomFacts
+                      adults={room.capacityAdults}
+                      children={room.capacityChildren}
+                      bed={room.bed ?? undefined}
+                      vietnamese={vi}
+                    />
+                  );
                   return (
                     <article className="stt-hotel-room" key={room.id} data-room-photo={photos.length > 0}>
                       {photos.length > 0 ? (
-                        <figure className="stt-room-figure">
+                        <div className="stt-room-figure">
                           <HotelGallery images={photos} hotelName={room.name} labels={galleryLabels} room />
-                          {referencePhoto ? <figcaption>{referenceLabel}</figcaption> : null}
-                        </figure>
+                          {facts}
+                        </div>
                       ) : null}
                       <div className="stt-hotel-room-body">
                         <h3>{room.name}</h3>
                         <p className="stt-hotel-room-meta">
                           {[
                             room.sizeSqm ? format(t.size, { size: room.sizeSqm }) : null,
-                            room.bed,
                             room.view ? `${t.view}: ${room.view}` : null,
                             format(t.capacity, { count: room.maxOccupancy }),
                           ].filter(Boolean).join(" · ")}
                         </p>
+                        {photos.length === 0 ? facts : null}
                         {photos.length === 0 ? (
                           <small className="stt-room-photo-empty">
                             {vi ? "Chưa có ảnh phòng" : "Room photos unavailable"}

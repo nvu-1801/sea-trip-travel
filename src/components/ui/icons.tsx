@@ -201,3 +201,9 @@ export const ArrowUpIcon = (p: IconProps) => (
     <path d="m6 11 6-6 6 6" />
   </Svg>
 );
+
+export const BedIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M3 18v-7m18 7v-7M3 15h18M5 11V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v4M3 11h18M12 6v5" />
+  </Svg>
+);

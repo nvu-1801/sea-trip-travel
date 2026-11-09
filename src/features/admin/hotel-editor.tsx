@@ -5,6 +5,7 @@ import { MAX_ROOM_IMAGES, type HotelRoom } from "@/domain/hotel-room";
 import { LODGING_TYPES, LODGING_LABELS } from "@/domain/hotel";
 import type { TourLink } from "@/server/hotels/store";
 import type { TourRelation } from "@/domain/hotel-pricing";
+import { HotelRoomFacts } from "@/features/hotels/hotel-room-facts";
 import { HotelCalendar } from "./hotel-calendar";
 import {
   ChipsField,
@@ -1060,6 +1061,14 @@ function RoomRow({
             upload={uploadRoomPhoto}
             onChange={(value) => set("images", value)}
           />
+          <div className="stt-hotel-room-facts-preview">
+            <span className="adm-field-label">Hiển thị dưới ảnh phòng</span>
+            <HotelRoomFacts
+              adults={draft.capacityAdults}
+              children={draft.capacityChildren}
+              bed={draft.bed}
+            />
+          </div>
           <div className="stt-hotel-actions">
             <button
               type="button"

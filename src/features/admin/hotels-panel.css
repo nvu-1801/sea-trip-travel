@@ -1414,3 +1414,17 @@
     line-height: 1.25;
   }
 }
+
+.stt-hotel-room-facts-preview .stt-room-facts {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stt-hotel-room-facts-preview li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
