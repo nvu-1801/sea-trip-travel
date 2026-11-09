@@ -7,7 +7,6 @@ import type { Metadata, Viewport } from "next";
 import type { CSSProperties } from "react";
 import {
   Be_Vietnam_Pro,
-  Cormorant_Garamond,
   Lora,
   Manrope,
 } from "next/font/google";
@@ -50,18 +49,10 @@ const beVietnamPro = Be_Vietnam_Pro({
  * Vietnamese uses Lora: a warm, low-contrast serif with full Vietnamese
  * diacritic support and a gentler rhythm than the previous Fraunces. English
  * uses Cormorant Garamond, which is more calligraphic and editorial. Both are
- * self-hosted by `next/font` (no layout shift, no request to Google at runtime).
+ * served from the site, with Cormorant supplied by Fontsource.
  */
 const lora = Lora({
   variable: "--font-lora",
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
-
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
@@ -149,7 +140,7 @@ export default async function LocaleLayout({
       data-theme={activeTheme.id}
       style={activeTheme.vars as CSSProperties}
       lang={localeMeta[locale].htmlLang}
-      className={`${beVietnamPro.variable} ${lora.variable} ${cormorant.variable} ${manrope.variable} h-full antialiased`}
+      className={`${beVietnamPro.variable} ${lora.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <noscript>
