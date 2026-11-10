@@ -137,8 +137,14 @@ describe("migration", () => {
 
 describe("hotel and room persistence", () => {
   it("creates a hotel as a draft, then publishes it", () => {
-    const created = save("hotels", hotelRecord(), 0, "save");
+    const draft = hotelRecord({ province: "", address: "", summary: "" });
+    const created = save("hotels", draft, 0, "save");
     assert.equal(created.revision, 1);
+    assert.equal(list("hotels")[0].data.province, "");
+    assert.throws(
+      () => save("hotels", { ...draft, province: " " }, 1, "publish"),
+      /Nhập tỉnh\/thành phố/,
+    );
     assert.deepEqual(publishedIds("hotels"), []);
     save("hotels", hotelRecord(), 1, "publish");
     assert.deepEqual(publishedIds("hotels"), ["hotel_demo"]);
