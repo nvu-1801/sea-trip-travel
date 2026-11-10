@@ -7,6 +7,7 @@ import { LODGING_LABELS, type LodgingType } from "@/domain/hotel";
 import { HotelEditor, type HotelRoomRow, type HotelRow } from "./hotel-editor";
 import { text } from "./hotel-form";
 import { AdminIcon } from "./admin-icons";
+import { ConfirmModal } from "./notify";
 import "./hotels-panel.css";
 
 /**
@@ -47,6 +48,8 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
   const [destinations, setDestinations] = useState<{ value: string; label: string }[]>([]);
   const [tours, setTours] = useState<{ value: string; label: string }[]>([]);
   const [editing, setEditing] = useState<string | null>(null);
+  const [trashOpen, setTrashOpen] = useState(false);
+  const [purging, setPurging] = useState<HotelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ kind: "ok" | "error"; message: string } | null>(
@@ -285,6 +288,7 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
   const filtered = useMemo(() => {
     const needle = filter.q.trim().toLocaleLowerCase("vi");
     return hotels.filter((row) => {
+      if (row.state === "deleted") return false;
       const name = text(row.data.name).toLocaleLowerCase("vi");
       const province = text(row.data.province);
       const mode = text(row.data.roomMode);
@@ -323,7 +327,77 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
     (row) => row.state !== "deleted" || featuredOrderOf(row) > 0,
   );
 
-  const editingRow = hotels.find((row) => row.id === editing) ?? null;
+  const archived = hotels.filter((row) => row.state === "deleted");
+  const editingRow = hotels.find((row) => row.id === editing && row.state !== "deleted") ?? null;
+
+  async function emptyTrash() {
+    setBusy(true);
+    try {
+      await api("/api/admin/content/hotels", {
+        method: "DELETE",
+        body: JSON.stringify(purging.map(({ id, revision }) => ({ id, revision }))),
+      });
+      await load();
+      setStatus({ kind: "ok", message: `Đã xóa vĩnh viễn ${purging.length} khách sạn.` });
+    } catch (cause) {
+      await load();
+      setStatus({
+        kind: "error",
+        message: cause instanceof Error ? cause.message : "Không dọn được thùng rác",
+      });
+    } finally {
+      setPurging([]);
+      setBusy(false);
+    }
+  }
+
+  if (trashOpen)
+    return (
+      <section className="stt-hotel-panel" aria-label="Thùng rác khách sạn">
+        <div className="stt-hotel-actions">
+          <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => setTrashOpen(false)}>
+            Về danh sách khách sạn
+          </button>
+          <button type="button" className="stt-hotel-action stt-hotel-action--danger" disabled={busy || loading || !archived.length} onClick={() => setPurging(archived)}>
+            <AdminIcon name="trash" size={14} /> Dọn sạch thùng rác
+          </button>
+        </div>
+        <h2>Thùng rác khách sạn</h2>
+        <p>Khách sạn sẽ tự động bị xóa vĩnh viễn sau 60 ngày kể từ khi lưu trữ.</p>
+        {status && <p role="status" className={status.kind === "error" ? "adm-field-error" : "adm-notice adm-notice--ok"}>{status.message}</p>}
+        {loading ? <p>Đang tải thùng rác…</p> : !archived.length ? <p>Thùng rác đang trống.</p> : (
+          <ul className="stt-hotel-trash-list">
+            {archived.map((row) => (
+              <li key={row.id}>
+                <div>
+                  <strong>{text(row.data.name)}</strong>
+                  {row.updated_at && <small>Lưu trữ ngày {new Date(row.updated_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</small>}
+                </div>
+                <div className="stt-hotel-actions">
+                  <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => void changeState(row, "restore")}>
+                    <AdminIcon name="restore" size={14} /> Khôi phục
+                  </button>
+                  <button type="button" className="stt-hotel-action stt-hotel-action--danger" disabled={busy} onClick={() => setPurging([row])}>
+                    Xóa vĩnh viễn
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <ConfirmModal
+          request={purging.length ? {
+            title: purging.length === 1 ? `Xóa vĩnh viễn ${text(purging[0].data.name)}?` : `Xóa vĩnh viễn ${purging.length} khách sạn?`,
+            body: "Hạng phòng, giá, lịch phòng và liên kết tour của khách sạn cũng sẽ bị xóa. Thao tác này không thể hoàn tác.",
+            confirmLabel: "Xóa vĩnh viễn",
+            danger: true,
+          } : null}
+          busy={busy}
+          onCancel={() => { if (!busy) setPurging([]); }}
+          onConfirm={() => void emptyTrash()}
+        />
+      </section>
+    );
 
   if (editingRow)
     return (
@@ -344,6 +418,15 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
 
   return (
     <div className="stt-hotel-panel">
+      <div className="stt-hotel-actions">
+        <button type="button" className="stt-hotel-action" disabled={busy || loading} onClick={() => {
+          setStatus(null);
+          setTrashOpen(true);
+          void load();
+        }}>
+          <AdminIcon name="trash" size={14} /> Thùng rác ({archived.length})
+        </button>
+      </div>
       {status ? (
         <p
           className={
@@ -621,7 +704,6 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
               <option value="">Tất cả trạng thái</option>
               <option value="published">Đang hiển thị</option>
               <option value="draft">Bản nháp</option>
-              <option value="deleted">Đã lưu trữ</option>
             </select>
           </label>
           <label className="stt-hotel-filter">
@@ -797,46 +879,33 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
                               <AdminIcon name="eye" size={13} /> Xem trước
                             </Link>
                           ) : null}
-                          {row.state === "deleted" ? (
+                          {row.state === "published" ? (
                             <button
                               type="button"
                               className="stt-hotel-action"
                               disabled={busy}
-                              onClick={() => void changeState(row, "restore")}
+                              onClick={() => void changeState(row, "unpublish")}
                             >
-                              <AdminIcon name="restore" size={13} /> Khôi phục
+                              Ẩn
                             </button>
                           ) : (
-                            <>
-                              {row.state === "published" ? (
-                                <button
-                                  type="button"
-                                  className="stt-hotel-action"
-                                  disabled={busy}
-                                  onClick={() => void changeState(row, "unpublish")}
-                                >
-                                  Ẩn
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="stt-hotel-action"
-                                  disabled={busy}
-                                  onClick={() => void changeState(row, "publish")}
-                                >
-                                  Xuất bản
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                className="stt-hotel-action stt-hotel-action--danger"
-                                disabled={busy}
-                                onClick={() => void changeState(row, "delete")}
-                              >
-                                <AdminIcon name="trash" size={13} /> Lưu trữ
-                              </button>
-                            </>
+                            <button
+                              type="button"
+                              className="stt-hotel-action"
+                              disabled={busy}
+                              onClick={() => void changeState(row, "publish")}
+                            >
+                              Xuất bản
+                            </button>
                           )}
+                          <button
+                            type="button"
+                            className="stt-hotel-action stt-hotel-action--danger"
+                            disabled={busy}
+                            onClick={() => void changeState(row, "delete")}
+                          >
+                            <AdminIcon name="trash" size={13} /> Lưu trữ
+                          </button>
                         </div>
                       </td>
                     </tr>

@@ -1428,3 +1428,56 @@
   align-items: center;
   gap: 0.5rem;
 }
+.stt-hotel-localization {
+  border: 1px solid var(--adm-border, #d8e2e7);
+  border-radius: 12px;
+}
+
+.stt-hotel-localization > summary {
+  cursor: pointer;
+  padding: 14px 16px;
+  font-weight: 700;
+}
+
+.stt-hotel-localization-body {
+  display: grid;
+  gap: 16px;
+  padding: 0 16px 16px;
+}
+
+.stt-hotel-localization fieldset {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--adm-border, #d8e2e7);
+  border-radius: 8px;
+}
+
+.stt-hotel-localization legend {
+  padding-inline: 6px;
+  font-weight: 600;
+}
+
+.stt-hotel-trash-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stt-hotel-trash-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--adm-border, #d8e2e7);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.stt-hotel-trash-list small {
+  display: block;
+}
