@@ -5,7 +5,7 @@ import { tourRecordSchema } from "@/domain/tour-cms";
 import { collectTourBusinessIssues } from "@/domain/tour-rules";
 import { defaultThemeRecord, themeRecordSchema } from "@/domain/theme";
 import { travelArticleSchema } from "@/domain/article";
-import { hotelSchema } from "@/domain/hotel";
+import { hotelDraftSchema, hotelSchema } from "@/domain/hotel";
 import { hotelRoomSchema } from "@/domain/hotel-room";
 import {
   destinationSchema,
@@ -1039,7 +1039,11 @@ function saveRecord(
       };
     }
   }
-  const data = schemas[collection].parse(normalized) as {
+  const schema =
+    collection === "hotels" && action !== "publish"
+      ? hotelDraftSchema
+      : schemas[collection];
+  const data = schema.parse(normalized) as {
     id: string;
     slug?: string;
     path?: string;
@@ -1183,7 +1187,7 @@ function saveRecord(
         throw new Error("Tour/điểm đến liên quan không tồn tại");
     }
     if (collection === "hotels") {
-      const hotel = hotelSchema.parse(data);
+      const hotel = hotelDraftSchema.parse(data);
       if (hotel.destinationId && !present("destinations", hotel.destinationId))
         throw new Error("Điểm đến liên kết không tồn tại");
     }

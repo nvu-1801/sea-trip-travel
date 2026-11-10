@@ -50,7 +50,7 @@ const translatedHotel = z.object({
   seo: seoSchema.optional(),
 });
 
-export const hotelSchema = z
+export const hotelDraftSchema = z
   .object({
     /** Stable identifier. Never reused, never recycled for another property. */
     id: z.string().regex(/^hotel_[a-z0-9_]+$/, "id phải có dạng hotel_abc"),
@@ -60,8 +60,8 @@ export const hotelSchema = z
     /** Optional link to a `destinations` record, used for the location filter. */
     destinationId: z.string().min(1).optional(),
     /** Province/city shown on the card. Free text so a new place needs no seed. */
-    province: z.string().min(1).max(80),
-    address: z.string().min(1).max(240),
+    province: z.string().trim().max(80),
+    address: z.string().trim().max(240),
     /** Only an https map link; never rendered as an iframe. */
     mapUrl: z
       .url()
@@ -79,7 +79,7 @@ export const hotelSchema = z
       .default(null),
     /** Where the star rating comes from, e.g. "theo công bố của khách sạn". */
     starBasis: z.string().min(1).max(160).optional(),
-    summary: z.string().min(1).max(400),
+    summary: z.string().trim().max(400),
     description: z.array(z.string().min(1).max(4000)).max(20).default([]),
     highlights: z.array(z.string().min(1).max(200)).max(10).default([]),
     amenities: z.array(z.string().min(1).max(80)).max(60).default([]),
@@ -108,6 +108,12 @@ export const hotelSchema = z
       });
     }
   });
+
+export const hotelSchema = hotelDraftSchema.safeExtend({
+  province: hotelDraftSchema.shape.province.min(1, "Nhập tỉnh/thành phố"),
+  address: hotelDraftSchema.shape.address.min(1, "Nhập địa chỉ"),
+  summary: hotelDraftSchema.shape.summary.min(1, "Nhập mô tả ngắn"),
+});
 
 export type Hotel = z.infer<typeof hotelSchema>;
 export type HotelInput = z.input<typeof hotelSchema>;
