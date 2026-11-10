@@ -1,4 +1,6 @@
 import { persistLead, markMail } from "@/server/cms/leads";
+import { activePromotion } from "@/domain/promotion";
+import { publicPromotions } from "@/server/cms/promotions";
 import "server-only";
 
 import { createHash, randomUUID } from "node:crypto";
@@ -577,6 +579,11 @@ export async function submitLead(
   const tour = input.tourSlug
     ? getTourBySlug(input.tourSlug, input.locale)
     : undefined;
+  const promotion = input.promotionId
+    ? activePromotion(publicPromotions(), tour?.slug ?? null, now.getTime())
+    : undefined;
+  if (input.promotionId && (input.kind !== "tour" || (input.tourSlug && !tour) || promotion?.id !== input.promotionId))
+    return fail(400, "VALIDATION_ERROR", "Chiến dịch quà tặng đã kết thúc hoặc không áp dụng cho tour này.");
 
   let lead: ContactLead;
   let hotelSummary: LeadNotificationContext["hotelSummary"];
@@ -610,7 +617,8 @@ export async function submitLead(
       fullName: input.fullName,
       phone: normalizePhone(input.phone),
       ...(input.email ? { email: input.email } : {}),
-      ...(input.interest ? { interest: input.interest } : {}),
+      ...(promotion ? { interest: promotion.title, promotionId: promotion.id } :
+        input.interest ? { interest: input.interest } : {}),
       ...(tour ? { tourSlug: tour.slug } : {}),
       ...(input.travelDate ? { travelDate: input.travelDate } : {}),
       ...(input.partySize ? { partySize: input.partySize } : {}),

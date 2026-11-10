@@ -13,6 +13,7 @@ const LABELS: Record<string, string> = {
   categories: "Danh mục",
   destinations: "Điểm đến",
   hotels: "Khách sạn",
+  promotions: "Quà khuyến mãi",
   media: "Thư viện ảnh",
   translations: "Bản dịch tiếng Anh",
   messages: "Nội dung VI / EN",
@@ -54,6 +55,7 @@ export default async function AdminSectionPage({
     <Dashboard
       section={section}
       initialEdit={first(query.edit)}
+      initialPromotion={section === "leads" ? first(query.promotion) : undefined}
       initialCsrf={value?.csrf ?? null}
       initialVersion={value ? contentVersion("admin") : undefined}
     />

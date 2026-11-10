@@ -218,18 +218,23 @@ export function saveRateRules(
   if (input.rooms.length > 20) throw new Error("Quá nhiều hạng phòng trong một lần lưu");
 
   const prepared = new Map<string, { rules: RateRule[] }>();
-  for (const room of input.rooms) {
+  for (const [roomIndex, room] of input.rooms.entries()) {
     assertRoomOfHotel(room.roomId, input.hotelId);
     if (room.rules.length > MAX_RATE_RULES_PER_ROOM)
       throw new Error("Quá nhiều quy tắc giá cho một hạng phòng");
-    const parsed = room.rules.map((rule, index) =>
-      rateRuleSchema.parse({
+    const parsed = room.rules.map((rule, index) => {
+      const parsedRule = rateRuleSchema.safeParse({
         ...rule,
         id: rule.id || `${room.roomId}-${index}`,
         hotelId: input.hotelId,
         roomId: room.roomId,
-      }),
-    );
+      });
+      if (!parsedRule.success)
+        throw new z.ZodError(parsedRule.error.issues.map((issue) => ({
+          ...issue, path: ["rooms", roomIndex, "rules", index, ...issue.path],
+        })));
+      return parsedRule.data;
+    });
     if (parsed.filter((rule) => rule.kind === "base").length > 1)
       throw new Error("Mỗi hạng phòng chỉ có một giá cơ bản");
     for (let i = 0; i < parsed.length; i += 1) {

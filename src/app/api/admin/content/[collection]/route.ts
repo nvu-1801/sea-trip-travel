@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requireSession } from "@/server/cms/auth";
 import {
   list,
+  published,
   purgeExpiredTrash,
   purgeHotelTrash,
   save,
@@ -25,6 +26,10 @@ export async function GET(
     purgeExpiredTrash();
     const kind = collection((await params).collection);
     const rows = list(kind);
+    if (kind === "promotions") {
+      const live = new Set(published<{ id: string }>("promotions", []).map(({ id }) => id));
+      return reply(rows.map((row) => ({ ...row, live: live.has(row.id) })));
+    }
     if (kind !== "settings") return reply(rows);
     // Settings rows created before a field existed still have to render every
     // editor field. Merge defaults under the saved record; the saved value wins.

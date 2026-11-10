@@ -11,7 +11,9 @@ import {
   ChipsField,
   Field,
   GalleryField,
+  HotelFormError,
   LinesField,
+  fieldIssue,
   imagesOf,
   numberOf,
   text,
@@ -85,11 +87,12 @@ export function HotelEditor({
   const [draft, setDraft] = useState<Record<string, unknown>>(hotel.data);
   const [revision, setRevision] = useState(hotel.revision);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [issues, setIssues] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
   const [roomEditing, setRoomEditing] = useState<string | null>(null);
   const [roomsDraft, setRoomsDraft] = useState<HotelRoomRow[]>([]);
   const [links, setLinks] = useState<TourLink[]>([]);
+  const [linkIssues, setLinkIssues] = useState<Record<string, string>>({});
   const [linksLoaded, setLinksLoaded] = useState(false);
 
   // A room created here moves into the server list after its first save. This
@@ -100,15 +103,14 @@ export function HotelEditor({
 
   const set = useCallback((key: string, value: unknown) => {
     setDraft((current) => ({ ...current, [key]: value }));
+    setIssues((current) => Object.fromEntries(Object.entries(current).filter(([path]) => path !== key && !path.startsWith(`${key}.`))));
   }, []);
 
   const report = useCallback(
     (kind: "ok" | "error", message: string) => {
       if (kind === "ok") {
         setNotice(message);
-        setError("");
       } else {
-        setError(message);
         setNotice("");
       }
       onStatus(kind, message);
@@ -131,9 +133,7 @@ export function HotelEditor({
         unknown
       >;
       if (!response.ok)
-        throw new Error(
-          typeof body.error === "string" ? body.error : "Không lưu được dữ liệu",
-        );
+        throw new HotelFormError(body, "Không lưu được dữ liệu");
       return body;
     },
     [csrf],
@@ -141,7 +141,7 @@ export function HotelEditor({
 
   async function saveContent(action: "save" | "publish") {
     setBusy(true);
-    setError("");
+    setIssues({});
     try {
       const clean = {
         ...draft,
@@ -161,6 +161,18 @@ export function HotelEditor({
       );
       await onSaved();
     } catch (cause) {
+      if (cause instanceof HotelFormError && Object.keys(cause.issues).length) {
+        setIssues(cause.issues);
+        const field = Object.keys(cause.issues)[0].split(".")[0];
+        setTab(["images", "amenities"].includes(field) ? "media" : "info");
+        requestAnimationFrame(() => {
+          const first = document.querySelector<HTMLElement>(".stt-hotel-editor .adm-field--invalid");
+          const details = first?.closest("details");
+          if (details) details.open = true;
+          first?.scrollIntoView({ block: "center" });
+          first?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus({ preventScroll: true });
+        });
+      }
       report(
         "error",
         cause instanceof Error ? cause.message : "Không lưu được",
@@ -172,7 +184,6 @@ export function HotelEditor({
 
   async function changeState(action: "unpublish" | "delete" | "restore") {
     setBusy(true);
-    setError("");
     try {
       const result = await api("/api/admin/content/hotels", {
         method: "POST",
@@ -205,13 +216,13 @@ export function HotelEditor({
       setLinks((result.links ?? []) as TourLink[]);
       setLinksLoaded(true);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Không tải được tour liên kết");
+      report("error", cause instanceof Error ? cause.message : "Không tải được tour liên kết");
     }
   }
 
   async function saveLinks() {
     setBusy(true);
-    setError("");
+    setLinkIssues({});
     try {
       await api(`/api/admin/hotels/${hotel.id}/tour-links`, {
         method: "POST",
@@ -219,6 +230,7 @@ export function HotelEditor({
       });
       report("ok", "Đã lưu quan hệ tour. Yêu cầu mới sẽ dùng quan hệ này.");
     } catch (cause) {
+      if (cause instanceof HotelFormError) setLinkIssues(cause.issues);
       report(
         "error",
         cause instanceof Error ? cause.message : "Không lưu được liên kết",
@@ -266,11 +278,6 @@ export function HotelEditor({
         </div>
       </header>
 
-      {error ? (
-        <p className="adm-field-error" role="alert">
-          {error}
-        </p>
-      ) : null}
       {notice ? (
         <p className="adm-notice adm-notice--ok" role="status">
           {notice}
@@ -299,7 +306,7 @@ export function HotelEditor({
       {tab === "info" ? (
         <div className="stt-hotel-section">
           <div className="stt-hotel-grid2">
-            <Field label="Tên khách sạn">
+            <Field label="Tên khách sạn" error={fieldIssue(issues, "name")}>
               <input
                 value={text(draft.name)}
                 maxLength={160}
@@ -307,7 +314,7 @@ export function HotelEditor({
               />
             </Field>
             <Field
-              label="Slug"
+              label="Slug" error={fieldIssue(issues, "slug")}
               hint={
                 revision > 0
                   ? "Slug đã phát hành được giữ cố định để không phá liên kết."
@@ -321,14 +328,14 @@ export function HotelEditor({
                 onChange={(event) => set("slug", event.target.value)}
               />
             </Field>
-            <Field label="Tỉnh / thành">
+            <Field label="Tỉnh / thành" error={fieldIssue(issues, "province")}>
               <input
                 value={text(draft.province)}
                 maxLength={80}
                 onChange={(event) => set("province", event.target.value)}
               />
             </Field>
-            <Field label="Điểm đến liên kết" hint="Dùng cho bộ lọc điểm đến và thẻ trên trang chủ.">
+            <Field label="Điểm đến liên kết" error={fieldIssue(issues, "destinationId")} hint="Dùng cho bộ lọc điểm đến và thẻ trên trang chủ.">
               <select
                 value={text(draft.destinationId)}
                 onChange={(event) =>
@@ -343,14 +350,14 @@ export function HotelEditor({
                 ))}
               </select>
             </Field>
-            <Field label="Địa chỉ">
+            <Field label="Địa chỉ" error={fieldIssue(issues, "address")}>
               <input
                 value={text(draft.address)}
                 maxLength={240}
                 onChange={(event) => set("address", event.target.value)}
               />
             </Field>
-            <Field label="Link bản đồ (https)" hint="Dán link HTTPS. Để hiện bản đồ xem trước, có thể dùng URL trong mã nhúng Google Maps.">
+            <Field label="Link bản đồ (https)" error={fieldIssue(issues, "mapUrl")} hint="Dán link HTTPS. Để hiện bản đồ xem trước, có thể dùng URL trong mã nhúng Google Maps.">
               <input
                 value={text(draft.mapUrl)}
                 maxLength={500}
@@ -358,7 +365,7 @@ export function HotelEditor({
                 onChange={(event) => set("mapUrl", event.target.value || undefined)}
               />
             </Field>
-            <Field label="Loại lưu trú">
+            <Field label="Loại lưu trú" error={fieldIssue(issues, "lodgingType")}>
               <select
                 value={text(draft.lodgingType, "hotel")}
                 onChange={(event) => set("lodgingType", event.target.value)}
@@ -370,7 +377,7 @@ export function HotelEditor({
                 ))}
               </select>
             </Field>
-            <Field label="Hạng sao (1–5)" hint="Để trống nếu chưa có căn cứ công bố.">
+            <Field label="Hạng sao (1–5)" error={fieldIssue(issues, "starRating")} hint="Để trống nếu chưa có căn cứ công bố.">
               <select
                 value={draft.starRating === null || draft.starRating === undefined ? "" : String(draft.starRating)}
                 onChange={(event) =>
@@ -388,14 +395,14 @@ export function HotelEditor({
                 ))}
               </select>
             </Field>
-            <Field label="Căn cứ hạng sao" hint="Bắt buộc khi chọn sao, ví dụ “theo công bố của khách sạn”.">
+            <Field label="Căn cứ hạng sao" error={fieldIssue(issues, "starBasis")} hint="Bắt buộc khi chọn sao, ví dụ “theo công bố của khách sạn”.">
               <input
                 value={text(draft.starBasis)}
                 maxLength={160}
                 onChange={(event) => set("starBasis", event.target.value || undefined)}
               />
             </Field>
-            <Field label="Giờ nhận phòng">
+            <Field label="Giờ nhận phòng" error={fieldIssue(issues, "checkInTime")}>
               <input
                 value={text(draft.checkInTime)}
                 placeholder="14:00"
@@ -403,7 +410,7 @@ export function HotelEditor({
                 onChange={(event) => set("checkInTime", event.target.value || undefined)}
               />
             </Field>
-            <Field label="Giờ trả phòng">
+            <Field label="Giờ trả phòng" error={fieldIssue(issues, "checkOutTime")}>
               <input
                 value={text(draft.checkOutTime)}
                 placeholder="12:00"
@@ -411,7 +418,7 @@ export function HotelEditor({
                 onChange={(event) => set("checkOutTime", event.target.value || undefined)}
               />
             </Field>
-            <Field label="Thứ tự đề xuất" hint="Số nhỏ hiện trước trong danh sách.">
+            <Field label="Thứ tự đề xuất" error={fieldIssue(issues, "order")} hint="Số nhỏ hiện trước trong danh sách.">
               <input
                 inputMode="numeric"
                 value={String(numberOf(draft.order, 0))}
@@ -420,7 +427,7 @@ export function HotelEditor({
                 }
               />
             </Field>
-            <Field label="Chế độ tình trạng phòng">
+            <Field label="Chế độ tình trạng phòng" error={fieldIssue(issues, "roomMode")}>
               <select
                 value={text(draft.roomMode, "on_request")}
                 onChange={(event) => set("roomMode", event.target.value)}
@@ -431,7 +438,7 @@ export function HotelEditor({
             </Field>
           </div>
 
-          <Field label="Giới thiệu ngắn" hint="Tối đa 400 ký tự, hiện trên thẻ danh sách.">
+          <Field label="Giới thiệu ngắn" error={fieldIssue(issues, "summary")} hint="Tối đa 400 ký tự, hiện trên thẻ danh sách.">
             <textarea
               rows={3}
               value={text(draft.summary)}
@@ -440,26 +447,26 @@ export function HotelEditor({
             />
           </Field>
           <LinesField
-            label="Bài giới thiệu"
+            label="Bài giới thiệu" error={fieldIssue(issues, "description")}
             hint="Mỗi dòng là một đoạn văn."
             value={Array.isArray(draft.description) ? (draft.description as string[]) : []}
             onChange={(value) => set("description", value)}
           />
           <LinesField
-            label="Điểm nổi bật"
+            label="Điểm nổi bật" error={fieldIssue(issues, "highlights")}
             hint="Mỗi dòng một ý, tối đa 10."
             value={Array.isArray(draft.highlights) ? (draft.highlights as string[]) : []}
             onChange={(value) => set("highlights", value)}
             rows={3}
           />
           <ChipsField
-            label="Tiện ích"
+            label="Tiện ích" error={fieldIssue(issues, "amenities")}
             hint="Ngăn cách bằng dấu phẩy."
             value={Array.isArray(draft.amenities) ? (draft.amenities as string[]) : []}
             onChange={(value) => set("amenities", value)}
           />
           <LinesField
-            label="Chính sách"
+            label="Chính sách" error={fieldIssue(issues, "policies")}
             hint="Mỗi dòng một chính sách đã xác nhận; không ghi chính sách chưa kiểm tra."
             value={Array.isArray(draft.policies) ? (draft.policies as string[]) : []}
             onChange={(value) => set("policies", value)}
@@ -472,14 +479,14 @@ export function HotelEditor({
               <fieldset>
                 <legend>Hiển thị trên công cụ tìm kiếm</legend>
                 <div className="stt-hotel-grid2">
-                  <Field label="Tiêu đề SEO">
+                  <Field label="Tiêu đề SEO" error={fieldIssue(issues, "seo.title")}>
                     <input
                       value={text(seo.title)}
                       maxLength={90}
                       onChange={(event) => setSeo("title", event.target.value)}
                     />
                   </Field>
-                  <Field label="Mô tả SEO">
+                  <Field label="Mô tả SEO" error={fieldIssue(issues, "seo.description")}>
                     <textarea
                       rows={3}
                       value={text(seo.description)}
@@ -492,14 +499,14 @@ export function HotelEditor({
               <fieldset>
                 <legend>Nội dung tiếng Anh</legend>
                 <div className="stt-hotel-grid2">
-                  <Field label="Tên tiếng Anh">
+                  <Field label="Tên tiếng Anh" error={fieldIssue(issues, "_en.name")}>
                     <input
                       value={text(en.name)}
                       maxLength={160}
                       onChange={(event) => setEn("name", event.target.value || undefined)}
                     />
                   </Field>
-                  <Field label="Giới thiệu tiếng Anh">
+                  <Field label="Giới thiệu tiếng Anh" error={fieldIssue(issues, "_en.summary")}>
                     <textarea
                       rows={3}
                       value={text(en.summary)}
@@ -507,7 +514,7 @@ export function HotelEditor({
                       onChange={(event) => setEn("summary", event.target.value || undefined)}
                     />
                   </Field>
-                  <Field label="Địa chỉ tiếng Anh">
+                  <Field label="Địa chỉ tiếng Anh" error={fieldIssue(issues, "_en.address")}>
                     <input
                       value={text(en.address)}
                       maxLength={240}
@@ -551,7 +558,7 @@ export function HotelEditor({
       {tab === "media" ? (
         <div className="stt-hotel-section">
           <GalleryField
-            label="Ảnh khách sạn"
+            label="Ảnh khách sạn" error={fieldIssue(issues, "images")}
             hint="Ảnh đầu tiên là ảnh bìa. Alt bắt buộc để đạt accessibility."
             value={imagesOf(draft.images)}
             media={media}
@@ -559,7 +566,7 @@ export function HotelEditor({
             onChange={(value) => set("images", value)}
           />
           <ChipsField
-            label="Tiện ích nổi bật"
+            label="Tiện ích nổi bật" error={fieldIssue(issues, "amenities")}
             value={Array.isArray(draft.amenities) ? (draft.amenities as string[]) : []}
             onChange={(value) => set("amenities", value)}
           />
@@ -675,8 +682,8 @@ export function HotelEditor({
             </p>
           </div>
           {links.map((link, index) => (
-            <div className="stt-hotel-link-row" key={`${link.roomId}-${link.tourSlug}-${index}`}>
-              <Field label="Tour">
+            <div className="stt-hotel-link-row" key={`${link.roomId}-${link.tourSlug}-${index}`} onChange={() => setLinkIssues({})}>
+              <Field label="Tour" error={fieldIssue(linkIssues, `links.${index}.tourSlug`)}>
                 <select
                   value={link.tourSlug}
                   onChange={(event) =>
@@ -697,7 +704,7 @@ export function HotelEditor({
                   ))}
                 </select>
               </Field>
-              <Field label="Áp dụng cho">
+              <Field label="Áp dụng cho" error={fieldIssue(linkIssues, `links.${index}.roomId`)}>
                 <select
                   value={link.roomId}
                   onChange={(event) =>
@@ -718,7 +725,7 @@ export function HotelEditor({
                   ))}
                 </select>
               </Field>
-              <Field label="Quan hệ">
+              <Field label="Quan hệ" error={fieldIssue(linkIssues, `links.${index}.relation`)}>
                 <select
                   value={link.relation}
                   onChange={(event) =>
@@ -899,14 +906,16 @@ function RoomRow({
       setUploadCount((count) => count - 1);
     }
   }
-  const [error, setError] = useState("");
+  const [roomIssues, setRoomIssues] = useState<Record<string, string>>({});
 
-  const set = (key: keyof HotelRoom, value: unknown) =>
+  const set = (key: keyof HotelRoom, value: unknown) => {
     setDraft((current) => ({ ...current, [key]: value }));
+    setRoomIssues((current) => Object.fromEntries(Object.entries(current).filter(([path]) => path !== key && !path.startsWith(`${key}.`))));
+  };
 
   async function save(action: "save" | "publish" | "delete") {
     setBusy(true);
-    setError("");
+    setRoomIssues({});
     try {
       const response = await fetch("/api/admin/content/hotelRooms", {
         method: "POST",
@@ -922,9 +931,7 @@ function RoomRow({
       });
       const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
       if (!response.ok)
-        throw new Error(
-          typeof body.error === "string" ? body.error : "Không lưu được hạng phòng",
-        );
+        throw new HotelFormError(body, "Không lưu được hạng phòng");
       setRevision(Number(body.revision ?? revision + 1));
       onStatus(
         "ok",
@@ -937,7 +944,7 @@ function RoomRow({
       await onSaved();
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "Không lưu được";
-      setError(message);
+      if (cause instanceof HotelFormError) setRoomIssues(cause.issues);
       onStatus("error", message);
     } finally {
       setBusy(false);
@@ -960,20 +967,15 @@ function RoomRow({
       </div>
       {open ? (
         <>
-          {error ? (
-            <p className="adm-field-error" role="alert">
-              {error}
-            </p>
-          ) : null}
           <div className="stt-hotel-grid2">
-            <Field label="Tên hạng phòng">
+            <Field label="Tên hạng phòng" error={fieldIssue(roomIssues, "name")}>
               <input
                 value={draft.name}
                 maxLength={120}
                 onChange={(event) => set("name", event.target.value)}
               />
             </Field>
-            <Field label="Diện tích (m²)">
+            <Field label="Diện tích (m²)" error={fieldIssue(roomIssues, "sizeSqm")}>
               <input
                 inputMode="numeric"
                 value={draft.sizeSqm ?? ""}
@@ -985,21 +987,21 @@ function RoomRow({
                 }
               />
             </Field>
-            <Field label="Giường">
+            <Field label="Giường" error={fieldIssue(roomIssues, "bed")}>
               <input
                 value={draft.bed ?? ""}
                 maxLength={120}
                 onChange={(event) => set("bed", event.target.value || undefined)}
               />
             </Field>
-            <Field label="Hướng nhìn">
+            <Field label="Hướng nhìn" error={fieldIssue(roomIssues, "view")}>
               <input
                 value={draft.view ?? ""}
                 maxLength={120}
                 onChange={(event) => set("view", event.target.value || undefined)}
               />
             </Field>
-            <Field label="Người lớn tiêu chuẩn">
+            <Field label="Người lớn tiêu chuẩn" error={fieldIssue(roomIssues, "capacityAdults")}>
               <input
                 inputMode="numeric"
                 value={draft.capacityAdults}
@@ -1008,7 +1010,7 @@ function RoomRow({
                 }
               />
             </Field>
-            <Field label="Trẻ em tiêu chuẩn">
+            <Field label="Trẻ em tiêu chuẩn" error={fieldIssue(roomIssues, "capacityChildren")}>
               <input
                 inputMode="numeric"
                 value={draft.capacityChildren}
@@ -1017,7 +1019,7 @@ function RoomRow({
                 }
               />
             </Field>
-            <Field label="Sức chứa tối đa">
+            <Field label="Sức chứa tối đa" error={fieldIssue(roomIssues, "maxOccupancy")}>
               <input
                 inputMode="numeric"
                 value={draft.maxOccupancy}
@@ -1026,7 +1028,7 @@ function RoomRow({
                 }
               />
             </Field>
-            <Field label="Thứ tự">
+            <Field label="Thứ tự" error={fieldIssue(roomIssues, "order")}>
               <input
                 inputMode="numeric"
                 value={draft.order}
@@ -1034,7 +1036,7 @@ function RoomRow({
               />
             </Field>
           </div>
-          <Field label="Mô tả">
+          <Field label="Mô tả" error={fieldIssue(roomIssues, "description")}>
             <textarea
               rows={3}
               value={draft.description ?? ""}
@@ -1043,11 +1045,11 @@ function RoomRow({
             />
           </Field>
           <ChipsField
-            label="Tiện nghi"
+            label="Tiện nghi" error={fieldIssue(roomIssues, "amenities")}
             value={draft.amenities}
             onChange={(value) => set("amenities", value)}
           />
-          <Field label="Chính sách trẻ em">
+          <Field label="Chính sách trẻ em" error={fieldIssue(roomIssues, "childPolicy")}>
             <textarea
               rows={2}
               value={draft.childPolicy ?? ""}
@@ -1055,7 +1057,7 @@ function RoomRow({
               onChange={(event) => set("childPolicy", event.target.value || undefined)}
             />
           </Field>
-          <Field label="Chính sách giường phụ">
+          <Field label="Chính sách giường phụ" error={fieldIssue(roomIssues, "extraBedPolicy")}>
             <textarea
               rows={2}
               value={draft.extraBedPolicy ?? ""}
@@ -1064,7 +1066,7 @@ function RoomRow({
             />
           </Field>
           <GalleryField
-            label="Ảnh hạng phòng"
+            label="Ảnh hạng phòng" error={fieldIssue(roomIssues, "images")}
             hint={`Tối đa ${MAX_ROOM_IMAGES} ảnh. Ảnh đầu tiên hiển thị trên thẻ phòng.`}
             sizeGuide="Nên dùng ảnh ngang 1600 × 1200 px (4:3), JPEG, PNG hoặc WebP, tối đa 10 MB mỗi ảnh."
             maxImages={MAX_ROOM_IMAGES}

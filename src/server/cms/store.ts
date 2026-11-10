@@ -7,6 +7,7 @@ import { defaultThemeRecord, themeRecordSchema } from "@/domain/theme";
 import { travelArticleSchema } from "@/domain/article";
 import { hotelDraftSchema, hotelSchema } from "@/domain/hotel";
 import { hotelRoomSchema } from "@/domain/hotel-room";
+import { promotionSchema, publishedPromotionSchema } from "@/domain/promotion";
 import {
   destinationSchema,
   MAX_HOME_DESTINATIONS,
@@ -82,6 +83,7 @@ export const schemas = {
     _enReviewed: z.boolean().optional(),
   }),
   hotels: hotelSchema,
+  promotions: promotionSchema,
   hotelRooms: hotelRoomSchema,
   settings: settingsSchema,
   theme: themeRecordSchema,
@@ -1074,6 +1076,8 @@ function saveRecord(
   const schema =
     collection === "hotels" && action !== "publish"
       ? hotelDraftSchema
+      : collection === "promotions" && action === "publish"
+        ? publishedPromotionSchema
       : schemas[collection];
   const data = schema.parse(normalized) as {
     id: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { cloneElement, isValidElement, useId, useState, type ReactElement, type ReactNode } from "react";
 import type { ImageAsset } from "@/domain/common";
 import { ImageField } from "./image-picker";
 import { AdminIcon } from "./admin-icons";
@@ -50,6 +50,21 @@ export function imagesOf(value: unknown): ImageAsset[] {
     : [];
 }
 
+export class HotelFormError extends Error {
+  constructor(body: Record<string, unknown>, fallback: string) {
+    const issues = Array.isArray(body.issues) ? body.issues as { path: string; message: string }[] : [];
+    super(issues.length ? [...new Set(issues.map(({ message }) => message))].slice(0, 4).join(" · ") :
+      typeof body.error === "string" ? body.error : fallback);
+    this.issues = Object.fromEntries(issues.map(({ path, message }) => [path, message]));
+  }
+
+  readonly issues: Record<string, string>;
+}
+
+export function fieldIssue(issues: Record<string, string>, field: string) {
+  return issues[field] ?? Object.entries(issues).find(([path]) => path.startsWith(`${field}.`))?.[1];
+}
+
 export function Field({
   label,
   hint,
@@ -61,13 +76,23 @@ export function Field({
   error?: string;
   children: ReactNode;
 }) {
+  const fieldId = useId();
+  const labelId = `${fieldId}-label`;
+  const hintId = `${fieldId}-hint`;
+  const errorId = `${fieldId}-error`;
   return (
     <label className={`adm-field${error ? " adm-field--invalid" : ""}`}>
-      <span className="adm-field-label">{label}</span>
-      {children}
-      {hint ? <small className="adm-hint">{hint}</small> : null}
+      <span className="adm-field-label" id={labelId}>{label}</span>
+      {isValidElement(children)
+        ? cloneElement(children as ReactElement<{ "aria-invalid"?: boolean; "aria-describedby"?: string; "aria-labelledby"?: string }>, {
+          "aria-labelledby": labelId,
+          "aria-invalid": error ? true : undefined,
+          "aria-describedby": [hint && hintId, error && errorId].filter(Boolean).join(" ") || undefined,
+        })
+        : children}
+      {hint ? <small className="adm-hint" id={hintId}>{hint}</small> : null}
       {error ? (
-        <span className="adm-field-error" role="alert">
+        <span className="adm-field-error" id={errorId}>
           {error}
         </span>
       ) : null}
@@ -78,6 +103,7 @@ export function Field({
 export function LinesField({
   label,
   hint,
+  error,
   value,
   rows = 4,
   placeholder,
@@ -87,13 +113,14 @@ export function LinesField({
   hint?: string;
   value: string[];
   rows?: number;
+  error?: string;
   placeholder?: string;
   onChange: (value: string[]) => void;
 }) {
   const [raw, setRaw] = useState(() => textLines(value));
   const displayed = textLines(toLines(raw)) === textLines(value) ? raw : textLines(value);
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} error={error}>
       <textarea
         rows={rows}
         value={displayed}
@@ -110,18 +137,20 @@ export function LinesField({
 export function ChipsField({
   label,
   hint,
+  error,
   value,
   onChange,
 }: {
   label: string;
   hint?: string;
+  error?: string;
   value: string[];
   onChange: (value: string[]) => void;
 }) {
   const [raw, setRaw] = useState(() => chips(value));
   const displayed = chips(toChips(raw)) === chips(value) ? raw : chips(value);
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} error={error}>
       <input
         value={displayed}
         onChange={(event) => {
@@ -136,6 +165,7 @@ export function ChipsField({
 export function GalleryField({
   label,
   hint,
+  error,
   value,
   media,
   upload,
@@ -146,6 +176,7 @@ export function GalleryField({
 }: {
   label: string;
   hint?: string;
+  error?: string;
   value: ImageAsset[];
   media: { value: string; label: string }[];
   upload: (file: File) => Promise<{ src: string; alt: string }>;
@@ -168,7 +199,7 @@ export function GalleryField({
     onChange(next);
   };
   return (
-    <div className="stt-hotel-gallery">
+    <div className={`stt-hotel-gallery${error ? " adm-field--invalid" : ""}`}>
       <div>
         <span className="adm-field-label">{label}</span>
         {hint ? <p className="adm-hint">{hint}</p> : null}
@@ -220,6 +251,7 @@ export function GalleryField({
           </div>
         </div>
       ))}
+      {error && <p className="adm-field-error">{error}</p>}
       {maxImages === undefined ? (
         <button
           type="button"

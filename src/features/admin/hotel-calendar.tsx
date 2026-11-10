@@ -10,6 +10,7 @@ import {
 import type { RateKind, StoredRateRule } from "@/domain/hotel-pricing";
 import { AdminDatePicker } from "./admin-date-picker";
 import { AdminIcon } from "./admin-icons";
+import { Field, fieldIssue, HotelFormError } from "./hotel-form";
 import "./hotels-panel.css";
 
 const WEEKDAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"] as const;
@@ -97,6 +98,7 @@ function toDraft(rule: StoredRateRule): RuleDraft {
   };
 }
 
+
 const vnd = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 });
 
 export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
@@ -116,6 +118,8 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [rateIssues, setRateIssues] = useState<Record<string, string>>({});
+  const [availabilityIssue, setAvailabilityIssue] = useState("");
 
   const roomIds = useMemo(() => rooms.map((room) => room.id), [rooms]);
 
@@ -134,9 +138,7 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
         unknown
       >;
       if (!response.ok)
-        throw new Error(
-          typeof body.error === "string" ? body.error : "Không lưu được dữ liệu",
-        );
+        throw new HotelFormError(body, "Không lưu được dữ liệu");
       return body;
     },
     [csrf],
@@ -198,6 +200,7 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
   );
 
   function updateRule(index: number, patch: Partial<RuleDraft>) {
+    setRateIssues({});
     setRules((current) => {
       const next = [...(current[activeRoom] ?? [])];
       next[index] = { ...next[index], ...patch };
@@ -223,6 +226,7 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
   async function saveRates() {
     setBusy(true);
     setError("");
+    setRateIssues({});
     try {
       const payload = {
         rooms: rooms.map((room) => ({
@@ -260,7 +264,11 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "Không lưu được giá";
-      setError(message);
+      if (cause instanceof HotelFormError) {
+        setRateIssues(cause.issues);
+        const roomIndex = Number(Object.keys(cause.issues)[0]?.split(".")[1]);
+        if (rooms[roomIndex]) setActiveRoom(rooms[roomIndex].id);
+      }
       onStatus("error", message);
     } finally {
       setBusy(false);
@@ -290,6 +298,7 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
     }
     setBusy(true);
     setError("");
+    setAvailabilityIssue("");
     try {
       const entries = [...selectedDates].map((date) => ({
         roomId: activeRoom,
@@ -324,7 +333,7 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : "Không lưu được tình trạng";
-      setError(message);
+      setAvailabilityIssue(message);
       onStatus("error", message);
     } finally {
       setBusy(false);
@@ -333,6 +342,8 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
 
   const activeRoomName =
     rooms.find((room) => room.id === activeRoom)?.name ?? "chưa chọn";
+  const ruleIssue = (index: number, key: string) =>
+    fieldIssue(rateIssues, `rooms.${rooms.findIndex((room) => room.id === activeRoom)}.rules.${index}.${key}`);
 
   if (rooms.length === 0)
     return (
@@ -432,25 +443,24 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
                         </label>
                       ))}
                     </div>
+                    {ruleIssue(index, "weekdays") && <small className="adm-field-error">{ruleIssue(index, "weekdays")}</small>}
                   </div>
                 ) : null}
 
                 {rule.kind === "date_range" ? (
                   <>
-                    <label className="adm-field">
-                      <span className="adm-field-label">Từ ngày</span>
+                    <Field label="Từ ngày" error={ruleIssue(index, "startDate")}>
                       <AdminDatePicker
                         value={rule.startDate}
                         onChange={(value) => updateRule(index, { startDate: value })}
                       />
-                    </label>
-                    <label className="adm-field">
-                      <span className="adm-field-label">Đến ngày (gồm cả đêm)</span>
+                    </Field>
+                    <Field label="Đến ngày (gồm cả đêm)" error={ruleIssue(index, "endDate")}>
                       <AdminDatePicker
                         value={rule.endDate}
                         onChange={(value) => updateRule(index, { endDate: value })}
                       />
-                    </label>
+                    </Field>
                     <label className="adm-field">
                       <span className="adm-field-label">Tên đợt (tuỳ chọn)</span>
                       <input
@@ -465,8 +475,8 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
                   </>
                 ) : null}
 
-                <label className="adm-field">
-                  <span className="adm-field-label">Giá mỗi đêm (VND)</span>
+                <Field label="Giá mỗi đêm (VND)" error={ruleIssue(index, "amount")}
+                  hint={rule.amount ? `${vnd.format(Number(rule.amount))} ₫` : undefined}>
                   <input
                     inputMode="numeric"
                     value={rule.amount}
@@ -476,10 +486,7 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
                       })
                     }
                   />
-                  {rule.amount ? (
-                    <small className="adm-hint">{vnd.format(Number(rule.amount))} ₫</small>
-                  ) : null}
-                </label>
+                </Field>
 
                 <label className="adm-field">
                   <span className="adm-field-label">Phụ thu chưa xác định</span>
@@ -639,16 +646,16 @@ export function HotelCalendar({ csrf, hotelId, rooms, onStatus }: Props) {
           >
             Bỏ chọn
           </button>
-          <label className="adm-field">
-            <span className="adm-field-label">Số phòng</span>
+          <Field label="Số phòng" error={availabilityIssue}>
             <input
               inputMode="numeric"
               value={bulkRooms}
-              onChange={(event) =>
-                setBulkRooms(event.target.value.replace(/[^\d]/g, "").slice(0, 3))
-              }
+              onChange={(event) => {
+                setAvailabilityIssue("");
+                setBulkRooms(event.target.value.replace(/[^\d]/g, "").slice(0, 3));
+              }}
             />
-          </label>
+          </Field>
           <label className="adm-toggle">
             <input
               type="checkbox"

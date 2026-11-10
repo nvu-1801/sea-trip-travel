@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PromotionTrigger } from "@/features/promotions/promotion-gift";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ROUTES } from "@/config/navigation";
@@ -322,6 +323,7 @@ export function TourDetailContent({
                   <ButtonLink href="#tu-van" size="lg" className="mt-4 w-full">
                     {m.tour.asideCta}
                   </ButtonLink>
+                  <div className="mt-3"><PromotionTrigger placement="tour" /></div>
                   <p className="mt-3 text-center text-xs text-foreground-subtle">
                     {m.common.notAvailableBooking}
                   </p>
@@ -329,6 +331,7 @@ export function TourDetailContent({
               </div>
             </aside>
           </div>
+          <div className="mt-4 lg:hidden"><PromotionTrigger placement="tour" /></div>
 
           {/* --- In-page anchors --------------------------------------------- */}
           <nav

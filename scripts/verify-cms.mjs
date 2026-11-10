@@ -126,6 +126,7 @@ try {
         "Khách hàng & đối tác",
         "Bản dịch tiếng Anh",
         "Nội dung VI / EN",
+        "Quà khuyến mãi",
         "Yêu cầu tư vấn",
         "Tài chính tour",
         "Website & footer",

@@ -213,6 +213,7 @@ export const leadInputSchema = z.object({
   interest: optionalText(LEAD_LIMITS.interest),
   /** Slug of the tour being viewed, when the form lives on a tour page. */
   tourSlug: optionalText(LEAD_LIMITS.tourSlug),
+  promotionId: z.string().regex(/^promo_[a-z0-9_]+$/).max(80).optional(),
   /** `YYYY-MM-DD`. Kept as a plain string; past dates are allowed. */
   travelDate: z.preprocess(
     emptyToUndefined,
@@ -259,6 +260,7 @@ export const contactLeadSchema = z.object({
   receivedAt: z.iso.datetime(),
   /** `tour` for the original pipeline; `hotel` adds the block below. */
   kind: z.enum(["tour", "hotel"]).default("tour"),
+  promotionId: z.string().optional(),
   fullName: z.string().min(1),
   phone: z.string().min(1),
   email: z.string().optional(),
