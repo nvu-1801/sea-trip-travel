@@ -41,6 +41,10 @@ export async function handle(operation: () => Promise<Response>) {
     if (error instanceof ZodError)
       return reply(
         {
+          issues: error.issues.slice(0, 32).map((issue) => ({
+            path: issue.path.map(String).join("."),
+            message: issue.message,
+          })),
           error: error.issues
             .map((i) => `${i.path.join(".")}: ${i.message}`)
             .slice(0, 8)

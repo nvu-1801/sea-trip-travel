@@ -63,11 +63,17 @@ export function AdminDatePicker({
   value,
   onChange,
   disabled = false,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
+  "aria-labelledby": ariaLabelledBy,
 }: {
   id?: string;
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
+  "aria-labelledby"?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [today, setToday] = useState<DateParts | null>(null);
@@ -322,6 +328,9 @@ export function AdminDatePicker({
         type="button"
         className="adm-date-trigger"
         aria-haspopup="dialog"
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedBy}
+        aria-labelledby={ariaLabelledBy}
         aria-expanded={open}
         disabled={disabled}
         onClick={() => (open ? returnFocusToTrigger() : openPopover())}

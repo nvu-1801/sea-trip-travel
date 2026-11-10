@@ -7,7 +7,7 @@ import { LODGING_LABELS, type LodgingType } from "@/domain/hotel";
 import { HotelEditor, type HotelRoomRow, type HotelRow } from "./hotel-editor";
 import { text } from "./hotel-form";
 import { AdminIcon } from "./admin-icons";
-import { ConfirmModal } from "./notify";
+import { ConfirmModal, type ToastKind } from "./notify";
 import "./hotels-panel.css";
 
 /**
@@ -39,7 +39,7 @@ const STATE_LABEL: Record<string, string> = {
   deleted: "Đã lưu trữ",
 };
 
-export function HotelsPanel({ csrf }: { csrf: string }) {
+export function HotelsPanel({ csrf, notify }: { csrf: string; notify: (kind: ToastKind, message: string) => void }) {
   const [hotels, setHotels] = useState<HotelRow[]>([]);
   const [rooms, setRooms] = useState<HotelRoomRow[]>([]);
   const [settingsRow, setSettingsRow] = useState<HotelRow | null>(null);
@@ -412,7 +412,10 @@ export function HotelsPanel({ csrf }: { csrf: string }) {
         upload={upload}
         onSaved={load}
         onClose={() => setEditing(null)}
-        onStatus={(kind, message) => setStatus({ kind, message })}
+        onStatus={(kind, message) => {
+          if (kind === "error") notify("error", message);
+          setStatus({ kind, message });
+        }}
       />
     );
 

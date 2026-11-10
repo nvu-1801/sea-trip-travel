@@ -43,6 +43,7 @@ import {
 } from "./notify";
 import { AdmFilterSelect, AdmLeadStatusSelect } from "./ui-select";
 import { HotelsPanel } from "./hotels-panel";
+import { PromotionsPanel } from "./promotions-panel";
 import { HotelLeadCard } from "./hotel-lead-card";
 import "./hotels-panel.css";
 import { LEAD_TRASH_RETENTION_DAYS } from "@/lib/lead-trash";
@@ -236,6 +237,7 @@ const tabs = [
   ["categories", "Danh mục", "categories"],
   ["destinations", "Điểm đến", "destinations"],
   ["hotels", "Khách sạn", "home"],
+  ["promotions", "Quà khuyến mãi", "home"],
   ["media", "Thư viện ảnh", "media"],
   ["customers", "Khách hàng & dấu ấn hành trình", "users"],
   ["translations", "Bản dịch tiếng Anh", "language"],
@@ -268,6 +270,7 @@ const TAB_GROUPS: { label: string | null; keys: string[] }[] = [
       "customers",
       "translations",
       "messages",
+      "promotions",
     ],
   },
   { label: "Bán hàng", keys: ["leads", "finance"] },
@@ -606,6 +609,7 @@ export function Dashboard({
   initialVersion,
   section = "overview",
   initialEdit,
+  initialPromotion,
 }: {
   initialCsrf: string | null;
   initialVersion?: string;
@@ -613,6 +617,7 @@ export function Dashboard({
   section?: string;
   /** `?edit=` id/slug from a direct link or quick search. */
   initialEdit?: string;
+  initialPromotion?: string;
 }) {
   const tab = section;
   const [hasUpdates, setHasUpdates] = useState(false);
@@ -3238,12 +3243,17 @@ export function Dashboard({
           )
         ) : tab === "hotels" ? (
           csrf ? (
-            <HotelsPanel csrf={csrf} />
+            <HotelsPanel csrf={csrf} notify={pushToast} />
           ) : (
             <p className="adm-empty">Đang tải…</p>
           )
+        ) : tab === "promotions" ? (
+          csrf ? <PromotionsPanel csrf={csrf} notify={pushToast} /> : <p className="adm-empty">Đang tải…</p>
         ) : tab === "leads" ? (
           <>
+            {initialPromotion && <p className="adm-notice">
+              Đang lọc đăng ký của chiến dịch quà. <Link href="/admin/leads">Xem tất cả yêu cầu</Link>
+            </p>}
             <div className="adm-stats">
               {(
                 [
@@ -3421,6 +3431,7 @@ export function Dashboard({
                 };
                 const filtered = leads.filter(
                   (l) =>
+                    (!initialPromotion || l.data.promotionId === initialPromotion) &&
                     (leadStatusFilter === "all" ||
                       l.status === leadStatusFilter) &&
                     (leadKindFilter === "all" ||

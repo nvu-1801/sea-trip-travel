@@ -13,6 +13,7 @@ export const ADMIN_SECTION_PATHS = {
   categories: "/admin/categories",
   destinations: "/admin/destinations",
   hotels: "/admin/hotels",
+  promotions: "/admin/promotions",
   media: "/admin/media",
   translations: "/admin/translations",
   messages: "/admin/messages",

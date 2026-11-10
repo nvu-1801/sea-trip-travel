@@ -19,6 +19,7 @@ import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { WebVitals } from "@/components/analytics/web-vitals";
 import { InitialScroll } from "@/components/layout/initial-scroll";
 import { FloatingContact } from "@/components/layout/floating-contact";
+import { Promotions } from "@/features/promotions/promotion-gift";
 import { JsonLd } from "@/components/seo/json-ld";
 import { travelAgencyJsonLd, websiteJsonLd } from "@/lib/json-ld";
 import {
@@ -153,6 +154,7 @@ export default async function LocaleLayout({
             socialLinks: siteSettings.socialLinks,
           }}
         >
+          <Promotions>
           <JsonLd id="ld-agency" data={travelAgencyJsonLd(locale)} />
           <JsonLd id="ld-website" data={websiteJsonLd(locale)} />
 
@@ -179,6 +181,7 @@ export default async function LocaleLayout({
               backToTop: m.common.backToTop,
             }}
           />
+          </Promotions>
         </SiteContactProvider>
       </body>
     </html>
