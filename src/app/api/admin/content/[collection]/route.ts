@@ -3,6 +3,7 @@ import { requireSession } from "@/server/cms/auth";
 import {
   list,
   purgeExpiredTrash,
+  purgeHotelTrash,
   save,
   schemas,
   type Collection,
@@ -60,6 +61,7 @@ export async function POST(
       })
       .parse(await jsonBody(request));
     const name = collection((await params).collection);
+    if (name === "hotels" && input.action === "restore") purgeExpiredTrash(Date.now(), true);
     const record =
       input.data && typeof input.data === "object"
         ? (input.data as Record<string, unknown>)
@@ -92,5 +94,21 @@ export async function POST(
       );
       throw error;
     }
+  });
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ collection: string }> },
+) {
+  return handle(async () => {
+    await requireSession(request);
+    if ((await params).collection !== "hotels")
+      throw new Error("Nhóm nội dung không hỗ trợ xóa vĩnh viễn");
+    const rows = z.array(z.object({
+      id: z.string().regex(/^hotel_[a-z0-9_]+$/),
+      revision: z.number().int().positive(),
+    })).min(1).parse(await jsonBody(request));
+    return reply(purgeHotelTrash(rows, auditContext(request)));
   });
 }

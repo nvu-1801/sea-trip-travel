@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { contentVersion, db } from "@/server/cms/db";
-import { hotelSettings, list, published, save } from "@/server/cms/store";
+import { hotelSettings, list, published, purgeExpiredTrash, purgeHotelTrash, save } from "@/server/cms/store";
 import * as hotelStore from "@/server/hotels/store";
 import * as publicModel from "@/server/hotels/public";
 import { priceStay } from "@/domain/hotel-pricing";
@@ -240,6 +240,32 @@ describe("hotel and room persistence", () => {
     save("hotels", hotelRecord(), 6, "publish");
     assert.deepEqual(publishedIds("hotels"), ["hotel_demo"]);
   });
+});
+
+it("purges only archived hotels and cascades their operational data at 60 days", () => {
+  const archived = hotelRecord({ id: "hotel_expired", slug: "expired-hotel" });
+  const recent = hotelRecord({ id: "hotel_recent", slug: "recent-hotel" });
+  const room = roomRecord({ id: "room_expired", hotelId: archived.id });
+  save("hotels", archived, 0, "save");
+  save("hotels", recent, 0, "save");
+  save("hotelRooms", room, 0, "save");
+  db().prepare("INSERT INTO hotel_availability(room_id,date,rooms,updated_at) VALUES(?,?,?,?)")
+    .run(room.id, "2026-10-01", 1, NOW);
+  const archivedRow = save("hotels", archived, 1, "delete");
+  assert.throws(() => purgeHotelTrash([
+    { id: archived.id, revision: archivedRow.revision },
+    { id: recent.id, revision: 1 },
+  ]), /Thùng rác đã thay đổi/);
+  assert.ok(list("hotelRooms").some((row) => row.id === room.id));
+  db().prepare("UPDATE records SET updated_at=? WHERE collection='hotels' AND id=?").run(NOW, archived.id);
+  const expires = Date.parse(NOW) + 60 * 24 * 60 * 60 * 1000;
+  assert.equal(purgeExpiredTrash(expires - 1, true), 0);
+  assert.equal(purgeExpiredTrash(expires, true), 1);
+  assert.ok(!list("hotels").some((row) => row.id === archived.id));
+  assert.ok(!list("hotelRooms").some((row) => row.id === room.id));
+  assert.equal(db().prepare("SELECT 1 FROM hotel_availability WHERE room_id=?").get(room.id), undefined);
+  const recentRow = save("hotels", recent, 1, "delete");
+  assert.deepEqual(purgeHotelTrash([{ id: recent.id, revision: recentRow.revision }]), { removed: 1 });
 });
 
 describe("rate rules", () => {

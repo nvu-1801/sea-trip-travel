@@ -697,20 +697,52 @@ export function list(collection: Collection): CmsRecord[] {
 /**
  * Permanently removes trashed rows older than the retention window.
  * Deleted rows carry `updated_at` = time of the delete action, so no
- * migration is needed. Runs lazily from the admin content API — never
- * touches published rows.
+ * migration is needed. Admin reads sweep all collections. The server timer
+ * sweeps hotels even when nobody opens the admin.
  */
 export const TRASH_RETENTION_DAYS = 60;
 
-export function purgeExpiredTrash(nowMs: number = Date.now()): number {
+function removeHotelTrash(id: string) {
+  db().prepare(`DELETE FROM hotel_availability WHERE room_id IN (
+    SELECT id FROM records WHERE collection='hotelRooms' AND json_extract(data,'$.hotelId')=?
+  )`).run(id);
+  db().prepare("DELETE FROM hotel_rate_rules WHERE hotel_id=?").run(id);
+  db().prepare("DELETE FROM hotel_tour_links WHERE hotel_id=?").run(id);
+  db().prepare("DELETE FROM records WHERE collection='hotelRooms' AND json_extract(data,'$.hotelId')=?").run(id);
+  db().prepare("DELETE FROM records WHERE collection='hotels' AND id=? AND state='deleted'").run(id);
+}
+
+export function purgeHotelTrash(rows: { id: string; revision: number }[], context: AuditContext = {}) {
+  return transaction(() => {
+    const archived = db().prepare("SELECT 1 FROM records WHERE collection='hotels' AND state='deleted' AND id=? AND revision=?");
+    for (const row of rows) {
+      if (!archived.get(row.id, row.revision))
+        throw new Error("Thùng rác đã thay đổi. Tải lại danh sách trước khi xóa.");
+      removeHotelTrash(row.id);
+      audit("purge", `hotels/${row.id}`, context);
+    }
+    return { removed: rows.length };
+  });
+}
+
+export function purgeExpiredTrash(nowMs: number = Date.now(), hotelsOnly = false): number {
   const cutoff = new Date(
     nowMs - TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000,
   ).toISOString();
   return transaction(() => {
+    const expiredHotels = db()
+      .prepare("SELECT id FROM records WHERE collection='hotels' AND state='deleted' AND updated_at<=?")
+      .all(cutoff) as { id: string }[];
+    for (const { id } of expiredHotels) removeHotelTrash(id);
+    if (hotelsOnly) return expiredHotels.length;
+    const expiredRooms = "SELECT id FROM records WHERE collection='hotelRooms' AND state='deleted' AND updated_at<?";
+    db().prepare(`DELETE FROM hotel_availability WHERE room_id IN (${expiredRooms})`).run(cutoff);
+    db().prepare(`DELETE FROM hotel_rate_rules WHERE room_id IN (${expiredRooms})`).run(cutoff);
+    db().prepare(`DELETE FROM hotel_tour_links WHERE room_id IN (${expiredRooms})`).run(cutoff);
     const result = db()
       .prepare("DELETE FROM records WHERE state='deleted' AND updated_at<?")
       .run(cutoff);
-    return Number(result.changes ?? 0);
+    return expiredHotels.length + Number(result.changes ?? 0);
   });
 }
 const AUDIT_PREVIEW_LIMIT = 120;
@@ -1089,6 +1121,8 @@ function saveRecord(
     inspect(data);
     if ((previous?.revision ?? 0) !== revision)
       throw new Error("Nội dung đã thay đổi. Tải lại trước khi lưu.");
+    if (collection === "hotels" && previous?.state === "deleted" && action !== "restore")
+      throw new Error("Khôi phục khách sạn từ thùng rác trước khi chỉnh sửa.");
     if (previousData) {
       const slugChanged = previousData.slug !== data.slug;
       const pathChanged = previousData.path !== data.path;

@@ -28,6 +28,7 @@ export type HotelRow = {
   id: string;
   revision: number;
   state: string;
+  updated_at?: string;
   data: Record<string, unknown>;
 };
 
@@ -465,53 +466,65 @@ export function HotelEditor({
             rows={3}
           />
 
-          <details>
+          <details className="stt-hotel-localization">
             <summary>Tiêu đề SEO và bản tiếng Anh</summary>
-            <div className="stt-hotel-grid2">
-              <Field label="SEO title">
-                <input
-                  value={text(seo.title)}
-                  maxLength={90}
-                  onChange={(event) => setSeo("title", event.target.value)}
-                />
-              </Field>
-              <Field label="SEO description">
-                <input
-                  value={text(seo.description)}
-                  maxLength={220}
-                  onChange={(event) => setSeo("description", event.target.value)}
-                />
-              </Field>
-              <Field label="Tên tiếng Anh">
-                <input
-                  value={text(en.name)}
-                  maxLength={160}
-                  onChange={(event) => setEn("name", event.target.value || undefined)}
-                />
-              </Field>
-              <Field label="Giới thiệu tiếng Anh">
-                <input
-                  value={text(en.summary)}
-                  maxLength={400}
-                  onChange={(event) => setEn("summary", event.target.value || undefined)}
-                />
-              </Field>
-              <Field label="Địa chỉ tiếng Anh">
-                <input
-                  value={text(en.address)}
-                  maxLength={240}
-                  onChange={(event) => setEn("address", event.target.value || undefined)}
-                />
-              </Field>
+            <div className="stt-hotel-localization-body">
+              <fieldset>
+                <legend>Hiển thị trên công cụ tìm kiếm</legend>
+                <div className="stt-hotel-grid2">
+                  <Field label="Tiêu đề SEO">
+                    <input
+                      value={text(seo.title)}
+                      maxLength={90}
+                      onChange={(event) => setSeo("title", event.target.value)}
+                    />
+                  </Field>
+                  <Field label="Mô tả SEO">
+                    <textarea
+                      rows={3}
+                      value={text(seo.description)}
+                      maxLength={220}
+                      onChange={(event) => setSeo("description", event.target.value)}
+                    />
+                  </Field>
+                </div>
+              </fieldset>
+              <fieldset>
+                <legend>Nội dung tiếng Anh</legend>
+                <div className="stt-hotel-grid2">
+                  <Field label="Tên tiếng Anh">
+                    <input
+                      value={text(en.name)}
+                      maxLength={160}
+                      onChange={(event) => setEn("name", event.target.value || undefined)}
+                    />
+                  </Field>
+                  <Field label="Giới thiệu tiếng Anh">
+                    <textarea
+                      rows={3}
+                      value={text(en.summary)}
+                      maxLength={400}
+                      onChange={(event) => setEn("summary", event.target.value || undefined)}
+                    />
+                  </Field>
+                  <Field label="Địa chỉ tiếng Anh">
+                    <input
+                      value={text(en.address)}
+                      maxLength={240}
+                      onChange={(event) => setEn("address", event.target.value || undefined)}
+                    />
+                  </Field>
+                </div>
+                <label className="adm-toggle">
+                  <input
+                    type="checkbox"
+                    checked={draft._enReviewed === true}
+                    onChange={(event) => set("_enReviewed", event.target.checked)}
+                  />
+                  <span>Bản tiếng Anh đã được duyệt (chỉ khi duyệt mới được index)</span>
+                </label>
+              </fieldset>
             </div>
-            <label className="adm-toggle">
-              <input
-                type="checkbox"
-                checked={draft._enReviewed === true}
-                onChange={(event) => set("_enReviewed", event.target.checked)}
-              />
-              <span>Bản tiếng Anh đã được duyệt (chỉ khi duyệt mới được index)</span>
-            </label>
           </details>
 
           <div className="stt-hotel-actions">

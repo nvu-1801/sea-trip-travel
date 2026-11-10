@@ -426,6 +426,16 @@ async function main() {
     await page.locator(".stt-hotel-table button", { hasText: "Sửa" }).first().click();
     await page.waitForSelector(".stt-hotel-tabs", { timeout: 20_000 });
     check("editor opens with five tabs", (await page.locator(".stt-hotel-tab").count()) === 5);
+    const localization = page.locator(".stt-hotel-localization");
+    await localization.locator("summary").click();
+    for (const width of [390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      check(`SEO and English groups fit at ${width}px`, await localization.evaluate(
+        (section) => section.querySelectorAll("fieldset").length === 2 &&
+          section.scrollWidth <= section.clientWidth + 1,
+      ));
+    }
+    await localization.locator("summary").click();
 
     const preview = await desktop.newPage();
     await preview.goto(`${BASE}/admin/preview/hotels/hotel_demo_quynhon`, {
@@ -534,6 +544,23 @@ async function main() {
       "admin keeps the data while the module is off",
       (await page.locator(".stt-hotel-table tbody tr").count()) >= 1,
     );
+
+    await page.getByRole("button", { name: "Thêm khách sạn", exact: true }).first().click();
+    await page.waitForSelector(".stt-hotel-tabs");
+    await page.goto(`${BASE}/admin/hotels`, { waitUntil: "load" });
+    const newHotel = page.getByRole("row").filter({ hasText: "Khách sạn mới" });
+    await newHotel.getByRole("button", { name: "Lưu trữ", exact: true }).click();
+    await page.getByRole("button", { name: "Thùng rác (1)", exact: true }).click();
+    await page.getByRole("button", { name: "Khôi phục", exact: true }).click();
+    await page.getByText("Thùng rác đang trống.").waitFor();
+    await page.getByRole("button", { name: "Về danh sách khách sạn" }).click();
+    await newHotel.getByRole("button", { name: "Lưu trữ", exact: true }).click();
+    await page.getByRole("button", { name: "Thùng rác (1)", exact: true }).click();
+    await page.getByRole("button", { name: "Dọn sạch thùng rác" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Xóa vĩnh viễn" }).click();
+    await page.getByText("Thùng rác đang trống.").waitFor();
+    check("hotel trash supports restore and confirmed permanent deletion",
+      await page.getByText("Đã xóa vĩnh viễn 1 khách sạn.").isVisible());
 
     seed(dbPath, "on");
     await desktop.close();
