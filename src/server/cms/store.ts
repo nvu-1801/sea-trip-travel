@@ -1115,6 +1115,18 @@ function saveRecord(
     const previousData = previous
       ? (JSON.parse(previous.data) as Record<string, unknown>)
       : null;
+    if (collection === "promotions") {
+      const campaign = promotionSchema.parse(data);
+      const rules = db().prepare("SELECT rules FROM promotion_results WHERE campaign_id=?").get(data.id);
+      if (rules && action === "publish") throw new Error("Chiến dịch đã đóng. Nhân bản để mở đợt mới.");
+      if (db().prepare("SELECT 1 FROM promotion_entries WHERE campaign_id=? LIMIT 1").get(data.id)) {
+        const before = promotionSchema.parse(previous?.published ? JSON.parse(previous.published) : previousData);
+        if ((before.selectionMode ?? "random") !== (campaign.selectionMode ?? "random") ||
+            (before.winnerCount ?? 1) !== (campaign.winnerCount ?? 1) ||
+            (before.reserveCount ?? 0) !== (campaign.reserveCount ?? 0))
+          throw new Error("Không đổi cách chọn hoặc số suất sau khi chiến dịch đã có đăng ký.");
+      }
+    }
     // Studio placeholders (`noi-dung-…`) may be replaced by a readable slug
     // derived from the title; a real, already-saved slug stays immutable.
     normalizePublicSlug(

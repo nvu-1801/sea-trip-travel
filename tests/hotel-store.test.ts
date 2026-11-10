@@ -11,6 +11,8 @@ import * as hotelStore from "@/server/hotels/store";
 import * as publicModel from "@/server/hotels/public";
 import { priceStay } from "@/domain/hotel-pricing";
 import { resolveAvailability } from "@/domain/hotel-availability";
+import { listLeads, persistLead } from "@/server/cms/leads";
+import { promotionEntries, reconcileLegacyPromotion, updatePromotionEntries } from "@/server/cms/promotion-entries";
 
 /**
  * Persistence, migration and write-guard checks for the hotel module.
@@ -50,6 +52,33 @@ after(() => {
 });
 
 const NOW = "2026-10-01T00:00:00.000Z";
+
+it("reconciles legacy promotion leads idempotently and honors the configured result method", () => {
+  const id = "promo_reconcile_test";
+  save("promotions", {
+    id, name: "Fixture", title: "Fixture", intro: "Fixture", terms: "Fixture",
+    button: "Đăng ký", confirmation: "Đã nhận", image: "", alt: "",
+    background: "#ffffff", accent: "#000000", buttonColor: "#000000",
+    starts: "", ends: "", home: true, featured: false, tours: [],
+    floating: false, autoOpen: false, selectionMode: "manual", winnerCount: 1,
+  }, 0, "save");
+  persistLead("promo_test_a", { promotionId: id, fullName: "Khách kiểm thử", phone: "0901234567" });
+  persistLead("promo_test_b", { promotionId: id, fullName: "Khách kiểm thử", phone: "+84901234567" });
+  const preview = reconcileLegacyPromotion(id, false, {});
+  assert.equal(preview.eligible, 1);
+  assert.equal(preview.duplicates, 1);
+  assert.equal(promotionEntries(id).entries.length, 0);
+  reconcileLegacyPromotion(id, true, {});
+  assert.equal(reconcileLegacyPromotion(id, true, {}).eligible, 0);
+  assert.equal(listLeads().some((lead) => lead.id.startsWith("promo_test_")), false);
+  const [entry] = promotionEntries(id).entries;
+  assert.equal(entry.phone, "0901234567");
+  updatePromotionEntries(id, { action: "close" }, {});
+  assert.throws(() => updatePromotionEntries(id, { action: "random", count: 1 }, {}), /thể lệ/);
+  updatePromotionEntries(id, { action: "manual", ids: [entry.id], reason: "Đúng tiêu chí" }, {});
+  updatePromotionEntries(id, { action: "fulfill", id: entry.id, status: "delivered" }, {});
+  assert.equal(promotionEntries(id).result?.fulfillment[entry.id], "delivered");
+});
 
 function hotelRecord(overrides: Record<string, unknown> = {}) {
   return {

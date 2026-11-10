@@ -23,6 +23,9 @@ export const promotionSchema = z.object({
   tours: z.array(z.string().regex(/^[a-z0-9-]+$/)).max(100),
   floating: z.boolean(),
   autoOpen: z.boolean(),
+  selectionMode: z.enum(["random", "manual"]).optional(),
+  winnerCount: z.number().int().min(1, "Cần ít nhất một phần quà").max(100).optional(),
+  reserveCount: z.number().int().min(0).max(100).optional(),
 });
 
 export const publishedPromotionSchema = promotionSchema.superRefine((item, ctx) => {
@@ -43,6 +46,8 @@ export const publishedPromotionSchema = promotionSchema.superRefine((item, ctx) 
     ctx.addIssue({ code: "custom", path: ["tours"], message: "Chọn trang chủ hoặc ít nhất một tour" });
   if (item.home && !item.featured && !item.tours.length)
     ctx.addIssue({ code: "custom", path: ["featured"], message: "Chọn làm quà nổi bật để hiện chiến dịch trên trang chủ" });
+  if (item.selectionMode === "manual" && item.reserveCount)
+    ctx.addIssue({ code: "custom", path: ["reserveCount"], message: "Chế độ chọn thủ công không tự chọn dự phòng" });
 });
 
 export type Promotion = z.infer<typeof promotionSchema>;

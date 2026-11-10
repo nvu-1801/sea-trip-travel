@@ -63,6 +63,7 @@ export function AdminDatePicker({
   value,
   onChange,
   disabled = false,
+  withTime = false,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
   "aria-labelledby": ariaLabelledBy,
@@ -71,10 +72,13 @@ export function AdminDatePicker({
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  withTime?: boolean;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
   "aria-labelledby"?: string;
 }) {
+  const [pendingDate, setPendingDate] = useState("");
+  const [time, setTime] = useState("");
   const [open, setOpen] = useState(false);
   const [today, setToday] = useState<DateParts | null>(null);
   const [view, setView] = useState<MonthView | null>(null);
@@ -86,7 +90,7 @@ export function AdminDatePicker({
   const popoverRef = useRef<HTMLDivElement>(null);
   const dayRefs = useRef(new Map<string, HTMLButtonElement>());
 
-  const selected = useMemo(() => parseIsoDate(value), [value]);
+  const selected = useMemo(() => parseIsoDate(value.split("T")[0]), [value]);
   const focusDay = useCallback((iso: string) => setFocusIso(iso), []);
 
   useEffect(() => {
@@ -109,6 +113,12 @@ export function AdminDatePicker({
     );
     const below = rect.bottom + 8;
     const above = rect.top - POPOVER_HEIGHT - 8;
+    if (withTime) {
+      const height = Math.min(460, window.innerHeight - 20);
+      const top = Math.max(margin, Math.min(below, window.innerHeight - height - margin));
+      setPosition({ left, top });
+      return;
+    }
     const top = below + POPOVER_HEIGHT > window.innerHeight - margin && above > margin
       ? above
       : below;
@@ -117,7 +127,12 @@ export function AdminDatePicker({
 
   const openPopover = () => {
     if (disabled) return;
-    const now = todayParts();
+    const vietnamNow = withTime
+      ? new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString()
+      : "";
+    const now = parseIsoDate(vietnamNow.slice(0, 10)) ?? todayParts();
+    setPendingDate(toIsoDate(selected ?? now));
+    setTime(value.split("T")[1] ?? vietnamNow.slice(11, 16));
     const base = selected ?? now;
     setToday(now);
     setView(monthViewOf(base));
@@ -128,11 +143,17 @@ export function AdminDatePicker({
 
   const select = useCallback(
     (parts: DateParts) => {
+      if (withTime) {
+        setPendingDate(toIsoDate(parts));
+        setView(monthViewOf(parts));
+        setFocusIso(toIsoDate(parts));
+        return;
+      }
       onChange(toIsoDate(parts));
       setOpen(false);
       requestAnimationFrame(() => triggerRef.current?.focus());
     },
-    [onChange],
+    [onChange, withTime],
   );
 
   useEffect(() => {
@@ -146,7 +167,10 @@ export function AdminDatePicker({
         setOpen(false);
       }
     };
-    const onViewportChange = () => setOpen(false);
+    const onViewportChange = (event: Event) => {
+      if (event.target instanceof Node && popoverRef.current?.contains(event.target)) return;
+      setOpen(false);
+    };
     document.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("resize", onViewportChange);
     document.addEventListener("scroll", onViewportChange, true);
@@ -167,11 +191,17 @@ export function AdminDatePicker({
     focusDay(toIsoDate(next));
   };
 
+  const navigateMonth = (month: MonthView, direction: -1 | 1) => {
+    const next = shiftMonthView(month, direction);
+    setView(next);
+    if (withTime) setFocusIso(toIsoDate({ ...next, d: 1 }));
+  };
+
   const cycleFocus = (direction: 1 | -1) => {
     const root = popoverRef.current;
     if (!root) return;
     const focusables = Array.from(
-      root.querySelectorAll<HTMLElement>("button:not([disabled])"),
+      root.querySelectorAll<HTMLElement>("button:not([disabled]), input:not([disabled])"),
     ).filter((element) => element.tabIndex !== -1 || element === document.activeElement);
     if (focusables.length === 0) return;
     const current = focusables.indexOf(document.activeElement as HTMLElement);
@@ -182,6 +212,8 @@ export function AdminDatePicker({
   const onPopoverKeyDown = (event: React.KeyboardEvent) => {
     const base = parseIsoDate(focusIso) ?? selected ?? today;
     if (!base) return;
+    if (withTime && event.key !== "Tab" && event.key !== "Escape" &&
+        !(event.target instanceof Element && event.target.closest('[role="grid"]'))) return;
     switch (event.key) {
       case "ArrowLeft":
         event.preventDefault();
@@ -229,15 +261,15 @@ export function AdminDatePicker({
             ref={popoverRef}
             role="dialog"
             aria-modal="false"
-            aria-label="Chọn ngày"
+            aria-label={withTime ? "Chọn ngày giờ Việt Nam" : "Chọn ngày"}
             onKeyDown={onPopoverKeyDown}
-            className="adm-date-pop"
+            className={withTime ? "adm-date-pop adm-date-pop--time" : "adm-date-pop"}
             style={{ left: position.left, top: position.top }}
           >
             <div className="adm-date-head">
               <button
                 type="button"
-                onClick={() => setView(shiftMonthView(view, -1))}
+                onClick={() => navigateMonth(view, -1)}
                 aria-label="Tháng trước"
                 className="adm-date-nav"
               >
@@ -248,7 +280,7 @@ export function AdminDatePicker({
               </p>
               <button
                 type="button"
-                onClick={() => setView(shiftMonthView(view, 1))}
+                onClick={() => navigateMonth(view, 1)}
                 aria-label="Tháng sau"
                 className="adm-date-nav"
               >
@@ -276,7 +308,7 @@ export function AdminDatePicker({
               {Array.from({ length: 6 }, (_, week) => (
                 <div key={week} role="row" className="adm-date-row">
                   {grid.slice(week * 7, week * 7 + 7).map((cell) => {
-                    const isSelected = sameDay(cell.parts, selected);
+                    const isSelected = withTime ? cell.iso === pendingDate : sameDay(cell.parts, selected);
                     const isToday = sameDay(cell.parts, today);
                     const isFocusTarget = cell.iso === focusIso;
                     return (
@@ -305,7 +337,22 @@ export function AdminDatePicker({
               ))}
             </div>
 
-            <div className="adm-date-foot">
+            {withTime ? (
+              <>
+                <label className="adm-date-time">
+                  <span>Giờ Việt Nam <small>UTC+7</small></span>
+                  <input type="time" value={time} onChange={(event) => setTime(event.target.value)} />
+                </label>
+                <div className="adm-date-foot">
+                  <button type="button" onClick={() => { onChange(""); returnFocusToTrigger(); }}>Xóa</button>
+                  <button type="button" onClick={() => today && select(today)}>Hôm nay</button>
+                  <button type="button" className="adm-date-apply" disabled={!time} onClick={() => {
+                    onChange(`${pendingDate}T${time}`);
+                    returnFocusToTrigger();
+                  }}>Áp dụng</button>
+                </div>
+              </>
+            ) : <div className="adm-date-foot">
               <span>{selected ? ddmm(selected) : "Chưa chọn ngày"}</span>
               <button
                 type="button"
@@ -314,7 +361,7 @@ export function AdminDatePicker({
               >
                 Hôm nay
               </button>
-            </div>
+            </div>}
           </div>,
           document.body,
         )
@@ -328,7 +375,7 @@ export function AdminDatePicker({
         type="button"
         className="adm-date-trigger"
         aria-haspopup="dialog"
-        aria-invalid={ariaInvalid}
+        data-invalid={ariaInvalid || undefined}
         aria-describedby={ariaDescribedBy}
         aria-labelledby={ariaLabelledBy}
         aria-expanded={open}
@@ -348,7 +395,7 @@ export function AdminDatePicker({
       >
         <AdminIcon name="calendar" size={15} />
         <span data-empty={selected ? undefined : "true"}>
-          {selected ? ddmm(selected) : "Chọn ngày"}
+          {selected ? `${ddmm(selected)}${withTime ? ` · ${value.split("T")[1]}` : ""}` : withTime ? "Chọn ngày và giờ" : "Chọn ngày"}
         </span>
         <i aria-hidden="true" className="adm-date-caret" />
       </button>

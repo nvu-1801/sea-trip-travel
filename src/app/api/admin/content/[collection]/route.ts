@@ -10,6 +10,7 @@ import {
   type Collection,
 } from "@/server/cms/store";
 import { auditContext, auditFailure } from "@/server/cms/audit";
+import { isPromotionClosed, promotionEntryCounts } from "@/server/cms/promotion-entries";
 import { handle, jsonBody, reply } from "@/server/cms/http";
 import { defaultSettings } from "@/server/cms/settings";
 function collection(value: string): Collection {
@@ -28,7 +29,8 @@ export async function GET(
     const rows = list(kind);
     if (kind === "promotions") {
       const live = new Set(published<{ id: string }>("promotions", []).map(({ id }) => id));
-      return reply(rows.map((row) => ({ ...row, live: live.has(row.id) })));
+      const counts = promotionEntryCounts();
+      return reply(rows.map((row) => ({ ...row, live: live.has(row.id), closed: isPromotionClosed(row.id), entries: counts[row.id] ?? 0 })));
     }
     if (kind !== "settings") return reply(rows);
     // Settings rows created before a field existed still have to render every

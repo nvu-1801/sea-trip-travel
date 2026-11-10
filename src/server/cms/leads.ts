@@ -99,7 +99,7 @@ export function listLeads() {
   return decryptRows(
     db()
       .prepare(
-        "SELECT * FROM leads WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 500",
+        "SELECT * FROM leads WHERE deleted_at IS NULL AND kind!='promotion_archived' ORDER BY created_at DESC LIMIT 500",
       )
       .all() as LeadRow[],
   );
@@ -164,7 +164,7 @@ export function unreadLeadCount(): number {
   return (
     db()
       .prepare(
-        "SELECT COUNT(*) AS count FROM leads WHERE read_at IS NULL AND deleted_at IS NULL",
+        "SELECT COUNT(*) AS count FROM leads WHERE read_at IS NULL AND deleted_at IS NULL AND kind!='promotion_archived'",
       )
       .get() as { count: number }
   ).count;

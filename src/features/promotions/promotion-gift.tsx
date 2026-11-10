@@ -23,22 +23,23 @@ export function GiftIcon() {
   </svg>;
 }
 
-export function GiftArtwork({ item, children }: { item: PublicPromotion; children: ReactNode }) {
+function GiftArtwork({ item, children }: { item: PublicPromotion; children: ReactNode }) {
   return <div className="stt-gift-art" style={{ background: item.background, color: readableText(item.background) }}>
     <div className="stt-gift-image">
-      {item.image ? <Image src={item.image} alt={item.alt} fill sizes="(max-width: 640px) 100vw, 420px" /> : <GiftIcon />}
+      {item.image ? <Image src={item.image} alt={item.alt} fill sizes="(max-width: 720px) 100vw, 620px" /> : <GiftIcon />}
     </div>
     <div className="stt-gift-copy">
       <p className="stt-gift-eyebrow"><span style={{ background: item.accent }} /> QUÀ TẶNG SEA TRIP</p>
       <h2>{item.title || "Tiêu đề quà tặng"}</h2>
       {item.intro && <p>{item.intro}</p>}
-      {item.terms && <div><h3>Điều kiện nhận quà</h3><p className="stt-gift-terms">{item.terms}</p></div>}
+      {item.terms && <div className="stt-gift-conditions"><h3>Điều kiện nhận quà</h3><p className="stt-gift-terms">{item.terms}</p></div>}
+      {item.winnerCount && <p>{item.winnerCount} phần quà · {item.selectionMode === "manual" ? "Chọn theo thể lệ" : "Bốc thăm ngẫu nhiên"}</p>}
       {children}
     </div>
   </div>;
 }
 
-export function GiftButton({ item, children, ...props }: { item: PublicPromotion; children: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+function GiftButton({ item, children, ...props }: { item: PublicPromotion; children: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button {...props} className="stt-gift-primary" style={{ background: item.buttonColor, color: readableText(item.buttonColor) }}>{children}</button>;
 }
 
@@ -117,9 +118,7 @@ function GiftDialog({ item, tour, source, storageKey, onClose }: {
   item: PublicPromotion; tour?: string; source: string; storageKey: string; onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const submission = useRef("");
   const inFlight = useRef(false);
-  const [register, setRegister] = useState(false);
   const [done, setDone] = useState(() => Boolean(read(`${storageKey}:done`)));
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -138,27 +137,25 @@ function GiftDialog({ item, tour, source, storageKey, onClose }: {
     event.preventDefault();
     if (inFlight.current || done) return;
     const fields = new FormData(event.currentTarget);
-    submission.current ||= read(`${storageKey}:submission`) || crypto.randomUUID();
-    write(`${storageKey}:submission`, submission.current);
     inFlight.current = true;
     setBusy(true);
     setErrors({});
     setFailure("");
     try {
-      const response = await fetch("/api/leads", {
+      const response = await fetch("/api/promotions/entries", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           fullName: fields.get("fullName"), phone: fields.get("phone"),
           consent: fields.get("consent") === "on", company: fields.get("company"),
-          promotionId: item.id, tourSlug: tour, sourcePage: source,
-          locale: source.startsWith("/en") ? "en" : "vi", submissionId: submission.current,
+          promotionId: item.id, tourSlug: tour,
         }),
       });
       const result = await response.json();
       if (!response.ok || !result.ok) {
-        setErrors(result.error?.fieldErrors ?? {});
-        throw new Error(result.error?.message ?? "Chưa gửi được đăng ký");
+        const issues = (result.issues ?? []) as { path: string; message: string }[];
+        setErrors(Object.fromEntries(issues.map(({ path, message }) => [path, [message]])));
+        throw new Error(issues.length ? "Kiểm tra các ô được đánh dấu rồi gửi lại." : result.error ?? "Chưa gửi được đăng ký");
       }
       write(`${storageKey}:done`, "1");
       setDone(true);
@@ -177,22 +174,43 @@ function GiftDialog({ item, tour, source, storageKey, onClose }: {
       <button type="button" className="stt-gift-close" aria-label="Đóng quà tặng" onClick={onClose}>×</button>
     </div>
     <GiftArtwork item={item}>
-      {done ? <p role="status">{item.confirmation}</p> : register ? (
-        <form className="stt-gift-form" onSubmit={submit}>
-          <label>Họ và tên<input autoComplete="name" name="fullName" required maxLength={100} aria-invalid={Boolean(errors.fullName)} />
-            {errors.fullName && <small>{errors.fullName[0]}</small>}
-          </label>
-          <label>Số điện thoại<input autoComplete="tel" type="tel" name="phone" required maxLength={24} aria-invalid={Boolean(errors.phone)} />
-            {errors.phone && <small>{errors.phone[0]}</small>}
-          </label>
-          <input name="company" hidden tabIndex={-1} autoComplete="off" />
-          <label className="stt-gift-consent"><input name="consent" type="checkbox" required />
-            <span>Tôi đồng ý để Sea Trip liên hệ và đã đọc <a href={source.startsWith("/en") ? "/en/chinh-sach-bao-mat" : "/chinh-sach-bao-mat"}>chính sách bảo mật</a>.</span>
-          </label>
-          {failure && <p role="alert">{failure}</p>}
-          <GiftButton item={item} type="submit" disabled={busy}>{busy ? "Đang gửi…" : "Gửi đăng ký"}</GiftButton>
-        </form>
-      ) : <GiftButton item={item} type="button" onClick={() => setRegister(true)}>{item.button}</GiftButton>}
+      {done ? <p role="status">{item.confirmation}</p> : (
+        <GiftRegistration item={item} source={source} busy={busy} errors={errors} failure={failure} onSubmit={submit}
+          onEdit={(name) => setErrors((current) => { const next = { ...current }; delete next[name]; return next; })} />
+      )}
     </GiftArtwork>
   </dialog>;
+}
+
+function GiftRegistration({ item, source = "", busy = false, errors = {}, failure, onSubmit, onEdit }: {
+  item: PublicPromotion;
+  source?: string;
+  busy?: boolean;
+  errors?: Record<string, string[]>;
+  failure?: string;
+  onSubmit?: (event: FormEvent<HTMLFormElement>) => void;
+  onEdit?: (name: string) => void;
+}) {
+  const preview = !onSubmit;
+  const fields = <>
+      <label>Họ và tên<input autoComplete="name" name="fullName" disabled={preview} required maxLength={100} aria-invalid={Boolean(errors.fullName)} aria-describedby={errors.fullName ? "gift-name-error" : undefined} onChange={() => onEdit?.("fullName")} />
+        {errors.fullName && <small id="gift-name-error">{errors.fullName[0]}</small>}
+      </label>
+      <label>Số điện thoại<input autoComplete="tel" type="tel" name="phone" disabled={preview} required maxLength={24} aria-invalid={Boolean(errors.phone)} aria-describedby={errors.phone ? "gift-phone-error" : undefined} onChange={() => onEdit?.("phone")} />
+        {errors.phone && <small id="gift-phone-error">{errors.phone[0]}</small>}
+      </label>
+      <input name="company" hidden tabIndex={-1} autoComplete="off" />
+      <label className="stt-gift-consent"><input name="consent" type="checkbox" disabled={preview} required aria-invalid={Boolean(errors.consent)} aria-describedby={errors.consent ? "gift-consent-error" : undefined} onChange={() => onEdit?.("consent")} />
+        <span>Tôi đồng ý để Sea Trip liên hệ và đã đọc {preview ? "chính sách bảo mật" : <a href={source.startsWith("/en") ? "/en/chinh-sach-bao-mat" : "/chinh-sach-bao-mat"}>chính sách bảo mật</a>}.</span>
+      </label>
+      {errors.consent && <small id="gift-consent-error">{errors.consent[0]}</small>}
+      {failure && <p role="alert">{failure}</p>}
+      <GiftButton item={item} type="submit" disabled={busy || preview}>{busy ? "Đang gửi…" : item.button || "Gửi đăng ký"}</GiftButton>
+    </>;
+  return preview ? <div className="stt-gift-form">{fields}</div> :
+    <form className="stt-gift-form" onSubmit={onSubmit} noValidate>{fields}</form>;
+}
+
+export function GiftPreview({ item }: { item: PublicPromotion }) {
+  return <GiftArtwork item={item}><GiftRegistration item={item} /></GiftArtwork>;
 }
