@@ -574,6 +574,19 @@ async function main() {
 
     console.log("6. Promotion campaign");
     await page.goto(`${BASE}/admin/promotions`, { waitUntil: "load" });
+    await page.getByRole("button", { name: "Dùng mẫu lịch để bàn" }).click();
+    await page.getByRole("button", { name: "Xem trước mobile" }).click();
+    await page.locator(".stt-gift-preview").getByRole("img", { name: /Mẫu lịch để bàn Sea Trip/ }).waitFor();
+    await page.getByRole("button", { name: "Lưu nháp", exact: true }).click();
+    const sample = page.locator(".stt-hotel-trash-list li").filter({ hasText: "Mẫu quà lịch Sea Trip" });
+    await sample.waitFor();
+    page.once("dialog", (dialog) => dialog.accept());
+    await sample.getByRole("button", { name: "Xóa", exact: true }).click();
+    await page.getByText("Thùng rác chiến dịch (1)").click();
+    await page.getByRole("button", { name: "Khôi phục bản nháp" }).click();
+    await sample.getByRole("button", { name: "Sửa", exact: true }).waitFor();
+    check("calendar template previews, saves, deletes and restores as draft",
+      (await (await fetch(`${BASE}/api/promotions`)).json()) === null);
     await page.getByRole("button", { name: "Tạo chiến dịch" }).click();
     await page.getByLabel("Tên quản lý nội bộ").fill("QA quà khuyến mãi");
     await page.getByRole("button", { name: "Lưu nháp", exact: true }).click();

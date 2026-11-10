@@ -11,6 +11,14 @@ import type { ToastKind } from "./notify";
 type Row = { id: string; revision: number; state: string; live: boolean; data: Promotion };
 type Option = { value: string; label: string };
 const endpoint = "/api/admin/content/promotions";
+const calendarSample = {
+  name: "Mẫu quà lịch Sea Trip",
+  title: "Lịch để bàn Sea Trip Travel",
+  intro: "Mang một góc biển Quy Nhơn về bàn làm việc với bộ lịch để bàn Sea Trip.",
+  image: "/images/promotions/lich-de-ban-sea-trip.webp",
+  alt: "Mẫu lịch để bàn Sea Trip Travel với ảnh vịnh biển Quy Nhơn",
+};
+type Action = "save" | "publish" | "unpublish" | "delete" | "restore";
 
 function newPromotion(): Promotion {
   return {
@@ -71,7 +79,7 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
     return { src: image.src, alt: image.alt ?? "" };
   };
 
-  async function save(item: Promotion, action: "save" | "publish" | "unpublish") {
+  async function save(item: Promotion, action: Action) {
     setBusy(true);
     setIssues({});
     try {
@@ -81,7 +89,14 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
         body: JSON.stringify({ data: item, revision: previous?.revision ?? 0, action }),
       });
       setRows(await request(endpoint));
-      notify("success", { save: "Đã lưu bản nháp", publish: "Đã xuất bản chiến dịch", unpublish: "Đã tạm dừng chiến dịch" }[action]);
+      if (action === "delete") setDraft((current) => current?.id === item.id ? null : current);
+      notify("success", {
+        save: "Đã lưu bản nháp",
+        publish: "Đã xuất bản chiến dịch",
+        unpublish: "Đã tạm dừng chiến dịch",
+        delete: "Đã chuyển chiến dịch vào thùng rác",
+        restore: "Đã khôi phục chiến dịch về bản nháp",
+      }[action]);
     } catch (cause) {
       if (cause instanceof HotelFormError) setIssues(cause.issues);
       notify("error", cause instanceof Error ? cause.message : "Không lưu được chiến dịch");
@@ -90,13 +105,15 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
     }
   }
 
+  const deleted = rows.filter((row) => row.state === "deleted");
   return <div className="stt-hotel-panel">
     {loadError && <p role="alert" className="adm-field-error">{loadError}</p>}
     <section className="stt-hotel-section">
       <div className="stt-hotel-actions">
         <button type="button" className="adm-primary" disabled={busy} onClick={() => edit(newPromotion())}>Tạo chiến dịch</button>
+        <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => edit({ ...newPromotion(), ...calendarSample })}>Dùng mẫu lịch để bàn</button>
       </div>
-      {!rows.length && <p>Chưa có chiến dịch quà khuyến mãi.</p>}
+      {rows.length === deleted.length && <p>Chưa có chiến dịch quà khuyến mãi.</p>}
       <ul className="stt-hotel-trash-list">
         {rows.filter((row) => row.state !== "deleted").map((row) => <li key={row.id}>
           <div><strong>{row.data.name}</strong><small>{row.live ? row.state === "published" ? "Đã xuất bản" : "Có bản nháp mới · bản đã xuất bản vẫn chạy theo lịch" : "Bản nháp hoặc đã tạm dừng"}</small></div>
@@ -107,10 +124,22 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
               starts: "", ends: "", featured: false,
             })}>Nhân bản</button>
             {row.live && <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => void save(row.data, "unpublish")}>Tạm dừng</button>}
+            <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => {
+              if (window.confirm("Chuyển chiến dịch vào thùng rác? Quà sẽ ngừng hiển thị trên website.")) void save(row.data, "delete");
+            }}>Xóa</button>
             <Link className="stt-hotel-action" href={`/admin/leads?promotion=${encodeURIComponent(row.id)}`}>Xem đăng ký</Link>
           </div>
         </li>)}
       </ul>
+      {deleted.length > 0 && <details>
+        <summary>Thùng rác chiến dịch ({deleted.length})</summary>
+        <ul className="stt-hotel-trash-list">
+          {deleted.map((row) => <li key={row.id}>
+            <strong>{row.data.name}</strong>
+            <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => void save(row.data, "restore")}>Khôi phục bản nháp</button>
+          </li>)}
+        </ul>
+      </details>}
     </section>
     {draft && <section className="stt-hotel-section" aria-label="Chỉnh sửa chiến dịch quà">
       <h2>{draft.name || "Chiến dịch mới"}</h2>
@@ -121,6 +150,7 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
             : <input maxLength={length} value={draft[key]} onChange={(event) => set(key, event.target.value)} />}
         </Field>)}
       </div>
+      <p>Ảnh mẫu là ảnh minh họa. Bạn có thể thay bằng ảnh quà thật trước khi xuất bản.</p>
       <ImageField label="Ảnh món quà" value={draft.image} alt={draft.alt} altRequired media={media}
         onUpload={upload} onAltChange={(alt) => set("alt", alt)}
         onChange={(image, alt) => { set("image", image); if (alt) set("alt", alt); }} />
