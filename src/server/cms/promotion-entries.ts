@@ -2,7 +2,7 @@ import "server-only";
 import { createHmac, randomInt, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { normalizePhone, phoneSchema } from "@/domain/lead";
-import { activePromotion, promotionSchema } from "@/domain/promotion";
+import { activePromotion, promotionSchema, promotionWinnerCount } from "@/domain/promotion";
 import { HttpError } from "./auth";
 import { audit, db, transaction, type AuditContext } from "./db";
 import { decrypt, encrypt } from "./leads";
@@ -97,7 +97,8 @@ function requireCampaign(id: string) {
 
 const rulesOf = (data: unknown) => {
   const campaign = promotionSchema.parse(data);
-  return { method: campaign.selectionMode ?? "random", count: campaign.winnerCount ?? 1, reserves: campaign.reserveCount ?? 0 };
+  return { method: campaign.selectionMode ?? "random", count: campaign.winnerCount ?? 1, reserves: campaign.reserveCount ?? 0,
+    entriesPerWinner: campaign.entriesPerWinner };
 };
 type Rules = ReturnType<typeof rulesOf>;
 type Fulfillment = "contacted" | "confirmed" | "delivered";
@@ -161,7 +162,7 @@ export function updatePromotionEntries(id: string, input: z.infer<typeof promoti
       const pool = (db().prepare("SELECT id FROM promotion_entries WHERE campaign_id=? AND exclusion IS NULL").all(id) as { id: string }[]).map((row) => row.id);
       const count = input.action === "random" ? input.count : input.ids.length;
       const rules = JSON.parse(String(state.rules)) as Rules;
-      if (input.action !== rules.method || count !== rules.count)
+      if (input.action !== rules.method || count !== promotionWinnerCount(pool.length, rules.count, rules.entriesPerWinner))
         throw new HttpError(400, "Cách chọn và số giải phải đúng với thể lệ đã chốt.");
       if (count > pool.length) throw new HttpError(400, "Số suất vượt quá số lượt đủ điều kiện.");
       const selected = input.action === "manual" ? [...new Set(input.ids)] : [];

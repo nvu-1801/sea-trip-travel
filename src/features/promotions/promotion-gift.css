@@ -20,7 +20,9 @@ body:has(.stt-gift-dialog[open]) { overflow: hidden; }
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 520px;
+  align-self: start;
+  width: 100%;
+  aspect-ratio: 1;
   background: color-mix(in srgb, currentColor 6%, transparent);
 }
 .stt-gift-image img { object-fit: contain; padding: clamp(16px, 2.6vw, 36px); }
@@ -40,12 +42,23 @@ body:has(.stt-gift-dialog[open]) { overflow: hidden; }
 .stt-gift-form label { display: grid; gap: 5px; font-size: .88rem; font-weight: 650; }
 .stt-gift-form input:not([type="checkbox"]):not([hidden]) { width: 100%; min-height: 44px; border: 1px solid color-mix(in srgb, currentColor 45%, transparent); border-radius: 9px; padding: 8px 12px; background: transparent; font-size: 1rem; font-weight: 400; }
 .stt-gift-form .stt-gift-consent { display: flex; align-items: flex-start; gap: 8px; font-size: .82rem; font-weight: 400; }
-.stt-gift-consent input { flex: none; margin-top: .22em; }
+.stt-gift-art .stt-gift-form .stt-gift-consent input[type="checkbox"] {
+  flex: 0 0 16px;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  margin: .15em 0 0;
+}
+.stt-gift-consent span { min-width: 0; overflow-wrap: break-word; }
 .stt-gift-form .stt-gift-primary { width: 100%; min-height: 46px; }
 .stt-gift-art :focus-visible, .stt-gift-close:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 .stt-gift-form a { text-decoration: underline; }
 .stt-gift-fab, .stt-gift-banner { display: flex; align-items: center; gap: 8px; }
 .stt-gift-fab { border: 1px solid #d9a973; border-radius: 999px; padding: 8px 12px; background: #fff4e1; color: #503417; font-size: .8rem; font-weight: 750; box-shadow: 0 2px 14px #0002; }
+.stt-gift-fab { position: fixed; z-index: 40; left: max(16px, env(safe-area-inset-left)); bottom: calc(6rem + env(safe-area-inset-bottom)); }
+@media (min-width: 1024px) { .stt-gift-fab { left: 24px; bottom: 24px; } }
 .stt-gift-banner { flex-wrap: wrap; border: 1px solid #dec69d; border-radius: 12px; padding: 10px 14px; background: #fff8ea; color: #402b18; }
 .stt-gift-banner p { flex: 1; margin: 0; font-weight: 700; }
 .stt-gift-banner button { background: #543514; color: #fff; }

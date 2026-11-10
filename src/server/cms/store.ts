@@ -1123,7 +1123,8 @@ function saveRecord(
         const before = promotionSchema.parse(previous?.published ? JSON.parse(previous.published) : previousData);
         if ((before.selectionMode ?? "random") !== (campaign.selectionMode ?? "random") ||
             (before.winnerCount ?? 1) !== (campaign.winnerCount ?? 1) ||
-            (before.reserveCount ?? 0) !== (campaign.reserveCount ?? 0))
+            (before.reserveCount ?? 0) !== (campaign.reserveCount ?? 0) ||
+            before.entriesPerWinner !== campaign.entriesPerWinner)
           throw new Error("Không đổi cách chọn hoặc số suất sau khi chiến dịch đã có đăng ký.");
       }
     }

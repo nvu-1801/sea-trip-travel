@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { Field, HotelFormError } from "./hotel-form";
 import { ConfirmModal, type ToastKind } from "./notify";
+import { promotionWinnerCount } from "@/domain/promotion";
 
 type Entry = { id: string; fullName: string; phone: string; tourSlug?: string; created_at: string; exclusion: string | null };
 type Fulfillment = "contacted" | "confirmed" | "delivered";
-type Data = { entries: Entry[]; closedAt: string | null; rules: { method: "random" | "manual"; count: number; reserves: number }; result: { method: "random" | "manual"; selected: string[]; alternates: string[]; fulfillment: Record<string, Fulfillment>; eligible: number; at: string } | null };
+type Data = { entries: Entry[]; closedAt: string | null; rules: { method: "random" | "manual"; count: number; reserves: number; entriesPerWinner?: number }; result: { method: "random" | "manual"; selected: string[]; alternates: string[]; fulfillment: Record<string, Fulfillment>; eligible: number; at: string } | null };
 type Action = { action: "close" } | { action: "random"; count: number } | { action: "manual"; ids: string[]; reason: string } | { action: "exclude" | "replace"; id: string; reason: string } | { action: "fulfill"; id: string; status: Fulfillment };
 type LegacyReport = { eligible: number; duplicates: number; linked: number; trash: number; invalid: number; unreadable: number };
 
@@ -73,7 +74,7 @@ export function PromotionEntries({ id, title, request, notify, onBack }: {
   }
   const eligible = data?.entries.filter((entry) => !entry.exclusion).length ?? 0;
   const method = data?.rules.method;
-  const count = data?.rules.count ?? 1;
+  const count = promotionWinnerCount(eligible, data?.rules.count ?? 1, data?.rules.entriesPerWinner);
   const visible = data?.entries.filter((entry) => `${entry.fullName} ${entry.phone} ${entry.tourSlug ?? ""}`.toLocaleLowerCase("vi").includes(query.trim().toLocaleLowerCase("vi")));
   return <section className="stt-hotel-section stt-promo-entries" aria-label="Người tham gia chiến dịch">
     <div className="stt-hotel-actions">
@@ -140,10 +141,10 @@ export function PromotionEntries({ id, title, request, notify, onBack }: {
         data.closedAt && <section className="stt-hotel-section">
           <h3>Chốt người trúng</h3>
           <p>{method === "random" ? "Bốc thăm ngẫu nhiên" : "Chọn theo thể lệ"} · {count} phần quà</p>
-          {eligible < count && <p className="adm-field-error">Chưa đủ người hợp lệ để trao số phần quà đã công bố.</p>}
+          {(!count || eligible < count) && <p className="adm-field-error">Chưa đủ lượt hợp lệ để chốt người trúng.</p>}
           {method === "manual" &&
             <Field label={`Lý do chọn (${selected.length} người)`} error={issues.reason || issues.ids}><input value={reason} maxLength={250} onChange={(event) => { setReason(event.target.value); setIssues({}); }} /></Field>}
-          <button type="button" className="adm-primary" disabled={busy || eligible < count} onClick={() => {
+          <button type="button" className="adm-primary" disabled={busy || !count || eligible < count} onClick={() => {
             if (method === "manual" && (selected.length !== count || !reason.trim())) {
               setIssues({ reason: selected.length !== count ? `Chọn đúng ${count} người trong danh sách.` : "Nhập lý do chọn." }); return;
             }

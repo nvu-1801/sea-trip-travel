@@ -32,8 +32,8 @@ function GiftArtwork({ item, children }: { item: PublicPromotion; children: Reac
       <p className="stt-gift-eyebrow"><span style={{ background: item.accent }} /> QUÀ TẶNG SEA TRIP</p>
       <h2>{item.title || "Tiêu đề quà tặng"}</h2>
       {item.intro && <p>{item.intro}</p>}
-      {item.terms && <div className="stt-gift-conditions"><h3>Điều kiện nhận quà</h3><p className="stt-gift-terms">{item.terms}</p></div>}
-      {item.winnerCount && <p>{item.winnerCount} phần quà · {item.selectionMode === "manual" ? "Chọn theo thể lệ" : "Bốc thăm ngẫu nhiên"}</p>}
+      <p className="stt-gift-conditions">Điền họ tên và số điện thoại để tham gia. Mỗi số điện thoại được tính một lượt.</p>
+      {(item.entriesPerWinner || item.winnerCount) && <p>{item.entriesPerWinner ? `Mỗi ${item.entriesPerWinner} lượt hợp lệ có 1 suất (tối đa 100 suất)` : `${item.winnerCount} phần quà`} · {item.selectionMode === "manual" ? "Ban tổ chức chọn" : "Bốc thăm ngẫu nhiên"}</p>}
       {children}
     </div>
   </div>;
@@ -57,7 +57,7 @@ export function PromotionTrigger({ placement }: { placement: "home" | "tour" | "
   );
 }
 
-export function Promotions({ children }: { children: ReactNode }) {
+export function Promotions({ children, version }: { children: ReactNode; version?: string | null }) {
   const path = usePathname();
   const page = path.replace(/^\/(vi|en)(?=\/|$)/, "").replace(/\/$/, "");
   const tour = /^\/tour\/([a-z0-9-]+)$/.exec(page)?.[1];
@@ -80,7 +80,7 @@ export function Promotions({ children }: { children: ReactNode }) {
     void refresh();
     const timer = setInterval(refresh, 15_000);
     return () => { controller.abort(); clearInterval(timer); };
-  }, [page, tour]);
+  }, [page, tour, version]);
   const item = selection?.page === page ? selection.item : null;
   const key = item ? `seatrip:gift:${item.id}` : "";
   const open = () => {
@@ -109,6 +109,7 @@ export function Promotions({ children }: { children: ReactNode }) {
 
   return <Gifts.Provider value={item ? { item, open } : null}>
     {children}
+    <PromotionTrigger placement="floating" />
     {item && opened === `${item.id}:${page}` &&
       <GiftDialog key={opened} item={item} tour={tour} source={path} storageKey={key} onClose={() => setOpened("")} />}
   </Gifts.Provider>;

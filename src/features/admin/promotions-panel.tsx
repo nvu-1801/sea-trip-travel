@@ -35,7 +35,7 @@ function newPromotion(): Promotion {
 
 const fields = [
   ["name", "Tên quản lý nội bộ", 100], ["title", "Tiêu đề khách thấy", 120],
-  ["intro", "Lời giới thiệu", 500], ["terms", "Điều kiện nhận quà", 2000],
+  ["intro", "Lời giới thiệu", 500],
   ["button", "Nhãn nút gửi đăng ký", 50], ["confirmation", "Lời xác nhận sau khi gửi", 250],
 ] as const;
 
@@ -155,7 +155,7 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
       <div className="stt-hotel-grid2">
         {fields.map(([key, label, length]) => <Field key={key} label={label} error={fieldIssue(issues, key)}>
           {length > 250
-            ? <textarea rows={key === "terms" ? 5 : 3} maxLength={length} value={draft[key]} onChange={(event) => set(key, event.target.value)} />
+            ? <textarea rows={3} maxLength={length} value={draft[key]} onChange={(event) => set(key, event.target.value)} />
             : <input maxLength={length} value={draft[key]} onChange={(event) => set(key, event.target.value)} />}
         </Field>)}
       </div>
@@ -199,19 +199,30 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
               if (mode === "manual") set("reserveCount", 0);
             }}><option value="random">Bốc thăm ngẫu nhiên</option><option value="manual">Chọn theo tiêu chí trong thể lệ</option></select>
           </Field>
-          <Field label="Số phần quà" error={issues.winnerCount}>
-            <input type="number" min={1} max={100} value={draft.winnerCount ?? 1} onChange={(event) => set("winnerCount", Number(event.target.value))} />
+          <Field label="Số lượt hợp lệ cho một suất" hint="Để trống nếu muốn đặt số phần quà cố định. Ví dụ: 20 lượt hợp lệ cho 1 suất." error={issues.entriesPerWinner}>
+            <input type="number" min={1} max={10000} value={draft.entriesPerWinner ?? ""} onChange={(event) => set("entriesPerWinner", event.target.value ? Number(event.target.value) : undefined)} />
           </Field>
+          {!draft.entriesPerWinner && <Field label="Số phần quà cố định" error={issues.winnerCount}>
+            <input type="number" min={1} max={100} value={draft.winnerCount ?? 1} onChange={(event) => set("winnerCount", Number(event.target.value))} />
+          </Field>}
           {draft.selectionMode !== "manual" && <Field label="Số suất dự phòng" error={issues.reserveCount}>
             <input type="number" min={0} max={100} value={draft.reserveCount ?? 0} onChange={(event) => set("reserveCount", Number(event.target.value))} />
           </Field>}
         </div>
       </fieldset>
-      <Field label="Tour áp dụng" hint="Giữ Ctrl hoặc Command để chọn nhiều tour." error={fieldIssue(issues, "tours")}>
-        <select className="stt-promo-tours" multiple size={5} value={draft.tours} onChange={(event) => set("tours", Array.from(event.currentTarget.selectedOptions, (item) => item.value))}>
-          {tours.map((tour) => <option key={tour.value} value={tour.value}>{tour.label}</option>)}
+      <Field label="Tour áp dụng" hint="Chọn từng tour để thêm vào danh sách." error={fieldIssue(issues, "tours")}>
+        <select value="" onChange={(event) => { if (event.target.value) set("tours", [...draft.tours, event.target.value]); }}>
+          <option value="">Chọn tour…</option>
+          {tours.filter((tour) => !draft.tours.includes(tour.value)).map((tour) => <option key={tour.value} value={tour.value}>{tour.label}</option>)}
         </select>
       </Field>
+      {!!draft.tours.length && <ul className="stt-promo-tour-chips" aria-label="Các tour đã chọn">
+        {draft.tours.map((slug) => {
+          const label = tours.find((tour) => tour.value === slug)?.label ?? slug;
+          return <li key={slug}><span>{label}</span><button type="button" aria-label={`Bỏ tour ${label}`}
+            onClick={() => set("tours", draft.tours.filter((value) => value !== slug))}>×</button></li>;
+        })}
+      </ul>}
       <div className="stt-hotel-actions">
         <button type="button" className="stt-hotel-action" onClick={() => setPreview("desktop")}>Xem trước desktop</button>
         <button type="button" className="stt-hotel-action" onClick={() => setPreview("mobile")}>Xem trước mobile</button>

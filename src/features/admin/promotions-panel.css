@@ -126,3 +126,6 @@
   display: grid;
   gap: 8px;
 }
+.stt-promo-tour-chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.stt-promo-tour-chips li { display: inline-flex; max-width: 100%; align-items: center; gap: 8px; padding: 4px 6px 4px 12px; border: 1px solid #eed5e0; border-radius: 999px; background: #fff7fa; overflow-wrap: anywhere; }
+.stt-promo-tour-chips button { flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: #f7e4ed; color: #8a174b; cursor: pointer; }

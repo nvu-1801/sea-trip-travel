@@ -589,6 +589,10 @@ async function main() {
       (await (await fetch(`${BASE}/api/promotions`)).json()) === null);
     await page.getByRole("button", { name: "Tạo chiến dịch" }).click();
     await page.getByLabel("Tên quản lý nội bộ").fill("QA quà khuyến mãi");
+    await page.getByLabel("Tour áp dụng").selectOption("quy-nhon-phu-yen-4-ngay-3-dem");
+    const pickedTour = page.getByRole("list", { name: "Các tour đã chọn" });
+    await pickedTour.getByRole("button", { name: /^Bỏ tour/ }).click();
+    check("admin can add a tour from the dropdown and remove its chip", await pickedTour.count() === 0);
     await page.getByRole("button", { name: "Lưu nháp", exact: true }).click();
     const campaign = page.locator(".stt-hotel-trash-list li").filter({ hasText: "QA quà khuyến mãi" });
     await campaign.waitFor();
@@ -601,9 +605,9 @@ async function main() {
     const id = draft.id;
     const gift = {
       ...draft.data, title: "Quà kiểm thử Quy Nhơn", intro: "Quà kiểm thử của Studio.",
-      terms: "Áp dụng cho tour kiểm thử.", image: "/images/destinations/quy-nhon-bien.jpg", alt: "Ảnh thử",
-      starts: local(-3600_000), ends: local(3600_000), featured: true, tours: [tour],
-      selectionMode: "random", winnerCount: 1, reserveCount: 1,
+      terms: "", image: "/images/destinations/quy-nhon-bien.jpg", alt: "Ảnh thử",
+      starts: local(-3600_000), ends: local(3600_000), featured: false, tours: [tour],
+      selectionMode: "random", winnerCount: 1, reserveCount: 1, entriesPerWinner: 2,
     };
     const publish = async (data, revision) => {
       const result = await page.request.post(`${BASE}/api/admin/content/promotions`, {
@@ -613,10 +617,13 @@ async function main() {
     };
     await publish({ ...gift, starts: local(1800_000) }, draft.revision);
     check("scheduled gift stays hidden before its start", (await (await fetch(`${BASE}/api/promotions`)).json()) === null);
+    await page.goto(`${BASE}/`, { waitUntil: "load" });
     await publish(gift, draft.revision + 1);
     check("unrelated tours do not get the gift", (await (await fetch(`${BASE}/api/promotions?tour=other-tour`)).json()) === null);
-    await page.goto(`${BASE}/`, { waitUntil: "load" });
-    await page.getByRole("button", { name: "Xem quà", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Xem quà", exact: true }).waitFor({ timeout: 20_000 });
+    check("an already-open home shows the published gift without requiring featured or reload", true);
+    const giftButton = await page.getByRole("button", { name: "Quà tặng", exact: true }).boundingBox();
+    check("the floating gift button sits on the left", giftButton && giftButton.x < 50);
     check("gift does not auto-open by default", await page.locator(".stt-gift-dialog[open]").count() === 0);
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 900 });
@@ -685,7 +692,7 @@ async function main() {
     await publish({ ...gift, starts: local(-7200_000), ends: local(-3600_000) }, draft.revision + 3);
     check("expired gifts are unavailable from the public endpoint", (await (await fetch(`${BASE}/api/promotions`)).json()) === null);
     await publish(gift, draft.revision + 4);
-    await publish({ ...gift, id: "promo_tour_override", name: "QA tour riêng", featured: false, starts: local(-900_000) }, 0);
+    await publish({ ...gift, id: "promo_tour_override", name: "QA tour riêng", home: false, featured: false, starts: local(-900_000) }, 0);
     check("overlapping tour campaigns leave the featured home selection intact",
       (await (await fetch(`${BASE}/api/promotions`)).json())?.id === id &&
       (await (await fetch(`${BASE}/api/promotions?tour=${tour}`)).json())?.id === "promo_tour_override");

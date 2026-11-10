@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useSiteContact } from "@/components/layout/site-context";
 import { facebookLink, zaloLink } from "@/config/social-links";
 import { cn } from "@/lib/utils";
-import { PromotionTrigger } from "@/features/promotions/promotion-gift";
 import {
   ArrowUpIcon,
   ChatIcon,
@@ -169,7 +168,6 @@ export function FloatingContact({ labels }: { labels: FloatingContactLabels }) {
           close();
       }}
     >
-      <PromotionTrigger placement="floating" />
       {/* Back to top — appears once the visitor has committed to the page. */}
       <button
         type="button"
