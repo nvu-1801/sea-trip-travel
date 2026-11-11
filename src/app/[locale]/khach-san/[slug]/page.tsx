@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/form-controls";
 import { MAX_NIGHTS_PER_STAY, stayDates } from "@/domain/hotel-pricing";
 import type { Metadata } from "next";
 import { HotelRoomRequest } from "@/features/hotels/hotel-room-request";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { contentRedirect } from "@/lib/data/redirects";
 import { buildMetadata, absoluteUrl } from "@/lib/seo";
 import { localizePath } from "@/i18n/routing";
 import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
@@ -109,7 +110,20 @@ export default async function HotelDetailPage({
     checkOut,
     tourSlug,
   });
-  if (!detail) notFound();
+  if (!detail) {
+    const target = contentRedirect(`/khach-san/${slug}`);
+    if (target) {
+      const preserved = new URLSearchParams();
+      for (const [key, value] of Object.entries(query)) {
+        for (const item of typeof value === "string" ? [value] : value ?? []) {
+          preserved.append(key, item);
+        }
+      }
+      const search = preserved.toString();
+      permanentRedirect(localizePath(locale, target) + (search ? `?${search}` : ""));
+    }
+    notFound();
+  }
 
   const path = `/khach-san/${detail.slug}`;
   const pageUrl = absoluteUrl(localizePath(locale, path));

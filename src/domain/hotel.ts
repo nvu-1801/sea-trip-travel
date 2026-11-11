@@ -54,7 +54,7 @@ export const hotelDraftSchema = z
   .object({
     /** Stable identifier. Never reused, never recycled for another property. */
     id: z.string().regex(/^hotel_[a-z0-9_]+$/, "id phải có dạng hotel_abc"),
-    /** Stable URL-safe slug. Changing it breaks links and SEO. */
+    /** URL-safe segment of the hotel’s public path. */
     slug: z.string().regex(/^[a-z0-9-]+$/),
     name: z.string().min(1).max(160),
     /** Optional link to a `destinations` record, used for the location filter. */

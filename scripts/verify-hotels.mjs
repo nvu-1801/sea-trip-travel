@@ -488,6 +488,30 @@ async function main() {
       fullPage: true,
     });
 
+    await page.getByRole("tab", { name: /Thông tin/ }).click();
+    const hotelName = page.getByLabel("Tên khách sạn", { exact: true });
+    const hotelSlug = page.getByLabel("Slug", { exact: true });
+    await hotelSlug.fill("");
+    await hotelName.fill("Khách sạn Đà Nẵng");
+    check("hotel slug follows the Vietnamese name", await hotelSlug.inputValue() === "khach-san-da-nang");
+    await hotelSlug.fill("Biển Đẹp");
+    await hotelName.fill("Khách sạn Biển Đẹp");
+    check("a custom slug survives a later name edit", await hotelSlug.inputValue() === "Biển Đẹp");
+    await page.getByRole("button", { name: "Lưu và xuất bản", exact: true }).click();
+    await page.getByText(/Đã xuất bản khách sạn/).first().waitFor();
+    check("the saved custom slug is normalized", await hotelSlug.inputValue() === "bien-dep");
+    const oldHotel = await desktop.request.get(
+      `${BASE}/khach-san/demo-quy-nhon-resort?checkIn=${checkIn}&checkOut=${checkOut}`,
+      { maxRedirects: 0 },
+    );
+    const redirected = new URL(oldHotel.headers().location ?? BASE, BASE);
+    check("the old hotel URL permanently redirects with booking dates",
+      oldHotel.status() === 308 && redirected.pathname === "/khach-san/bien-dep" &&
+      redirected.searchParams.get("checkIn") === checkIn &&
+      redirected.searchParams.get("checkOut") === checkOut);
+    const renamedHotel = await desktop.request.get(redirected.href);
+    check("the new hotel URL is public", renamedHotel.ok() && (await renamedHotel.text()).includes("Khách sạn Biển Đẹp"));
+
     await page.getByRole("button", { name: "Về danh sách", exact: true }).click();
     await page.locator(".stt-hotel-table").waitFor();
     check("return to list closes the hotel editor", !(await page.locator(".stt-hotel-tabs").isVisible()));

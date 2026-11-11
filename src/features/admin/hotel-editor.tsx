@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { MAX_ROOM_IMAGES, type HotelRoom } from "@/domain/hotel-room";
+import { slugFollowsTitle } from "@/lib/public-slug";
+import { slugify } from "@/lib/slugify";
 import { LODGING_TYPES, LODGING_LABELS } from "@/domain/hotel";
 import type { TourLink } from "@/server/hotels/store";
 import type { TourRelation } from "@/domain/hotel-pricing";
@@ -84,7 +86,16 @@ export function HotelEditor({
   onStatus,
 }: Props) {
   const [tab, setTab] = useState<TabKey>("info");
-  const [draft, setDraft] = useState<Record<string, unknown>>(hotel.data);
+  const [draft, setDraft] = useState<Record<string, unknown>>(() => ({
+    ...hotel.data,
+    slug: hotel.data.slug === "khach-san-moi"
+      ? slugify(text(hotel.data.name))
+      : hotel.data.slug,
+  }));
+  const [autoSlug, setAutoSlug] = useState(() =>
+    hotel.data.slug === "khach-san-moi" ||
+    slugFollowsTitle(hotel.data.slug, hotel.data.name),
+  );
   const [revision, setRevision] = useState(hotel.revision);
   const [busy, setBusy] = useState(false);
   const [issues, setIssues] = useState<Record<string, string>>({});
@@ -153,6 +164,7 @@ export function HotelEditor({
         body: JSON.stringify({ data: clean, revision, action }),
       });
       setRevision(Number(result.revision ?? revision + 1));
+      if (typeof result.slug === "string") set("slug", result.slug);
       report(
         "ok",
         action === "publish"
@@ -310,22 +322,24 @@ export function HotelEditor({
               <input
                 value={text(draft.name)}
                 maxLength={160}
-                onChange={(event) => set("name", event.target.value)}
+                onChange={(event) => {
+                  const name = event.target.value;
+                  set("name", name);
+                  if (autoSlug) set("slug", slugify(name));
+                }}
               />
             </Field>
             <Field
               label="Slug" error={fieldIssue(issues, "slug")}
-              hint={
-                revision > 0
-                  ? "Slug đã phát hành được giữ cố định để không phá liên kết."
-                  : "Tự sinh từ tên nếu để trống."
-              }
+              hint="Tự tạo từ tên khách sạn. Bạn có thể sửa hoặc để trống để dùng lại tên."
             >
               <input
                 value={text(draft.slug)}
                 maxLength={80}
-                readOnly={revision > 0}
-                onChange={(event) => set("slug", event.target.value)}
+                onChange={(event) => {
+                  setAutoSlug(!event.target.value.trim());
+                  set("slug", event.target.value);
+                }}
               />
             </Field>
             <Field label="Tỉnh / thành" error={fieldIssue(issues, "province")}>
