@@ -5,11 +5,7 @@ import { contentVersion } from "@/server/cms/db";
 import { LiveContent } from "@/components/layout/live-content";
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties } from "react";
-import {
-  Be_Vietnam_Pro,
-  Lora,
-  Manrope,
-} from "next/font/google";
+import { Be_Vietnam_Pro, Lora } from "next/font/google";
 import "../globals.css";
 import { siteConfig } from "@/config/runtime-site";
 import { SkipLink, SiteHeader } from "@/components/layout/site-header";
@@ -57,18 +53,6 @@ const lora = Lora({
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
-  display: "swap",
-});
-
-/**
- * English body face. Manrope is soft, modern and has Vietnamese support too,
- * but it is only selected for `html[lang="en"]`; Vietnamese keeps Be Vietnam
- * Pro, which is optimised for Vietnamese diacritics.
- */
-const manrope = Manrope({
-  variable: "--font-manrope",
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -141,7 +125,7 @@ export default async function LocaleLayout({
       data-theme={activeTheme.id}
       style={activeTheme.vars as CSSProperties}
       lang={localeMeta[locale].htmlLang}
-      className={`${beVietnamPro.variable} ${lora.variable} ${manrope.variable} h-full antialiased`}
+      className={`${beVietnamPro.variable} ${lora.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <noscript>

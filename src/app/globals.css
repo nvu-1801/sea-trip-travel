@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@fontsource-variable/cormorant-garamond";
 @import "@fontsource-variable/cormorant-garamond/wght-italic.css";
+@import "@fontsource-variable/manrope";
 
 /* =============================================================================
    SEA TRIP TRAVEL — Design tokens.
@@ -183,7 +184,7 @@
  */
 html[lang="en"] {
   --font-sans:
-    var(--font-manrope), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    "Manrope Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-display:
     "Cormorant Garamond Variable", Georgia, "Times New Roman",
