@@ -172,6 +172,9 @@ export function db() {
     database.exec(`ALTER TABLE promotion_results ADD COLUMN rules TEXT NOT NULL
       DEFAULT '{"method":"random","count":1,"reserves":0}'`);
   }
+  const promotionEntryColumns = database.prepare("PRAGMA table_info(promotion_entries)").all();
+  if (!promotionEntryColumns.some((column) => column.name === "read_at"))
+    database.exec("ALTER TABLE promotion_entries ADD COLUMN read_at TEXT");
   const leadColumns = database.prepare("PRAGMA table_info(leads)").all() as {
     name: string;
   }[];

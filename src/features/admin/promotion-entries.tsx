@@ -7,7 +7,7 @@ import { promotionWinnerCount } from "@/domain/promotion";
 
 type Entry = { id: string; fullName: string; phone: string; tourSlug?: string; created_at: string; exclusion: string | null };
 type Fulfillment = "contacted" | "confirmed" | "delivered";
-type Data = { entries: Entry[]; closedAt: string | null; rules: { method: "random" | "manual"; count: number; reserves: number; entriesPerWinner?: number }; result: { method: "random" | "manual"; selected: string[]; alternates: string[]; fulfillment: Record<string, Fulfillment>; eligible: number; at: string } | null };
+type Data = { entries: Entry[]; seenThrough: number; closedAt: string | null; rules: { method: "random" | "manual"; count: number; reserves: number; entriesPerWinner?: number }; result: { method: "random" | "manual"; selected: string[]; alternates: string[]; fulfillment: Record<string, Fulfillment>; eligible: number; at: string } | null };
 type Action = { action: "close" } | { action: "random"; count: number } | { action: "manual"; ids: string[]; reason: string } | { action: "exclude" | "replace"; id: string; reason: string } | { action: "fulfill"; id: string; status: Fulfillment };
 type LegacyReport = { eligible: number; duplicates: number; linked: number; trash: number; invalid: number; unreadable: number };
 
@@ -29,7 +29,17 @@ export function PromotionEntries({ id, title, request, notify, onBack }: {
   const [legacy, setLegacy] = useState<LegacyReport>();
   useEffect(() => {
     let active = true;
-    request(url).then((value) => { if (active) setData(value); })
+    request(url).then((value) => {
+      if (!active) return;
+      setData(value);
+      if (value.seenThrough) {
+        void request(url, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ action: "mark-read", through: value.seenThrough }),
+        }).catch(() => { /* The badge can be cleared when the list is reopened. */ });
+      }
+    })
       .catch((cause) => { if (active) setError(cause.message); });
     return () => { active = false; };
   }, [request, url]);

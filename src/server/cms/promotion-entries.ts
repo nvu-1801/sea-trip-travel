@@ -88,6 +88,13 @@ export function promotionEntryCounts() {
   return Object.fromEntries(rows.map(({ campaign_id, total }) => [campaign_id, total]));
 }
 
+export function unreadPromotionCount() {
+  const row = db().prepare(`SELECT count(*) AS total FROM promotion_entries e
+    JOIN records r ON r.collection='promotions' AND r.id=e.campaign_id
+    WHERE e.read_at IS NULL AND r.state!='deleted'`).get();
+  return Number(row?.total ?? 0);
+}
+
 function requireCampaign(id: string) {
   const row = list("promotions").find((row) => row.id === id && row.state !== "deleted");
   if (!row)
@@ -112,14 +119,16 @@ function readResult(encoded: unknown): Result | null {
 export function promotionEntries(id: string) {
   const campaign = requireCampaign(id);
   const state = db().prepare("SELECT closed_at, rules, result FROM promotion_results WHERE campaign_id=?").get(id);
-  const rows = db().prepare("SELECT id,data,created_at,exclusion FROM promotion_entries WHERE campaign_id=? ORDER BY created_at DESC,id")
-    .all(id) as { id: string; data: string; created_at: string; exclusion: string | null }[];
+  const rows = db().prepare("SELECT rowid,id,data,created_at,exclusion FROM promotion_entries WHERE campaign_id=? ORDER BY created_at DESC,id")
+    .all(id) as { rowid: number; id: string; data: string; created_at: string; exclusion: string | null }[];
   return { closedAt: state?.closed_at ?? null, rules: state ? JSON.parse(String(state.rules)) : rulesOf(campaign.data),
     result: readResult(state?.result),
-    entries: rows.map(({ data, ...row }) => ({ ...row, ...decrypt(data) })) };
+    seenThrough: rows.reduce((latest, row) => Math.max(latest, row.rowid), 0),
+    entries: rows.map(({ data, id, created_at, exclusion }) => ({ ...decrypt(data), id, created_at, exclusion })) };
 }
 
 export const promotionAction = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("mark-read"), through: z.number().int().nonnegative() }),
   z.object({ action: z.literal("close") }),
   z.object({ action: z.literal("exclude"), id: z.uuid(), reason: z.string().trim().min(1, "Nhập lý do loại").max(250) }),
   z.object({ action: z.literal("random"), count: z.number().int().min(1, "Nhập ít nhất một suất").max(100) }),
@@ -130,6 +139,11 @@ export const promotionAction = z.discriminatedUnion("action", [
 
 export function updatePromotionEntries(id: string, input: z.infer<typeof promotionAction>, context: AuditContext) {
   const campaign = requireCampaign(id);
+  if (input.action === "mark-read") {
+    db().prepare("UPDATE promotion_entries SET read_at=? WHERE campaign_id=? AND read_at IS NULL AND rowid<=?")
+      .run(new Date().toISOString(), id, input.through);
+    return { ok: true };
+  }
   return transaction(() => {
     const state = db().prepare("SELECT result,rules FROM promotion_results WHERE campaign_id=?").get(id);
     if (input.action === "fulfill" || input.action === "replace") {

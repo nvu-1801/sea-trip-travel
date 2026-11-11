@@ -136,7 +136,9 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
             <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => {
               if (window.confirm("Chuyển chiến dịch vào thùng rác? Quà sẽ ngừng hiển thị trên website.")) void save(row.data, "delete");
             }}>Xóa</button>
-            <button type="button" className="stt-hotel-action" onClick={() => setView(row)}>Xem đăng ký ({row.entries})</button>
+            <button type="button" className="adm-primary stt-promo-entry-action" onClick={() => setView(row)}>
+              Xem đăng ký <span className="stt-promo-entry-count">({row.entries})</span>
+            </button>
           </div>
         </li>)}
       </ul>

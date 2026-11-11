@@ -622,6 +622,7 @@ export function Dashboard({
   const tab = section;
   const [hasUpdates, setHasUpdates] = useState(false);
   const [unreadLeads, setUnreadLeads] = useState(0);
+  const [unreadPromotions, setUnreadPromotions] = useState(0);
   const [uploadCount, setUploadCount] = useState(0);
   const [csrf, setCsrf] = useState(initialCsrf),
     [rows, setRows] = useState<RecordRow[]>([]),
@@ -1145,6 +1146,7 @@ export function Dashboard({
         const result = await response.json();
         if (!cancelled) {
           setUnreadLeads(result.count);
+          setUnreadPromotions(Number(result.promotionUnread ?? 0));
           setLeadTrashCount(Number(result.trash ?? 0));
         }
       } catch {
@@ -2789,6 +2791,11 @@ export function Dashboard({
                   >
                     <AdminIcon name={icon as AdminIconName} size={17} />
                     <span className="adm-nav-text">{railLabel}</span>
+                    {key === "promotions" && unreadPromotions > 0 && (
+                      <span className="adm-unread-badge" aria-label={`${unreadPromotions} đăng ký quà chưa xem`} aria-live="polite">
+                        {unreadPromotions}
+                      </span>
+                    )}
                     {key === "leads" && unreadLeads > 0 && (
                       <span
                         className="adm-unread-badge"

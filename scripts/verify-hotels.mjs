@@ -662,9 +662,14 @@ async function main() {
     check("a completed registration cannot be submitted again in the same browser",
       await page.getByText(gift.confirmation, { exact: true }).isVisible());
     await page.goto(`${BASE}/admin/promotions`, { waitUntil: "load" });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const unreadGiftBadge = page.locator('[aria-label="1 đăng ký quà chưa xem"]');
+    await unreadGiftBadge.waitFor();
     await campaign.getByRole("button", { name: "Xem đăng ký (1)", exact: true }).click();
     await page.getByText("Khách QA", { exact: true }).waitFor();
     check("Studio shows the participant in the campaign", await page.getByText("Khách QA", { exact: true }).count() === 1);
+    await unreadGiftBadge.waitFor({ state: "detached", timeout: 20_000 });
+    check("opening registrations clears their unread sidebar badge", true);
     const leadsAfterGift = await (await page.request.get(`${BASE}/api/admin/leads`)).json();
     check("gift registration does not create a consultation lead", !JSON.stringify(leadsAfterGift).includes("Khách QA"));
     await page.goto(`${BASE}/admin/promotions`, { waitUntil: "load" });
