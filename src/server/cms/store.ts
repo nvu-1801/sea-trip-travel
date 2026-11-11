@@ -616,6 +616,91 @@ export function repairPlaceholderSlugs(): number {
   return repaired;
 }
 
+export const HOTEL_SLUG_MIGRATION = "hotels/name-slugs:v1";
+
+function backfillHotelSlugs(): number {
+  const connection = db();
+  const rows = connection.prepare(
+    "SELECT id,data,published FROM records WHERE collection='hotels' AND state!='deleted' ORDER BY id",
+  ).all() as { id: string; data: string; published: string | null }[];
+  type Snapshot = { name?: string; slug?: string };
+  const entries = rows.map((row) => ({
+    ...row,
+    draft: JSON.parse(row.data) as Snapshot,
+    live: row.published ? JSON.parse(row.published) as Snapshot : null,
+  }));
+
+  const claims = new Map<string, Set<string>>();
+  const claim = (slug: string | undefined, id: string) => {
+    if (!slug) return;
+    const owners = claims.get(slug) ?? new Set<string>();
+    owners.add(id);
+    claims.set(slug, owners);
+  };
+  for (const entry of entries) {
+    for (const snapshot of [entry.draft, entry.live]) {
+      if (!snapshot) continue;
+      claim(snapshot.slug, entry.id);
+      claim(slugify(snapshot.name ?? ""), entry.id);
+    }
+  }
+  const prefix = "/khach-san/";
+  const aliases = new Set((connection.prepare(
+    "SELECT from_path FROM content_redirects WHERE from_path LIKE '/khach-san/%'",
+  ).all() as { from_path: string }[]).map(({ from_path }) => from_path));
+
+  const update = connection.prepare(
+    "UPDATE records SET data=?,published=?,revision=revision+1,updated_at=? WHERE collection=? AND id=?",
+  );
+  const now = new Date().toISOString();
+  const renamed = new Map<string, string>();
+  let repaired = 0;
+  for (const { id, draft, live } of entries) {
+    const oldLive = live?.slug;
+    const rename = (snapshot: Snapshot | null) => {
+      if (!snapshot?.slug) return false;
+      const { slug: oldSlug } = snapshot;
+      const next = slugify(snapshot.name ?? "");
+      if (!next || next === oldSlug || claims.get(next)?.size !== 1 ||
+          aliases.has(prefix + next)) return false;
+      snapshot.slug = next;
+      if (claims.get(oldSlug)?.size === 1) renamed.set(oldSlug, id);
+      return true;
+    };
+    const changedDraft = rename(draft);
+    const changedLive = rename(live);
+    if (!changedDraft && !changedLive) continue;
+    if (changedLive && oldLive && live?.slug) {
+      const oldPath = prefix + oldLive;
+      const newPath = prefix + live.slug;
+      connection.prepare("UPDATE content_redirects SET to_path=? WHERE to_path=?").run(newPath, oldPath);
+      rememberRedirect(oldPath, newPath);
+    }
+    update.run(JSON.stringify(draft), live ? JSON.stringify(live) : null, now, "hotels", id);
+    repaired += 1;
+  }
+
+  const site = connection.prepare(
+    "SELECT data,published FROM records WHERE collection='settings' AND id='site'",
+  ).get() as { data: string; published: string | null } | undefined;
+  if (site && renamed.size) {
+    type SettingsSnapshot = { hotels?: { featured?: string[] } };
+    const draft = JSON.parse(site.data) as SettingsSnapshot;
+    const live = site.published ? JSON.parse(site.published) as SettingsSnapshot : null;
+    let changed = false;
+    for (const snapshot of [draft, live]) {
+      if (!snapshot?.hotels?.featured) continue;
+      snapshot.hotels.featured = snapshot.hotels.featured.map((slug) => {
+        const id = renamed.get(slug);
+        if (id) changed = true;
+        return id ?? slug;
+      });
+    }
+    if (changed) update.run(JSON.stringify(draft), live ? JSON.stringify(live) : null, now, "settings", "site");
+  }
+  return repaired;
+}
+
 /** Applies every pending content repair. The caller owns the transaction. */
 function applyPendingMigrations(): number {
   let repaired = 0;
@@ -626,6 +711,10 @@ function applyPendingMigrations(): number {
   if (!migrationApplied(PUBLIC_SLUG_MIGRATION)) {
     repaired += repairPlaceholderSlugs();
     markMigration(PUBLIC_SLUG_MIGRATION);
+  }
+  if (!migrationApplied(HOTEL_SLUG_MIGRATION)) {
+    repaired += backfillHotelSlugs();
+    markMigration(HOTEL_SLUG_MIGRATION);
   }
   if (!migrationApplied(CUSTOMER_VIDEO_FIRST_MIGRATION)) {
     repaired += reorderCustomerVideos();

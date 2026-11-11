@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { contentVersion, db } from "@/server/cms/db";
-import { hotelSettings, list, published, purgeExpiredTrash, purgeHotelTrash, redirectTarget, save } from "@/server/cms/store";
+import { HOTEL_SLUG_MIGRATION, hotelSettings, list, migrateContent, published, purgeExpiredTrash, purgeHotelTrash, redirectTarget, rememberRedirect, save } from "@/server/cms/store";
 import * as hotelStore from "@/server/hotels/store";
 import * as publicModel from "@/server/hotels/public";
 import { priceStay } from "@/domain/hotel-pricing";
@@ -588,5 +588,43 @@ describe("public projection", () => {
       entries: [{ roomId: "room_demo", date: "2026-12-05", rooms: 3 }],
     });
     assert.notEqual(contentVersion("public"), before);
+  });
+});
+
+
+describe("hotel slug backfill", () => {
+  it("repairs existing URLs once, preserving drafts, aliases, pins and collisions", () => {
+    const id = "hotel_backfill";
+    const oldPath = "/khach-san/khach-san-moi";
+    const liveSlug = "the-kila-boutique-hotel-quy-nhon";
+    const hotel = hotelRecord({ id, name: "The Kila Boutique Hotel Quy Nhơn", slug: "khach-san-moi" });
+    save("hotels", hotel, 0, "publish");
+    save("hotels", { ...hotel, name: "Tên khách sạn nháp", slug: "slug-nhap-cu" }, 1, "save");
+    rememberRedirect("/khach-san/kila-truoc-day", oldPath);
+
+    for (const [id, slug] of [["hotel_backfill_a", "slug-a"], ["hotel_backfill_b", "slug-b"]]) {
+      save("hotels", hotelRecord({ id, name: "Khách sạn Trùng", slug }), 0, "publish");
+    }
+    const settings = list("settings")[0];
+    save("settings", {
+      ...settings.data,
+      hotels: { enabled: true, homeVisible: true, featured: ["khach-san-moi", "slug-a"] },
+    }, settings.revision, "publish");
+
+    // The database already started once, as an existing production volume has.
+    db().prepare("DELETE FROM cms_migrations WHERE id=?").run(HOTEL_SLUG_MIGRATION);
+    assert.equal(migrateContent(), 1);
+    assert.equal(migrateContent(), 0);
+    const draft = list("hotels").find((row) => row.id === id);
+    assert.equal(draft?.state, "draft");
+    assert.equal(draft?.revision, 3);
+    assert.equal(draft?.data.slug, "ten-khach-san-nhap");
+    assert.equal(publicModel.publicHotelDetail(liveSlug, "vi")?.name, hotel.name);
+    assert.equal(publicModel.publicHotelDetail("ten-khach-san-nhap", "vi"), null);
+    assert.equal(redirectTarget(oldPath), "/khach-san/" + liveSlug);
+    assert.equal(redirectTarget("/khach-san/kila-truoc-day"), "/khach-san/" + liveSlug);
+    assert.equal(publicModel.publicHotelDetail("slug-a", "vi")?.id, "hotel_backfill_a");
+    assert.equal(publicModel.publicHotelDetail("slug-b", "vi")?.id, "hotel_backfill_b");
+    assert.deepEqual(hotelSettings().featured, [id, "slug-a"]);
   });
 });
