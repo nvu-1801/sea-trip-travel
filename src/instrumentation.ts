@@ -2,7 +2,8 @@ export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs" || process.env.CMS_ENABLED !== "1")
     return;
 
-  const { purgeExpiredTrash } = await import("@/server/cms/store");
+  const { purgeExpiredTrash, seed } = await import("@/server/cms/store");
+  seed();
   const sweep = () => {
     try {
       purgeExpiredTrash(Date.now(), true);
