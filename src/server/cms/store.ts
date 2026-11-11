@@ -23,6 +23,7 @@ import {
 } from "./db";
 import { homeRegionsInputSchema } from "@/domain/home-regions";
 import { ROUTES } from "@/config/navigation";
+import { slugify } from "@/lib/slugify";
 import { AUDIT_FIELD_LABELS } from "@/lib/audit-activity";
 import {
   isPlaceholderSlug,
@@ -1054,6 +1055,16 @@ function saveRecord(
   context: AuditContext = {},
 ) {
   let normalized = input;
+  if (collection === "hotels" && input && typeof input === "object") {
+    const hotel = input as Record<string, unknown>;
+    if (typeof hotel.name === "string" && typeof hotel.id === "string") {
+      const custom = typeof hotel.slug === "string" ? slugify(hotel.slug) : "";
+      normalized = {
+        ...hotel,
+        slug: custom || slugify(hotel.name) || slugify(hotel.id),
+      };
+    }
+  }
   if (
     collection === "settings" &&
     normalized &&
@@ -1117,7 +1128,7 @@ function saveRecord(
       : null;
     // Studio placeholders (`noi-dung-…`) may be replaced by a readable slug
     // derived from the title; a real, already-saved slug stays immutable.
-    normalizePublicSlug(
+    if (collection !== "hotels") normalizePublicSlug(
       collection,
       data as Record<string, unknown>,
       previousData,
@@ -1132,7 +1143,7 @@ function saveRecord(
       const pathChanged = previousData.path !== data.path;
       const placeholder = isPlaceholderSlug(previousData.slug);
       if (
-        (slugChanged && !(isPublicSlugCollection(collection) && placeholder)) ||
+        (slugChanged && collection !== "hotels" && !(isPublicSlugCollection(collection) && placeholder)) ||
         (pathChanged && !(collection === "categories" && placeholder))
       )
         throw new Error(
@@ -1146,6 +1157,17 @@ function saveRecord(
     )
       throw new Error("Không thể ẩn/xóa cấu hình hệ thống");
     const all = list(collection);
+    if (
+      collection === "hotels" &&
+      action !== "delete" &&
+      action !== "unpublish" &&
+      (all.some((row) => row.id !== data.id && row.state !== "deleted" && row.data.slug === data.slug) ||
+        published<{ id: string; slug: string }>("hotels", []).some(
+          (row) => row.id !== data.id && row.slug === data.slug,
+        ))
+    ) {
+      throw new z.ZodError([{ code: "custom", path: ["slug"], message: "Slug khách sạn đã tồn tại." }]);
+    }
     if (
       collection === "destinations" &&
       (data as Record<string, unknown>).showOnHome === true
@@ -1170,6 +1192,7 @@ function saveRecord(
           ) + 1;
     }
     if (
+      collection !== "hotels" &&
       all.some(
         (row) =>
           row.id !== data.id &&
@@ -1330,7 +1353,19 @@ function saveRecord(
         "INSERT INTO records(collection,id,data,published,state,revision,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(collection,id) DO UPDATE SET data=excluded.data,published=excluded.published,state=excluded.state,revision=excluded.revision,updated_at=excluded.updated_at",
       )
       .run(collection, data.id, json, publicValue, state, revision + 1, now);
-    if (previousData) {
+    if (collection === "hotels" && action === "publish") {
+      const newPath = publicPathFor(collection, data);
+      if (newPath) {
+        db().prepare("DELETE FROM content_redirects WHERE from_path=?").run(newPath);
+        const oldPath = previous?.published
+          ? publicPathFor(collection, JSON.parse(previous.published))
+          : null;
+        if (oldPath && oldPath !== newPath) {
+          db().prepare("UPDATE content_redirects SET to_path=? WHERE to_path=?").run(newPath, oldPath);
+          rememberRedirect(oldPath, newPath);
+        }
+      }
+    } else if (collection !== "hotels" && previousData) {
       const oldSlug = String(previousData.slug ?? "");
       const newSlug = String((data as Record<string, unknown>).slug ?? "");
       if (oldSlug && newSlug && oldSlug !== newSlug) {
@@ -1367,7 +1402,7 @@ function saveRecord(
         changes: auditSummary.changes,
       },
     });
-    return { id: data.id, revision: revision + 1 };
+    return { id: data.id, revision: revision + 1, ...(collection === "hotels" ? { slug: data.slug } : {}) };
   })();
 }
 /** One atomic edit of the home introduction and its shared category cards. */

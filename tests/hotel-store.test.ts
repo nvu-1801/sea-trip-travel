@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { contentVersion, db } from "@/server/cms/db";
-import { hotelSettings, list, published, purgeExpiredTrash, purgeHotelTrash, save } from "@/server/cms/store";
+import { hotelSettings, list, published, purgeExpiredTrash, purgeHotelTrash, redirectTarget, save } from "@/server/cms/store";
 import * as hotelStore from "@/server/hotels/store";
 import * as publicModel from "@/server/hotels/public";
 import { priceStay } from "@/domain/hotel-pricing";
@@ -185,11 +185,29 @@ describe("hotel and room persistence", () => {
     );
   });
 
-  it("keeps a published slug immutable", () => {
+  it("normalizes hotel slugs, reserves the live URL during drafts, and redirects after publication", () => {
+    const hotel = hotelRecord({ id: "hotel_slug_test", name: "Khách sạn Đà Nẵng", slug: "" });
+    save("hotels", hotel, 0, "publish");
+    const oldPath = "/khach-san/khach-san-da-nang";
+    assert.equal(publicModel.publicHotelDetail("khach-san-da-nang", "vi")?.id, hotel.id);
+
+    const draft = { ...hotel, slug: "Đường dẫn Riêng!" };
+    const saved = save("hotels", draft, 1, "save");
+    assert.equal(saved.slug, "duong-dan-rieng");
+    assert.equal(redirectTarget(oldPath), null);
     assert.throws(
-      () => save("hotels", hotelRecord({ slug: "doi-slug" }), 4, "publish"),
-      /Giữ nguyên slug/,
+      () => save("hotels", { ...hotel, id: "hotel_slug_duplicate", slug: "KHÁCH SẠN ĐÀ NẴNG" }, 0, "save"),
+      /đã tồn tại/,
     );
+
+    save("hotels", draft, 2, "publish");
+    assert.equal(redirectTarget(oldPath), "/khach-san/duong-dan-rieng");
+    assert.equal(publicModel.publicHotelDetail("duong-dan-rieng", "vi")?.id, hotel.id);
+    save("hotels", hotel, 3, "publish");
+    assert.equal(redirectTarget(oldPath), null);
+    assert.equal(redirectTarget("/khach-san/duong-dan-rieng"), oldPath);
+    save("hotels", hotel, 4, "delete");
+    purgeHotelTrash([{ id: hotel.id, revision: 5 }]);
   });
 
   it("links a hotel to an existing destination only", () => {
