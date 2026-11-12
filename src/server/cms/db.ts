@@ -25,6 +25,14 @@ export function db() {
     CREATE TABLE IF NOT EXISTS records (collection TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL,
       published TEXT, state TEXT NOT NULL DEFAULT 'draft', revision INTEGER NOT NULL DEFAULT 1,
       updated_at TEXT NOT NULL, PRIMARY KEY(collection,id));
+    CREATE TABLE IF NOT EXISTS promotion_entries (
+      id TEXT PRIMARY KEY, campaign_id TEXT NOT NULL, phone_key TEXT NOT NULL,
+      data TEXT NOT NULL, created_at TEXT NOT NULL, exclusion TEXT,
+      UNIQUE(campaign_id, phone_key)
+    );
+    CREATE TABLE IF NOT EXISTS promotion_results (
+      campaign_id TEXT PRIMARY KEY, closed_at TEXT NOT NULL, rules TEXT NOT NULL, result TEXT
+    );
     CREATE TABLE IF NOT EXISTS admin (id INTEGER PRIMARY KEY CHECK(id=1), username TEXT NOT NULL, password TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS sessions (hash TEXT PRIMARY KEY, expires INTEGER NOT NULL, csrf TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS attempts (key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires INTEGER NOT NULL);
@@ -159,6 +167,14 @@ export function db() {
       updated_at TEXT NOT NULL
     );
     PRAGMA user_version=2;`);
+  const promotionResultColumns = database.prepare("PRAGMA table_info(promotion_results)").all();
+  if (!promotionResultColumns.some((column) => column.name === "rules")) {
+    database.exec(`ALTER TABLE promotion_results ADD COLUMN rules TEXT NOT NULL
+      DEFAULT '{"method":"random","count":1,"reserves":0}'`);
+  }
+  const promotionEntryColumns = database.prepare("PRAGMA table_info(promotion_entries)").all();
+  if (!promotionEntryColumns.some((column) => column.name === "read_at"))
+    database.exec("ALTER TABLE promotion_entries ADD COLUMN read_at TEXT");
   const leadColumns = database.prepare("PRAGMA table_info(leads)").all() as {
     name: string;
   }[];

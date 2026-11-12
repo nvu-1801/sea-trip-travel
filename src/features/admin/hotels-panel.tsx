@@ -421,15 +421,6 @@ export function HotelsPanel({ csrf, notify }: { csrf: string; notify: (kind: Toa
 
   return (
     <div className="stt-hotel-panel">
-      <div className="stt-hotel-actions">
-        <button type="button" className="stt-hotel-action" disabled={busy || loading} onClick={() => {
-          setStatus(null);
-          setTrashOpen(true);
-          void load();
-        }}>
-          <AdminIcon name="trash" size={14} /> Thùng rác ({archived.length})
-        </button>
-      </div>
       {status ? (
         <p
           className={
@@ -656,14 +647,28 @@ export function HotelsPanel({ csrf, notify }: { csrf: string; notify: (kind: Toa
                 : `${filtered.length} / ${hotels.length} khách sạn`}
             </p>
           </div>
-          <button
-            type="button"
-            className="adm-primary stt-hotel-add"
-            disabled={busy}
-            onClick={() => void createHotel()}
-          >
-            <AdminIcon name="plus" size={14} /> Thêm khách sạn
-          </button>
+          <div className="stt-hotel-actions">
+            <button
+              type="button"
+              className="stt-hotel-action stt-hotel-add"
+              disabled={busy || loading}
+              onClick={() => {
+                setStatus(null);
+                setTrashOpen(true);
+                void load();
+              }}
+            >
+              <AdminIcon name="trash" size={14} /> Thùng rác ({archived.length})
+            </button>
+            <button
+              type="button"
+              className="adm-primary stt-hotel-add"
+              disabled={busy}
+              onClick={() => void createHotel()}
+            >
+              <AdminIcon name="plus" size={14} /> Thêm khách sạn
+            </button>
+          </div>
         </div>
 
         <div className="stt-hotel-filters">

@@ -613,20 +613,25 @@ async function main() {
       (await (await fetch(`${BASE}/api/promotions`)).json()) === null);
     await page.getByRole("button", { name: "Tạo chiến dịch" }).click();
     await page.getByLabel("Tên quản lý nội bộ").fill("QA quà khuyến mãi");
+    await page.getByLabel("Tour áp dụng").selectOption("quy-nhon-phu-yen-4-ngay-3-dem");
+    const pickedTour = page.getByRole("list", { name: "Các tour đã chọn" });
+    await pickedTour.getByRole("button", { name: /^Bỏ tour/ }).click();
+    check("admin can add a tour from the dropdown and remove its chip", await pickedTour.count() === 0);
     await page.getByRole("button", { name: "Lưu nháp", exact: true }).click();
     const campaign = page.locator(".stt-hotel-trash-list li").filter({ hasText: "QA quà khuyến mãi" });
     await campaign.waitFor();
-    const id = new URL(await campaign.getByRole("link", { name: "Xem đăng ký" }).getAttribute("href"), BASE).searchParams.get("promotion");
     check("draft promotion stays private", (await (await fetch(`${BASE}/api/promotions`)).json()) === null);
     const csrf = await page.evaluate(async () => (await (await fetch("/api/admin/auth")).json()).csrf);
     const local = (offset) => new Date(Date.now() + 7 * 3600_000 + offset).toISOString().slice(0, 16);
     const tour = "quy-nhon-phu-yen-4-ngay-3-dem";
     const records = await (await page.request.get(`${BASE}/api/admin/content/promotions`)).json();
-    const draft = records.find((row) => row.id === id);
+    const draft = records.find((row) => row.data.name === "QA quà khuyến mãi");
+    const id = draft.id;
     const gift = {
       ...draft.data, title: "Quà kiểm thử Quy Nhơn", intro: "Quà kiểm thử của Studio.",
-      terms: "Áp dụng cho tour kiểm thử.", image: "/images/destinations/quy-nhon-bien.jpg", alt: "Ảnh thử",
-      starts: local(-3600_000), ends: local(3600_000), featured: true, tours: [tour],
+      terms: "", image: "/images/destinations/quy-nhon-bien.jpg", alt: "Ảnh thử",
+      starts: local(-3600_000), ends: local(3600_000), featured: false, tours: [tour],
+      selectionMode: "random", winnerCount: 1, reserveCount: 1, entriesPerWinner: 2,
     };
     const publish = async (data, revision) => {
       const result = await page.request.post(`${BASE}/api/admin/content/promotions`, {
@@ -636,16 +641,22 @@ async function main() {
     };
     await publish({ ...gift, starts: local(1800_000) }, draft.revision);
     check("scheduled gift stays hidden before its start", (await (await fetch(`${BASE}/api/promotions`)).json()) === null);
+    await page.goto(`${BASE}/`, { waitUntil: "load" });
     await publish(gift, draft.revision + 1);
     check("unrelated tours do not get the gift", (await (await fetch(`${BASE}/api/promotions?tour=other-tour`)).json()) === null);
-    await page.goto(`${BASE}/`, { waitUntil: "load" });
-    await page.getByRole("button", { name: "Xem quà", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Xem quà", exact: true }).waitFor({ timeout: 20_000 });
+    check("an already-open home shows the published gift without requiring featured or reload", true);
+    const giftButton = await page.getByRole("button", { name: "Quà tặng", exact: true }).boundingBox();
+    check("the floating gift button sits on the left", giftButton && giftButton.x < 50);
     check("gift does not auto-open by default", await page.locator(".stt-gift-dialog[open]").count() === 0);
     for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 900 });
       await page.getByRole("button", { name: "Xem quà", exact: true }).click();
       const dialog = page.getByRole("dialog", { name: gift.title });
       await dialog.waitFor();
+      check(`gift registration is visible immediately at ${width}px`,
+        await dialog.getByLabel("Họ và tên").isVisible() &&
+        await dialog.getByRole("button", { name: gift.button, exact: true }).getAttribute("type") === "submit");
       await dialog.locator("img").evaluate((image) => image.decode());
       check(`gift dialog fits at ${width}px`, await dialog.evaluate((element) =>
         element.scrollWidth <= element.clientWidth + 1 &&
@@ -657,25 +668,40 @@ async function main() {
     await page.goto(`${BASE}/tour/${tour}`, { waitUntil: "load" });
     await page.getByRole("button", { name: "Xem quà", exact: true }).click();
     const giftForm = page.getByRole("dialog", { name: gift.title });
-    await giftForm.getByRole("button", { name: "Đăng ký nhận quà", exact: true }).click();
+    await giftForm.getByRole("button", { name: gift.button, exact: true }).click();
+    await giftForm.locator("#gift-phone-error").waitFor();
+    check("invalid gift form shows errors under the fields", await giftForm.locator("#gift-name-error").isVisible() && await giftForm.locator("#gift-consent-error").isVisible());
     await giftForm.getByLabel("Họ và tên").fill("Khách QA");
-    await giftForm.getByLabel("Số điện thoại", { exact: true }).fill("0901234567");
+    await giftForm.locator('[name="phone"]').fill("0901234567");
     await giftForm.getByRole("checkbox", { name: /Tôi đồng ý/ }).check();
-    await giftForm.getByRole("button", { name: "Gửi đăng ký" }).click();
+    await giftForm.getByRole("button", { name: gift.button, exact: true }).click();
     await page.getByText(gift.confirmation, { exact: true }).waitFor();
+    const repeat = await fetch(`${BASE}/api/promotions/entries`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ promotionId: id, tourSlug: tour, fullName: "Khách QA", phone: "+84901234567", consent: true }),
+    });
+    check("a retry with a normalized phone succeeds without adding a participant", repeat.ok);
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Xem quà", exact: true }).click();
     check("a completed registration cannot be submitted again in the same browser",
       await page.getByText(gift.confirmation, { exact: true }).isVisible());
-    await page.goto(`${BASE}/admin/leads?promotion=${id}`, { waitUntil: "load" });
+    await page.goto(`${BASE}/admin/promotions`, { waitUntil: "load" });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const unreadGiftBadge = page.locator('[aria-label="1 đăng ký quà chưa xem"]');
+    await unreadGiftBadge.waitFor();
+    await campaign.getByRole("button", { name: "Xem đăng ký (1)", exact: true }).click();
     await page.getByText("Khách QA", { exact: true }).waitFor();
-    check("Studio can filter the registration by campaign", await page.getByText("Khách QA", { exact: true }).count() === 1);
+    check("Studio shows the participant in the campaign", await page.getByText("Khách QA", { exact: true }).count() === 1);
+    await unreadGiftBadge.waitFor({ state: "detached", timeout: 20_000 });
+    check("opening registrations clears their unread sidebar badge", true);
+    const leadsAfterGift = await (await page.request.get(`${BASE}/api/admin/leads`)).json();
+    check("gift registration does not create a consultation lead", !JSON.stringify(leadsAfterGift).includes("Khách QA"));
     await page.goto(`${BASE}/admin/promotions`, { waitUntil: "load" });
     await campaign.getByRole("button", { name: "Nhân bản", exact: true }).click();
     check("duplicating keeps content and clears the schedule",
       await page.getByLabel("Tiêu đề khách thấy").inputValue() === gift.title &&
-      await page.getByLabel("Bắt đầu (giờ Việt Nam)").inputValue() === "" &&
-      await page.getByLabel("Kết thúc (giờ Việt Nam)").inputValue() === "");
+      !(await page.getByLabel("Bắt đầu", { exact: true }).textContent())?.match(/\d{2}\/\d{2}/) &&
+      !(await page.getByLabel("Kết thúc", { exact: true }).textContent())?.match(/\d{2}\/\d{2}/));
     await publish({ ...gift, autoOpen: true }, draft.revision + 2);
     const freshVisitor = await browser.newPage();
     const scrollForGift = () => freshVisitor.evaluate(() => {
@@ -695,10 +721,34 @@ async function main() {
     await publish({ ...gift, starts: local(-7200_000), ends: local(-3600_000) }, draft.revision + 3);
     check("expired gifts are unavailable from the public endpoint", (await (await fetch(`${BASE}/api/promotions`)).json()) === null);
     await publish(gift, draft.revision + 4);
-    await publish({ ...gift, id: "promo_tour_override", name: "QA tour riêng", featured: false, starts: local(-900_000) }, 0);
+    await publish({ ...gift, id: "promo_tour_override", name: "QA tour riêng", home: false, featured: false, starts: local(-900_000) }, 0);
     check("overlapping tour campaigns leave the featured home selection intact",
       (await (await fetch(`${BASE}/api/promotions`)).json())?.id === id &&
       (await (await fetch(`${BASE}/api/promotions?tour=${tour}`)).json())?.id === "promo_tour_override");
+    const act = (data) => page.request.post(`${BASE}/api/admin/promotions/${id}`, {
+      data, headers: { origin: BASE, "x-csrf-token": csrf },
+    });
+    const submitGift = (phone) => fetch(`${BASE}/api/promotions/entries`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ promotionId: id, fullName: "Khách dự phòng", phone, consent: true }),
+    });
+    check("the public cannot read campaign participant details", (await fetch(`${BASE}/api/admin/promotions/${id}`)).status === 401);
+    check("a second participant can enter the active home campaign", (await submitGift("0912345678")).ok);
+    check("a draw cannot run before registration closes", (await act({ action: "random", count: 1 })).status() === 409);
+    check("the administrator can close registration", (await act({ action: "close" })).ok());
+    check("a closed campaign rejects new registrations", (await submitGift("0932345678")).status === 409);
+    const outcomes = await Promise.all([act({ action: "random", count: 1 }), act({ action: "random", count: 1 })]);
+    check("concurrent draws commit exactly one winner result", outcomes.filter((outcome) => outcome.ok()).length === 1 &&
+      outcomes.filter((outcome) => outcome.status() === 409).length === 1);
+    const campaignResult = async () => (await (await page.request.get(`${BASE}/api/admin/promotions/${id}`)).json()).result;
+    const result = await campaignResult();
+    check("the draw records one distinct winner and alternate", result.selected.length === 1 &&
+      result.alternates.length === 1 && result.selected[0] !== result.alternates[0]);
+    check("a winner can be replaced by the next alternate with a reason",
+      (await act({ action: "replace", id: result.selected[0], reason: "Khách từ chối nhận quà" })).ok() &&
+      (await campaignResult()).selected[0] === result.alternates[0]);
+    check("award delivery can be recorded", (await act({ action: "fulfill", id: result.alternates[0], status: "delivered" })).ok() &&
+      (await campaignResult()).fulfillment[result.alternates[0]] === "delivered");
 
     seed(dbPath, "on");
     await desktop.close();

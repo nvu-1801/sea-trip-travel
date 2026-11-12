@@ -23,13 +23,16 @@ export const promotionSchema = z.object({
   tours: z.array(z.string().regex(/^[a-z0-9-]+$/)).max(100),
   floating: z.boolean(),
   autoOpen: z.boolean(),
+  selectionMode: z.enum(["random", "manual"]).optional(),
+  winnerCount: z.number().int().min(1, "Cần ít nhất một phần quà").max(100).optional(),
+  reserveCount: z.number().int().min(0).max(100).optional(),
+  entriesPerWinner: z.number().int().min(1, "Nhập ít nhất một lượt mỗi suất").max(10000).optional(),
 });
 
 export const publishedPromotionSchema = promotionSchema.superRefine((item, ctx) => {
   const required = {
     title: "Nhập tiêu đề quà",
     intro: "Nhập lời giới thiệu",
-    terms: "Nhập điều kiện nhận quà",
     image: "Chọn ảnh quà",
     alt: "Nhập mô tả ảnh",
     starts: "Chọn thời điểm bắt đầu",
@@ -41,8 +44,8 @@ export const publishedPromotionSchema = promotionSchema.superRefine((item, ctx) 
     ctx.addIssue({ code: "custom", path: ["ends"], message: "Thời điểm kết thúc phải sau thời điểm bắt đầu" });
   if (!item.home && !item.tours.length)
     ctx.addIssue({ code: "custom", path: ["tours"], message: "Chọn trang chủ hoặc ít nhất một tour" });
-  if (item.home && !item.featured && !item.tours.length)
-    ctx.addIssue({ code: "custom", path: ["featured"], message: "Chọn làm quà nổi bật để hiện chiến dịch trên trang chủ" });
+  if (item.selectionMode === "manual" && item.reserveCount)
+    ctx.addIssue({ code: "custom", path: ["reserveCount"], message: "Chế độ chọn thủ công không tự chọn dự phòng" });
 });
 
 export type Promotion = z.infer<typeof promotionSchema>;
@@ -53,8 +56,13 @@ export const promotionTime = (value: string) => Date.parse(`${value}:00+07:00`);
 export function activePromotion<T extends PublicPromotion>(items: readonly T[], tour: string | null, now: number) {
   return items.filter((item) =>
     promotionTime(item.starts) <= now && now < promotionTime(item.ends) &&
-    (tour === null ? item.home && item.featured : item.tours.includes(tour)),
-  ).sort((a, b) => b.starts.localeCompare(a.starts) || a.id.localeCompare(b.id))[0];
+    (tour === null ? item.home : item.tours.includes(tour)),
+  ).sort((a, b) => (tour === null ? Number(b.featured) - Number(a.featured) : 0) ||
+    b.starts.localeCompare(a.starts) || a.id.localeCompare(b.id))[0];
+}
+
+export function promotionWinnerCount(eligible: number, fixed: number, entriesPerWinner?: number) {
+  return entriesPerWinner ? Math.min(100, Math.floor(eligible / entriesPerWinner)) : fixed;
 }
 
 function luminance(color: string) {
