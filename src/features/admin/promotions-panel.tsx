@@ -1,14 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { contrast, type Promotion } from "@/domain/promotion";
-import { GiftArtwork, GiftButton } from "@/features/promotions/promotion-gift";
+import { GiftPreview } from "@/features/promotions/promotion-gift";
 import { Field, HotelFormError, fieldIssue } from "./hotel-form";
+import { AdminDatePicker } from "./admin-date-picker";
+import "./promotions-panel.css";
 import { ImageField } from "./image-picker";
 import type { ToastKind } from "./notify";
+import { PromotionEntries } from "./promotion-entries";
 
-type Row = { id: string; revision: number; state: string; live: boolean; data: Promotion };
+type Row = { id: string; revision: number; state: string; live: boolean; closed: boolean; entries: number; data: Promotion };
 type Option = { value: string; label: string };
 const endpoint = "/api/admin/content/promotions";
 const calendarSample = {
@@ -23,17 +25,18 @@ type Action = "save" | "publish" | "unpublish" | "delete" | "restore";
 function newPromotion(): Promotion {
   return {
     id: `promo_${crypto.randomUUID().replaceAll("-", "")}`, name: "", title: "", intro: "", terms: "",
-    button: "Đăng ký nhận quà",
-    confirmation: "Đã ghi nhận đăng ký. Sea Trip sẽ liên hệ để xác nhận điều kiện nhận quà.",
+    button: "Đăng ký tham gia",
+    confirmation: "Đã ghi nhận lượt tham gia. Sea Trip sẽ liên hệ nếu bạn trúng quà.",
     image: "", alt: "", background: "#fff8ec", buttonColor: "#6c3b22", accent: "#b97842",
     starts: "", ends: "", home: true, featured: false, tours: [], floating: true, autoOpen: false,
+    selectionMode: "random", winnerCount: 1, reserveCount: 0,
   };
 }
 
 const fields = [
   ["name", "Tên quản lý nội bộ", 100], ["title", "Tiêu đề khách thấy", 120],
-  ["intro", "Lời giới thiệu", 500], ["terms", "Điều kiện nhận quà", 2000],
-  ["button", "Nhãn nút đăng ký", 50], ["confirmation", "Lời xác nhận sau khi gửi", 250],
+  ["intro", "Lời giới thiệu", 500],
+  ["button", "Nhãn nút gửi đăng ký", 50], ["confirmation", "Lời xác nhận sau khi gửi", 250],
 ] as const;
 
 export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind: ToastKind, message: string) => void }) {
@@ -45,6 +48,7 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
   const [preview, setPreview] = useState<"desktop" | "mobile" | null>(null);
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [view, setView] = useState<Row | null>(null);
 
   const request = useCallback(async (url: string, init: RequestInit = {}) => {
     const response = await fetch(url, { ...init, headers: { "x-csrf-token": csrf, ...init.headers } });
@@ -106,6 +110,11 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
   }
 
   const deleted = rows.filter((row) => row.state === "deleted");
+  if (view) return <PromotionEntries id={view.id} title={view.data.name} request={request} notify={notify} onBack={() => {
+    setView(null);
+    void request(endpoint).then(setRows).catch((cause) => notify("error", cause.message));
+  }} />;
+
   return <div className="stt-hotel-panel">
     {loadError && <p role="alert" className="adm-field-error">{loadError}</p>}
     <section className="stt-hotel-section">
@@ -116,18 +125,20 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
       {rows.length === deleted.length && <p>Chưa có chiến dịch quà khuyến mãi.</p>}
       <ul className="stt-hotel-trash-list">
         {rows.filter((row) => row.state !== "deleted").map((row) => <li key={row.id}>
-          <div><strong>{row.data.name}</strong><small>{row.live ? row.state === "published" ? "Đã xuất bản" : "Có bản nháp mới · bản đã xuất bản vẫn chạy theo lịch" : "Bản nháp hoặc đã tạm dừng"}</small></div>
+          <div><strong>{row.data.name}</strong><small>{row.closed ? "Đã đóng đăng ký" : row.live ? row.state === "published" ? "Đã xuất bản" : "Có bản nháp mới · bản đã xuất bản vẫn chạy theo lịch" : "Bản nháp hoặc đã tạm dừng"}</small></div>
           <div className="stt-hotel-actions">
             <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => edit(row.data)}>Sửa</button>
             <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => edit({
               ...row.data, id: newPromotion().id, name: `${row.data.name.slice(0, 91)} (bản sao)`,
               starts: "", ends: "", featured: false,
             })}>Nhân bản</button>
-            {row.live && <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => void save(row.data, "unpublish")}>Tạm dừng</button>}
+            {row.live && !row.closed && <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => void save(row.data, "unpublish")}>Tạm dừng</button>}
             <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => {
               if (window.confirm("Chuyển chiến dịch vào thùng rác? Quà sẽ ngừng hiển thị trên website.")) void save(row.data, "delete");
             }}>Xóa</button>
-            <Link className="stt-hotel-action" href={`/admin/leads?promotion=${encodeURIComponent(row.id)}`}>Xem đăng ký</Link>
+            <button type="button" className="adm-primary stt-promo-entry-action" onClick={() => setView(row)}>
+              Xem đăng ký <span className="stt-promo-entry-count">({row.entries})</span>
+            </button>
           </div>
         </li>)}
       </ul>
@@ -146,7 +157,7 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
       <div className="stt-hotel-grid2">
         {fields.map(([key, label, length]) => <Field key={key} label={label} error={fieldIssue(issues, key)}>
           {length > 250
-            ? <textarea rows={key === "terms" ? 5 : 3} maxLength={length} value={draft[key]} onChange={(event) => set(key, event.target.value)} />
+            ? <textarea rows={3} maxLength={length} value={draft[key]} onChange={(event) => set(key, event.target.value)} />
             : <input maxLength={length} value={draft[key]} onChange={(event) => set(key, event.target.value)} />}
         </Field>)}
       </div>
@@ -155,27 +166,65 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
         onUpload={upload} onAltChange={(alt) => set("alt", alt)}
         onChange={(image, alt) => { set("image", image); if (alt) set("alt", alt); }} />
       {(issues.image || issues.alt) && <p className="adm-field-error">{[issues.image, issues.alt].filter(Boolean).join(" · ")}</p>}
-      <div className="stt-hotel-grid2">
+      <div className="stt-promo-colors">
         {([["background", "Nền popup"], ["buttonColor", "Màu nút"], ["accent", "Màu điểm nhấn"]] as const).map(([key, label]) =>
           <Field key={key} label={label}><input type="color" value={draft[key]} onChange={(event) => set(key, event.target.value)} /></Field>)}
       </div>
       {contrast(draft.background, draft.accent) < 3 && <p className="adm-field-warning">Màu điểm nhấn có độ tương phản thấp so với nền. Màu chữ và chữ trên nút được chọn tự động.</p>}
-      <div className="stt-hotel-grid2">
-        {([["starts", "Bắt đầu"], ["ends", "Kết thúc"]] as const).map(([key, label]) => <Field key={key} label={`${label} (giờ Việt Nam)`} error={issues[key]}>
-          <input type="datetime-local" value={draft[key]} onChange={(event) => set(key, event.target.value)} />
-        </Field>)}
-      </div>
-      <div className="stt-hotel-grid2">
+      <fieldset className="stt-promo-settings">
+        <legend>Lịch hiển thị</legend>
+        <p className="adm-hint">Giờ Việt Nam (UTC+7)</p>
+        <div className="stt-hotel-grid2">
+          {([["starts", "Bắt đầu"], ["ends", "Kết thúc"]] as const).map(([key, label]) => (
+            <Field key={key} label={label} error={issues[key]}>
+              <AdminDatePicker withTime value={draft[key]} onChange={(value) => set(key, value)} />
+            </Field>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="stt-promo-settings">
+        <legend>Vị trí hiển thị</legend>
+        <div className="stt-promo-visibility">
         {([["home", "Hiện ở trang chủ"], ["featured", "Chọn làm quà nổi bật trên trang chủ"],
           ["floating", "Hiện nút nổi Quà tặng"], ["autoOpen", "Tự mở trên trang chủ (tối đa một lần mỗi 7 ngày)"]] as const).map(([key, label]) =>
           <label key={key} className="adm-toggle"><input type="checkbox" checked={draft[key]} onChange={(event) => set(key, event.target.checked)} /><span>{label}</span></label>)}
-      </div>
-      {issues.featured && <p className="adm-field-error">{issues.featured}</p>}
-      <Field label="Tour áp dụng" hint="Có thể chọn nhiều tour." error={fieldIssue(issues, "tours")}>
-        <select multiple size={6} value={draft.tours} onChange={(event) => set("tours", Array.from(event.currentTarget.selectedOptions, (item) => item.value))}>
-          {tours.map((tour) => <option key={tour.value} value={tour.value}>{tour.label}</option>)}
+        </div>
+        {issues.featured && <p className="adm-field-error">{issues.featured}</p>}
+      </fieldset>
+      <fieldset className="stt-promo-settings">
+        <legend>Thể lệ chọn người trúng</legend>
+        <div className="stt-hotel-grid2">
+          <Field label="Cách chọn" error={issues.selectionMode}>
+            <select value={draft.selectionMode ?? "random"} onChange={(event) => {
+              const mode = event.target.value === "manual" ? "manual" : "random";
+              set("selectionMode", mode);
+              if (mode === "manual") set("reserveCount", 0);
+            }}><option value="random">Bốc thăm ngẫu nhiên</option><option value="manual">Chọn theo tiêu chí trong thể lệ</option></select>
+          </Field>
+          <Field label="Số lượt hợp lệ cho một suất" hint="Để trống nếu muốn đặt số phần quà cố định. Ví dụ: 20 lượt hợp lệ cho 1 suất." error={issues.entriesPerWinner}>
+            <input type="number" min={1} max={10000} value={draft.entriesPerWinner ?? ""} onChange={(event) => set("entriesPerWinner", event.target.value ? Number(event.target.value) : undefined)} />
+          </Field>
+          {!draft.entriesPerWinner && <Field label="Số phần quà cố định" error={issues.winnerCount}>
+            <input type="number" min={1} max={100} value={draft.winnerCount ?? 1} onChange={(event) => set("winnerCount", Number(event.target.value))} />
+          </Field>}
+          {draft.selectionMode !== "manual" && <Field label="Số suất dự phòng" error={issues.reserveCount}>
+            <input type="number" min={0} max={100} value={draft.reserveCount ?? 0} onChange={(event) => set("reserveCount", Number(event.target.value))} />
+          </Field>}
+        </div>
+      </fieldset>
+      <Field label="Tour áp dụng" hint="Chọn từng tour để thêm vào danh sách." error={fieldIssue(issues, "tours")}>
+        <select value="" onChange={(event) => { if (event.target.value) set("tours", [...draft.tours, event.target.value]); }}>
+          <option value="">Chọn tour…</option>
+          {tours.filter((tour) => !draft.tours.includes(tour.value)).map((tour) => <option key={tour.value} value={tour.value}>{tour.label}</option>)}
         </select>
       </Field>
+      {!!draft.tours.length && <ul className="stt-promo-tour-chips" aria-label="Các tour đã chọn">
+        {draft.tours.map((slug) => {
+          const label = tours.find((tour) => tour.value === slug)?.label ?? slug;
+          return <li key={slug}><span>{label}</span><button type="button" aria-label={`Bỏ tour ${label}`}
+            onClick={() => set("tours", draft.tours.filter((value) => value !== slug))}>×</button></li>;
+        })}
+      </ul>}
       <div className="stt-hotel-actions">
         <button type="button" className="stt-hotel-action" onClick={() => setPreview("desktop")}>Xem trước desktop</button>
         <button type="button" className="stt-hotel-action" onClick={() => setPreview("mobile")}>Xem trước mobile</button>
@@ -183,7 +232,7 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
         <button type="button" className="adm-primary" disabled={busy} onClick={() => void save(draft, "publish")}>Xuất bản</button>
       </div>
       {preview && <div className="stt-gift-preview" data-mobile={preview === "mobile"}>
-        <GiftArtwork item={draft}><GiftButton item={draft} type="button" disabled>{draft.button}</GiftButton></GiftArtwork>
+        <GiftPreview item={draft} />
       </div>}
     </section>}
   </div>;

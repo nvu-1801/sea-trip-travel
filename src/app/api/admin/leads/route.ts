@@ -18,6 +18,7 @@ import {
 import { consumeLimit } from "@/server/cms/store";
 import { getMailer } from "@/server/email/mailer";
 import { contactLeadSchema } from "@/domain/lead";
+import { unreadPromotionCount } from "@/server/cms/promotion-entries";
 import { getTourBySlug } from "@/lib/data/tours";
 import { list } from "@/server/cms/store";
 import {
@@ -95,6 +96,7 @@ export async function GET(request: Request) {
       return reply({
         count: unreadLeadCount(),
         trash: trashedLeadCount(),
+        promotionUnread: unreadPromotionCount(),
       });
     }
     if (params.get("trash") === "1") {

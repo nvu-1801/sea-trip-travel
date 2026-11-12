@@ -138,7 +138,7 @@ export default async function LocaleLayout({
             socialLinks: siteSettings.socialLinks,
           }}
         >
-          <Promotions>
+          <Promotions version={version}>
           <JsonLd id="ld-agency" data={travelAgencyJsonLd(locale)} />
           <JsonLd id="ld-website" data={websiteJsonLd(locale)} />
 
