@@ -600,7 +600,7 @@ async function main() {
     await page.goto(`${BASE}/admin/promotions`, { waitUntil: "load" });
     await page.getByRole("button", { name: "Dùng mẫu lịch để bàn" }).click();
     await page.getByRole("button", { name: "Xem trước mobile" }).click();
-    await page.locator(".stt-gift-preview").getByRole("img", { name: /Mẫu lịch để bàn Sea Trip/ }).waitFor();
+    await page.locator(".stt-gift-preview").getByRole("img", { name: /Mẫu lịch để bàn Sea Trip/ }).evaluate((image) => image.decode());
     await page.getByRole("button", { name: "Lưu nháp", exact: true }).click();
     const sample = page.locator(".stt-hotel-trash-list li").filter({ hasText: "Mẫu quà lịch Sea Trip" });
     await sample.waitFor();
@@ -629,7 +629,8 @@ async function main() {
     const id = draft.id;
     const gift = {
       ...draft.data, title: "Quà kiểm thử Quy Nhơn", intro: "Quà kiểm thử của Studio.",
-      terms: "", image: "/images/destinations/quy-nhon-bien.jpg", alt: "Ảnh thử",
+      terms: "Mỗi người nhận tối đa một phần quà.", image: "/images/promotions/lich-de-ban-sea-trip.webp", alt: "Ảnh lịch để bàn Sea Trip",
+      background: "#fff8ec", buttonColor: "#6c3b22", accent: "#b97842",
       starts: local(-3600_000), ends: local(3600_000), featured: false, tours: [tour],
       selectionMode: "random", winnerCount: 1, reserveCount: 1, entriesPerWinner: 2,
     };
@@ -654,10 +655,29 @@ async function main() {
       await page.getByRole("button", { name: "Xem quà", exact: true }).click();
       const dialog = page.getByRole("dialog", { name: gift.title });
       await dialog.waitFor();
+      await dialog.getByText("Điều kiện nhận quà", { exact: true }).click();
+      check(`published gift conditions are visible at ${width}px`, await dialog.getByText(gift.terms, { exact: true }).isVisible());
+      await dialog.getByText("Điều kiện nhận quà", { exact: true }).click();
       check(`gift registration is visible immediately at ${width}px`,
         await dialog.getByLabel("Họ và tên").isVisible() &&
         await dialog.getByRole("button", { name: gift.button, exact: true }).getAttribute("type") === "submit");
-      await dialog.locator("img").evaluate((image) => image.decode());
+      const image = dialog.getByRole("img", { name: gift.alt });
+      check(`calendar image loads at 4:3 at ${width}px`, await image.evaluate(async (element) => {
+        await element.decode();
+        return Math.abs(element.naturalWidth * 3 / 4 - element.naturalHeight) <= 1;
+      }));
+      check(`gift image fills its panel at ${width}px`, await image.evaluate((element, viewport) => {
+        const imageBox = element.getBoundingClientRect();
+        const artBox = element.closest(".stt-gift-art").getBoundingClientRect();
+        return Math.abs(imageBox.left - artBox.left) < 1 && Math.abs(imageBox.top - artBox.top) < 1 &&
+          (viewport > 720
+            ? Math.abs(imageBox.width - artBox.width / 2) < 1 && Math.abs(imageBox.height - artBox.height) < 1
+            : Math.abs(imageBox.width - artBox.width) < 1 && Math.abs(imageBox.height - imageBox.width * 3 / 4) < 1);
+      }, width));
+      check(`legacy gift colors use the site palette at ${width}px`, await dialog.evaluate((element) =>
+        getComputedStyle(element.querySelector(".stt-gift-art")).backgroundImage.includes("linear-gradient") &&
+        getComputedStyle(element.querySelector(".stt-gift-primary")).backgroundColor ===
+          getComputedStyle(document.querySelector(".stt-gift-banner button")).backgroundColor));
       check(`gift dialog fits at ${width}px`, await dialog.evaluate((element) =>
         element.scrollWidth <= element.clientWidth + 1 &&
         Math.abs(element.clientWidth - element.querySelector(".stt-gift-art").getBoundingClientRect().width) <= 1));
@@ -672,6 +692,13 @@ async function main() {
     await giftForm.locator("#gift-phone-error").waitFor();
     check("invalid gift form shows errors under the fields", await giftForm.locator("#gift-name-error").isVisible() && await giftForm.locator("#gift-consent-error").isVisible());
     await giftForm.getByLabel("Họ và tên").fill("Khách QA");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await giftForm.locator("#gift-name-error").waitFor({ state: "hidden" });
+    check("gift inputs stay aligned when only the phone has an error", await giftForm.evaluate((dialog) => {
+      const name = dialog.querySelector('input[name="fullName"]').getBoundingClientRect();
+      const phone = dialog.querySelector('input[name="phone"]').getBoundingClientRect();
+      return Math.abs(name.top - phone.top) < 1 && Math.abs(name.height - phone.height) < 1;
+    }));
     await giftForm.locator('[name="phone"]').fill("0901234567");
     await giftForm.getByRole("checkbox", { name: /Tôi đồng ý/ }).check();
     await giftForm.getByRole("button", { name: gift.button, exact: true }).click();
@@ -749,6 +776,61 @@ async function main() {
       (await campaignResult()).selected[0] === result.alternates[0]);
     check("award delivery can be recorded", (await act({ action: "fulfill", id: result.alternates[0], status: "delivered" })).ok() &&
       (await campaignResult()).fulfillment[result.alternates[0]] === "delivered");
+
+    const expiredGift = { ...gift, id: "promo_expired_draw", name: "QA bốc thăm hết hạn", entriesPerWinner: undefined };
+    await publish(expiredGift, 0);
+    const expiredEntry = await fetch(`${BASE}/api/promotions/entries`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ promotionId: expiredGift.id, fullName: "Khách bốc thăm", phone: "0952345678", consent: true }),
+    });
+    if (!expiredEntry.ok) throw new Error(`Expired draw fixture rejected: ${await expiredEntry.text()}`);
+    await page.goto(`${BASE}/admin/promotions`, { waitUntil: "load" });
+    const expiredRow = page.locator(".stt-hotel-trash-list li").filter({ hasText: expiredGift.name });
+    await expiredRow.getByRole("button", { name: "Xem đăng ký (1)", exact: true }).click();
+    const drawButton = page.getByRole("button", { name: "Bốc thăm và chốt kết quả" });
+    await drawButton.waitFor();
+    check("Studio shows the disabled draw button and deadline during registration",
+      await drawButton.isDisabled() && await page.getByText(/Hạn đăng ký .+giờ Việt Nam/).isVisible());
+    await publish({ ...expiredGift, starts: local(-7200_000), ends: local(-3600_000) }, 1);
+    await page.goto(`${BASE}/admin/promotions`, { waitUntil: "load" });
+    await expiredRow.getByRole("button", { name: "Xem đăng ký (1)", exact: true }).click();
+    const help = page.locator('summary[aria-label="Hướng dẫn chọn người nhận quà"]');
+    await help.click();
+    check("the question-mark help explains expired draws", await page.getByText(/Khi hết hạn hoặc đã đóng đăng ký/).isVisible());
+    check("the help panel has an opaque background in Studio",
+      await page.locator(".stt-promo-help-panel").evaluate((panel) => getComputedStyle(panel).backgroundColor === "rgb(255, 255, 255)"));
+    await help.click();
+    await page.getByRole("button", { name: "Bốc thăm và chốt kết quả" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Đồng ý" }).click();
+    await page.getByText("Đã chốt 1 người trúng bằng bốc thăm.").waitFor();
+    const expiredResult = await (await page.request.get(`${BASE}/api/admin/promotions/${expiredGift.id}`)).json();
+    check("Studio draws an expired campaign without a separate close action",
+      Boolean(expiredResult.closedAt) && expiredResult.result.selected[0] === expiredResult.entries[0].id);
+
+    const manual = { ...gift, id: "promo_manual_qa", name: "QA chọn thủ công", selectionMode: "manual",
+      reserveCount: 0, entriesPerWinner: undefined };
+    await publish(manual, 0);
+    const manualEntry = await fetch(`${BASE}/api/promotions/entries`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ promotionId: manual.id, fullName: "Khách chọn tay", phone: "0942345678", consent: true }),
+    });
+    if (!manualEntry.ok) throw new Error(`Manual campaign entry rejected: ${await manualEntry.text()}`);
+    await page.goto(`${BASE}/admin/promotions`, { waitUntil: "load" });
+    const manualRow = page.locator(".stt-hotel-trash-list li").filter({ hasText: manual.name });
+    await manualRow.getByRole("button", { name: "Xem đăng ký (1)", exact: true }).click();
+    const manualRules = page.getByRole("region", { name: "Thể lệ trao quà" });
+    await manualRules.waitFor();
+    check("Studio shows the published conditions and manual method",
+      await manualRules.getByText(manual.terms, { exact: true }).isVisible() &&
+      await manualRules.getByText("Admin chọn thủ công", { exact: true }).isVisible());
+    await page.getByRole("checkbox", { name: "Chọn Khách chọn tay" }).check();
+    await page.getByRole("button", { name: "Đóng đăng ký", exact: true }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Đồng ý" }).click();
+    await page.getByLabel("Lý do chọn (1/1 người)").fill("Đã đối chiếu điều kiện.");
+    await page.getByRole("button", { name: "Chốt người nhận quà" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Đồng ý" }).click();
+    await page.getByText("Đã chốt 1 người trúng bằng chọn thủ công.").waitFor();
+    check("Studio records the manually chosen recipient", await page.getByLabel("Trao quà cho Khách chọn tay").isVisible());
 
     seed(dbPath, "on");
     await desktop.close();

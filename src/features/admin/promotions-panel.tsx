@@ -27,7 +27,7 @@ function newPromotion(): Promotion {
     id: `promo_${crypto.randomUUID().replaceAll("-", "")}`, name: "", title: "", intro: "", terms: "",
     button: "Đăng ký tham gia",
     confirmation: "Đã ghi nhận lượt tham gia. Sea Trip sẽ liên hệ nếu bạn trúng quà.",
-    image: "", alt: "", background: "#fff8ec", buttonColor: "#6c3b22", accent: "#b97842",
+    image: "", alt: "", background: "#f8f4f1", buttonColor: "#a81455", accent: "#a81455",
     starts: "", ends: "", home: true, featured: false, tours: [], floating: true, autoOpen: false,
     selectionMode: "random", winnerCount: 1, reserveCount: 0,
   };
@@ -110,7 +110,12 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
   }
 
   const deleted = rows.filter((row) => row.state === "deleted");
-  if (view) return <PromotionEntries id={view.id} title={view.data.name} request={request} notify={notify} onBack={() => {
+  const draftRow = rows.find((row) => row.id === draft?.id);
+  const selectionLocked = Boolean(draftRow && (draftRow.closed || draftRow.entries > 0));
+  if (view) return <PromotionEntries id={view.id} title={view.data.name} request={request} notify={notify} onEdit={() => {
+    edit(view.data);
+    setView(null);
+  }} onBack={() => {
     setView(null);
     void request(endpoint).then(setRows).catch((cause) => notify("error", cause.message));
   }} />;
@@ -192,23 +197,29 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
         {issues.featured && <p className="adm-field-error">{issues.featured}</p>}
       </fieldset>
       <fieldset className="stt-promo-settings">
-        <legend>Thể lệ chọn người trúng</legend>
+        <legend>Điều kiện và cách chọn người nhận quà</legend>
+        <Field label="Điều kiện nhận quà" hint="Nội dung này hiển thị cho khách. Admin đối chiếu điều kiện và ghi lý do khi loại một lượt." error={issues.terms}>
+          <textarea rows={3} maxLength={2000} value={draft.terms} onChange={(event) => set("terms", event.target.value)} />
+        </Field>
+        <p className="adm-hint">{selectionLocked
+          ? "Cách chọn và số suất đã khóa. Nhân bản chiến dịch để đặt cách chọn khác cho đợt mới."
+          : "Chọn cách trao quà trước khi có đăng ký. Với chế độ thủ công, admin chọn từng người trong danh sách và ghi lý do khi chốt."}</p>
         <div className="stt-hotel-grid2">
           <Field label="Cách chọn" error={issues.selectionMode}>
-            <select value={draft.selectionMode ?? "random"} onChange={(event) => {
+            <select disabled={selectionLocked} value={draft.selectionMode ?? "random"} onChange={(event) => {
               const mode = event.target.value === "manual" ? "manual" : "random";
               set("selectionMode", mode);
               if (mode === "manual") set("reserveCount", 0);
-            }}><option value="random">Bốc thăm ngẫu nhiên</option><option value="manual">Chọn theo tiêu chí trong thể lệ</option></select>
+            }}><option value="random">Bốc thăm ngẫu nhiên</option><option value="manual">Admin chọn thủ công</option></select>
           </Field>
           <Field label="Số lượt hợp lệ cho một suất" hint="Để trống nếu muốn đặt số phần quà cố định. Ví dụ: 20 lượt hợp lệ cho 1 suất." error={issues.entriesPerWinner}>
-            <input type="number" min={1} max={10000} value={draft.entriesPerWinner ?? ""} onChange={(event) => set("entriesPerWinner", event.target.value ? Number(event.target.value) : undefined)} />
+            <input disabled={selectionLocked} type="number" min={1} max={10000} value={draft.entriesPerWinner ?? ""} onChange={(event) => set("entriesPerWinner", event.target.value ? Number(event.target.value) : undefined)} />
           </Field>
           {!draft.entriesPerWinner && <Field label="Số phần quà cố định" error={issues.winnerCount}>
-            <input type="number" min={1} max={100} value={draft.winnerCount ?? 1} onChange={(event) => set("winnerCount", Number(event.target.value))} />
+            <input disabled={selectionLocked} type="number" min={1} max={100} value={draft.winnerCount ?? 1} onChange={(event) => set("winnerCount", Number(event.target.value))} />
           </Field>}
           {draft.selectionMode !== "manual" && <Field label="Số suất dự phòng" error={issues.reserveCount}>
-            <input type="number" min={0} max={100} value={draft.reserveCount ?? 0} onChange={(event) => set("reserveCount", Number(event.target.value))} />
+            <input disabled={selectionLocked} type="number" min={0} max={100} value={draft.reserveCount ?? 0} onChange={(event) => set("reserveCount", Number(event.target.value))} />
           </Field>}
         </div>
       </fieldset>

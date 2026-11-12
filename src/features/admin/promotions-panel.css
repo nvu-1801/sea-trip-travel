@@ -126,6 +126,55 @@
   display: grid;
   gap: 8px;
 }
+.stt-promo-terms { white-space: pre-line; overflow-wrap: anywhere; }
+.stt-promo-entry-heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.stt-promo-entry-heading h2 { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.stt-promo-help { flex: none; }
+.stt-promo-help summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #edccdb;
+  border-radius: 999px;
+  background: #fff3f8;
+  color: #9c164e;
+  font-size: .8rem;
+  font-weight: 750;
+  list-style: none;
+  cursor: pointer;
+}
+.stt-promo-help summary::-webkit-details-marker { display: none; }
+.stt-promo-help summary:hover, .stt-promo-help[open] summary { border-color: #d78cac; background: #fbe4ef; }
+.stt-promo-help summary:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.stt-promo-help-panel {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: calc(100% + 8px);
+  inset-inline-end: 0;
+  width: min(100%, 370px);
+  padding: 18px;
+  border: 1px solid #edccdb;
+  border-radius: 16px;
+  background: #fff;
+  color: #412c38;
+  box-shadow: 0 16px 40px #4e163025;
+  font-size: .85rem;
+  line-height: 1.55;
+}
+.stt-promo-help-panel h3 { margin: 0; color: #861545; font-size: 1rem; }
+.stt-promo-help-panel dl { margin: 12px 0; }
+.stt-promo-help-panel dt { font-weight: 750; color: #412032; }
+.stt-promo-help-panel dt:not(:first-child) { margin-top: 10px; }
+.stt-promo-help-panel dd { margin: 2px 0 0; }
+.stt-promo-help-panel p { margin: 0; padding: 9px 10px; border-radius: 8px; background: #fff1f6; }
 .stt-promo-tour-chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
 .stt-promo-tour-chips li { display: inline-flex; max-width: 100%; align-items: center; gap: 8px; padding: 4px 6px 4px 12px; border: 1px solid #eed5e0; border-radius: 999px; background: #fff7fa; overflow-wrap: anywhere; }
 .stt-promo-tour-chips button { flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: #8a174b; cursor: pointer; }

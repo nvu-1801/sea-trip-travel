@@ -2,7 +2,7 @@ import "server-only";
 import { createHmac, randomInt, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { normalizePhone, phoneSchema } from "@/domain/lead";
-import { activePromotion, promotionSchema, promotionWinnerCount } from "@/domain/promotion";
+import { activePromotion, promotionSchema, promotionTime, promotionWinnerCount } from "@/domain/promotion";
 import { HttpError } from "./auth";
 import { audit, db, transaction, type AuditContext } from "./db";
 import { decrypt, encrypt } from "./leads";
@@ -102,12 +102,17 @@ function requireCampaign(id: string) {
   return row;
 }
 
-const rulesOf = (data: unknown) => {
-  const campaign = promotionSchema.parse(data);
+function effectiveCampaign(id: string, draft: unknown) {
+  const published = db().prepare("SELECT published FROM records WHERE collection='promotions' AND id=?").get(id)?.published;
+  return promotionSchema.parse(published ? JSON.parse(String(published)) : draft);
+}
+
+const rulesOf = (campaign: ReturnType<typeof effectiveCampaign>) => {
   return { method: campaign.selectionMode ?? "random", count: campaign.winnerCount ?? 1, reserves: campaign.reserveCount ?? 0,
     entriesPerWinner: campaign.entriesPerWinner };
 };
 type Rules = ReturnType<typeof rulesOf>;
+const registrationExpired = (campaign: ReturnType<typeof effectiveCampaign>) => Boolean(campaign.ends) && promotionTime(campaign.ends) <= Date.now();
 type Fulfillment = "contacted" | "confirmed" | "delivered";
 type Result = { method: Rules["method"]; selected: string[]; alternates: string[]; fulfillment: Record<string, Fulfillment>; eligible: number; at: string; reason?: string };
 function readResult(encoded: unknown): Result | null {
@@ -118,10 +123,12 @@ function readResult(encoded: unknown): Result | null {
 
 export function promotionEntries(id: string) {
   const campaign = requireCampaign(id);
+  const effective = effectiveCampaign(id, campaign.data);
   const state = db().prepare("SELECT closed_at, rules, result FROM promotion_results WHERE campaign_id=?").get(id);
   const rows = db().prepare("SELECT rowid,id,data,created_at,exclusion FROM promotion_entries WHERE campaign_id=? ORDER BY created_at DESC,id")
     .all(id) as { rowid: number; id: string; data: string; created_at: string; exclusion: string | null }[];
-  return { closedAt: state?.closed_at ?? null, rules: state ? JSON.parse(String(state.rules)) : rulesOf(campaign.data),
+  return { closedAt: state?.closed_at ?? null, expired: registrationExpired(effective), ends: effective.ends, terms: effective.terms,
+    rules: state ? JSON.parse(String(state.rules)) : rulesOf(effective),
     result: readResult(state?.result),
     seenThrough: rows.reduce((latest, row) => Math.max(latest, row.rowid), 0),
     entries: rows.map(({ data, id, created_at, exclusion }) => ({ ...decrypt(data), id, created_at, exclusion })) };
@@ -165,17 +172,18 @@ export function updatePromotionEntries(id: string, input: z.infer<typeof promoti
     }
     if (state?.result) throw new HttpError(409, "Kết quả đã chốt.");
     if (input.action === "close") {
-      const published = db().prepare("SELECT published FROM records WHERE collection='promotions' AND id=?").get(id)?.published;
       db().prepare("INSERT OR IGNORE INTO promotion_results(campaign_id,closed_at,rules) VALUES(?,?,?)")
-        .run(id, new Date().toISOString(), JSON.stringify(rulesOf(published ? JSON.parse(String(published)) : campaign.data)));
+        .run(id, new Date().toISOString(), JSON.stringify(rulesOf(effectiveCampaign(id, campaign.data))));
     } else if (input.action === "exclude") {
       const result = db().prepare("UPDATE promotion_entries SET exclusion=? WHERE campaign_id=? AND id=?").run(input.reason, id, input.id);
       if (!result.changes) throw new HttpError(404, "Không tìm thấy lượt đăng ký.");
     } else {
-      if (!state) throw new HttpError(409, "Đóng đăng ký trước khi chốt kết quả.");
+      const campaignForDraw = state ? null : effectiveCampaign(id, campaign.data);
+      if (campaignForDraw && (input.action !== "random" || !registrationExpired(campaignForDraw)))
+        throw new HttpError(409, "Đóng đăng ký trước khi chốt kết quả.");
       const pool = (db().prepare("SELECT id FROM promotion_entries WHERE campaign_id=? AND exclusion IS NULL").all(id) as { id: string }[]).map((row) => row.id);
       const count = input.action === "random" ? input.count : input.ids.length;
-      const rules = JSON.parse(String(state.rules)) as Rules;
+      const rules = campaignForDraw ? rulesOf(campaignForDraw) : JSON.parse(String(state?.rules)) as Rules;
       if (input.action !== rules.method || count !== promotionWinnerCount(pool.length, rules.count, rules.entriesPerWinner))
         throw new HttpError(400, "Cách chọn và số giải phải đúng với thể lệ đã chốt.");
       if (count > pool.length) throw new HttpError(400, "Số suất vượt quá số lượt đủ điều kiện.");
@@ -188,7 +196,12 @@ export function updatePromotionEntries(id: string, input: z.infer<typeof promoti
       while (input.action === "random" && pool.length && alternates.length < rules.reserves)
         alternates.push(pool.splice(randomInt(pool.length), 1)[0]);
       const result: Result = { method: input.action, selected, alternates, fulfillment: {}, eligible, at: new Date().toISOString(), reason: input.action === "manual" ? input.reason : undefined };
-      db().prepare("UPDATE promotion_results SET result=? WHERE campaign_id=?").run(JSON.stringify(result), id);
+      if (state) {
+        db().prepare("UPDATE promotion_results SET result=? WHERE campaign_id=?").run(JSON.stringify(result), id);
+      } else {
+        db().prepare("INSERT INTO promotion_results(campaign_id,closed_at,rules,result) VALUES(?,?,?,?)")
+          .run(id, result.at, JSON.stringify(rules), JSON.stringify(result));
+      }
     }
     audit(`promotion-${input.action}`, `promotions/${id}`, context);
     return { ok: true };

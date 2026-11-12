@@ -24,23 +24,29 @@ export function GiftIcon() {
 }
 
 function GiftArtwork({ item, children }: { item: PublicPromotion; children: ReactNode }) {
-  return <div className="stt-gift-art" style={{ background: item.background, color: readableText(item.background) }}>
+  const customBackground = item.background !== "#fff8ec" && item.background !== "#f8f4f1";
+  return <div className="stt-gift-art" style={customBackground ? { background: item.background, color: readableText(item.background) } : undefined}>
     <div className="stt-gift-image">
-      {item.image ? <Image src={item.image} alt={item.alt} fill sizes="(max-width: 720px) 100vw, 620px" /> : <GiftIcon />}
+      {item.image ? <Image src={item.image} alt={item.alt} fill sizes="(max-width: 720px) 100vw, (max-width: 1104px) 50vw, 528px" /> : <GiftIcon />}
     </div>
     <div className="stt-gift-copy">
-      <p className="stt-gift-eyebrow"><span style={{ background: item.accent }} /> QUÀ TẶNG SEA TRIP</p>
+      <p className="stt-gift-eyebrow"><span aria-hidden="true" style={item.accent === "#b97842" ? undefined : { background: item.accent }} /> Quà tặng Sea Trip</p>
       <h2>{item.title || "Tiêu đề quà tặng"}</h2>
-      {item.intro && <p>{item.intro}</p>}
+      {item.intro && <p className="stt-gift-intro">{item.intro}</p>}
       <p className="stt-gift-conditions">Điền họ tên và số điện thoại để tham gia. Mỗi số điện thoại được tính một lượt.</p>
-      {(item.entriesPerWinner || item.winnerCount) && <p>{item.entriesPerWinner ? `Mỗi ${item.entriesPerWinner} lượt hợp lệ có 1 suất (tối đa 100 suất)` : `${item.winnerCount} phần quà`} · {item.selectionMode === "manual" ? "Ban tổ chức chọn" : "Bốc thăm ngẫu nhiên"}</p>}
+      {item.terms && <details className="stt-gift-conditions stt-gift-eligibility">
+        <summary>Điều kiện nhận quà</summary>
+        <p>{item.terms}</p>
+      </details>}
+      {(item.entriesPerWinner || item.winnerCount) && <p className="stt-gift-details">{item.entriesPerWinner ? `Mỗi ${item.entriesPerWinner} lượt hợp lệ có 1 suất (tối đa 100 suất)` : `${item.winnerCount} phần quà`} · {item.selectionMode === "manual" ? "Ban tổ chức chọn" : "Bốc thăm ngẫu nhiên"}</p>}
       {children}
     </div>
   </div>;
 }
 
 function GiftButton({ item, children, ...props }: { item: PublicPromotion; children: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button {...props} className="stt-gift-primary" style={{ background: item.buttonColor, color: readableText(item.buttonColor) }}>{children}</button>;
+  const customColor = item.buttonColor !== "#6c3b22" && item.buttonColor !== "#a81455";
+  return <button {...props} className="stt-gift-primary" style={customColor ? { background: item.buttonColor, color: readableText(item.buttonColor) } : undefined}>{children}</button>;
 }
 
 export function PromotionTrigger({ placement }: { placement: "home" | "tour" | "floating" }) {
