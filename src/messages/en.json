@@ -686,7 +686,9 @@
       "scrollCue": "Scroll for details",
       "galleryAll": "See all {count} photos",
       "mobileHint": "Reference rate per night",
-      "roomCta": "Ask about this room"
+      "roomRequestTitle": "What to include",
+      "roomRequestHint": "Share your check-in and check-out dates and guest count.",
+      "roomCta": "Check availability and rates"
     },
     "availability": {
       "onRequest": "Contact us to check room availability",
