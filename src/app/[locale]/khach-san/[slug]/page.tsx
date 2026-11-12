@@ -21,6 +21,7 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { MaskedHeading } from "@/components/motion/word-reveal";
 import { Reveal } from "@/components/ui/reveal";
 import { Button, ButtonLink, buttonStyles } from "@/components/ui/button";
+import { CalendarIcon } from "@/components/ui/icons";
 import { SectionHeading } from "@/components/ui/layout";
 import { JsonLd } from "@/components/seo/json-ld";
 import { breadcrumbJsonLd, hotelJsonLd } from "@/lib/json-ld";
@@ -48,6 +49,13 @@ const demoRoomPhotos: Partial<Record<string, string>> = {
   room_aurora_villas_suite_gia_dinh_2: "/images/hotels/hoang-nhan-palace/2-d32183c2.webp",
   room_aurora_villas_villa_2_phong_ngu_3: "/images/hotels/aurora-villas/2-893c05be.webp",
 };
+
+const auroraPreviewPhotos = [
+  "/images/hotels/aurora-villas/1-ad2ec172.webp",
+  "/images/hotels/aurora-villas/2-893c05be.webp",
+  "/images/hotels/aurora-villas/3-616d587b.webp",
+  "/images/hotels/aurora-villas/4-d58c5370.webp",
+];
 
 function first(value: string | string[] | undefined): string {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -176,8 +184,9 @@ export default async function HotelDetailPage({
       paragraph.trim() !== "" && !(index === 0 && paragraph.trim() === detail.summary.trim()),
   );
 
-  const availabilityLabel = (room: (typeof detail.rooms)[number]) => {    const result = room.availability;
-    if (result.kind === "on_request") return t.trustNote;
+  const availabilityLabel = (room: (typeof detail.rooms)[number]) => {
+    const result = room.availability;
+    if (result.kind === "on_request") return m.hotels.availability.onRequest;
     if (result.kind === "unknown") return m.hotels.availability.unknown;
     if (result.kind === "closed") return m.hotels.availability.closed;
     return format(m.hotels.availability.available, { count: result.rooms });
@@ -389,32 +398,33 @@ export default async function HotelDetailPage({
                   const photos = referencePhoto
                     ? [{ src: referencePhoto, alt: vi ? "Ảnh phòng tham khảo" : "Reference room photo" }]
                     : roomPhotos;
-                  const facts = (
-                    <HotelRoomFacts
-                      adults={room.capacityAdults}
-                      childCount={room.capacityChildren}
-                      bed={room.bed ?? undefined}
-                      vietnamese={vi}
-                    />
-                  );
+                  if (process.env.NODE_ENV === "development" && detail.slug === "aurora-villas") {
+                    for (const src of auroraPreviewPhotos) {
+                      if (!photos.some((photo) => photo.src === src)) {
+                        photos.push({ src, alt: vi ? "Ảnh mẫu Aurora Villas" : "Aurora Villas sample photo" });
+                      }
+                    }
+                  }
                   return (
                     <article className="stt-hotel-room" key={room.id} data-room-photo={photos.length > 0}>
                       {photos.length > 0 ? (
                         <div className="stt-room-figure">
                           <HotelGallery images={photos} hotelName={room.name} labels={galleryLabels} room />
-                          {facts}
                         </div>
                       ) : null}
                       <div className="stt-hotel-room-body">
                         <h3>{room.name}</h3>
-                        <p className="stt-hotel-room-meta">
-                          {[
-                            room.sizeSqm ? format(t.size, { size: room.sizeSqm }) : null,
-                            room.view ? `${t.view}: ${room.view}` : null,
-                            format(t.capacity, { count: room.maxOccupancy }),
-                          ].filter(Boolean).join(" · ")}
-                        </p>
-                        {photos.length === 0 ? facts : null}
+                        <ul className="stt-hotel-room-meta">
+                          {room.sizeSqm ? <li>{format(t.size, { size: room.sizeSqm })}</li> : null}
+                          {room.view ? <li>{t.view}: {room.view}</li> : null}
+                          <li>{format(t.capacity, { count: room.maxOccupancy })}</li>
+                        </ul>
+                        <HotelRoomFacts
+                          adults={room.capacityAdults}
+                          childCount={room.capacityChildren}
+                          bed={room.bed ?? undefined}
+                          vietnamese={vi}
+                        />
                         {photos.length === 0 ? (
                           <small className="stt-room-photo-empty">
                             {vi ? "Chưa có ảnh phòng" : "Room photos unavailable"}
@@ -448,6 +458,13 @@ export default async function HotelDetailPage({
                           </p>
                           <p className="stt-hotel-room-state">
                             {availabilityLabel(room)}
+                          </p>
+                        </div>
+                        <div className="stt-hotel-room-request-note">
+                          <CalendarIcon width={16} height={16} aria-hidden="true" />
+                          <p>
+                            <strong>{t.roomRequestTitle}</strong>
+                            {t.roomRequestHint}
                           </p>
                         </div>
                         <HotelRoomRequest

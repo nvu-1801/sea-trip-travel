@@ -686,7 +686,9 @@
       "scrollCue": "Cuộn để xem chi tiết",
       "galleryAll": "Xem tất cả {count} ảnh",
       "mobileHint": "Giá tham khảo mỗi đêm",
-      "roomCta": "Tư vấn phòng này"
+      "roomRequestTitle": "Thông tin để báo giá",
+      "roomRequestHint": "Cho SEA TRIP biết ngày nhận, trả phòng và số khách.",
+      "roomCta": "Hỏi phòng và giá"
     },
     "availability": {
       "onRequest": "Liên hệ kiểm tra tình trạng phòng",
