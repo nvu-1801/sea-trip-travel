@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdmFilterSelect } from "./ui-select";
 import { searchKey } from "@/lib/search";
 import {
@@ -32,21 +32,21 @@ function matchesStatus(status: TranslationState, filter: StatusFilter): boolean 
  * The server derives every status from the stored `data._en` fields, so coming
  * back after saving a record shows the new state without a stored flag to sync.
  */
-export function TranslationManager() {
+export function useTranslationQueue(enabled: boolean) {
   const [queue, setQueue] = useState<TranslationQueue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [query, setQuery] = useState("");
-  const [kind, setKind] = useState("all");
-  const [status, setStatus] = useState<StatusFilter>("incomplete");
+  const requestId = useRef(0);
 
   const load = useCallback(async () => {
+    const id = ++requestId.current;
     setLoading(true);
     setError("");
     try {
       const response = await fetch("/api/admin/translations", {
         cache: "no-store",
       });
+      if (id !== requestId.current) return;
       if (response.status === 401) {
         window.location.replace("/admin/login?expired=1");
         return;
@@ -54,6 +54,7 @@ export function TranslationManager() {
       const body = (await response.json()) as
         | TranslationQueue
         | { error?: string };
+      if (id !== requestId.current) return;
       if (!response.ok) {
         throw new Error(
           "error" in body && body.error
@@ -63,17 +64,19 @@ export function TranslationManager() {
       }
       setQueue(body as TranslationQueue);
     } catch (cause) {
+      if (id !== requestId.current) return;
       setError(
         cause instanceof Error
           ? cause.message
           : "Không tải được danh sách bản dịch.",
       );
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     // The loader owns its own error/loading state; this effect only starts it.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
@@ -87,10 +90,24 @@ export function TranslationManager() {
     window.addEventListener("focus", onFocus);
     window.addEventListener("pageshow", onPageShow);
     return () => {
+      requestId.current += 1;
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("pageshow", onPageShow);
     };
-  }, [load]);
+  }, [enabled, load]);
+
+  return { queue, loading, error, load };
+}
+
+export function TranslationManager({
+  queue,
+  loading,
+  error,
+  load,
+}: ReturnType<typeof useTranslationQueue>) {
+  const [query, setQuery] = useState("");
+  const [kind, setKind] = useState("all");
+  const [status, setStatus] = useState<StatusFilter>("incomplete");
 
   const items = useMemo(() => queue?.items ?? [], [queue]);
   const summary = queue?.summary;
