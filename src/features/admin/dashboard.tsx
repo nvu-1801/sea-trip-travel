@@ -30,7 +30,7 @@ import {
   CustomerStoriesEditor,
   type CustomerPart,
 } from "./customer-stories-editor";
-import { TranslationManager } from "./translation-manager";
+import { TranslationManager, useTranslationQueue } from "./translation-manager";
 import { ArticleEditorLayout } from "./article-section-nav";
 import type { HomeSectionMeta } from "@/lib/home-sections";
 import { HOME_SECTIONS, HOME_GROUPS } from "@/lib/home-sections";
@@ -1162,12 +1162,15 @@ export function Dashboard({
       window.removeEventListener("focus", refresh);
     };
   }, [csrf]);
+  const translationQueue = useTranslationQueue(Boolean(csrf));
+  const incompleteTranslations = translationQueue.queue?.summary.incomplete ?? 0;
   useContentUpdates({
     enabled: Boolean(csrf),
     url: "/api/admin/changes",
     initialVersion,
     onChange: async () => {
       if (busy || loading) return false;
+      void translationQueue.load();
       if (
         tab === "account" ||
         tab === "overview" ||
@@ -2791,6 +2794,15 @@ export function Dashboard({
                   >
                     <AdminIcon name={icon as AdminIconName} size={17} />
                     <span className="adm-nav-text">{railLabel}</span>
+                    {key === "translations" && incompleteTranslations > 0 && (
+                      <span
+                        className="adm-unread-badge"
+                        aria-label={`${incompleteTranslations} mục chưa đủ bản EN`}
+                        aria-live="polite"
+                      >
+                        {incompleteTranslations}
+                      </span>
+                    )}
                     {key === "promotions" && unreadPromotions > 0 && (
                       <span className="adm-unread-badge" aria-label={`${unreadPromotions} đăng ký quà chưa xem`} aria-live="polite">
                         {unreadPromotions}
@@ -4790,7 +4802,7 @@ export function Dashboard({
             onSave={(theme, action) => void saveTheme(theme, action)}
           />
         ) : tab === "translations" ? (
-          <TranslationManager />
+          <TranslationManager {...translationQueue} />
         ) : selected ? (
           <section className="adm-panel adm-edit" data-live-editor="content">
             <div className="adm-editor-header">
