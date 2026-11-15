@@ -162,7 +162,7 @@ export function TourPackages({ tour, locale }: { tour: Tour; locale: Locale }) {
     >
       <SectionHeading
         title={<span id="packages-title">{m.title}</span>}
-        description={m.description}
+        description={tour.slug === "quy-nhon-ky-co-eo-gio-1-ngay" ? m.groupDescription : m.description}
         as="h2"
       />
       <div className="mt-6 overflow-x-auto rounded-xl border border-border">

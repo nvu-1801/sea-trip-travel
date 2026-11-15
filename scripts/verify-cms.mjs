@@ -1341,6 +1341,43 @@ try {
     .waitFor();
   check("login after logout returns to the Studio", true);
 
+  await adminNav.getByRole("button", { name: "Quà khuyến mãi", exact: true }).click();
+  await page.getByRole("button", { name: "Dùng mẫu lịch để bàn" }).click();
+  const promotion = page.getByRole("region", { name: "Chỉnh sửa chiến dịch quà" });
+  const promotionName = promotion.getByLabel("Tên quản lý nội bộ");
+  const discard = promotion.getByRole("button", { name: "Xóa thay đổi" });
+  await promotionName.fill("Mẫu lịch đã lưu");
+  await promotion.getByRole("button", { name: "Lưu nháp" }).click();
+  await page.getByRole("listitem").filter({ hasText: "Mẫu lịch đã lưu" })
+    .getByRole("button", { name: "Sửa", exact: true }).waitFor();
+  check("saved campaign is the new discard baseline", await discard.isDisabled());
+  await promotionName.fill("Tên chưa lưu");
+  await discard.click();
+  const discardDialog = page.getByRole("alertdialog", { name: "Xóa thay đổi chưa lưu?" });
+  await discardDialog.getByRole("button", { name: "Hủy bỏ" }).click();
+  check("canceling discard keeps the campaign edits", await promotionName.inputValue() === "Tên chưa lưu");
+  await discard.click();
+  await discardDialog.getByRole("button", { name: "Xóa thay đổi" }).click();
+  check("discard restores the last saved campaign", await promotionName.inputValue() === "Mẫu lịch đã lưu" && await discard.isDisabled());
+
+  const campaign = page.getByRole("listitem").filter({ hasText: "Mẫu lịch đã lưu" });
+  const deleteCampaign = campaign.getByRole("button", { name: "Xóa", exact: true });
+  const trashDialog = page.getByRole("alertdialog", { name: "Chuyển chiến dịch vào Thùng rác?" });
+  await deleteCampaign.click();
+  await trashDialog.getByRole("button", { name: "Hủy bỏ" }).click();
+  check("canceling campaign deletion keeps it in the list", await campaign.isVisible());
+  await deleteCampaign.click();
+  await trashDialog.getByRole("button", { name: "Chuyển vào Thùng rác" }).click();
+  await campaign.waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "Thùng rác (1)", exact: true }).click();
+  const campaignTrash = page.getByRole("region", { name: "Thùng rác chiến dịch" });
+  await campaignTrash.getByRole("listitem").filter({ hasText: "Mẫu lịch đã lưu" })
+    .getByRole("button", { name: "Khôi phục" }).click();
+  await campaignTrash.getByText("Thùng rác đang trống.").waitFor();
+  await campaignTrash.getByRole("button", { name: "Về danh sách chiến dịch" }).click();
+  await campaign.getByText("Bản nháp hoặc đã tạm dừng").waitFor();
+  check("campaign trash restores a campaign as a draft", true);
+
   await page
     .getByRole("navigation", { name: "Quản trị" })
     .getByRole("button", { name: "Bảo mật", exact: true })

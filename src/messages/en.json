@@ -115,6 +115,7 @@
     }
   },
   "footer": {
+    "description": "SEA TRIP TRAVEL organizes tours in Quy Nhon, Phu Yen and across Vietnam.",
     "categoriesTitle": "Tour categories",
     "categoriesAria": "Tour categories",
     "infoTitle": "Information",
@@ -308,7 +309,8 @@
     "galleryCounter": "Photo {index} of {total}",
     "packages": {
       "title": "Find your travel package",
-      "description": "Prices are estimates per guest. SEA TRIP will confirm what is included during consultation.",
+      "description": "Prices shown are estimates per guest. SEA TRIP will confirm the price and inclusions when you enquire.",
+      "groupDescription": "Estimated prices are per guest and vary by group size.",
       "accommodation": "Package",
       "adult": "Adult",
       "child": "Children aged 5–9",
@@ -401,7 +403,7 @@
     "outOfHours": "Outside working hours, requests are still recorded and handled on the next working day.",
     "formEyebrow": "Consultation form",
     "formTitle": "Send a request",
-    "formDescription": "Pick a tour/destination or a hotel, then leave your name and phone number. SEA TRIP will check and get back to you.",
+    "formDescription": "If you haven’t selected a hotel, enter the tour or destination you’re interested in. Add your name and phone number and agree to let SEA TRIP contact you.",
     "steps": [
       {
         "title": "1. SEA TRIP receives your request",

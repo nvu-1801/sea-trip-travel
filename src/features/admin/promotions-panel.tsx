@@ -7,8 +7,9 @@ import { Field, HotelFormError, fieldIssue } from "./hotel-form";
 import { AdminDatePicker } from "./admin-date-picker";
 import "./promotions-panel.css";
 import { ImageField } from "./image-picker";
-import type { ToastKind } from "./notify";
+import type { ConfirmRequest, ToastKind } from "./notify";
 import { PromotionEntries } from "./promotion-entries";
+import { AdminIcon } from "./admin-icons";
 
 type Row = { id: string; revision: number; state: string; live: boolean; closed: boolean; entries: number; data: Promotion };
 type Option = { value: string; label: string };
@@ -39,9 +40,15 @@ const fields = [
   ["button", "Nhãn nút gửi đăng ký", 50], ["confirmation", "Lời xác nhận sau khi gửi", 250],
 ] as const;
 
-export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind: ToastKind, message: string) => void }) {
+export function PromotionsPanel({ csrf, notify, confirm }: {
+  csrf: string;
+  notify: (kind: ToastKind, message: string) => void;
+  confirm: (request: NonNullable<ConfirmRequest>) => Promise<boolean>;
+}) {
   const [rows, setRows] = useState<Row[]>([]);
   const [draft, setDraft] = useState<Promotion | null>(null);
+  const [baseline, setBaseline] = useState<Promotion | null>(null);
+  const [formVersion, setFormVersion] = useState(0);
   const [media, setMedia] = useState<Option[]>([]);
   const [tours, setTours] = useState<Option[]>([]);
   const [issues, setIssues] = useState<Record<string, string>>({});
@@ -49,6 +56,7 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [view, setView] = useState<Row | null>(null);
+  const [trashOpen, setTrashOpen] = useState(false);
 
   const request = useCallback(async (url: string, init: RequestInit = {}) => {
     const response = await fetch(url, { ...init, headers: { "x-csrf-token": csrf, ...init.headers } });
@@ -74,7 +82,24 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
     setDraft((current) => current && { ...current, [key]: value });
     setIssues((current) => ({ ...current, [key]: "" }));
   };
-  const edit = (item: Promotion) => { setDraft(item); setIssues({}); setPreview(null); };
+  const edit = (item: Promotion) => {
+    setDraft(item);
+    setBaseline(item);
+    setIssues({});
+    setPreview(null);
+    setFormVersion((version) => version + 1);
+  };
+  const dirty = JSON.stringify(draft) !== JSON.stringify(baseline);
+
+  async function discardChanges() {
+    if (!baseline || !await confirm({
+      title: "Xóa thay đổi chưa lưu?",
+      body: "Form sẽ trở về nội dung trước khi sửa.",
+      confirmLabel: "Xóa thay đổi",
+      danger: true,
+    })) return;
+    edit(baseline);
+  }
   const upload = async (file: File) => {
     const image = await request("/api/admin/media", {
       method: "POST", headers: { "content-type": file.type, "x-image-alt": encodeURIComponent(file.name.slice(0, 200)) }, body: file,
@@ -92,7 +117,13 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ data: item, revision: previous?.revision ?? 0, action }),
       });
-      setRows(await request(endpoint));
+      const records: Row[] = await request(endpoint);
+      setRows(records);
+      if (action === "save" || action === "publish") {
+        const saved = records.find((row) => row.id === item.id)?.data ?? item;
+        setBaseline(saved);
+        setDraft((current) => current === item ? saved : current);
+      }
       if (action === "delete") setDraft((current) => current?.id === item.id ? null : current);
       notify("success", {
         save: "Đã lưu bản nháp",
@@ -112,6 +143,27 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
   const deleted = rows.filter((row) => row.state === "deleted");
   const draftRow = rows.find((row) => row.id === draft?.id);
   const selectionLocked = Boolean(draftRow && (draftRow.closed || draftRow.entries > 0));
+  if (trashOpen) return (
+    <section className="stt-hotel-panel" aria-label="Thùng rác chiến dịch">
+      <div className="stt-hotel-actions">
+        <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => setTrashOpen(false)}>
+          Về danh sách chiến dịch
+        </button>
+      </div>
+      <h2>Thùng rác chiến dịch</h2>
+      <p>Khôi phục để đưa chiến dịch về bản nháp.</p>
+      {deleted.length === 0 ? <p>Thùng rác đang trống.</p> : (
+        <ul className="stt-hotel-trash-list">
+          {deleted.map((row) => <li key={row.id}>
+            <strong>{row.data.name}</strong>
+            <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => void save(row.data, "restore")}>
+              <AdminIcon name="restore" size={14} /> Khôi phục
+            </button>
+          </li>)}
+        </ul>
+      )}
+    </section>
+  );
   if (view) return <PromotionEntries id={view.id} title={view.data.name} request={request} notify={notify} onEdit={() => {
     edit(view.data);
     setView(null);
@@ -126,6 +178,9 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
       <div className="stt-hotel-actions">
         <button type="button" className="adm-primary" disabled={busy} onClick={() => edit(newPromotion())}>Tạo chiến dịch</button>
         <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => edit({ ...newPromotion(), ...calendarSample })}>Dùng mẫu lịch để bàn</button>
+        <button type="button" className="stt-hotel-action" disabled={busy || Boolean(loadError)} onClick={() => setTrashOpen(true)}>
+          <AdminIcon name="trash" size={14} /> Thùng rác ({deleted.length})
+        </button>
       </div>
       {rows.length === deleted.length && <p>Chưa có chiến dịch quà khuyến mãi.</p>}
       <ul className="stt-hotel-trash-list">
@@ -138,8 +193,13 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
               starts: "", ends: "", featured: false,
             })}>Nhân bản</button>
             {row.live && !row.closed && <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => void save(row.data, "unpublish")}>Tạm dừng</button>}
-            <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => {
-              if (window.confirm("Chuyển chiến dịch vào thùng rác? Quà sẽ ngừng hiển thị trên website.")) void save(row.data, "delete");
+            <button type="button" className="stt-hotel-action stt-hotel-action--danger" disabled={busy} onClick={async () => {
+              if (await confirm({
+                title: "Chuyển chiến dịch vào Thùng rác?",
+                body: `${row.data.name} sẽ ngừng hiển thị trên website. Bạn có thể khôi phục chiến dịch về bản nháp từ Thùng rác.`,
+                confirmLabel: "Chuyển vào Thùng rác",
+                danger: true,
+              })) await save(row.data, "delete");
             }}>Xóa</button>
             <button type="button" className="adm-primary stt-promo-entry-action" onClick={() => setView(row)}>
               Xem đăng ký <span className="stt-promo-entry-count">({row.entries})</span>
@@ -147,17 +207,13 @@ export function PromotionsPanel({ csrf, notify }: { csrf: string; notify: (kind:
           </div>
         </li>)}
       </ul>
-      {deleted.length > 0 && <details>
-        <summary>Thùng rác chiến dịch ({deleted.length})</summary>
-        <ul className="stt-hotel-trash-list">
-          {deleted.map((row) => <li key={row.id}>
-            <strong>{row.data.name}</strong>
-            <button type="button" className="stt-hotel-action" disabled={busy} onClick={() => void save(row.data, "restore")}>Khôi phục bản nháp</button>
-          </li>)}
-        </ul>
-      </details>}
     </section>
-    {draft && <section className="stt-hotel-section" aria-label="Chỉnh sửa chiến dịch quà">
+    {draft && <section key={formVersion} className="stt-hotel-section" aria-label="Chỉnh sửa chiến dịch quà">
+      <div className="stt-hotel-actions">
+        <button type="button" className="stt-hotel-action" disabled={busy || !dirty} onClick={() => void discardChanges()}>
+          Xóa thay đổi
+        </button>
+      </div>
       <h2>{draft.name || "Chiến dịch mới"}</h2>
       <div className="stt-hotel-grid2">
         {fields.map(([key, label, length]) => <Field key={key} label={label} error={fieldIssue(issues, key)}>

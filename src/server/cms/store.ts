@@ -724,6 +724,46 @@ function applyPendingMigrations(): number {
     repaired += seedCustomerSampleData();
     markMigration(CUSTOMER_SAMPLE_DATA_MIGRATION);
   }
+  const copyMigration = "public-copy/vi-corrections:v1";
+  if (!migrationApplied(copyMigration)) {
+    const vi = messageSeeds.find((item) => item.id === "vi")!;
+    const corrections = [
+      ["messages", "id='vi'", "$.contact.formDescription",
+        "Chỉ cần họ tên, số điện thoại và xác nhận. Các trường còn lại giúp tư vấn chính xác hơn.",
+        vi.contact.formDescription],
+      ["messages", "id='vi'", "$.tour.packages.description",
+        "Giá tham khảo theo từng hạng lưu trú, tính trên mỗi khách. Quyền lợi được xác nhận khi tư vấn.",
+        vi.tour.packages.description],
+      ["hero", "id='home'", "$.vi.badge", "Ẩm Thưc", "Ẩm Thực"],
+      ["messages", "id='vi'", "$.home.hero.badge", "Ẩm Thưc", "Ẩm Thực"],
+      ["hotelRooms", `EXISTS (
+        SELECT 1 FROM records AS hotel
+        WHERE hotel.collection='hotels'
+          AND json_extract(hotel.data,'$.slug')='the-kila-boutique-hotel-quy-nhon'
+          AND hotel.id=json_extract(records.data,'$.hotelId')
+      )`, "$.name", "Excutive Double Room", "Executive Double Room"],
+    ] as const;
+    for (const [collection, scope, field, oldText, newText] of corrections) {
+      const isHeroBadge = field.endsWith(".badge");
+      const match = isHeroBadge
+        ? "instr(value, $old)>0"
+        : collection === "hotelRooms" ? "replace(trim(value), '  ', ' ')=$old" : "value=$old";
+      const replacement = isHeroBadge ? "replace(value, $old, $new)" : "$new";
+      const updated = db().prepare(`
+        UPDATE records SET
+          data=(SELECT CASE WHEN ${match} THEN json_set(data,$field,${replacement}) ELSE data END FROM (SELECT json_extract(data,$field) value)),
+          published=(SELECT CASE WHEN ${match} THEN json_set(published,$field,${replacement}) ELSE published END FROM (SELECT json_extract(published,$field) value)),
+          revision=revision+1
+        WHERE collection=$collection AND ${scope}
+          AND EXISTS (
+            SELECT 1 FROM (SELECT json_extract(data,$field) value UNION ALL SELECT json_extract(published,$field))
+            WHERE ${match}
+          )
+      `).run({ collection, field, old: oldText, new: newText });
+      repaired += Number(updated.changes);
+    }
+    markMigration(copyMigration);
+  }
   return repaired;
 }
 
