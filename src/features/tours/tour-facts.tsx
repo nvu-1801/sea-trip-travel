@@ -150,6 +150,18 @@ export function TourPackages({ tour, locale }: { tour: Tour; locale: Locale }) {
   // switching back to a published price never loses pricing data.
   if (!hasPublishedPrice(tour.priceFrom) || tour.pricingOptions.length === 0)
     return null;
+  const isKyCo = tour.slug === "quy-nhon-ky-co-eo-gio-1-ngay";
+  const packageLabel = (label: string) => {
+    if (!isKyCo) return label;
+    const group = /^đi riêng (2\s*-\s*3|4\s*-\s*6|7\s*-\s*10) khách$/i.exec(label.trim());
+    if (group) {
+      const range = group[1].replace(/\s*-\s*/, "–");
+      return locale === "en" ? `Private tour for ${range} guests` : `Đi riêng ${range} khách`;
+    }
+    return locale === "en" && label.trim() === "Từ 11 khách trở lên"
+      ? "Groups of 11 or more"
+      : label;
+  };
   const m = getMessages(locale).tour.packages;
   const common = getMessages(locale).common;
   const money = (amount: number) =>
@@ -162,7 +174,7 @@ export function TourPackages({ tour, locale }: { tour: Tour; locale: Locale }) {
     >
       <SectionHeading
         title={<span id="packages-title">{m.title}</span>}
-        description={tour.slug === "quy-nhon-ky-co-eo-gio-1-ngay" ? m.groupDescription : m.description}
+        description={isKyCo ? m.groupDescription : m.description}
         as="h2"
       />
       <div className="mt-6 overflow-x-auto rounded-xl border border-border">
@@ -193,7 +205,7 @@ export function TourPackages({ tour, locale }: { tour: Tour; locale: Locale }) {
               return (
                 <tr key={option.id} className="even:bg-surface-muted/40">
                   <th scope="row" className="p-3 font-semibold sm:p-4">
-                    {option.label}
+                    {packageLabel(option.label)}
                   </th>
                   <td className="whitespace-nowrap p-3 font-bold tabular-nums text-primary-strong sm:p-4">
                     <span className="tour-package-price">

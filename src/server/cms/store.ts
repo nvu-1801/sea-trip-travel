@@ -701,6 +701,43 @@ function backfillHotelSlugs(): number {
   return repaired;
 }
 
+function fillEnglishCatalog(): number {
+  const catalog = messageSeeds.find((item) => item.id === "en")!;
+  const row = db().prepare(
+    "SELECT data,published FROM records WHERE collection='messages' AND id='en' AND state!='deleted'",
+  ).get() as { data: string; published: string | null } | undefined;
+  if (!row) return 0;
+
+  function fill(target: Record<string, unknown>, defaults: Record<string, unknown>) {
+    for (const [key, value] of Object.entries(defaults)) {
+      const current = target[key];
+      if (current == null || (typeof current === "string" && !current.trim())) {
+        target[key] = value;
+      } else if (current && value && typeof current === "object" &&
+        typeof value === "object" && !Array.isArray(current) && !Array.isArray(value)) {
+        fill(current as Record<string, unknown>, value as Record<string, unknown>);
+      }
+    }
+  }
+
+  function update(snapshot: string) {
+    const messages = JSON.parse(snapshot) as typeof catalog;
+    fill(messages, catalog);
+    if (messages.contact.formDescription ===
+      "All we need is your name, phone number and confirmation. The other fields make the advice more accurate.") {
+      messages.contact.formDescription = catalog.contact.formDescription;
+    }
+    return JSON.stringify(messages);
+  }
+
+  const data = update(row.data);
+  const live = row.published === null ? null : update(row.published);
+  if (data === row.data && live === row.published) return 0;
+  return Number(db().prepare(
+    "UPDATE records SET data=?, published=?, revision=revision+1 WHERE collection='messages' AND id='en'",
+  ).run(data, live).changes);
+}
+
 /** Applies every pending content repair. The caller owns the transaction. */
 function applyPendingMigrations(): number {
   let repaired = 0;
@@ -763,6 +800,12 @@ function applyPendingMigrations(): number {
       repaired += Number(updated.changes);
     }
     markMigration(copyMigration);
+  }
+  const englishMigration = "public-copy/en-catalog:v1";
+  const siteUrl = process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
+  if (siteUrl?.replace(/\/$/, "") === "https://seatriptravel.vn" && !migrationApplied(englishMigration)) {
+    repaired += fillEnglishCatalog();
+    markMigration(englishMigration);
   }
   return repaired;
 }
