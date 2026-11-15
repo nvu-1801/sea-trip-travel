@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { rememberHotelRequest, type HotelRequestDraft } from "./hotel-request-store";
 
 export function HotelRoomRequest({
@@ -11,9 +12,18 @@ export function HotelRoomRequest({
   draft: HotelRequestDraft;
   label: string;
 }) {
+  const router = useRouter();
+
   return (
-    <a className="stt-hotel-room-cta" href={href} onClick={() => rememberHotelRequest(draft)}>
+    <button
+      type="button"
+      className="stt-hotel-room-cta"
+      onClick={() => {
+        rememberHotelRequest(draft);
+        router.push(href);
+      }}
+    >
       {label} <span aria-hidden="true">→</span>
-    </a>
+    </button>
   );
 }

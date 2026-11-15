@@ -1095,6 +1095,7 @@ function RoomRow({
             <HotelRoomFacts
               adults={draft.capacityAdults}
               childCount={draft.capacityChildren}
+              maxOccupancy={draft.maxOccupancy}
               bed={draft.bed}
             />
           </div>

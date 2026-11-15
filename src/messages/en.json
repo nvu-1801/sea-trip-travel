@@ -308,7 +308,7 @@
     "galleryCounter": "Photo {index} of {total}",
     "packages": {
       "title": "Find your travel package",
-      "description": "Reference prices per guest by accommodation package. Inclusions are confirmed during consultation.",
+      "description": "Prices are estimates per guest. SEA TRIP will confirm what is included during consultation.",
       "accommodation": "Package",
       "adult": "Adult",
       "child": "Children aged 5–9",
