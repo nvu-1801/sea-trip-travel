@@ -422,6 +422,7 @@ export default async function HotelDetailPage({
                         <HotelRoomFacts
                           adults={room.capacityAdults}
                           childCount={room.capacityChildren}
+                          maxOccupancy={room.maxOccupancy}
                           bed={room.bed ?? undefined}
                           vietnamese={vi}
                         />
@@ -474,7 +475,7 @@ export default async function HotelDetailPage({
                             id: detail.id,
                             slug: detail.slug,
                             name: detail.name,
-                            priceFrom: detail.priceFrom,
+                            priceFrom: room.priceFrom,
                             roomId: room.id,
                             roomName: room.name,
                           }}

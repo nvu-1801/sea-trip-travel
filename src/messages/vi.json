@@ -308,7 +308,7 @@
     "galleryCounter": "Ảnh {index}/{total}",
     "packages": {
       "title": "Chọn gói phù hợp",
-      "description": "Giá tham khảo theo từng hạng lưu trú, tính trên mỗi khách. Quyền lợi được xác nhận khi tư vấn.",
+      "description": "Giá tham khảo tính theo mỗi khách. SEA TRIP sẽ xác nhận dịch vụ đi kèm khi tư vấn.",
       "accommodation": "Gói dịch vụ",
       "adult": "Người lớn",
       "child": "Trẻ em 5–9 tuổi",

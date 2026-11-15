@@ -285,6 +285,17 @@ async function main() {
       (await page.locator(".stt-hotel-form").count()) === 0 &&
         (await page.locator(".stt-hotel-request-room").count()) >= 2,
     );
+    const hotelDetailUrl = page.url();
+    const firstRoom = page.locator(".stt-hotel-room").first();
+    const roomTitle = await firstRoom.getByRole("heading", { level: 3 }).innerText();
+    await firstRoom.getByRole("button", { name: "Hỏi phòng và giá" }).click();
+    await page.waitForURL(/\/lien-he/, { timeout: 20_000 });
+    await page.locator("[data-hotel-chip]").waitFor();
+    check(
+      "room card carries the selected room to the consultation form",
+      (await page.locator("[data-hotel-chip]").innerText()).includes(roomTitle),
+    );
+    await page.goto(hotelDetailUrl, { waitUntil: "load" });
     await page.locator(".stt-hotel-request-room").first().click();
     const assignDialog = page.getByRole("dialog");
     await assignDialog.waitFor({ timeout: 20_000 });

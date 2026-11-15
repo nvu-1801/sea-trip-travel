@@ -74,7 +74,7 @@ export function HotelRequestPanel({
       id: hotel.id,
       slug: hotel.slug,
       name: hotel.name,
-      priceFrom: hotel.priceFrom,
+      priceFrom: room ? room.priceFrom : hotel.priceFrom,
       ...(room ? { roomId: room.id, roomName: room.name } : {}),
     });
     setAssigned(true);

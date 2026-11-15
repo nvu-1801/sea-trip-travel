@@ -3,11 +3,13 @@ import { BedIcon, UsersIcon } from "@/components/ui/icons";
 export function HotelRoomFacts({
   adults,
   childCount,
+  maxOccupancy,
   bed,
   vietnamese = true,
 }: {
   adults: number;
   childCount: number;
+  maxOccupancy: number;
   bed?: string;
   vietnamese?: boolean;
 }) {
@@ -17,7 +19,9 @@ export function HotelRoomFacts({
 
   return (
     <ul className="stt-room-facts">
-      <li><UsersIcon width={17} height={17} /> {guests}</li>
+      {adults + childCount <= maxOccupancy ? (
+        <li><UsersIcon width={17} height={17} /> {guests}</li>
+      ) : null}
       {bed ? <li><BedIcon width={17} height={17} /> {bed}</li> : null}
     </ul>
   );

@@ -518,9 +518,11 @@ export function LeadForm({
             <span aria-hidden="true">→</span>
           </a>
         )}
-        <p className="mt-2 text-xs leading-relaxed text-foreground-subtle">
-          {labels.hotel.hint}
-        </p>
+        {hotel ? (
+          <p className="mt-2 text-xs leading-relaxed text-foreground-subtle">
+            {labels.hotel.hint}
+          </p>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
