@@ -3267,7 +3267,7 @@ export function Dashboard({
             <p className="adm-empty">Đang tải…</p>
           )
         ) : tab === "promotions" ? (
-          csrf ? <PromotionsPanel csrf={csrf} notify={pushToast} /> : <p className="adm-empty">Đang tải…</p>
+          csrf ? <PromotionsPanel csrf={csrf} notify={pushToast} confirm={requestConfirm} /> : <p className="adm-empty">Đang tải…</p>
         ) : tab === "leads" ? (
           <>
             {initialPromotion && <p className="adm-notice">

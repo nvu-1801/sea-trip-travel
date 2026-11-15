@@ -38,21 +38,16 @@ function renderCopyright(template: string, name: string): React.ReactNode {
   });
 }
 
-/** Column heading with the brand rule that marks every section eyebrow. */
 function FooterHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="flex items-center gap-2.5 text-sm font-bold uppercase tracking-wider text-foreground">
-      <span
-        aria-hidden="true"
-        className="brand-gradient h-0.5 w-5 rounded-full"
-      />
+    <h2 className="text-base font-bold tracking-tight text-foreground">
       {children}
     </h2>
   );
 }
 
 const linkClass =
-  "font-medium text-foreground-muted transition-colors hover:text-primary-strong";
+  "stt-footer-link inline-flex min-h-11 items-center rounded-sm font-medium text-foreground-muted";
 
 /** Round icon button for a known social network; text pill otherwise. */
 function SocialButton({ label, url }: { label: string; url: string }) {
@@ -61,18 +56,6 @@ function SocialButton({ label, url }: { label: string; url: string }) {
     : /zalo|chat|message/i.test(label)
       ? ChatIcon
       : null;
-  if (!KnownIcon) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex min-h-11 items-center rounded-full border border-border-strong bg-surface/60 px-4 text-xs font-semibold text-foreground-muted transition-[color,border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:bg-primary-soft hover:text-primary-strong"
-      >
-        {label}
-      </a>
-    );
-  }
   return (
     <a
       href={url}
@@ -80,9 +63,9 @@ function SocialButton({ label, url }: { label: string; url: string }) {
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border-strong bg-surface/60 text-foreground-muted transition-[color,border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-primary-strong hover:bg-primary-strong hover:text-white"
+      className={`stt-footer-social inline-flex min-h-11 items-center justify-center rounded-full border border-border-strong bg-surface/60 text-xs font-semibold text-foreground-muted ${KnownIcon ? "w-11" : "px-4"}`}
     >
-      <KnownIcon className="h-5 w-5" />
+      {KnownIcon ? <KnownIcon className="h-5 w-5" /> : label}
     </a>
   );
 }
@@ -100,26 +83,19 @@ export function SiteFooter({ locale }: { locale: Locale }) {
   }));
 
   return (
-    <footer className="stt-footer relative overflow-hidden">
-      {/* Mirrors the identity rule at the top of the header. */}
-      <div className="brand-gradient h-px w-full" aria-hidden="true" />
-      <span aria-hidden="true" className="footer-glow" />
-
+    <footer className="stt-footer border-t border-border">
       <Container>
-        <div className="grid grid-cols-1 gap-10 py-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-12 lg:py-16">
-          <div className="sm:col-span-2 lg:col-span-4">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-8 py-10 lg:grid-cols-12 lg:gap-8 lg:py-14">
+          <div className="col-span-2 lg:col-span-4">
             <Logo size="md" />
-            <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-primary-strong">
-              {m.site.tagline}
-            </p>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-foreground-muted">
-              {m.site.description}
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-foreground-muted">
+              {m.footer.description}
             </p>
           </div>
 
           <nav aria-label={m.footer.categoriesAria} className="lg:col-span-3">
             <FooterHeading>{m.footer.categoriesTitle}</FooterHeading>
-            <ul className="mt-5 space-y-3 text-sm">
+            <ul className="mt-2 text-sm">
               {topLevel.map((category) => (
                 <li key={category.id}>
                   <Link
@@ -135,7 +111,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
 
           <nav aria-label={m.footer.infoAria} className="lg:col-span-2">
             <FooterHeading>{m.footer.infoTitle}</FooterHeading>
-            <ul className="mt-5 space-y-3 text-sm">
+            <ul className="mt-2 text-sm">
               {hotelSettings().enabled ? (
                 <li>
                   <Link
@@ -163,14 +139,14 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             </ul>
           </nav>
 
-          <div className="sm:col-span-2 lg:col-span-3">
+          <div className="col-span-2 border-t border-border pt-6 lg:col-span-3 lg:border-t-0 lg:pt-0">
             <FooterHeading>{m.footer.contactTitle}</FooterHeading>
-            <ul className="mt-5 space-y-1 text-sm text-foreground-muted">
+            <ul className="mt-2 space-y-1 text-sm text-foreground-muted">
               <li className="flex items-start gap-2.5">
                 <PhoneIcon className="mt-3.5 h-4 w-4 shrink-0 text-primary-strong" />
                 <a
                   href={config.contact.hotlineHref}
-                  className="inline-flex min-h-11 items-center font-semibold text-foreground transition-colors hover:text-primary-strong"
+                  className="stt-footer-link inline-flex min-h-11 items-center rounded-sm text-lg font-bold tabular-nums text-foreground"
                 >
                   {config.contact.hotline}
                 </a>
@@ -179,19 +155,19 @@ export function SiteFooter({ locale }: { locale: Locale }) {
                 <MailIcon className="mt-3.5 h-4 w-4 shrink-0 text-primary-strong" />
                 <a
                   href={`mailto:${config.contact.email}`}
-                  className="inline-flex min-h-11 items-center break-all transition-colors hover:text-primary-strong"
+                  className="stt-footer-link inline-flex min-h-11 min-w-0 items-center rounded-sm [overflow-wrap:anywhere]"
                 >
                   {config.contact.email}
                 </a>
               </li>
               <li className="flex items-start gap-2.5">
-                <MapPinIcon className="mt-1 h-4 w-4 shrink-0 text-primary-strong" />
+                <MapPinIcon className="mt-2 h-4 w-4 shrink-0 text-primary-strong" />
                 <span className="py-1.5 leading-relaxed">
                   {config.contact.address}
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
-                <ClockIcon className="mt-1 h-4 w-4 shrink-0 text-primary-strong" />
+                <ClockIcon className="mt-2 h-4 w-4 shrink-0 text-primary-strong" />
                 <span className="py-1.5 leading-relaxed">
                   {locale === "en"
                     ? config.contact.workingHoursEn ||
@@ -202,48 +178,21 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             </ul>
 
             {socials.length > 0 ? (
-              <ul className="mt-6 flex flex-wrap items-center gap-2.5">
+              <ul className="mt-4 flex flex-wrap items-center gap-2.5">
                 {socials.map((social) => (
                   <li key={social.key}>
                     <SocialButton label={social.label} url={social.url} />
                   </li>
                 ))}
-                <li
-                  aria-hidden="true"
-                  className="ml-1 hidden text-xs text-foreground-subtle sm:block"
-                >
-                  {locale === "en"
-                    ? "Follow our journeys"
-                    : "Theo dõi hành trình"}
-                </li>
               </ul>
             ) : null}
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-border py-6 text-xs text-foreground-subtle sm:flex-row sm:items-center sm:justify-between">
+        <div className="border-t border-border py-5 text-xs text-foreground-muted">
           <p>{renderCopyright(m.footer.copyright, config.name)}</p>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <a
-              href={config.contact.hotlineHref}
-              className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-foreground transition-colors hover:text-primary-strong"
-            >
-              <PhoneIcon className="h-4 w-4 text-primary-strong" />
-              {config.contact.hotline}
-            </a>
-            <a
-              href={`mailto:${config.contact.email}`}
-              className="inline-flex min-h-11 items-center gap-1.5 font-medium transition-colors hover:text-primary-strong"
-            >
-              <MailIcon className="h-4 w-4 text-primary-strong" />
-              {config.contact.email}
-            </a>
-          </div>
         </div>
       </Container>
-      <div aria-hidden="true" className="footer-watermark">
-        SEA TRIP
-      </div>
     </footer>
   );
 }

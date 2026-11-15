@@ -615,10 +615,14 @@ async function main() {
     await page.getByRole("button", { name: "Lưu nháp", exact: true }).click();
     const sample = page.locator(".stt-hotel-trash-list li").filter({ hasText: "Mẫu quà lịch Sea Trip" });
     await sample.waitFor();
-    page.once("dialog", (dialog) => dialog.accept());
     await sample.getByRole("button", { name: "Xóa", exact: true }).click();
-    await page.getByText("Thùng rác chiến dịch (1)").click();
-    await page.getByRole("button", { name: "Khôi phục bản nháp" }).click();
+    const trashConfirm = page.getByRole("alertdialog", { name: "Chuyển chiến dịch vào Thùng rác?" });
+    await trashConfirm.getByRole("button", { name: "Chuyển vào Thùng rác" }).click();
+    await page.getByRole("button", { name: "Thùng rác (1)", exact: true }).click();
+    const promotionTrash = page.getByRole("region", { name: "Thùng rác chiến dịch" });
+    await promotionTrash.getByRole("button", { name: "Khôi phục", exact: true }).click();
+    await promotionTrash.getByText("Thùng rác đang trống.").waitFor();
+    await promotionTrash.getByRole("button", { name: "Về danh sách chiến dịch" }).click();
     await sample.getByRole("button", { name: "Sửa", exact: true }).waitFor();
     check("calendar template previews, saves, deletes and restores as draft",
       (await (await fetch(`${BASE}/api/promotions`)).json()) === null);

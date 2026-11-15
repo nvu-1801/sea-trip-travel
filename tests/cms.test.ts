@@ -64,6 +64,25 @@ import {
   sameOrigin,
 } from "../src/server/cms/auth";
 import { db } from "../src/server/cms/db";
+test("copy migration corrects published typos and preserves edited drafts", () => {
+  homeHero();
+  const read = db().prepare("SELECT data,published FROM records WHERE collection='hero' AND id='home'");
+  const previous = read.get() as { data: string; published: string };
+  const update = db().prepare("UPDATE records SET data=?,published=? WHERE collection='hero' AND id='home'");
+  const live = JSON.parse(previous.published);
+  live.vi.badge = "Văn Hóa - Ẩm Thưc";
+  try {
+    update.run(previous.data, JSON.stringify(live));
+    db().prepare("DELETE FROM cms_migrations WHERE id=?").run("public-copy/vi-corrections:v1");
+    assert.equal(migrateContent(), 1);
+    const corrected = read.get() as typeof previous;
+    assert.equal(corrected.data, previous.data);
+    assert.equal(JSON.parse(corrected.published).vi.badge, "Văn Hóa - Ẩm Thực");
+    assert.equal(migrateContent(), 0);
+  } finally {
+    update.run(previous.data, previous.published);
+  }
+});
 import { cmsDataDir } from "../src/server/cms/db";
 import {
   encrypt,

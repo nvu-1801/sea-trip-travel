@@ -115,6 +115,7 @@
     }
   },
   "footer": {
+    "description": "SEA TRIP TRAVEL tổ chức tour Quy Nhơn, Phú Yên và các hành trình trong nước.",
     "categoriesTitle": "Danh mục tour",
     "categoriesAria": "Danh mục tour",
     "infoTitle": "Thông tin",
@@ -308,7 +309,8 @@
     "galleryCounter": "Ảnh {index}/{total}",
     "packages": {
       "title": "Chọn gói phù hợp",
-      "description": "Giá tham khảo tính theo mỗi khách. SEA TRIP sẽ xác nhận dịch vụ đi kèm khi tư vấn.",
+      "description": "Bảng giá tham khảo tính theo từng khách. SEA TRIP sẽ xác nhận giá và dịch vụ đi kèm khi tư vấn.",
+      "groupDescription": "Giá tham khảo tính trên mỗi khách và thay đổi theo số khách trong nhóm.",
       "accommodation": "Gói dịch vụ",
       "adult": "Người lớn",
       "child": "Trẻ em 5–9 tuổi",
@@ -401,7 +403,7 @@
     "outOfHours": "Ngoài giờ làm việc, yêu cầu vẫn được ghi nhận và xử lý vào buổi làm việc kế tiếp.",
     "formEyebrow": "Form tư vấn",
     "formTitle": "Gửi yêu cầu",
-    "formDescription": "Chọn một tour/điểm đến hoặc một khách sạn, rồi để lại họ tên và số điện thoại. SEA TRIP sẽ kiểm tra và tư vấn lại.",
+    "formDescription": "Nếu chưa chọn khách sạn, hãy nhập tour hoặc điểm đến bạn quan tâm. Điền họ tên, số điện thoại và đồng ý để SEA TRIP liên hệ tư vấn.",
     "steps": [
       {
         "title": "1. SEA TRIP tiếp nhận yêu cầu",
