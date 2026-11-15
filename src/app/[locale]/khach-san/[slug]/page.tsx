@@ -104,6 +104,18 @@ export default async function HotelDetailPage({
   const query = await searchParams;
   const m = getMessages(locale);
   const t = m.hotels.detail;
+  const roomView = (view: string) => {
+    switch (view.trim().toLowerCase()) {
+      case "pool view":
+      case "hồ bơi":
+        return locale === "en" ? "Pool view" : "Hồ bơi";
+      case "city view":
+      case "thành phố":
+        return locale === "en" ? "City view" : "Thành phố";
+      default:
+        return view;
+    }
+  };
 
   const checkInRaw = first(query.checkIn);
   const checkOutRaw = first(query.checkOut);
@@ -416,7 +428,7 @@ export default async function HotelDetailPage({
                         <h3>{room.name}</h3>
                         <ul className="stt-hotel-room-meta">
                           {room.sizeSqm ? <li>{format(t.size, { size: room.sizeSqm })}</li> : null}
-                          {room.view ? <li>{t.view}: {room.view}</li> : null}
+                          {room.view ? <li>{t.view}: {roomView(room.view)}</li> : null}
                           <li>{format(t.capacity, { count: room.maxOccupancy })}</li>
                         </ul>
                         <HotelRoomFacts
