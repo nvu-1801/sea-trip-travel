@@ -1,0 +1,28 @@
+name: SEA TRIP production uptime
+on:
+  schedule:
+    - cron: '2-57/5 * * * *'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  uptime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check public HTTPS homepage
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if status=$(curl --silent --show-error --location --max-redirs 5 \
+              --proto '=https' --proto-redir '=https' \
+              --connect-timeout 5 --max-time 12 --output /dev/null \
+              --write-out '%{http_code}' https://seatriptravel.vn/) &&
+              [[ "$status" == 200 ]]; then
+              echo "SEA TRIP homepage returned HTTP 200 (attempt $attempt)."
+              exit 0
+            fi
+            echo "SEA TRIP homepage check failed (attempt $attempt, HTTP ${status:-000})."
+            if [[ "$attempt" != 3 ]]; then sleep 5; fi
+          done
+          echo "::error::SEA TRIP production homepage failed three HTTPS checks."
+          exit 1
